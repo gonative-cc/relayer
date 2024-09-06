@@ -11,7 +11,7 @@ contributing has been established:
    already exist as either a Github [Discussion](https://github.com/gonative-cc/relayer/discussions),
    [Issue](https://github.com/gonative-cc/relayer/issues) or
    [PR](https://github.com/gonative-cc/relayer/pulls). Be sure to also check out
-   our public [Discord](https://discord.gg/dN76DEBCd9). Existing discussions will help you
+   our public [Discord](https://discord.gg/gonative). Existing discussions will help you
    gain context on the current status of the proposed contribution or topic. If
    one does not exist, feel free to start one.
 2. If you would like to create a [Github Issue](https://github.com/gonative-cc/relayer/issues),
@@ -28,7 +28,7 @@ contributing has been established:
       make a comment on the issue to inform the community of your intentions to
       begin work.
    4. Follow standard GitHub best practices, i.e. fork the repo, branch from the
-      HEAD of `main`, make commits, and submit a PR to `main`
+      HEAD of `master`, make commits, and submit a PR to `master`
       - For core developers working within the repo, to ensure a clear ownership
         of branches, branches must be named with the convention `{moniker}/{issue#}-branch-name`.
    5. Be sure to submit the PR in `Draft` mode. Submit your PR early, even if
@@ -40,13 +40,22 @@ contributing has been established:
 
 ## Coding Guidelines
 
-We follow the Cosmos SDK [Coding Guidelines](https://github.com/cosmos/cosmos-sdk/blob/main/CODING_GUIDELINES.md). Specifically:
+We follow the Cosmos SDK [Coding Guidelines](https://github.com/cosmos/cosmos-sdk/blob/master/CODING_GUIDELINES.md). Specifically:
 
-- API & Design SHOULD be proposed and reviewed before the main implementaion.
+- API & Design SHOULD be proposed and reviewed before the implementaion.
 - Minimize code duplication
-- Define [Acceptance tests](https://github.com/cosmos/cosmos-sdk/blob/main/CODING_GUIDELINES.md#acceptance-tests) or while implementing new features.
+- Define [Acceptance tests](https://github.com/cosmos/cosmos-sdk/blob/master/CODING_GUIDELINES.md#acceptance-tests) or while implementing new features.
   - Prefer use of acceptance test framework, like [gocuke](https://github.com/regen-network/gocuke/)
   - For unit tests or integration tests use [go mock](https://github.com/golang/mock) for creating mocks. Generate mock interface implementations using `go generate`.
+- Make sure you update the [CHANGELOG](CHANGELOG.md)
+
+## Requesting Reviews
+
+In order to accommodate the review process, the author of the PR must complete the author checklist (from the pull request template) to the best of their abilities before marking the PR as "Ready for Review". If you would like to receive early feedback on the PR, open the PR as a "Draft" and leave a comment in the PR indicating that you would like early feedback and tagging whoever you would like to receive feedback from.
+
+Codeowners are marked automatically as the reviewers.
+
+All PRs require at least one approval before they can be merged.
 
 ## Design Documents
 
@@ -56,7 +65,7 @@ opening an [Issue](https://github.com/gonative-cc/relayer/issues/new/choose) or 
 of the proposal.
 
 Once the proposal has been discussed and there is rough alignment on a high-level
-approach to the design, a [design doc](https://github.com/gonative-cc/relayer/blob/main/docs/design_docs/README.md) can be drafted in a dedicated pull request.
+approach to the design, a [design doc](https://github.com/gonative-cc/relayer/blob/master/docs/design_docs/README.md) can be drafted in a dedicated pull request.
 We are following this process to ensure all involved parties are in agreement before any party begins coding the proposed implementation.
 
 ## Branching Model
