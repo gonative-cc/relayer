@@ -32,3 +32,6 @@ Mock -> WIP -> alpha -> beta -> production
 | Native->Pera | WIP    |
 | Bitcoin SPV  |        |
 
+## Contributing
+
+Check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines & policies for how we develop the Cosmos Hub. Thank you to all those who have contributed!
