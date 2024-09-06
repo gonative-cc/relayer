@@ -1,0 +1,52 @@
+name: Lint
+on:
+  merge_group:
+    types: [checks_requested]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  golangci:
+    name: Run golangci-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: technote-space/get-diff-action@v6.1.2
+        with:
+          PATTERNS: |
+            **/*.go
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: golangci-lint main
+        uses: golangci/golangci-lint-action@v6
+        if: env.GIT_DIFF
+        with:
+          version: latest
+          args: --timeout 8m
+
+  markdown-lint:
+    name: markdown-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # lint only changed files
+      - uses: tj-actions/changed-files@v44
+        id: changed-files
+        with:
+          files: "**/*.md"
+          separator: ","
+      - uses: DavidAnson/markdownlint-cli2-action@v16
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          globs: ${{ steps.changed-files.outputs.all_changed_files }}
+          separator: ","
