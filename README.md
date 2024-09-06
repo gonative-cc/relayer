@@ -35,3 +35,8 @@ Mock -> WIP -> alpha -> beta -> production
 ## Contributing
 
 Check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines & policies for how we develop the Cosmos Hub. Thank you to all those who have contributed!
+
+## Talk to us
+
+- Follow the Native team's activities on the [Native X/Twitter account](https://x.com/NativeNetwork).
+- Join the conversation on [Native Discord](https://discord.gg/gonative).
