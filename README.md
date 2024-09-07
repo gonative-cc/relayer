@@ -28,10 +28,15 @@ Status scheme:
 Mock -> WIP -> alpha -> beta -> production
 ```
 
-| Service      | status |
-| :----------- | :----- |
-| Native->Pera | WIP    |
-| Bitcoin SPV  |        |
+| Service       | status |
+| :------------ | :----- |
+| Native-\>Pera | WIP    |
+| Bitcoin SPV   |        |
+
+## Setup
+
+1. Copy and update your env file: `cp .env.example .env`
+2. Build the project: `make build`
 
 ## Contributing
 
