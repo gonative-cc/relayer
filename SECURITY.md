@@ -19,8 +19,8 @@ Send your detailed vulnerability report to `security@gonative.cc`.
 
 ### 2. GitHub Private Vulnerability Reporting
 
-* For this project, utilize [relayer](https://github.com/gonative-cc/relayer/security/advisories/new) GitHub Private Vulnerability Reporting.
-* For Native Network, utilize [gonative](https://github.com/gonative-cc/gonative/security/advisories/new) GitHub Private Vulnerability Reporting.
+- For this project, utilize [relayer](https://github.com/gonative-cc/relayer/security/advisories/new) GitHub Private Vulnerability Reporting.
+- For Native Network, utilize [gonative](https://github.com/gonative-cc/gonative/security/advisories/new) GitHub Private Vulnerability Reporting.
 
 ## Submit Vulnerability Report
 
@@ -60,7 +60,7 @@ During this time:
 
 Though we don't have an official bug bounty program, we generally offer rewards to security researchers who responsibly disclose vulnerabilities to us. Bounties are generally awarded for vulnerabilities classified as **high** or **critical** severity. Bounty amounts will be determined during the disclosure process, after the severity has been assessed. Please note that in order to collect a bounty, the reporter must go through a KYC process.
 
-> [!WARNING] 
+> [!WARNING]
 > Targeting our production environments will disqualify you from receiving any bounty.
 
 ## Feedback on this Policy
