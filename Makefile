@@ -11,4 +11,8 @@ run:
 clean:
 	rm -rf out
 
+
+format:
+	revive ./...
+
 .PHONY: build run clean
