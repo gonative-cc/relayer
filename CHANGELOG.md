@@ -12,7 +12,7 @@ Usage:
 
 Change log entries are to be added to the Unreleased section and in one of the following subsections: Features, Breaking Changes, Bug Fixes. Example entry:
 
-* [#<PR-number>](https://github.com/umee-network/umee/pull/<PR-number>) <description>
+* [#<PR-number>](https://github.com/gonative-cc/relayer/pull/<PR-number>) <description>
 -->
 
 # CHANGELOG
