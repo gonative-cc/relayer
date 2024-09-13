@@ -19,6 +19,13 @@ clean:
 	rm -rf out
 
 lint:
+	@git diff --name-only  | grep  -E '\.go$$' | xargs revive
+	@git diff --name-only  | grep  -E '\.md$$' | xargs markdownlint-cli2 ./NONE
+
+lint-fix:
+	@git diff --name-only  | grep  -E '\.md$$' | xargs markdownlint-cli2 --fix ./NONE
+
+lint-all:
 	@revive ./...
 
 .PHONY: build run clean setup
