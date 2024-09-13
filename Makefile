@@ -1,6 +1,6 @@
 
 setup:
-	@cd .git/hooks; ln -s ../../scripts/git-hooks/* ./
+	@cd .git/hooks; ln -s -f ../../scripts/git-hooks/* ./
 
 
 out:
@@ -18,9 +18,15 @@ run:
 clean:
 	rm -rf out
 
+# used as pre-commit
+lint-git:
+	@git diff --name-only --cached | grep  -E '\.go$$' | xargs revive
+	@git diff --name-only --cached | grep  -E '\.md$$' | xargs markdownlint-cli2 ./NONE
+
+# lint changed files
 lint:
-	@git diff --name-only  | grep  -E '\.go$$' | xargs revive
-	@git diff --name-only  | grep  -E '\.md$$' | xargs markdownlint-cli2 ./NONE
+	@git diff --name-only | grep  -E '\.go$$' | xargs revive
+	@git diff --name-only | grep  -E '\.md$$' | xargs markdownlint-cli2 ./NONE
 
 lint-fix:
 	@git diff --name-only  | grep  -E '\.md$$' | xargs markdownlint-cli2 --fix ./NONE
