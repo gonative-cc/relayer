@@ -1,7 +1,14 @@
+
+setup:
+	@cd .git/hooks; ln -s ../../scripts/git-hooks/* ./
+
+
 out:
 	mkdir out
 
-build: out
+.git/hooks/pre-commit: setup
+
+build: out .git/hooks/pre-commit
 	go build -o ./out ./cmd/rly-pera
 
 run:
@@ -11,8 +18,7 @@ run:
 clean:
 	rm -rf out
 
+lint:
+	@revive ./...
 
-format:
-	revive ./...
-
-.PHONY: build run clean
+.PHONY: build run clean setup
