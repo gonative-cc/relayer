@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
+// ENV variables
 const (
 	EnvLogLevel = "LOG_LEVEL"
 )

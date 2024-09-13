@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ENV variables
 const (
 	EnvChainRPC            = "NATIVE_RPC"
 	EnvChainGRPC           = "NATIVE_GRPC"
