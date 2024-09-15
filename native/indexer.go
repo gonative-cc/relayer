@@ -54,6 +54,7 @@ func (i *Indexer) Start(ctx context.Context) error {
 		case blk := <-newBlocks:
 			if err := i.HandleNewBlock(ctx, blk); err != nil {
 				i.logger.Err(err).Msg("error handling block")
+				return err
 			}
 
 		case <-oneMin.C: // every minute. Tries to index from old blocks, if needed.

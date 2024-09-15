@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gonative-cc/relayer/native"
+	"github.com/gonative-cc/relayer/native/blockchain"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -47,7 +49,17 @@ func CmdStart() *cobra.Command {
 			// TODO: load the (should latest indexed block height from a file)
 			log.Info().Int("block", minimumBlockHeight).Msg("Start relaying msgs")
 
-			return nil
+			b, err := blockchain.New(os.Getenv(EnvChainRPC), os.Getenv(EnvChainGRPC))
+			if err != nil {
+				return err
+			}
+			logger := log.With().Str("module", "native").Logger()
+			ctx := cmd.Context()
+			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight)
+			if err != nil {
+				return err
+			}
+			return idx.Start(ctx)
 		},
 	}
 
