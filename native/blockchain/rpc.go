@@ -197,7 +197,7 @@ func (b *chainRPC) CheckTx(ctx context.Context, tx tmtypes.Tx) (err error) {
 
 	return nil
 }
-//create light provider
+// create light provider
 func (b *chainRPC) LightProvider() (provtypes.Provider) {
 
 	lightprovider, err := prov.New(b.ChainID(), b.conn.AddrRPC)
