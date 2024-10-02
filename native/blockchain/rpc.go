@@ -138,7 +138,7 @@ func (b *chainRPC) ChainHeader() (string, uint64, error) {
 func (b *chainRPC) makeRPCRequest(req any, responseStruct any) error {
 	reqBytes, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("error marshalling request: %w", err)
+		return fmt.Errorf("error marshaling request: %w", err)
 	}
 
 	resp, err := b.conn.httpClient.Post(b.conn.AddrRPC, "application/json", bytes.NewReader(reqBytes))
