@@ -21,7 +21,7 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	if err != nil {
 		return err
 	}
-	i.logger.info("light block", lb)
+	i.logger.Info("light block", lb)
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
 			i.logger.Err(err).Int64("height", blk.Height).Msg("error handling block")
