@@ -12,7 +12,6 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
     reviewers:
-      - umee-network/core-devs
+      - gonative-cc/tools
     labels:
-      - "A:Automerge"
-      - "T:Dependencies"
+      - "T:dependencies"
