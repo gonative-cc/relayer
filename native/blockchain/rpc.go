@@ -163,7 +163,8 @@ func (b *chainRPC) Block(ctx context.Context, height int64) (blk *tmtypes.Block,
 		// usually a node does not have all the blocks, 
 		// in this case we could parse the last block that node has available and start from there.
 		// "error in json rpc client, with http response metadata: 
-		// (Status: 200 OK, Protocol HTTP/1.1). RPC error -32603 - Internal error: height 1 is not available, lowest height is 7942001"
+		// (Status: 200 OK, Protocol HTTP/1.1). 
+		// RPC error -32603 - Internal error: height 1 is not available, lowest height is 7942001"
 		errString := err.Error()
 		searchStrInErr := fmt.Sprintf("Internal error: height %d is not available, lowest height is ", height)
 		idx := strings.Index(errString, searchStrInErr)
