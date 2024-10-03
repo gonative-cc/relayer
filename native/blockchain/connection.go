@@ -40,7 +40,7 @@ func NewConn(rpc, gRPC string) (*Conn, error) {
 	// Create a connection to the gRPC server.
 	grpcConn, err := grpc.NewClient(
 		gRPC, // your gRPC server address.
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // The Cosmos SDK doesn't support any transport security mechanism.
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // The Cosmos SDK doesn't support any transport.
 		// This instantiates a general gRPC codec which handles proto bytes. We pass in a nil interface registry
 		// if the request/response types contain interface instead of 'nil' you should pass the application specific codec.
 		grpc.WithDefaultCallOptions(grpc.ForceCodec(codec.NewProtoCodec(nil).GRPCCodec())),

@@ -2,7 +2,6 @@ package native
 
 import (
 	"context"
-
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	provtypes "github.com/cometbft/cometbft/light/provider"
