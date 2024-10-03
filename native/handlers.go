@@ -17,7 +17,7 @@ func (i *Indexer) HandleNewBlock(ctx context.Context, blk *tmtypes.Block) error 
 // HandleBlock handles the receive of an block from the chain.
 func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	// light block
-	lb, err := i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
+	lb, err:= i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
 	if err != nil {
 		return err
 	}
