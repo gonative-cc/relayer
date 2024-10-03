@@ -34,6 +34,9 @@ lint-fix:
 lint-all:
 	@revive ./...
 
+lint-gofmt-fix:
+	@find -name "*.go" -exec gofmt -w -s {} \;
+
 .PHONY: build run clean setup
 
 ###############################################################################
