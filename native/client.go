@@ -2,7 +2,6 @@ package native
 
 import (
 	"fmt"
-	"context"
 	"github.com/block-vision/sui-go-sdk/sui"
 )
 

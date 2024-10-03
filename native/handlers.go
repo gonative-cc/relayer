@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"reflect"
+	"os"
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 
@@ -25,17 +25,23 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		return err
 	}
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
+	
 
-	fmt.Println(reflect.TypeOf(lb))
 
-	signerAccount, err := CreateSigner("defense frost latin party smoke veteran bamboo dignity sniff eyebrow extra lottery")
+	signerAccount, err := CreateSigner(os.Getenv("SIGNER_ACCOUNT_MNEMONIC"))
 	if err != nil {
 		fmt.Println("Error creating signer:", err)
 		return err
 	}
-	fmt.Println(signerAccount.Address)
 
-	gasObj := "0x12c7c74c3c7892156fa3429e9157992363fe68bf8f7d58a7d781d09ea4a74802"
+	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
+
+	i.logger.Info().Str("signer address", signerAccount.Address).Msg("Light Block ")
+
+
+	gasObj := os.Getenv("GAS_ADDRESS")
+
+	i.logger.Info().Str("gas address", gasObj).Msg("Light Block ")
 
 	rsp, err := callMoveFunction(ctx, i.cli, signerAccount.Address, gasObj, lb)
 	if err != nil {

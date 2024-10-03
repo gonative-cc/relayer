@@ -16,6 +16,8 @@ const (
 	EnvChainGRPC           = "NATIVE_GRPC"
 	FlagMinimumBlockHeight = "block"
 	defaultPort            = "8080"
+	SuiChain			   = "SUI_CHAIN"
+	SignerAccountMnemonic  = "SIGNER_ACCOUNT_MNEMONIC"
 )
 
 var (
@@ -53,9 +55,17 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			cli, err := native.CreateSuiClient(os.Getenv(SuiChain))
+			if err != nil {
+				return err
+			}
+
+
 			logger := log.With().Str("module", "native").Logger()
 			ctx := cmd.Context()
-			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight)
+			
+
+			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, cli)
 			if err != nil {
 				return err
 			}

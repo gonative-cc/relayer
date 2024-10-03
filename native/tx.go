@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"os"
 	"crypto/ed25519"
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -14,15 +15,15 @@ import (
 func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string, gasObj string, lb *tmtypes.LightBlock) (models.TxnMetaData, error) {
 	return cli.MoveCall(ctx, models.MoveCallRequest{
 		Signer:          signerAddress,
-		PackageObjectId: "0x97436bc2b3bba89b96dee5288e43dd96472c0e7d20e4ea8bd36c7ff636771ee9",
-		Module:          "example",
-		Function:        "magic",
+		PackageObjectId: os.Getenv("SMART_CONTRACT_ADDRESS"),
+		Module:          os.Getenv("SMART_CONTRACT_MODULE"),
+		Function:        os.Getenv("SMART_CONTRACT_FUNCTION"),
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
 			lb,
 		},
 		Gas:       gasObj,
-		GasBudget: "100000000",
+		GasBudget: os.Getenv("GAS_BUDGET"),
 	})
 }
 
