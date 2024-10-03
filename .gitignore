@@ -23,3 +23,7 @@ go.work.sum
 
 # binaries
 out
+
+# tests
+
+coverage.txt
