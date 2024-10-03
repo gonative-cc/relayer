@@ -10,16 +10,15 @@ import (
 	"strings"
 	"sync"
 
+	provtypes "github.com/cometbft/cometbft/light/provider"
+	prov "github.com/cometbft/cometbft/light/provider/http"
 	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	prov "github.com/cometbft/cometbft/light/provider/http"
-	provtypes "github.com/cometbft/cometbft/light/provider"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	"github.com/gonative-cc/relayer/native"
-	
 )
 
 const (
@@ -197,8 +196,9 @@ func (b *chainRPC) CheckTx(ctx context.Context, tx tmtypes.Tx) (err error) {
 
 	return nil
 }
+
 // create light provider
-func (b *chainRPC) LightProvider() (provtypes.Provider) {
+func (b *chainRPC) LightProvider() provtypes.Provider {
 
 	lightprovider, err := prov.New(b.ChainID(), b.conn.AddrRPC)
 	if err != nil {
