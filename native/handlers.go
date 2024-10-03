@@ -3,7 +3,7 @@ package native
 import (
 	"context"
 	"encoding/hex"
-	
+
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 

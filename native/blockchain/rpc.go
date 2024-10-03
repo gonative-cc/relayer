@@ -10,11 +10,11 @@ import (
 	"strings"
 	"sync"
 
+	provtypes "github.com/cometbft/cometbft/light/provider"
+	prov "github.com/cometbft/cometbft/light/provider/http"
 	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	prov "github.com/cometbft/cometbft/light/provider/http"
-	provtypes "github.com/cometbft/cometbft/light/provider"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
@@ -160,10 +160,10 @@ func (b *chainRPC) Block(ctx context.Context, height int64) (blk *tmtypes.Block,
 	defer b.mu.Unlock()
 	blkResult, err := b.conn.websocketRPC.Block(ctx, &height)
 	if err != nil {
-		// usually a node does not have all the blocks, 
+		// usually a node does not have all the blocks,
 		// in this case we could parse the last block that node has available and start from there.
-		// "error in json rpc client, with http response metadata: 
-		// (Status: 200 OK, Protocol HTTP/1.1). 
+		// "error in json rpc client, with http response metadata:
+		// (Status: 200 OK, Protocol HTTP/1.1).
 		// RPC error -32603 - Internal error: height 1 is not available, lowest height is 7942001"
 		errString := err.Error()
 		searchStrInErr := fmt.Sprintf("Internal error: height %d is not available, lowest height is ", height)
@@ -199,8 +199,9 @@ func (b *chainRPC) CheckTx(ctx context.Context, tx tmtypes.Tx) (err error) {
 
 	return nil
 }
+
 // create light provider
-func (b *chainRPC) LightProvider() (provtypes.Provider) {
+func (b *chainRPC) LightProvider() provtypes.Provider {
 
 	lightprovider, err := prov.New(b.ChainID(), b.conn.AddrRPC)
 	if err != nil {
