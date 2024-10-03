@@ -13,6 +13,8 @@ import (
 	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	prov "github.com/cometbft/cometbft/light/provider/http"
+	provtypes "github.com/cometbft/cometbft/light/provider"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
@@ -135,7 +137,7 @@ func (b *chainRPC) ChainHeader() (string, uint64, error) {
 func (b *chainRPC) makeRPCRequest(req any, responseStruct any) error {
 	reqBytes, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("error marshalling request: %w", err)
+		return fmt.Errorf("error marshaling request: %w", err)
 	}
 
 	resp, err := b.conn.httpClient.Post(b.conn.AddrRPC, "application/json", bytes.NewReader(reqBytes))
@@ -158,8 +160,11 @@ func (b *chainRPC) Block(ctx context.Context, height int64) (blk *tmtypes.Block,
 	defer b.mu.Unlock()
 	blkResult, err := b.conn.websocketRPC.Block(ctx, &height)
 	if err != nil {
-		// usually a node does not have all the blocks, in this case we could parse the last block that node has available and start from there.
-		// "error in json rpc client, with http response metadata: (Status: 200 OK, Protocol HTTP/1.1). RPC error -32603 - Internal error: height 1 is not available, lowest height is 7942001"
+		// usually a node does not have all the blocks, 
+		// in this case we could parse the last block that node has available and start from there.
+		// "error in json rpc client, with http response metadata: 
+		// (Status: 200 OK, Protocol HTTP/1.1). 
+		// RPC error -32603 - Internal error: height 1 is not available, lowest height is 7942001"
 		errString := err.Error()
 		searchStrInErr := fmt.Sprintf("Internal error: height %d is not available, lowest height is ", height)
 		idx := strings.Index(errString, searchStrInErr)
@@ -193,4 +198,13 @@ func (b *chainRPC) CheckTx(ctx context.Context, tx tmtypes.Tx) (err error) {
 	}
 
 	return nil
+}
+// create light provider
+func (b *chainRPC) LightProvider() (provtypes.Provider) {
+
+	lightprovider, err := prov.New(b.ChainID(), b.conn.AddrRPC)
+	if err != nil {
+		return nil
+	}
+	return lightprovider
 }
