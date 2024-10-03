@@ -88,7 +88,8 @@ func (i *Indexer) IndexOldBlocks(ctx context.Context) {
 	}
 
 	if blk == nil && minimumNodeBlkHeight != 0 {
-		i.logger.Info().Int("blockHeight", blockHeight).Int("minimumNodeBlkHeight", minimumNodeBlkHeight).Msg("initial block height not available on node")
+		i.logger.Info().Int("blockHeight", blockHeight).Int("minimumNodeBlkHeight", minimumNodeBlkHeight).Msg(
+			"initial block height not available on node")
 		// in this case we should continue to index from the given height.
 		i.lowestBlock = minimumNodeBlkHeight
 		i.IndexOldBlocks(ctx)
