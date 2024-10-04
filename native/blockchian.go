@@ -6,7 +6,6 @@ import (
 	provtypes "github.com/cometbft/cometbft/light/provider"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	provtypes "github.com/cometbft/cometbft/light/provider"
 )
 
 // Blockchain is the expected blockchain interface the indexer needs to store data in the database.

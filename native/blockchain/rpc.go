@@ -15,8 +15,6 @@ import (
 	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	prov "github.com/cometbft/cometbft/light/provider/http"
-	provtypes "github.com/cometbft/cometbft/light/provider"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 

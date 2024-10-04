@@ -55,7 +55,7 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		fmt.Println("Error executing transaction:", err)
 		return err
 	}
-
+	i.logger.Debug().Any("transaction response", rsp2).Msg("After making trasaction")
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
 			i.logger.Err(err).Int64("height", blk.Height).Msg("error handling block")
