@@ -48,7 +48,7 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		fmt.Println("Error calling move function:", err)
 		return err
 	}
-	//fmt.Println("Move call response:", rsp)
+	// fmt.Println("Move call response:", rsp)
 
 	rsp2, err := executeTransaction(ctx, i.cli, rsp, signerAccount.PriKey)
 	if err != nil {

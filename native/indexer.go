@@ -8,9 +8,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/rs/zerolog"
 	"github.com/block-vision/sui-go-sdk/sui"
-
+	"github.com/rs/zerolog"
 )
 
 const (

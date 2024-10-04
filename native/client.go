@@ -2,10 +2,11 @@ package native
 
 import (
 	"fmt"
+
 	"github.com/block-vision/sui-go-sdk/sui"
 )
 
-// CreateSuiClient to create client
+// CreateSuiClient creates a Sui client
 func CreateSuiClient(url string) (*sui.Client, error) {
 	api := sui.NewSuiClient(url)
 	client, ok := api.(*sui.Client)

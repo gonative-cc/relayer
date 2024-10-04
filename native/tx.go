@@ -2,8 +2,9 @@ package native
 
 import (
 	"context"
-	"os"
 	"crypto/ed25519"
+	"os"
+
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -11,8 +12,8 @@ import (
 
 
 
-
-func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string, gasObj string, lb *tmtypes.LightBlock) (models.TxnMetaData, error) {
+func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string, gasObj string, 
+	lb *tmtypes.LightBlock) (models.TxnMetaData, error) {
 	return cli.MoveCall(ctx, models.MoveCallRequest{
 		Signer:          signerAddress,
 		PackageObjectId: os.Getenv("SMART_CONTRACT_ADDRESS"),
@@ -27,7 +28,8 @@ func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string
 	})
 }
 
-func executeTransaction(ctx context.Context, cli *sui.Client, txnMetaData models.TxnMetaData, priKey ed25519.PrivateKey) (models.SuiTransactionBlockResponse, error) {
+func executeTransaction(ctx context.Context, cli *sui.Client, txnMetaData models.TxnMetaData, 
+	priKey ed25519.PrivateKey) (models.SuiTransactionBlockResponse, error) {
 	return cli.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: txnMetaData,
 		PriKey:      priKey,
