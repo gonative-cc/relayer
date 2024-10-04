@@ -16,8 +16,7 @@ const (
 	EnvChainGRPC           = "NATIVE_GRPC"
 	FlagMinimumBlockHeight = "block"
 	defaultPort            = "8080"
-	SuiChain			   = "SUI_CHAIN"
-	SignerAccountMnemonic  = "SIGNER_ACCOUNT_MNEMONIC"
+	SuiChain	       = "SUI_CHAIN"
 )
 
 var (
