@@ -21,12 +21,12 @@ func (i *Indexer) HandleNewBlock(ctx context.Context, blk *tmtypes.Block) error 
 func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	// light block
 	lb, err:= i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
+
 	if err != nil {
 		return err
 	}
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
 	
-
 
 	signerAccount, err := CreateSigner(os.Getenv("SIGNER_ACCOUNT_MNEMONIC"))
 	if err != nil {
@@ -55,10 +55,6 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		fmt.Println("Error executing transaction:", err)
 		return err
 	}
-
-	fmt.Println(rsp2)
-
-
 
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
