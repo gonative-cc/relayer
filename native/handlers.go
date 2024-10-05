@@ -30,7 +30,7 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 
 	signerAccount, err := CreateSigner(os.Getenv("SIGNER_ACCOUNT_MNEMONIC"))
 	if err != nil {
-		fmt.Println("Error creating signer:", err)
+		i.logger.Err(err).Msg("Error creating signer:")
 		return err
 	}
 
@@ -45,14 +45,14 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 
 	rsp, err := callMoveFunction(ctx, i.cli, signerAccount.Address, gasObj, lb)
 	if err != nil {
-		fmt.Println("Error calling move function:", err)
+		i.logger.Err(err).Msg("Error calling move function:")
 		return err
 	}
 	// fmt.Println("Move call response:", rsp)
 
 	rsp2, err := executeTransaction(ctx, i.cli, rsp, signerAccount.PriKey)
 	if err != nil {
-		fmt.Println("Error executing transaction:", err)
+		i.logger.Err(err).Msg("Error executing transaction:")
 		return err
 	}
 	i.logger.Debug().Any("transaction response", rsp2).Msg("After making trasaction")
