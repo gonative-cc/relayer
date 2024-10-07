@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
+	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -22,16 +22,19 @@ type Indexer struct {
 	// defines the lowest block that the node has available in store.
 	// Usually nodes prun blocks after 2 weeks.
 	lowestBlock int
+	logger      zerolog.Logger
 
-	logger zerolog.Logger
+	cli *sui.Client
 }
 
 // NewIndexer returns a new indexer struct with open connections.
-func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger, startBlockHeight int) (*Indexer, error) {
+func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
+	startBlockHeight int, cli *sui.Client) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),
 		lowestBlock: startBlockHeight,
+		cli:         cli,
 	}
 	return i, i.onStart(ctx)
 }
