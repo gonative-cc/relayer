@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"os"
-	
+
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 
