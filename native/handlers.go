@@ -15,11 +15,10 @@ func (i *Indexer) HandleNewBlock(ctx context.Context, blk *tmtypes.Block) error 
 	return i.HandleBlock(ctx, blk)
 }
 
-// HandleBlock handles the receive of an block from the chain.
+// HandleBlock handles the receive of a block from the chain.
 func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	// light block
 	lb, err := i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
-
 	if err != nil {
 		return err
 	}
@@ -31,12 +30,9 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		return err
 	}
 
-	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
-
 	i.logger.Info().Str("signer address", signerAccount.Address).Msg("Light Block ")
 
 	gasObj := os.Getenv("GAS_ADDRESS")
-
 	i.logger.Info().Str("gas address", gasObj).Msg("Light Block ")
 
 	rsp, err := callMoveFunction(ctx, i.cli, signerAccount.Address, gasObj, lb)
@@ -44,14 +40,14 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		i.logger.Err(err).Msg("Error calling move function:")
 		return err
 	}
-	// fmt.Println("Move call response:", rsp)
 
 	rsp2, err := executeTransaction(ctx, i.cli, rsp, signerAccount.PriKey)
 	if err != nil {
 		i.logger.Err(err).Msg("Error executing transaction:")
 		return err
 	}
-	i.logger.Debug().Any("transaction response", rsp2).Msg("After making trasaction")
+	i.logger.Debug().Any("transaction response", rsp2).Msg("After making transaction")
+
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
 			i.logger.Err(err).Int64("height", blk.Height).Msg("error handling block")
