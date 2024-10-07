@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
-
 	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog"

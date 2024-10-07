@@ -3,8 +3,9 @@ package native
 import (
 	"context"
 	"encoding/hex"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"os"
+	
+	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 // HandleNewBlock handles the receive of new block from the chain.
