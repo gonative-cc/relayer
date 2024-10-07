@@ -10,9 +10,7 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 
-
-
-func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string, gasObj string, 
+func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string, gasObj string,
 	lb *tmtypes.LightBlock) (models.TxnMetaData, error) {
 	return cli.MoveCall(ctx, models.MoveCallRequest{
 		Signer:          signerAddress,
@@ -28,7 +26,7 @@ func callMoveFunction(ctx context.Context, cli *sui.Client, signerAddress string
 	})
 }
 
-func executeTransaction(ctx context.Context, cli *sui.Client, txnMetaData models.TxnMetaData, 
+func executeTransaction(ctx context.Context, cli *sui.Client, txnMetaData models.TxnMetaData,
 	priKey ed25519.PrivateKey) (models.SuiTransactionBlockResponse, error) {
 	return cli.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: txnMetaData,

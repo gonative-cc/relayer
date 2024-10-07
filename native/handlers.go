@@ -3,10 +3,9 @@ package native
 import (
 	"context"
 	"encoding/hex"
-	"os"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"os"
 )
-
 
 // HandleNewBlock handles the receive of new block from the chain.
 func (i *Indexer) HandleNewBlock(ctx context.Context, blk *tmtypes.Block) error {
@@ -19,13 +18,12 @@ func (i *Indexer) HandleNewBlock(ctx context.Context, blk *tmtypes.Block) error 
 // HandleBlock handles the receive of an block from the chain.
 func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	// light block
-	lb, err:= i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
+	lb, err := i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
 
 	if err != nil {
 		return err
 	}
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
-	
 
 	signerAccount, err := CreateSigner(os.Getenv("SIGNER_ACCOUNT_MNEMONIC"))
 	if err != nil {
@@ -36,7 +34,6 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
 
 	i.logger.Info().Str("signer address", signerAccount.Address).Msg("Light Block ")
-
 
 	gasObj := os.Getenv("GAS_ADDRESS")
 
@@ -82,5 +79,3 @@ func (i *Indexer) HandleTx(ctx context.Context, blockHeight, blockTimeUnix int, 
 	}
 	return nil
 }
-
-
