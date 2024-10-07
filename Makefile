@@ -33,6 +33,7 @@ lint-fix:
 
 lint-all:
 	@revive ./...
+	@gofmt -w -s ./...
 
 lint-gofmt-fix:
 	@find -name "*.go" -exec gofmt -w -s {} \;
