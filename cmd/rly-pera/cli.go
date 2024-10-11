@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native/blockchain"
 	"github.com/rs/zerolog/log"
@@ -16,6 +17,13 @@ const (
 	EnvChainGRPC           = "NATIVE_GRPC"
 	FlagMinimumBlockHeight = "block"
 	defaultPort            = "8080"
+	PeraChain              = "PERA_RPC"
+	PeraSignerMnemonic     = "PERA_SIGNER_MNEMONIC"
+	PeraNativeLcPackage    = "PERA_NATIVE_LC_PACKAGE"
+	PeraNativeLcModule     = "PERA_NATIVE_LC_MODULE"
+	PeraNativeLcFunction   = "PERA_NATIVE_LC_FUNCTION"
+	GasAddress             = "GAS_ADDRESS"
+	GasBudget              = "GAS_BUDGET"
 )
 
 var (
@@ -53,9 +61,24 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			c := sui.NewSuiClient(os.Getenv(PeraChain)).(*sui.Client)
+
+			signer, err := native.CreateSigner(os.Getenv(PeraSignerMnemonic))
+			if err != nil {
+				return err
+			}
+
 			logger := log.With().Str("module", "native").Logger()
 			ctx := cmd.Context()
-			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight)
+
+			pc, err := native.NewParaClient(c, signer,
+				os.Getenv(PeraNativeLcPackage), os.Getenv(PeraNativeLcModule),
+				os.Getenv(PeraNativeLcFunction), os.Getenv(GasAddress), os.Getenv(GasBudget))
+			if err != nil {
+				return err
+			}
+
+			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, pc)
 			if err != nil {
 				return err
 			}
