@@ -74,6 +74,9 @@ func CmdStart() *cobra.Command {
 			pc, err := native.NewParaClient(c, signer,
 				os.Getenv(PeraNativeLcPackage), os.Getenv(PeraNativeLcModule),
 				os.Getenv(PeraNativeLcFunction), os.Getenv(GasAddress), os.Getenv(GasBudget))
+			if err != nil {
+					return err
+				}
 
 			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, pc)
 			if err != nil {
