@@ -1,7 +1,6 @@
 package native
 
 import (
-
 	"github.com/block-vision/sui-go-sdk/signer"
 )
 

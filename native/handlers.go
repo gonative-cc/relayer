@@ -3,7 +3,6 @@ package native
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 
 	tmtypes "github.com/cometbft/cometbft/types"
 )
@@ -31,7 +30,7 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		return err
 	}
 
-	logger.Debug().Any("transaction response", txrsp).Msg("After making transaction")
+	i.logger.Debug().Any("transaction response", txrsp).Msg("After making transaction")
 
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
@@ -60,6 +59,3 @@ func (i *Indexer) HandleTx(ctx context.Context, blockHeight, blockTimeUnix int, 
 	}
 	return nil
 }
-
-
-

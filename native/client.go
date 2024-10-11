@@ -1,41 +1,37 @@
 package native
 
-
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/signer"
+	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
-
+	"github.com/rs/zerolog"
 )
-
 
 // PeraClient wrapper
 type PeraClient struct {
-	c *sui.Client
-    Signer *signer.Signer
-    // Sui package object ID
-    Package  string
-    Module string
-    Function string
-	GasAddr string
+	c      *sui.Client
+	Signer *signer.Signer
+	// Sui package object ID
+	Package   string
+	Module    string
+	Function  string
+	GasAddr   string
 	GasBudget string
 }
 
-
 // NewParaClient wrapper
-func NewParaClient(c *sui.Client, signer *signer.Signer, Package string, Module string, 
+func NewParaClient(c *sui.Client, signer *signer.Signer, Package string, Module string,
 	Function string, GasAddr string, GasBudget string) (*PeraClient, error) {
 	i := &PeraClient{
-		c:             c,
-		Signer:           signer,
-		Package:      Package,
-		Module: 	Module,
-		Function:         Function,
-		GasAddr: 		GasAddr,
+		c:         c,
+		Signer:    signer,
+		Package:   Package,
+		Module:    Module,
+		Function:  Function,
+		GasAddr:   GasAddr,
 		GasBudget: GasBudget,
 	}
 	return i, nil

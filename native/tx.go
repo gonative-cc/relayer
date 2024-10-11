@@ -3,8 +3,6 @@ package native
 import (
 	"context"
 	"crypto/ed25519"
-	"fmt"
-	"os"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
