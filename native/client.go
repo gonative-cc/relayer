@@ -2,7 +2,6 @@ package native
 
 import (
 	"context"
-	"fmt"
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -15,7 +14,7 @@ type PeraClient struct {
 	c      *sui.Client
 	Signer *signer.Signer
 	// Sui package object ID
-	Package   string
+	LcPackage string
 	Module    string
 	Function  string
 	GasAddr   string
@@ -23,24 +22,23 @@ type PeraClient struct {
 }
 
 // NewParaClient wrapper
-func NewParaClient(c *sui.Client, signer *signer.Signer, Package string, Module string,
-	Function string, GasAddr string, GasBudget string) (*PeraClient, error) {
+func NewParaClient(c *sui.Client, signer *signer.Signer, lcpackage string, module string,
+	function string, gasAddr string, gasBudget string) (*PeraClient, error) {
 	i := &PeraClient{
 		c:         c,
 		Signer:    signer,
-		Package:   Package,
-		Module:    Module,
-		Function:  Function,
-		GasAddr:   GasAddr,
-		GasBudget: GasBudget,
+		LcPackage: lcpackage,
+		Module:    module,
+		Function:  function,
+		GasAddr:   gasAddr,
+		GasBudget: gasBudget,
 	}
 	return i, nil
 }
 
-func (p *PeraClient) lcUpdateCall(ctx context.Context, lb *tmtypes.LightBlock, logger zerolog.Logger) (models.SuiTransactionBlockResponse, error) {
-	fmt.Printf("In lcupdatecall", p.c)
-	rsp, err := callMoveFunction(ctx, p.c, p.Package, p.Module, p.Function, p.GasBudget, p.Signer.Address, p.GasAddr, lb)
-	fmt.Printf("In lcupdatecall", rsp)
+func (p *PeraClient) lcUpdateCall(ctx context.Context, lb *tmtypes.LightBlock,
+	logger zerolog.Logger) (models.SuiTransactionBlockResponse, error) {
+	rsp, err := callMoveFunction(ctx, p.c, p.LcPackage, p.Module, p.Function, p.GasBudget, p.Signer.Address, p.GasAddr, lb)
 	if err != nil {
 		logger.Err(err).Msg("Error calling move function:")
 		return models.SuiTransactionBlockResponse{}, err // Return zero value for the response

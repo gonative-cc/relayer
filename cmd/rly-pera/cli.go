@@ -61,13 +61,7 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			//c := sui.NewSuiClient(os.Getenv(PeraChain)).(*sui.Client)
-
-			api := sui.NewSuiClient(os.Getenv(PeraChain))
-			c, ok := api.(*sui.Client)
-			if !ok {
-				return fmt.Errorf("failed to assert type to *sui.Client")
-			}
+			c := sui.NewSuiClient(os.Getenv(PeraChain)).(*sui.Client)
 
 			signer, err := native.CreateSigner(os.Getenv(PeraSignerMnemonic))
 			if err != nil {
