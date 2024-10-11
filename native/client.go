@@ -22,8 +22,8 @@ type PeraClient struct {
 }
 
 // NewParaClient creates a new PeraClient instance
-func NewParaClient(c *sui.Client, signer *signer.Signer, lcpackage, 
-	module, function, gasAddr, gasBudget string) (*PeraClient, error) {
+func NewParaClient(c *sui.Client, signer *signer.Signer, lcpackage string, 
+	module string, function string, gasAddr string, gasBudget string) (*PeraClient, error) {
 	i := &PeraClient{
 		c:         c,
 		Signer:    signer,
