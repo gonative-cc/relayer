@@ -3,7 +3,7 @@ package native
 import (
 	"context"
 	"encoding/hex"
-	"os"
+	"fmt"
 
 	tmtypes "github.com/cometbft/cometbft/types"
 )
@@ -25,29 +25,13 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	}
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
 
-	signerAccount, err := CreateSigner(os.Getenv("SIGNER_ACCOUNT_MNEMONIC"))
+	txrsp, err := i.pc.lcUpdateCall(ctx, lb, i.logger)
+
 	if err != nil {
-		i.logger.Err(err).Msg("Error creating signer:")
 		return err
 	}
 
-	i.logger.Info().Str("signer address", signerAccount.Address).Msg("Light Block ")
-
-	gasObj := os.Getenv("GAS_ADDRESS")
-	i.logger.Info().Str("gas address", gasObj).Msg("Light Block ")
-
-	rsp, err := callMoveFunction(ctx, i.cli, signerAccount.Address, gasObj, lb)
-	if err != nil {
-		i.logger.Err(err).Msg("Error calling move function:")
-		return err
-	}
-
-	rsp2, err := executeTransaction(ctx, i.cli, rsp, signerAccount.PriKey)
-	if err != nil {
-		i.logger.Err(err).Msg("Error executing transaction:")
-		return err
-	}
-	i.logger.Debug().Any("transaction response", rsp2).Msg("After making transaction")
+	logger.Debug().Any("transaction response", txrsp).Msg("After making transaction")
 
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
@@ -76,3 +60,6 @@ func (i *Indexer) HandleTx(ctx context.Context, blockHeight, blockTimeUnix int, 
 	}
 	return nil
 }
+
+
+

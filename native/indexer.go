@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
@@ -24,17 +23,17 @@ type Indexer struct {
 	lowestBlock int
 	logger      zerolog.Logger
 
-	cli *sui.Client
+	pc *PeraClient
 }
 
 // NewIndexer returns a new indexer struct with open connections.
 func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
-	startBlockHeight int, cli *sui.Client) (*Indexer, error) {
+	startBlockHeight int, pc *PeraClient) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),
 		lowestBlock: startBlockHeight,
-		cli:         cli,
+		pc:          pc,
 	}
 	return i, i.onStart(ctx)
 }

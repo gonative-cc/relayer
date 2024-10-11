@@ -1,7 +1,6 @@
 package native
 
 import (
-	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/signer"
 )
@@ -12,6 +11,5 @@ func CreateSigner(mnemonic string) (*signer.Signer, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("signerAccount.Address: %s\n", signerAccount.Address)
 	return signerAccount, nil
 }
