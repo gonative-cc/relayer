@@ -9,7 +9,8 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 
-func callMoveFunction(ctx context.Context, c *sui.Client, lcpackage string, module string, function string, gasbudget string, signerAddress string, gasAddr string,
+func callMoveFunction(ctx context.Context, c *sui.Client, lcpackage string, module string, 
+	function string, gasbudget string, signerAddress string, gasAddr string,
 	lb *tmtypes.LightBlock) (models.TxnMetaData, error) {
 
 	return c.MoveCall(ctx, models.MoveCallRequest{

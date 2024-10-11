@@ -22,7 +22,8 @@ type PeraClient struct {
 }
 
 // NewParaClient creates a new PeraClient instance
-func NewParaClient(c *sui.Client, signer *signer.Signer, lcpackage, module, function, gasAddr, gasBudget string) (*PeraClient, error) {
+func NewParaClient(c *sui.Client, signer *signer.Signer, lcpackage, 
+	module, function, gasAddr, gasBudget string) (*PeraClient, error) {
 	i := &PeraClient{
 		c:         c,
 		Signer:    signer,
@@ -35,7 +36,8 @@ func NewParaClient(c *sui.Client, signer *signer.Signer, lcpackage, module, func
 	return i, nil
 }
 
-func (p *PeraClient) lcUpdateCall(ctx context.Context, lb *tmtypes.LightBlock, logger zerolog.Logger) (models.SuiTransactionBlockResponse, error) {
+func (p *PeraClient) lcUpdateCall(ctx context.Context, lb *tmtypes.LightBlock, 
+	logger zerolog.Logger) (models.SuiTransactionBlockResponse, error) {
 	rsp, err := callMoveFunction(ctx, p.c, p.LcPackage, p.Module, p.Function, p.GasBudget, p.Signer.Address, p.GasAddr, lb)
 	if err != nil {
 		logger.Err(err).Msg("Error calling move function:")
