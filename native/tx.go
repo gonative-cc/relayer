@@ -9,7 +9,13 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 
-func callMoveFunction(ctx context.Context, c *sui.Client, lcpackage, module, function, gasbudget, signerAddress, gasAddr string, lb *tmtypes.LightBlock) (models.TxnMetaData, error) {
+func callMoveFunction(
+	ctx context.Context,
+	c *sui.Client,
+	lcpackage, module, function, gasbudget,
+	signerAddress, gasAddr string,
+	lb *tmtypes.LightBlock,
+) (models.TxnMetaData, error) {
 	return c.MoveCall(ctx, models.MoveCallRequest{
 		Signer:          signerAddress,
 		PackageObjectId: lcpackage,
@@ -24,7 +30,12 @@ func callMoveFunction(ctx context.Context, c *sui.Client, lcpackage, module, fun
 	})
 }
 
-func executeTransaction(ctx context.Context, cli *sui.Client, txnMetaData models.TxnMetaData, priKey ed25519.PrivateKey) (models.SuiTransactionBlockResponse, error) {
+func executeTransaction(
+	ctx context.Context,
+	cli *sui.Client,
+	txnMetaData models.TxnMetaData,
+	priKey ed25519.PrivateKey,
+) (models.SuiTransactionBlockResponse, error) {
 	return cli.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: txnMetaData,
 		PriKey:      priKey,
