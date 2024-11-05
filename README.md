@@ -19,6 +19,7 @@ A software that monitors and relayers:
 - CometBFT blocks to update Native -> Pera light client
 - Bitcoin blocks to update Bitcoin -> Native light client
 - Bitcoin SPV proofs to verify dWallet holdings
+- Native -> Bitcoin transaction relayer
 
 ### Status
 
@@ -28,10 +29,11 @@ Status scheme:
 Mock -> WIP -> alpha -> beta -> production
 ```
 
-| Service       | status |
-| :------------ | :----- |
-| Native-\>Pera | WIP    |
-| Bitcoin SPV   |        |
+| Service           | status |
+| :------------     | :----- |
+| Native-\>Pera     | WIP    |
+| Bitcoin SPV       |        |
+| Native-\>Bitcoin  | WIP    |
 
 ## Setup
 
