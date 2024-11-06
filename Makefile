@@ -30,17 +30,17 @@ lint:
 	@git diff --name-only | grep  -E '\.go$$' | xargs -r revive
 	@git diff --name-only | grep  -E '\.md$$' | xargs -r markdownlint-cli2
 
+lint-all: lint-fix-go-all
+	@revive ./...
+
 lint-fix-all: lint-fix-go-all
-	@find -name "*.go" -exec gofmt -w -s {} \;
 
 lint-fix-go-all:
-	@find -name "*.go" -exec gofmt -w -s {} \;
-
-lint-all:
-	@revive ./...
+	@gofmt -w -s -l .
 
 
 .PHONY: build run clean setup
+.PHONY: lint lint-all lint-fix-all lint-fix-go-all
 
 ###############################################################################
 ##                                   Tests                                   ##
