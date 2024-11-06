@@ -1,7 +1,7 @@
 name: Tests
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
   merge_group:
     types: [checks_requested]
 
@@ -46,15 +46,14 @@ jobs:
       - name: Test and Create Coverage Report
         if: env.GIT_DIFF
         run: |
-          EXPERIMENTAL=true make test-unit
-      #     EXPERIMENTAL=true make test-unit-cover
-      # - uses: codecov/codecov-action@v4.6.0
-      #   if: env.GIT_DIFF
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     file: ./coverage.txt
-      #     fail_ci_if_error: true
-      #     verbose: true
+          EXPERIMENTAL=true make test-unit-cover
+      - uses: codecov/codecov-action@v4.6.0
+        if: env.GIT_DIFF
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
+          fail_ci_if_error: true
+          # verbose: true
 
   # test-e2e:
   #   # skip the e2e tests when `skip-e2e-test` label is present on pull request
