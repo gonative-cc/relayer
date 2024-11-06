@@ -63,7 +63,8 @@ func CmdStart() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int(FlagMinimumBlockHeight, 1, fmt.Sprintf("%s=100 to start relaying from block 100", FlagMinimumBlockHeight))
+	cmd.Flags().Int(FlagMinimumBlockHeight, 1, fmt.Sprintf(
+		"%s=100 to start relaying from block 100", FlagMinimumBlockHeight))
 	return cmd
 }
 

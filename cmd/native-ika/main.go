@@ -10,6 +10,7 @@ import (
 
 func main() {
 	if err := env.Init(); err != nil {
+
 		fmt.Println("\n>> Err setting up env ", err)
 		return
 	}
