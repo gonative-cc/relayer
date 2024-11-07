@@ -38,10 +38,15 @@ Mock -> WIP -> alpha -> beta -> production
 ## Setup
 
 1. Make sure you have `go`, `make` installed
-1. Copy and update your env file: `cp .env.example .env`
-1. Build the project: `make build`
+2. Copy and update your env file: `cp .env.example .env`
+3. Build the project: `make build`
 
 To build and start you can run: `make build start`
+
+In order to run Native -> Bitcoin relayer PoC:
+
+1. Copy and update .env.example file to .env `cp env.example .env`
+2. Run script with path of transaction file as command line argument: `go run main.go transaction.txt`
 
 ### Development
 

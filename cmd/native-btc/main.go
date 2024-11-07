@@ -13,18 +13,21 @@ import (
 
 // ENV variables
 const (
-	BtcRpcHost = "BTC_RPC"
-	BtcRpcUser = "USER_RPC"
-	BtcRpcPass = "PASS_RPC"
+	BtcRPCHost = "BTC_RPC"
+	BtcRPCUser = "BTC_RPC_USER"
+	BtcRPCPass = "BTC_RPC_PASS"
 )
 
 func main() {
 	err := godotenv.Load("../../.env")
 	if err != nil {
-		fmt.Println("Error loading .env file", err)
+		if os.IsNotExist(err) {
+			fmt.Println(".env file does not exist. Please create one.")
+		} else {
+			fmt.Println("Error loading .env file:", err)
+		}
 		return
 	}
-
 	if len(os.Args) < 2 {
 		fmt.Println("Missing transaction file path")
 		return
@@ -38,9 +41,9 @@ func main() {
 	}
 
 	connCfg := &rpcclient.ConnConfig{
-		Host:         os.Getenv(Host),
-		User:         os.Getenv(User),
-		Pass:         os.Getenv(Pass),
+		Host:         os.Getenv(BtcRPCHost),
+		User:         os.Getenv(BtcRPCUser),
+		Pass:         os.Getenv(BtcRPCPass),
 		HTTPPostMode: true,
 		DisableTLS:   false,
 	}
