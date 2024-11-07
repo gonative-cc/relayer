@@ -13,9 +13,9 @@ import (
 
 // ENV variables
 const (
-	Host = "BTC_RPC"
-	User = "USER_RPC"
-	Pass = "PASS_RPC"
+	BtcRpcHost = "BTC_RPC"
+	BtcRpcUser = "USER_RPC"
+	BtcRpcPass = "PASS_RPC"
 )
 
 func main() {
