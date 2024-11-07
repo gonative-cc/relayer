@@ -11,13 +11,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// ENV variables
-const (
-	BtcRPCHost = "BTC_RPC"
-	BtcRPCUser = "BTC_RPC_USER"
-	BtcRPCPass = "BTC_RPC_PASS"
-)
-
 func main() {
 	err := godotenv.Load("../../.env")
 	if err != nil {
@@ -41,9 +34,9 @@ func main() {
 	}
 
 	connCfg := &rpcclient.ConnConfig{
-		Host:         os.Getenv(BtcRPCHost),
-		User:         os.Getenv(BtcRPCUser),
-		Pass:         os.Getenv(BtcRPCPass),
+		Host:         os.Getenv("BTC_RPC"),
+		User:         os.Getenv("BTC_RPC_USER"),
+		Pass:         os.Getenv("BTC_RPC_PASS"),
 		HTTPPostMode: true,
 		DisableTLS:   false,
 	}
