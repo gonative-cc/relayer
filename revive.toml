@@ -2,7 +2,7 @@ ignoreGeneratedHeader = false
 severity = "error"
 confidence = 0.8
 errorCode = 2
-warningCode = 0
+warningCode = 1
 
 [rule.blank-imports]
 [rule.context-as-argument]
@@ -31,20 +31,32 @@ warningCode = 0
 # Custom #
 
 [rule.if-return]
+[rule.early-return]
+[rule.identical-branches]
+[rule.unconditional-recursion]
+[rule.confusing-results]
+[rule.duplicated-imports]
+[rule.unnecessary-stmt]
 
 [rule.atomic]
 [rule.bool-literal-in-expr]
 [rule.datarace]
-[rule.duplicated-imports]
-[rule.early-return]
-[rule.identical-branches]
 
 [rule.range-val-address]
 [rule.range-val-in-closure]
 [rule.string-of-int]
 [rule.struct-tag]
 [rule.time-equal]
-[rule.unconditional-recursion]
-
-[rule.unnecessary-stmt]
 [rule.waitgroup-by-value]
+[rule.defer]
+
+# [rule.add-constant]
+
+[rule.argument-limit]
+    Arguments = [6]
+[rule.cyclomatic]
+    Arguments = [10]
+[rule.function-result-limit]
+    Arguments = [3]
+[rule.max-control-nesting]
+    Arguments = [4]

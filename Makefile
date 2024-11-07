@@ -9,7 +9,7 @@ out:
 .git/hooks/pre-commit: setup
 
 build: out .git/hooks/pre-commit
-	go build -o ./out ./cmd/rly-pera
+	go build -o ./out ./cmd/*
 
 run:
 	@if [ ! -f .env ]; then echo "Create .env file by copying and updating .env.example"; exit 1; fi
@@ -20,25 +20,27 @@ clean:
 
 # used as pre-commit
 lint-git:
-	@git diff --name-only --cached | grep  -E '\.go$$' | xargs revive
-	@git diff --name-only --cached | grep  -E '\.md$$' | xargs markdownlint-cli2 ./NONE
+	@files=$$(git diff --name-only --cached | grep  -E '\.go$$' | xargs -r gofmt -l); if [ -n "$$files" ]; then echo $$files;  exit 101; fi
+	@git diff --name-only --cached | grep  -E '\.go$$' | xargs -r revive
+	@git diff --name-only --cached | grep  -E '\.md$$' | xargs -r markdownlint-cli2
 
 # lint changed files
 lint:
-	@git diff --name-only | grep  -E '\.go$$' | xargs revive
-	@git diff --name-only | grep  -E '\.md$$' | xargs markdownlint-cli2 ./NONE
+	@files=$$(git diff --name-only | grep  -E '\.go$$' | xargs -r gofmt -l); if [ -n "$$files" ]; then echo $$files;  exit 101; fi
+	@git diff --name-only | grep  -E '\.go$$' | xargs -r revive
+	@git diff --name-only | grep  -E '\.md$$' | xargs -r markdownlint-cli2
 
-lint-fix:
-	@git diff --name-only  | grep  -E '\.md$$' | xargs markdownlint-cli2 --fix ./NONE
-
-lint-all:
+lint-all: lint-fix-go-all
 	@revive ./...
-	@gofmt -w -s ./...
 
-lint-gofmt-fix:
-	@find -name "*.go" -exec gofmt -w -s {} \;
+lint-fix-all: lint-fix-go-all
+
+lint-fix-go-all:
+	@gofmt -w -s -l .
+
 
 .PHONY: build run clean setup
+.PHONY: lint lint-all lint-fix-all lint-fix-go-all
 
 ###############################################################################
 ##                                   Tests                                   ##
