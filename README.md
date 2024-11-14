@@ -8,7 +8,7 @@
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#wip)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go)](https://godoc.org/github.com/gonative-cc/relayer)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gonative-cc/relayer?style=flat-square)](https://goreportcard.com/report/github.com/gonative-cc/relayer)
-[![Version](https://img.shields.io/github/tag/gonative-cc/relayer.svg?style=flat-square)](https://github.com/github.com/gonative-cc/relayer)
+[![Version](https://img.shields.io/github/tag/gonative-cc/relayer.svg?style=flat-square)](https://github.com/gonative-cc/relayer)
 [![License: MPL-2.0](https://img.shields.io/github/license/gonative-cc/relayer.svg?style=flat-square)](https://github.com/gonative-cc/relayer/blob/main/LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 
@@ -19,6 +19,7 @@ A software that monitors and relayers:
 - CometBFT blocks to update Native -> Pera light client
 - Bitcoin blocks to update Bitcoin -> Native light client
 - Bitcoin SPV proofs to verify dWallet holdings
+- Native -> Bitcoin transaction relayer
 
 ### Status
 
@@ -28,18 +29,24 @@ Status scheme:
 Mock -> WIP -> alpha -> beta -> production
 ```
 
-| Service       | status |
-| :------------ | :----- |
-| Native-\>Pera | WIP    |
-| Bitcoin SPV   |        |
+| Service           | status |
+| :------------     | :----- |
+| Native-\>Pera     | WIP    |
+| Bitcoin SPV       |        |
+| Native-\>Bitcoin  | WIP    |
 
 ## Setup
 
 1. Make sure you have `go`, `make` installed
-1. Copy and update your env file: `cp .env.example .env`
-1. Build the project: `make build`
+2. Copy and update your env file: `cp .env.example .env`
+3. Build the project: `make build`
 
 To build and start you can run: `make build start`
+
+In order to run Native -> Bitcoin relayer PoC:
+
+1. Copy and update .env.example file to .env `cp env.example .env`
+2. Run script with path of transaction file as command line argument: `go run main.go transaction.txt`
 
 ### Development
 
