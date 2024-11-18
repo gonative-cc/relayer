@@ -21,7 +21,7 @@ const (
 	PeraSignerMnemonic     = "PERA_SIGNER_MNEMONIC"
 	PeraNativeLcPackage    = "PERA_NATIVE_LC_PACKAGE"
 	PeraNativeLcModule     = "PERA_NATIVE_LC_MODULE"
-	PeraNativeLcFunction   = "PERA_NATIVE_LC_FUNCTION"
+	IkaNativeLcFunction   = "IKA_NATIVE_LC_FUNCTION"
 	GasAddress             = "GAS_ADDRESS"
 	GasBudget              = "GAS_BUDGET"
 )

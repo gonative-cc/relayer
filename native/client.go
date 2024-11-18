@@ -40,10 +40,9 @@ func NewIkaClient(
 	return i, nil
 }
 
-// lcUpdateCall performs a light client update call on the Ika blockchain.
-// It takes a context, a light block, and a logger as input.
+// updateLC sends light blocks to the Native Light Client module in the Ika blockchain.
 // It returns the transaction response and an error if any occurred.
-func (p *IkaClient) lcUpdateCall(
+func (p *IkaClient) updateLC(
 	ctx context.Context,
 	lb *tmtypes.LightBlock,
 	logger zerolog.Logger,
