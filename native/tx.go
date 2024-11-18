@@ -9,6 +9,10 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 )
 
+// callMoveFunction prepares a Move call transaction to be executed on the Ika/Sui network.
+// It takes the necessary parameters for the Move call, including the package, module,
+// function, arguments, gas information, and signer address.
+// It returns the transaction metadata and an error if any occurred during preparation.
 func callMoveFunction(
 	ctx context.Context,
 	c *sui.Client,
@@ -30,6 +34,9 @@ func callMoveFunction(
 	})
 }
 
+// executeTransaction signs and executes a prepared Move call transaction on the Ika/Sui network.
+// It takes the transaction metadata, the signer's private key, and execution options.
+// It returns the transaction response and an error if any occurred during execution.
 func executeTransaction(
 	ctx context.Context,
 	cli *sui.Client,

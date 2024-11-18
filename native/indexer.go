@@ -23,12 +23,12 @@ type Indexer struct {
 	lowestBlock int
 	logger      zerolog.Logger
 
-	pc *PeraClient
+	pc *IkaClient
 }
 
 // NewIndexer returns a new indexer struct with open connections.
 func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
-	startBlockHeight int, pc *PeraClient) (*Indexer, error) {
+	startBlockHeight int, pc *IkaClient) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),

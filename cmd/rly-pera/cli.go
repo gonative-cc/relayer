@@ -71,7 +71,7 @@ func CmdStart() *cobra.Command {
 			logger := log.With().Str("module", "native").Logger()
 			ctx := cmd.Context()
 
-			pc, err := native.NewParaClient(c, signer,
+			pc, err := native.NewIkaClient(c, signer,
 				os.Getenv(PeraNativeLcPackage), os.Getenv(PeraNativeLcModule),
 				os.Getenv(PeraNativeLcFunction), os.Getenv(GasAddress), os.Getenv(GasBudget))
 			if err != nil {

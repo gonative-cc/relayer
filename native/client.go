@@ -10,8 +10,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// PeraClient wrapper
-type PeraClient struct {
+// IkaClient is a wrapper around the Sui client that provides functionality
+// for interacting with  Ika
+type IkaClient struct {
 	c         *sui.Client
 	Signer    *signer.Signer
 	LcPackage string
@@ -21,13 +22,13 @@ type PeraClient struct {
 	GasBudget string
 }
 
-// NewParaClient creates a new PeraClient instance
-func NewParaClient(
+// NewIkaClient creates a new IkaClient instance
+func NewIkaClient(
 	c *sui.Client,
 	signer *signer.Signer,
 	lcpackage, module, function, gasAddr, gasBudget string,
-) (*PeraClient, error) {
-	i := &PeraClient{
+) (*IkaClient, error) {
+	i := &IkaClient{
 		c:         c,
 		Signer:    signer,
 		LcPackage: lcpackage,
@@ -39,7 +40,10 @@ func NewParaClient(
 	return i, nil
 }
 
-func (p *PeraClient) lcUpdateCall(
+// lcUpdateCall performs a light client update call on the Ika blockchain.
+// It takes a context, a light block, and a logger as input.
+// It returns the transaction response and an error if any occurred.
+func (p *IkaClient) lcUpdateCall(
 	ctx context.Context,
 	lb *tmtypes.LightBlock,
 	logger zerolog.Logger,
