@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/gonative-cc/relayer/env"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
