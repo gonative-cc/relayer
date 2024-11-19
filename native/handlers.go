@@ -24,7 +24,7 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	}
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
 
-	txrsp, err := i.pc.updateLC(ctx, lb, i.logger)
+	txrsp, err := i.pc.lcUpdateCall(ctx, lb, i.logger)
 	if err != nil {
 		return err
 	}
