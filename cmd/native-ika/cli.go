@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native/blockchain"
@@ -63,7 +64,7 @@ func CmdStart() *cobra.Command {
 			}
 			c := sui.NewSuiClient(os.Getenv(IkaChain)).(*sui.Client)
 
-			signer, err := native.CreateSigner(os.Getenv(IkaSignerMnemonic))
+			signer, err := signer.NewSignertWithMnemonic(os.Getenv(IkaSignerMnemonic))
 			if err != nil {
 				return err
 			}
