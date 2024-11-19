@@ -17,19 +17,19 @@ const (
 	EnvChainGRPC           = "NATIVE_GRPC"
 	FlagMinimumBlockHeight = "block"
 	defaultPort            = "8080"
-	PeraChain              = "PERA_RPC"
-	PeraSignerMnemonic     = "PERA_SIGNER_MNEMONIC"
-	PeraNativeLcPackage    = "PERA_NATIVE_LC_PACKAGE"
-	PeraNativeLcModule     = "PERA_NATIVE_LC_MODULE"
-	IkaNativeLcFunction   = "IKA_NATIVE_LC_FUNCTION"
+	IkaChain               = "IKA_RPC"
+	IkaSignerMnemonic      = "IKA_SIGNER_MNEMONIC"
+	IkaNativeLcPackage     = "IKA_NATIVE_LC_PACKAGE"
+	IkaNativeLcModule      = "IKA_NATIVE_LC_MODULE"
+	IkaNativeLcFunction    = "IKA_NATIVE_LC_FUNCTION"
 	GasAddress             = "GAS_ADDRESS"
 	GasBudget              = "GAS_BUDGET"
 )
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "rly-pera",
-		Short: "An relayer for Native <-> Pera MPC",
+		Use:   "native-ika",
+		Short: "An relayer for Native <-> Ika MPC",
 	}
 )
 
@@ -61,9 +61,9 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			c := sui.NewSuiClient(os.Getenv(PeraChain)).(*sui.Client)
+			c := sui.NewSuiClient(os.Getenv(IkaChain)).(*sui.Client)
 
-			signer, err := native.CreateSigner(os.Getenv(PeraSignerMnemonic))
+			signer, err := native.CreateSigner(os.Getenv(IkaSignerMnemonic))
 			if err != nil {
 				return err
 			}
@@ -72,8 +72,8 @@ func CmdStart() *cobra.Command {
 			ctx := cmd.Context()
 
 			pc, err := native.NewIkaClient(c, signer,
-				os.Getenv(PeraNativeLcPackage), os.Getenv(PeraNativeLcModule),
-				os.Getenv(PeraNativeLcFunction), os.Getenv(GasAddress), os.Getenv(GasBudget))
+				os.Getenv(IkaNativeLcPackage), os.Getenv(IkaNativeLcModule),
+				os.Getenv(IkaNativeLcFunction), os.Getenv(GasAddress), os.Getenv(GasBudget))
 			if err != nil {
 				return err
 			}
@@ -94,8 +94,10 @@ func CmdStart() *cobra.Command {
 // just prints the env file.
 func printEnv() {
 	fmt.Printf(
-		"__ENVS used__\n%s = %s\n%s = %s\n-----------------\n",
+		"__ENVS used__\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n-----------------\n",
 		EnvChainRPC, os.Getenv(EnvChainRPC),
 		EnvChainGRPC, os.Getenv(EnvChainGRPC),
+		IkaChain, os.Getenv(IkaChain),
+		IkaNativeLcFunction, os.Getenv(IkaNativeLcFunction),
 	)
 }
