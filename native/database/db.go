@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 
 	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
 )
@@ -47,12 +46,12 @@ func InitDB(dbPath string) error {
 	var err error
 	db, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
+		return err
 	}
 
 	_, err = db.Exec(createTransactionsTableSQL)
 	if err != nil {
-		return fmt.Errorf("failed to create table: %w", err)
+		return err
 	}
 	return nil
 }
@@ -61,13 +60,13 @@ func InitDB(dbPath string) error {
 func InsertTransaction(tx Transaction) error {
 	stmt, err := db.Prepare(insertTransactionSQL)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
+		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(tx.BtcTxID, tx.RawTx, tx.Status)
 	if err != nil {
-		return fmt.Errorf("failed to execute statement: %w", err)
+		return err
 	}
 
 	return nil
@@ -77,7 +76,7 @@ func InsertTransaction(tx Transaction) error {
 func GetTransaction(txID uint64) (*Transaction, error) {
 	stmt, err := db.Prepare(getTransactionByTxidSQL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to prepare statement: %w", err)
+		return nil, err
 	}
 	defer stmt.Close()
 
@@ -89,7 +88,7 @@ func GetTransaction(txID uint64) (*Transaction, error) {
 		if err == sql.ErrNoRows {
 			return nil, nil // Return nil, nil if no transaction was found
 		}
-		return nil, fmt.Errorf("failed to scan row: %w", err)
+		return nil, err
 	}
 
 	return &tx, nil
@@ -99,7 +98,7 @@ func GetTransaction(txID uint64) (*Transaction, error) {
 func GetPendingTransactions() ([]Transaction, error) {
 	rows, err := db.Query(getPendingTransactionsSQL, StatusPending)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query database: %w", err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -108,7 +107,7 @@ func GetPendingTransactions() ([]Transaction, error) {
 		var tx Transaction
 		err := rows.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			return nil, err
 		}
 		transactions = append(transactions, tx)
 	}
@@ -120,13 +119,13 @@ func GetPendingTransactions() ([]Transaction, error) {
 func UpdateTransactionStatus(txID uint64, status TransactionStatus) error {
 	stmt, err := db.Prepare(updateTransactionStatusSQL)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
+		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(status, txID)
 	if err != nil {
-		return fmt.Errorf("failed to execute statement: %w", err)
+		return err
 	}
 
 	return nil
