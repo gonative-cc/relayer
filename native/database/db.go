@@ -56,6 +56,10 @@ func InitDB(dbPath string) error {
 	return nil
 }
 
+func GetDB() *sql.DB {
+	return db
+}
+
 // InsertTransaction inserts a new transaction into the database
 func InsertTransaction(tx Transaction) error {
 	stmt, err := db.Prepare(insertTransactionSQL)
