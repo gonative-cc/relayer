@@ -11,9 +11,9 @@ func TestInsertTransaction(t *testing.T) {
 	}
 
 	tx := Transaction{
-		Txid:   "test-txid",
-		RawTx:  "raw-transaction-hex",
-		Status: StatusPending,
+		BtcTxID: 1,
+		RawTx:   "raw-transaction-hex",
+		Status:  StatusPending,
 	}
 
 	err = InsertTransaction(tx)
@@ -29,9 +29,9 @@ func TestGetPendingTransactions(t *testing.T) {
 	}
 
 	transactions := []Transaction{
-		{Txid: "tx1", RawTx: "tx1-hex", Status: StatusPending},
-		{Txid: "tx2", RawTx: "tx2-hex", Status: StatusBroadcasted},
-		{Txid: "tx3", RawTx: "tx3-hex", Status: StatusPending},
+		{BtcTxID: 1, RawTx: "tx1-hex", Status: StatusPending},
+		{BtcTxID: 2, RawTx: "tx2-hex", Status: StatusBroadcasted},
+		{BtcTxID: 3, RawTx: "tx3-hex", Status: StatusPending},
 	}
 	for _, tx := range transactions {
 		err = InsertTransaction(tx)
@@ -56,22 +56,24 @@ func TestUpdateTransactionStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	txID := uint64(1)
+
 	tx := Transaction{
-		Txid:   "test-txid",
-		RawTx:  "raw-transaction-hex",
-		Status: StatusPending,
+		BtcTxID: txID,
+		RawTx:   "raw-transaction-hex",
+		Status:  StatusPending,
 	}
 	err = InsertTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = UpdateTransactionStatus("test-txid", StatusBroadcasted)
+	err = UpdateTransactionStatus(txID, StatusBroadcasted)
 	if err != nil {
 		t.Errorf("UpdateTransactionStatus() error = %v", err)
 	}
 
-	updatedTx, err := GetTransaction("test-txid")
+	updatedTx, err := GetTransaction(txID)
 	if err != nil {
 		t.Errorf("GetTransaction() error = %v", err)
 	}

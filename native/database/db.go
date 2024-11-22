@@ -19,9 +19,9 @@ const (
 
 // Transaction represents a transaction record in the database.
 type Transaction struct {
-	Txid   string            `json:"txid"`
-	RawTx  string            `json:"rawtx"`
-	Status TransactionStatus `json:"status"`
+	BtcTxID uint64            `json:"txid"`
+	RawTx   string            `json:"rawtx"`
+	Status  TransactionStatus `json:"status"`
 	// TODO: other fields
 }
 
@@ -56,7 +56,7 @@ func InsertTransaction(tx Transaction) error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(tx.Txid, tx.RawTx, tx.Status)
+	_, err = stmt.Exec(tx.BtcTxID, tx.RawTx, tx.Status)
 	if err != nil {
 		return fmt.Errorf("failed to execute statement: %w", err)
 	}
@@ -65,7 +65,7 @@ func InsertTransaction(tx Transaction) error {
 }
 
 // GetTransaction retrives a transaction by its txid
-func GetTransaction(txID string) (*Transaction, error) {
+func GetTransaction(txID uint64) (*Transaction, error) {
 	stmt, err := db.Prepare("SELECT txid, rawtx, status FROM transactions WHERE txid = ?")
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
@@ -75,7 +75,7 @@ func GetTransaction(txID string) (*Transaction, error) {
 	row := stmt.QueryRow(txID)
 
 	var tx Transaction
-	err = row.Scan(&tx.Txid, &tx.RawTx, &tx.Status)
+	err = row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Return nil, nil if no transaction was found
@@ -97,7 +97,7 @@ func GetPendingTransactions() ([]Transaction, error) {
 	var transactions []Transaction
 	for rows.Next() {
 		var tx Transaction
-		err := rows.Scan(&tx.Txid, &tx.RawTx, &tx.Status)
+		err := rows.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -108,7 +108,7 @@ func GetPendingTransactions() ([]Transaction, error) {
 }
 
 // UpdateTransactionStatus updates the status of a transaction by txid
-func UpdateTransactionStatus(txID string, status TransactionStatus) error {
+func UpdateTransactionStatus(txID uint64, status TransactionStatus) error {
 	stmt, err := db.Prepare("UPDATE transactions SET status = ? WHERE txid = ?")
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
