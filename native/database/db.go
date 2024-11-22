@@ -27,7 +27,7 @@ type Transaction struct {
 
 var db *sql.DB
 
-// InitDB initalizes the database connection and creates the table if it doesn't exist
+// InitDB initializes the database connection and creates the table if it doesn't exist
 func InitDB(dbPath string) error {
 	var err error
 	db, err = sql.Open("sqlite3", dbPath)
