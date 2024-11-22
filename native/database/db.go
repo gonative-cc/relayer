@@ -10,11 +10,26 @@ import (
 // TransactionStatus represents the different states of a transaction.
 type TransactionStatus string
 
-// different states
+// Different tx states
 const (
 	StatusPending     TransactionStatus = "pending"
 	StatusBroadcasted TransactionStatus = "broadcasted"
 	StatusConfirmed   TransactionStatus = "confirmed"
+)
+
+// SQL queries
+const (
+	insertTransactionSQL       = "INSERT INTO transactions(txid, rawtx, status) values(?,?,?)"
+	getPendingTransactionsSQL  = "SELECT txid, rawtx, status FROM transactions WHERE status = ?"
+	getTransactionByTxidSQL    = "SELECT txid, rawtx, status FROM transactions WHERE txid = ?"
+	updateTransactionStatusSQL = "UPDATE transactions SET status = ? WHERE txid = ?"
+	createTransactionsTableSQL = `
+        CREATE TABLE IF NOT EXISTS transactions (
+            txid TEXT PRIMARY KEY,
+            rawtx TEXT NOT NULL,
+            status TEXT NOT NULL
+        )
+    `
 )
 
 // Transaction represents a transaction record in the database.
@@ -35,13 +50,7 @@ func InitDB(dbPath string) error {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
 
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS transactions (
-            txid TEXT PRIMARY KEY,
-            rawtx TEXT NOT NULL,
-            status TEXT NOT NULL
-        )
-    `)
+	_, err = db.Exec(createTransactionsTableSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create table: %w", err)
 	}
@@ -50,7 +59,7 @@ func InitDB(dbPath string) error {
 
 // InsertTransaction inserts a new transaction into the database
 func InsertTransaction(tx Transaction) error {
-	stmt, err := db.Prepare("INSERT INTO transactions(txid, rawtx, status) values(?,?,?)")
+	stmt, err := db.Prepare(insertTransactionSQL)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
@@ -66,7 +75,7 @@ func InsertTransaction(tx Transaction) error {
 
 // GetTransaction retrives a transaction by its txid
 func GetTransaction(txID uint64) (*Transaction, error) {
-	stmt, err := db.Prepare("SELECT txid, rawtx, status FROM transactions WHERE txid = ?")
+	stmt, err := db.Prepare(getTransactionByTxidSQL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
@@ -88,7 +97,7 @@ func GetTransaction(txID uint64) (*Transaction, error) {
 
 // GetPendingTransactions retrieves all transactions with a "pending" status
 func GetPendingTransactions() ([]Transaction, error) {
-	rows, err := db.Query("SELECT txid, rawtx, status FROM transactions WHERE status = ?", StatusPending)
+	rows, err := db.Query(getPendingTransactionsSQL, StatusPending)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query database: %w", err)
 	}
@@ -109,7 +118,7 @@ func GetPendingTransactions() ([]Transaction, error) {
 
 // UpdateTransactionStatus updates the status of a transaction by txid
 func UpdateTransactionStatus(txID uint64, status TransactionStatus) error {
-	stmt, err := db.Prepare("UPDATE transactions SET status = ? WHERE txid = ?")
+	stmt, err := db.Prepare(updateTransactionStatusSQL)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
