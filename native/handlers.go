@@ -15,7 +15,7 @@ func (i *Indexer) HandleNewBlock(ctx context.Context, blk *tmtypes.Block) error 
 	return i.HandleBlock(ctx, blk)
 }
 
-// HandleBlock handles the receive of an block from the chain.
+// HandleBlock handles the receive of a block from the chain.
 func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 	// light block
 	lb, err := i.b.LightProvider().LightBlock(ctx, blk.Header.Height)
@@ -23,6 +23,13 @@ func (i *Indexer) HandleBlock(ctx context.Context, blk *tmtypes.Block) error {
 		return err
 	}
 	i.logger.Info().Int64("light block", lb.SignedHeader.Header.Height).Msg("Light Block ")
+
+	txrsp, err := i.pc.updateLC(ctx, lb, i.logger)
+	if err != nil {
+		return err
+	}
+	i.logger.Debug().Any("transaction response", txrsp).Msg("After making transaction")
+
 	for _, tx := range blk.Data.Txs {
 		if err := i.HandleTx(ctx, int(blk.Header.Height), int(blk.Time.Unix()), tx); err != nil {
 			i.logger.Err(err).Int64("height", blk.Height).Msg("error handling block")
