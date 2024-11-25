@@ -89,11 +89,7 @@ func CmdStart() *cobra.Command {
 
 			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, ikaClient)
 			if err != nil {
-				return err
 			}
-			return idx.Start(ctx)
-		},
-	}
 
 	cmd.Flags().Int(FlagMinimumBlockHeight, 1, fmt.Sprintf(
 		"%s=100 to start relaying from block 100", FlagMinimumBlockHeight))
