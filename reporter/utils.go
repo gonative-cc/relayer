@@ -8,7 +8,6 @@ import (
 	pv "github.com/cosmos/relayer/v2/relayer/provider"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/types/retry"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/vigilante/types"
@@ -34,7 +33,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBloc
 	for i, header := range ibs {
 		blockHash := header.BlockHash()
 		var res *btclctypes.QueryContainsBytesResponse
-		err = retry.Do(r.retrySleepTime, r.maxRetrySleepTime, func() error {
+		err = RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
 			res, err = r.babylonClient.ContainsBTCBlock(&blockHash)
 			return err
 		})
@@ -70,7 +69,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBloc
 
 func (r *Reporter) submitHeaderMsgs(msg *btclctypes.MsgInsertHeaders) error {
 	// submit the headers
-	err := retry.Do(r.retrySleepTime, r.maxRetrySleepTime, func() error {
+	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
 		res, err := r.babylonClient.InsertHeaders(context.Background(), msg)
 		if err != nil {
 			return err

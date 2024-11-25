@@ -6,21 +6,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/babylonchain/babylon/btctxformatter"
-	"github.com/babylonchain/babylon/types/retry"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/vigilante/btcclient"
 	"github.com/babylonchain/vigilante/config"
 	"github.com/babylonchain/vigilante/metrics"
 	"github.com/babylonchain/vigilante/types"
 	"go.uber.org/zap"
 )
 
+const (
+	BtcTxCurrentVersion uint8 = 0
+)
+
 type Reporter struct {
 	Cfg    *config.ReporterConfig
 	logger *zap.SugaredLogger
 
-	btcClient     btcclient.BTCClient
+	btcClient     BTCClient
 	babylonClient BabylonClient
 
 	// retry attributes
@@ -43,7 +44,7 @@ type Reporter struct {
 func New(
 	cfg *config.ReporterConfig,
 	parentLogger *zap.Logger,
-	btcClient btcclient.BTCClient,
+	btcClient BTCClient,
 	babylonClient BabylonClient,
 	retrySleepTime,
 	maxRetrySleepTime time.Duration,
@@ -55,7 +56,7 @@ func New(
 		btccParamsRes *btcctypes.QueryParamsResponse
 		err           error
 	)
-	err = retry.Do(retrySleepTime, maxRetrySleepTime, func() error {
+	err = RetryDo(retrySleepTime, maxRetrySleepTime, func() error {
 		btccParamsRes, err = babylonClient.BTCCheckpointParams()
 		return err
 	})
@@ -72,7 +73,7 @@ func New(
 	logger.Infof("BTCCheckpoint parameters: (k, w, tag) = (%d, %d, %s)", k, w, checkpointTag)
 
 	// Note that BTC cache is initialised only after bootstrapping
-	ckptCache := types.NewCheckpointCache(checkpointTag, btctxformatter.CurrentVersion)
+	ckptCache := types.NewCheckpointCache(checkpointTag, BtcTxCurrentVersion)
 
 	return &Reporter{
 		Cfg:                           cfg,
