@@ -7,14 +7,19 @@ about: Create a proposal to request a feature
 
 ## Summary
 
-## Problem Definition
 
-<!-- Why do we need this feature?
-What problems may be addressed by introducing this feature?
-What benefits does Tendermint stand to gain by including this feature?
-Are there any disadvantages of including this feature? -->
+
+## Context
+
+#### Why do we need this feature? What problems may be addressed by introducing this feature?
+
+#### What are the benefits by including this feature?
+
+#### Are there any disadvantages of including this feature?
 
 ## Proposal
+
+
 
 ---
 
