@@ -11,7 +11,7 @@ out:
 build: out .git/hooks/pre-commit
 	go build -o ./out ./cmd/*
 
-run:
+start:
 	@if [ ! -f .env ]; then echo "Create .env file by copying and updating .env.example"; exit 1; fi
 	@./out/native-ika start --block 8713586
 
@@ -39,7 +39,7 @@ lint-fix-go-all:
 	@gofmt -w -s -l .
 
 
-.PHONY: build run clean setup
+.PHONY: build start clean setup
 .PHONY: lint lint-all lint-fix-all lint-fix-go-all
 
 ###############################################################################
