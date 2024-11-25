@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
-	"fmt"
+	"encoding/hex"
 	"os"
 	"time"
 
@@ -10,15 +11,16 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/native/database"
+	"github.com/rs/zerolog/log"
 )
 
-// Config holds the configuration parameters for the Relayer
+// Config holds the configuration parameters for the Relayer.
 type Config struct {
 	DatabasePath string `json:"databasePath"`
 	BitcoinNode  string `json:"bitcoinNode"`
-	// ... other config options (e.g., RPC user, password)
 }
 
+// BitcoinClient defines the interface with only the functions we need.
 type BitcoinClient interface {
 	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
 	Shutdown()
@@ -34,16 +36,14 @@ type Relayer struct {
 
 // NewRelayer creates a new Relayer instance with the given configuration.
 func NewRelayer(config Config) (*Relayer, error) {
-	// Initialize database connection
-	err := database.InitDB(config.DatabasePath) // Call InitDB, but don't store the result
+	// Init database connection
+	err := database.InitDB(config.DatabasePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
+		return nil, err
 	}
 
-	// 2. Access the database connection from the database package
-	db := database.GetDB() // Get the DB connection
+	db := database.GetDB()
 
-	// Initialize Bitcoin RPC client
 	connCfg := &rpcclient.ConnConfig{
 		Host:         os.Getenv("BTC_RPC"),
 		User:         os.Getenv("BTC_RPC_USER"),
@@ -54,7 +54,7 @@ func NewRelayer(config Config) (*Relayer, error) {
 
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Bitcoin RPC client: %w", err)
+		return nil, err
 	}
 
 	return &Relayer{
@@ -67,49 +67,61 @@ func NewRelayer(config Config) (*Relayer, error) {
 
 // Start starts the relayer's main loop to broadcast transactions.
 func (r *Relayer) Start() {
-	// Graceful shutdown handling
 	go func() {
 		<-r.shutdownChan
-		// Close database connection, Bitcoin client, etc.
 		r.db.Close()
 		r.btcClient.Shutdown()
 	}()
 
 	for {
-		// 1. Get pending transactions from the database
-		pendingTxs, err := r.db.GetPendingTransactions()
+		pendingTxs, err := database.GetPendingTransactions()
 		if err != nil {
-			// Handle error (e.g., log and retry)
-			fmt.Println("Error getting pending transactions:", err)
+			log.Err(err).Msg("Error getting pending transactions")
 			continue
 		}
 
-		// 2. Broadcast transactions to Bitcoin network
 		for _, tx := range pendingTxs {
-			txHash, err := r.btcClient.SendRawTransaction(tx.RawTx, false)
+			decodedTx, err := decodeRawTransaction(tx.RawTx)
 			if err != nil {
-				// Handle error (e.g., log, maybe retry later)
-				fmt.Println("Error broadcasting transaction:", err)
+				log.Err(err).Msg("Error decoding transaction")
 				continue
 			}
 
-			// 3. Update transaction status in the database
-			err = r.db.UpdateTransactionStatus(tx.Txid, database.StatusBroadcast)
+			txHash, err := r.btcClient.SendRawTransaction(decodedTx, false)
 			if err != nil {
-				// Handle error (e.g., log)
-				fmt.Println("Error updating transaction status:", err)
+				log.Err(err).Msg("Error broadcasting transaction")
+				continue
 			}
 
-			// Log successful broadcast
-			fmt.Println("Broadcasted transaction:", txHash)
+			err = database.UpdateTransactionStatus(tx.BtcTxID, database.StatusBroadcasted)
+			if err != nil {
+				log.Err(err).Msg("Error updating transaction status")
+			}
+
+			log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")
 		}
 
-		// 4. Wait for a certain interval
 		time.Sleep(time.Second * 10) // Check every 10 seconds
 	}
 }
 
-// Stop initiates a graceful shutdown of the relayer.
+// Stop initiates a shutdown of the relayer.
 func (r *Relayer) Stop() {
 	close(r.shutdownChan)
+}
+
+// decodeRawTransaction decodes a raw transaction from a hex string.
+func decodeRawTransaction(rawTxHex string) (*wire.MsgTx, error) {
+	serializedTx, err := hex.DecodeString(rawTxHex)
+	if err != nil {
+		return nil, err
+	}
+
+	var msgTx wire.MsgTx
+	err = msgTx.Deserialize(bytes.NewReader(serializedTx))
+	if err != nil {
+		return nil, err
+	}
+
+	return &msgTx, nil
 }

@@ -56,6 +56,7 @@ func InitDB(dbPath string) error {
 	return nil
 }
 
+// GetDB returns the database connection to be used in other packages
 func GetDB() *sql.DB {
 	return db
 }
@@ -90,6 +91,7 @@ func GetTransaction(txID uint64) (*Transaction, error) {
 	err = row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			println("no rows!!!!!!!")
 			return nil, nil // Return nil, nil if no transaction was found
 		}
 		return nil, err
