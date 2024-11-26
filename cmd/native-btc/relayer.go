@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/hex"
 	"os"
 	"time"
@@ -10,7 +9,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/native/database"
+	"github.com/gonative-cc/relayer/database"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,20 +28,22 @@ type BitcoinClient interface {
 // Relayer broadcasts pending transactions from the database to the Bitcoin network.
 type Relayer struct {
 	config       Config
-	db           *sql.DB
+	db           *database.DB
 	btcClient    BitcoinClient
 	shutdownChan chan struct{}
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration.
-func NewRelayer(config Config) (*Relayer, error) {
-	// Init database connection
-	err := database.InitDB(config.DatabasePath)
-	if err != nil {
-		return nil, err
-	}
+func NewRelayer(config Config, db *database.DB) (*Relayer, error) {
 
-	db := database.GetDB()
+	// Init database connection
+	var err error
+	if db == nil {
+		db, err = database.NewDB(config.DatabasePath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	connCfg := &rpcclient.ConnConfig{
 		Host:         os.Getenv("BTC_RPC"),
@@ -69,19 +70,19 @@ func NewRelayer(config Config) (*Relayer, error) {
 func (r *Relayer) Start() {
 	go func() {
 		<-r.shutdownChan
-		r.db.Close()
+		// r.db.Close() TODO: add Close() function to DB so we can call it like this
 		r.btcClient.Shutdown()
 	}()
 
 	for {
-		pendingTxs, err := database.GetPendingTransactions()
+		pendingTxs, err := r.db.GetPendingTxs()
 		if err != nil {
 			log.Err(err).Msg("Error getting pending transactions")
 			continue
 		}
 
 		for _, tx := range pendingTxs {
-			decodedTx, err := decodeRawTransaction(tx.RawTx)
+			decodedTx, err := decodeRawTx(tx.RawTx)
 			if err != nil {
 				log.Err(err).Msg("Error decoding transaction")
 				continue
@@ -93,7 +94,7 @@ func (r *Relayer) Start() {
 				continue
 			}
 
-			err = database.UpdateTransactionStatus(tx.BtcTxID, database.StatusBroadcasted)
+			err = r.db.UpdateTxStatus(tx.BtcTxID, database.StatusBroadcasted)
 			if err != nil {
 				log.Err(err).Msg("Error updating transaction status")
 			}
@@ -110,8 +111,8 @@ func (r *Relayer) Stop() {
 	close(r.shutdownChan)
 }
 
-// decodeRawTransaction decodes a raw transaction from a hex string.
-func decodeRawTransaction(rawTxHex string) (*wire.MsgTx, error) {
+// decodeRawTx decodes a raw transaction from a hex string.
+func decodeRawTx(rawTxHex string) (*wire.MsgTx, error) {
 	serializedTx, err := hex.DecodeString(rawTxHex)
 	if err != nil {
 		return nil, err

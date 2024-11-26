@@ -6,7 +6,8 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/native/database"
+	"github.com/gonative-cc/relayer/database"
+	"gotest.tools/assert"
 )
 
 // Mock Bitcoin RPC client for testing
@@ -25,29 +26,24 @@ func (m *MockBitcoinClient) Shutdown() {
 }
 
 func TestRelayerStart(t *testing.T) {
-	err := database.InitDB(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
+	db := initTestDB(t)
 
 	config := Config{
 		DatabasePath: ":memory:",
 		BitcoinNode:  "mock-node",
 	}
-	relayer, err := NewRelayer(config)
-	if err != nil {
-		t.Fatal(err)
-	}
+	relayer, err := NewRelayer(config, db)
+	assert.NilError(t, err)
 	relayer.btcClient = &MockBitcoinClient{}
 
-	transactions := []database.Transaction{
+	transactions := []database.Tx{
 		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: database.StatusPending},
 		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: database.StatusPending},
 	}
 	for _, tx := range transactions {
-		err = database.InsertTransaction(tx)
+		err = db.InsertTx(tx)
 		if err != nil {
-			t.Fatal(err)
+			assert.NilError(t, err)
 		}
 	}
 
@@ -57,14 +53,18 @@ func TestRelayerStart(t *testing.T) {
 	time.Sleep(time.Second * 2)
 
 	for _, tx := range transactions {
-		updatedTx, err := database.GetTransaction(tx.BtcTxID)
-		if err != nil {
-			t.Errorf("Error getting transaction: %v", err)
-		}
-		if updatedTx.Status != database.StatusBroadcasted {
-			t.Errorf("Expected transaction status to be '%s', but got '%s'", database.StatusBroadcasted, updatedTx.Status)
-		}
+		updatedTx, err := db.GetTx(tx.BtcTxID)
+		assert.NilError(t, err, "Error getting transaction")
+		assert.Equal(t, updatedTx.Status, database.StatusBroadcasted)
 	}
 
 	relayer.Stop()
+}
+
+func initTestDB(t *testing.T) *database.DB {
+	t.Helper()
+
+	db, err := database.NewDB(":memory:")
+	assert.NilError(t, err)
+	return db
 }
