@@ -93,7 +93,7 @@ func (db DB) GetTx(txID uint64) (*Tx, error) {
 	err = row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Return nil, nil if no transaction was found
+			return nil, nil // Return nil, nil if no transaction was found TODO:not sure if its ideal
 		}
 		return nil, err
 	}
