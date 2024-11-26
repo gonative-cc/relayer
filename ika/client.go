@@ -57,7 +57,7 @@ func (p *Client) UpdateLC(
 		Arguments: []interface{}{
 			lb,
 		},
-		Gas:       p.GasAddr,
+		Gas:       &p.GasAddr,
 		GasBudget: p.GasBudget,
 	}
 	resp, err := p.c.MoveCall(ctx, req)
