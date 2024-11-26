@@ -6,8 +6,8 @@ import (
 	"time"
 
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -23,17 +23,17 @@ type Indexer struct {
 	lowestBlock int
 	logger      zerolog.Logger
 
-	pc *IkaClient
+	ika *ika.Client
 }
 
 // NewIndexer returns a new indexer struct with open connections.
 func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
-	startBlockHeight int, pc *IkaClient) (*Indexer, error) {
+	startBlockHeight int, ika *ika.Client) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),
 		lowestBlock: startBlockHeight,
-		pc:          pc,
+		ika:         ika,
 	}
 	return i, i.onStart(ctx)
 }
@@ -164,11 +164,5 @@ func (i *Indexer) loadChainHeader(_ context.Context) error {
 
 // Close closes all the open connections.
 func (i *Indexer) Close(ctx context.Context) error {
-	g, ctx := errgroup.WithContext(ctx)
-
-	g.Go(func() error {
-		return i.b.Close(ctx)
-	})
-
-	return g.Wait()
+	return i.b.Close(ctx)
 }
