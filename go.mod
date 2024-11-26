@@ -1,6 +1,6 @@
 module github.com/gonative-cc/relayer
 
-go 1.22.7
+go 1.23
 
 require (
 	github.com/babylonchain/babylon v0.8.6-0.20240605064737-7be9d5c57afb
