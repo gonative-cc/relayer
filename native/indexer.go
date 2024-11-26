@@ -5,9 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog"
 )
 
@@ -22,16 +21,19 @@ type Indexer struct {
 	// defines the lowest block that the node has available in store.
 	// Usually nodes prun blocks after 2 weeks.
 	lowestBlock int
+	logger      zerolog.Logger
 
-	logger zerolog.Logger
+	ika *ika.Client
 }
 
 // NewIndexer returns a new indexer struct with open connections.
-func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger, startBlockHeight int) (*Indexer, error) {
+func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
+	startBlockHeight int, ika *ika.Client) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),
 		lowestBlock: startBlockHeight,
+		ika:         ika,
 	}
 	return i, i.onStart(ctx)
 }
@@ -162,11 +164,5 @@ func (i *Indexer) loadChainHeader(_ context.Context) error {
 
 // Close closes all the open connections.
 func (i *Indexer) Close(ctx context.Context) error {
-	g, ctx := errgroup.WithContext(ctx)
-
-	g.Go(func() error {
-		return i.b.Close(ctx)
-	})
-
-	return g.Wait()
+	return i.b.Close(ctx)
 }

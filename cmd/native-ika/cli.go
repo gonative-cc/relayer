@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/block-vision/sui-go-sdk/signer"
+	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native/blockchain"
 	"github.com/rs/zerolog/log"
@@ -16,12 +19,19 @@ const (
 	EnvChainGRPC           = "NATIVE_GRPC"
 	FlagMinimumBlockHeight = "block"
 	defaultPort            = "8080"
+	IkaChain               = "IKA_RPC"
+	IkaSignerMnemonic      = "IKA_SIGNER_MNEMONIC"
+	IkaNativeLcPackage     = "IKA_NATIVE_LC_PACKAGE"
+	IkaNativeLcModule      = "IKA_NATIVE_LC_MODULE"
+	IkaNativeLcFunction    = "IKA_NATIVE_LC_FUNCTION"
+	IkaGasAcc              = "IKA_GAS_ACC"
+	IkaGasBudget           = "IKA_GAS_BUDGET"
 )
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "rly-pera",
-		Short: "An relayer for Native <-> Pera MPC",
+		Use:   "native-ika",
+		Short: "An relayer for Native <-> Ika MPC",
 	}
 )
 
@@ -53,9 +63,31 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			c := sui.NewSuiClient(os.Getenv(IkaChain)).(*sui.Client)
+
+			signer, err := signer.NewSignertWithMnemonic(os.Getenv(IkaSignerMnemonic))
+			if err != nil {
+				return err
+			}
+
 			logger := log.With().Str("module", "native").Logger()
 			ctx := cmd.Context()
-			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight)
+
+			lcContract := ika.SuiCtrCall{
+				Package:  os.Getenv(IkaNativeLcPackage),
+				Module:   os.Getenv(IkaNativeLcModule),
+				Function: os.Getenv(IkaNativeLcFunction),
+			}
+			if err := lcContract.Validate(); err != nil {
+				return err
+			}
+			ikaClient, err := ika.NewClient(c, signer, lcContract,
+				os.Getenv(IkaGasAcc), os.Getenv(IkaGasBudget))
+			if err != nil {
+				return err
+			}
+
+			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, ikaClient)
 			if err != nil {
 				return err
 			}
@@ -71,8 +103,10 @@ func CmdStart() *cobra.Command {
 // just prints the env file.
 func printEnv() {
 	fmt.Printf(
-		"__ENVS used__\n%s = %s\n%s = %s\n-----------------\n",
+		"__ENVS used__\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n-----------------\n",
 		EnvChainRPC, os.Getenv(EnvChainRPC),
 		EnvChainGRPC, os.Getenv(EnvChainGRPC),
+		IkaChain, os.Getenv(IkaChain),
+		IkaNativeLcFunction, os.Getenv(IkaNativeLcFunction),
 	)
 }

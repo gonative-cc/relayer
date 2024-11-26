@@ -17,6 +17,6 @@ type Blockchain interface {
 	DecodeTx(tx tmtypes.Tx) (sdktypes.Tx, error)
 	SubscribeNewBlock(ctx context.Context) (<-chan *tmtypes.Block, error)
 	Block(ctx context.Context, height int64) (blk *tmtypes.Block, minimumBlkHeight int, err error)
-	CheckTx(ctx context.Context, tx tmtypes.Tx) (err error)
+	CheckTx(ctx context.Context, tx tmtypes.Tx) error
 	LightProvider() provtypes.Provider
 }
