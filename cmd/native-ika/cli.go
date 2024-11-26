@@ -6,6 +6,7 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native/blockchain"
 	"github.com/rs/zerolog/log"
@@ -23,8 +24,8 @@ const (
 	IkaNativeLcPackage     = "IKA_NATIVE_LC_PACKAGE"
 	IkaNativeLcModule      = "IKA_NATIVE_LC_MODULE"
 	IkaNativeLcFunction    = "IKA_NATIVE_LC_FUNCTION"
-	GasAddress             = "GAS_ADDRESS"
-	GasBudget              = "GAS_BUDGET"
+	IkaGasAcc              = "IKA_GAS_ACC"
+	IkaGasBudget           = "IKA_GAS_BUDGET"
 )
 
 var (
@@ -72,14 +73,21 @@ func CmdStart() *cobra.Command {
 			logger := log.With().Str("module", "native").Logger()
 			ctx := cmd.Context()
 
-			pc, err := native.NewIkaClient(c, signer,
-				os.Getenv(IkaNativeLcPackage), os.Getenv(IkaNativeLcModule),
-				os.Getenv(IkaNativeLcFunction), os.Getenv(GasAddress), os.Getenv(GasBudget))
+			lcContract := ika.SuiCtrCall{
+				Package:  os.Getenv(IkaNativeLcPackage),
+				Module:   os.Getenv(IkaNativeLcModule),
+				Function: os.Getenv(IkaNativeLcFunction),
+			}
+			if err := lcContract.Validate(); err != nil {
+				return err
+			}
+			ikaClient, err := ika.NewClient(c, signer, lcContract,
+				os.Getenv(IkaGasAcc), os.Getenv(IkaGasBudget))
 			if err != nil {
 				return err
 			}
 
-			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, pc)
+			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, ikaClient)
 			if err != nil {
 				return err
 			}

@@ -10,7 +10,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gonative-cc/relayer?style=flat-square)](https://goreportcard.com/report/github.com/gonative-cc/relayer)
 [![Version](https://img.shields.io/github/tag/gonative-cc/relayer.svg?style=flat-square)](https://github.com/gonative-cc/relayer)
 [![License: MPL-2.0](https://img.shields.io/github/license/gonative-cc/relayer.svg?style=flat-square)](https://github.com/gonative-cc/relayer/blob/main/LICENSE)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](https://github.com/gonative-cc/contributig/blob/master/CODE_OF_CONDUCT.md)
 
 ## Summary
 
@@ -29,11 +29,21 @@ Status scheme:
 Mock -> WIP -> alpha -> beta -> production
 ```
 
-| Service           | status |
-| :------------     | :----- |
+| Service          | status |
+| :--------------- | :----- |
 | Native-\>Ika     | WIP    |
-| Bitcoin SPV       |        |
-| Native-\>Bitcoin  | WIP    |
+| Bitcoin SPV      |        |
+| Native-\>Bitcoin | WIP    |
+
+## Contributing
+
+Participating in open source is often a highly collaborative experience. We’re encouraged to create in public view, and we’re incentivized to welcome contributions of all kinds from people around the world.
+
+Check out [contributing repo](https://github.com/gonative-cc/contributig) for our guidelines & policies for how to contribute. Note: we require DCO! Thank you to all those who have contributed!
+
+### Security
+
+Check out [SECURITY.md](./SECURITY.md) for security concerns.
 
 ## Setup
 
@@ -53,8 +63,8 @@ In order to run Native -> Bitcoin relayer PoC:
 1. Run `make setup` (will setup git hooks)
 2. Install and make sure it is in your PATH:
 
-    - [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)
-    - [revive](https://github.com/mgechev/revive)
+   - [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)
+   - [revive](https://github.com/mgechev/revive)
 
 ### Coding notes
 
@@ -66,16 +76,6 @@ In order to run Native -> Bitcoin relayer PoC:
    //...
    log.Info().Int("block", minimumBlockHeight).Msg("Start relaying msgs")
    ```
-
-## Contributing
-
-Check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines & policies for how we develop the Cosmos Hub. Thank you to all those who have contributed!
-
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) - participating in open source is often a highly collaborative experience. We’re encouraged to create in public view, and we’re incentivized to welcome contributions of all kinds from people around the world. Every contributor must follow our Code of Conduct.
-
-### Security
-
-Check out [SECURITY.md](./SECURITY.md) for security concerns.
 
 ## Talk to us
 
