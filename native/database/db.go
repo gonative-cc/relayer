@@ -6,14 +6,14 @@ import (
 	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
 )
 
-// TransactionStatus represents the different states of a transaction.
-type TransactionStatus string
+// TxStatus represents the different states of a transaction.
+type TxStatus int
 
-// Different tx states
+// Transaction status constants
 const (
-	StatusPending     TransactionStatus = "pending"
-	StatusBroadcasted TransactionStatus = "broadcasted"
-	StatusConfirmed   TransactionStatus = "confirmed"
+	StatusPending TxStatus = iota
+	StatusBroadcasted
+	StatusConfirmed
 )
 
 // SQL queries
@@ -26,39 +26,46 @@ const (
         CREATE TABLE IF NOT EXISTS transactions (
             txid TEXT PRIMARY KEY,
             rawtx TEXT NOT NULL,
-            status TEXT NOT NULL
+            status INTEGER NOT NULL NOT NULL
         )
     `
 )
 
-// Transaction represents a transaction record in the database.
-type Transaction struct {
-	BtcTxID uint64            `json:"txid"`
-	RawTx   string            `json:"rawtx"`
-	Status  TransactionStatus `json:"status"`
+// Tx represents a transaction record in the database.
+type Tx struct {
+	BtcTxID uint64   `json:"txid"`
+	RawTx   string   `json:"rawtx"`
+	Status  TxStatus `json:"status"`
 	// TODO: other fields
 }
 
-var db *sql.DB
-
-// InitDB initializes the database connection and creates the table if it doesn't exist
-func InitDB(dbPath string) error {
-	var err error
-	db, err = sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(createTransactionsTableSQL)
-	if err != nil {
-		return err
-	}
-	return nil
+// DB holds the database connection and provides methods for interacting with it.
+type DB struct {
+	conn *sql.DB
 }
 
-// InsertTransaction inserts a new transaction into the database
-func InsertTransaction(tx Transaction) error {
-	stmt, err := db.Prepare(insertTransactionSQL)
+// NewDB creates a new DB instance and initializes the database connection.
+func NewDB(dbPath string) (*DB, error) {
+	db := &DB{} // Create a new DB instance
+
+	// Initialize the database connection
+	var err error
+	db.conn, err = sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.conn.Exec(createTransactionsTableSQL)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil // Return the initialized DB instance
+}
+
+// InsertTx inserts a new transaction into the database
+func (db DB) InsertTx(tx Tx) error {
+	stmt, err := db.conn.Prepare(insertTransactionSQL)
 	if err != nil {
 		return err
 	}
@@ -72,9 +79,9 @@ func InsertTransaction(tx Transaction) error {
 	return nil
 }
 
-// GetTransaction retrives a transaction by its txid
-func GetTransaction(txID uint64) (*Transaction, error) {
-	stmt, err := db.Prepare(getTransactionByTxidSQL)
+// GetTx retrives a transaction by its txid
+func (db DB) GetTx(txID uint64) (*Tx, error) {
+	stmt, err := db.conn.Prepare(getTransactionByTxidSQL)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +89,7 @@ func GetTransaction(txID uint64) (*Transaction, error) {
 
 	row := stmt.QueryRow(txID)
 
-	var tx Transaction
+	var tx Tx
 	err = row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -94,17 +101,17 @@ func GetTransaction(txID uint64) (*Transaction, error) {
 	return &tx, nil
 }
 
-// GetPendingTransactions retrieves all transactions with a "pending" status
-func GetPendingTransactions() ([]Transaction, error) {
-	rows, err := db.Query(getPendingTransactionsSQL, StatusPending)
+// GetPendingTxs retrieves all transactions with a "pending" status
+func (db DB) GetPendingTxs() ([]Tx, error) {
+	rows, err := db.conn.Query(getPendingTransactionsSQL, StatusPending)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var transactions []Transaction
+	var transactions []Tx
 	for rows.Next() {
-		var tx Transaction
+		var tx Tx
 		err := rows.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 		if err != nil {
 			return nil, err
@@ -115,9 +122,9 @@ func GetPendingTransactions() ([]Transaction, error) {
 	return transactions, nil
 }
 
-// UpdateTransactionStatus updates the status of a transaction by txid
-func UpdateTransactionStatus(txID uint64, status TransactionStatus) error {
-	stmt, err := db.Prepare(updateTransactionStatusSQL)
+// UpdateTxStatus updates the status of a transaction by txid
+func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
+	stmt, err := db.conn.Prepare(updateTransactionStatusSQL)
 	if err != nil {
 		return err
 	}

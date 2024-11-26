@@ -2,83 +2,70 @@ package database
 
 import (
 	"testing"
+
+	"gotest.tools/assert"
 )
 
-func TestInsertTransaction(t *testing.T) {
-	err := InitDB(":memory:") // in-memory database
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestInsertTx(t *testing.T) {
+	db := initTestDB(t)
 
-	tx := Transaction{
+	tx := Tx{
 		BtcTxID: 1,
 		RawTx:   "raw-transaction-hex",
 		Status:  StatusPending,
 	}
 
-	err = InsertTransaction(tx)
-	if err != nil {
-		t.Errorf("InsertTransaction() error = %v", err)
-	}
+	err := db.InsertTx(tx)
+	assert.NilError(t, err)
+
+	retrievedTx, err := db.GetTx(1)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, retrievedTx, &tx)
 }
 
-func TestGetPendingTransactions(t *testing.T) {
-	err := InitDB(":memory:") // in-memory database
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestGetPendingTxs(t *testing.T) {
+	db := initTestDB(t)
 
-	transactions := []Transaction{
+	transactions := []Tx{
 		{BtcTxID: 1, RawTx: "tx1-hex", Status: StatusPending},
 		{BtcTxID: 2, RawTx: "tx2-hex", Status: StatusBroadcasted},
 		{BtcTxID: 3, RawTx: "tx3-hex", Status: StatusPending},
 	}
 	for _, tx := range transactions {
-		err = InsertTransaction(tx)
-		if err != nil {
-			t.Fatal(err)
-		}
+		err := db.InsertTx(tx)
+		assert.NilError(t, err)
 	}
 
-	pendingTxs, err := GetPendingTransactions()
-	if err != nil {
-		t.Errorf("GetPendingTransactions() error = %v", err)
-	}
-
-	if len(pendingTxs) != 2 {
-		t.Errorf("Expected 2 pending transactions, got %d", len(pendingTxs))
-	}
+	pendingTxs, err := db.GetPendingTxs()
+	assert.NilError(t, err)
+	assert.Equal(t, len(pendingTxs), 2)
 }
 
-func TestUpdateTransactionStatus(t *testing.T) {
-	err := InitDB(":memory:") // in-memory database
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestUpdateTxStatus(t *testing.T) {
+	db := initTestDB(t)
 
 	txID := uint64(1)
 
-	tx := Transaction{
+	tx := Tx{
 		BtcTxID: txID,
 		RawTx:   "raw-transaction-hex",
 		Status:  StatusPending,
 	}
-	err = InsertTransaction(tx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := db.InsertTx(tx)
+	assert.NilError(t, err)
 
-	err = UpdateTransactionStatus(txID, StatusBroadcasted)
-	if err != nil {
-		t.Errorf("UpdateTransactionStatus() error = %v", err)
-	}
+	err = db.UpdateTxStatus(txID, StatusBroadcasted)
+	assert.NilError(t, err)
 
-	updatedTx, err := GetTransaction(txID)
-	if err != nil {
-		t.Errorf("GetTransaction() error = %v", err)
-	}
+	updatedTx, err := db.GetTx(txID)
+	assert.NilError(t, err)
+	assert.Equal(t, updatedTx.Status, StatusBroadcasted)
+}
 
-	if updatedTx.Status != StatusBroadcasted {
-		t.Errorf("Expected StatusBrodcasted, got %s", updatedTx.Status)
-	}
+func initTestDB(t *testing.T) *DB {
+	t.Helper()
+
+	db, err := NewDB(":memory:")
+	assert.NilError(t, err)
+	return db
 }
