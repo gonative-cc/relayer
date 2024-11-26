@@ -1,6 +1,6 @@
 module github.com/gonative-cc/relayer
 
-go 1.22.7
+go 1.23
 
 require (
 	github.com/block-vision/sui-go-sdk v1.0.6
