@@ -67,5 +67,7 @@ func initTestDB(t *testing.T) *DB {
 
 	db, err := NewDB(":memory:")
 	assert.NilError(t, err)
+	err = db.InitDB()
+	assert.NilError(t, err)
 	return db
 }

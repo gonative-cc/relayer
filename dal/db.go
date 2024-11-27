@@ -44,7 +44,7 @@ type DB struct {
 	conn *sql.DB
 }
 
-// NewDB creates a new DB instance and initializes the database connection.
+// NewDB creates a new DB instance
 func NewDB(dbPath string) (*DB, error) {
 	db := &DB{}
 
@@ -53,20 +53,18 @@ func NewDB(dbPath string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	_, err = db.conn.Exec(createTransactionsTableSQL)
 	return db, err
+}
+
+// InitDB initializes the database
+func (db DB) InitDB() error {
+	_, err := db.conn.Exec(createTransactionsTableSQL)
+	return err
 }
 
 // InsertTx inserts a new transaction into the database
 func (db DB) InsertTx(tx Tx) error {
-	stmt, err := db.conn.Prepare(insertTransactionSQL)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(tx.BtcTxID, tx.RawTx, tx.Status)
+	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.RawTx, tx.Status)
 	if err != nil {
 		return err
 	}
@@ -76,19 +74,12 @@ func (db DB) InsertTx(tx Tx) error {
 
 // GetTx retrives a transaction by its txid
 func (db DB) GetTx(txID uint64) (*Tx, error) {
-	stmt, err := db.conn.Prepare(getTransactionByTxidSQL)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
-	row := stmt.QueryRow(txID)
-
+	row := db.conn.QueryRow(getTransactionByTxidSQL, txID)
 	var tx Tx
-	err = row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
+	err := row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Return nil, nil if no transaction was found
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -119,13 +110,7 @@ func (db DB) GetPendingTxs() ([]Tx, error) {
 
 // UpdateTxStatus updates the status of a transaction by txid
 func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
-	stmt, err := db.conn.Prepare(updateTransactionStatusSQL)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(status, txID)
+	_, err := db.conn.Exec(updateTransactionStatusSQL, status, txID)
 	if err != nil {
 		return err
 	}
