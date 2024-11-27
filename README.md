@@ -32,8 +32,9 @@ Mock -> WIP -> alpha -> beta -> production
 | Service          | status |
 | :--------------- | :----- |
 | Native-\>Ika     | WIP    |
-| Bitcoin SPV      |        |
 | Native-\>Bitcoin | WIP    |
+| Native-\>Bitcoin | :x:    |
+| Bitcoin SPV      |        |
 
 ## Contributing
 
