@@ -43,9 +43,7 @@ func TestGetPendingTxs(t *testing.T) {
 
 func TestUpdateTxStatus(t *testing.T) {
 	db := initTestDB(t)
-
 	txID := uint64(1)
-
 	tx := Tx{
 		BtcTxID: txID,
 		RawTx:   "raw-transaction-hex",
@@ -64,10 +62,11 @@ func TestUpdateTxStatus(t *testing.T) {
 
 func initTestDB(t *testing.T) *DB {
 	t.Helper()
-
 	db, err := NewDB(":memory:")
 	assert.NilError(t, err)
+
 	err = db.InitDB()
 	assert.NilError(t, err)
+
 	return db
 }

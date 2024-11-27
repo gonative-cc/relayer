@@ -4,26 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/database"
+	"github.com/gonative-cc/relayer/bitcoin"
+	"github.com/gonative-cc/relayer/dal"
 	"gotest.tools/assert"
 )
-
-// Mock Bitcoin RPC client for testing
-type MockBitcoinClient struct{}
-
-func (m *MockBitcoinClient) SendRawTransaction(_ *wire.MsgTx, _ bool) (*chainhash.Hash, error) {
-	// Mock implementation
-	hash, err := chainhash.NewHashFromStr("0000000000000000000000000000000000000000000000000000000000000000")
-	if err != nil {
-		return nil, err
-	}
-	return hash, nil
-}
-
-func (m *MockBitcoinClient) Shutdown() {
-}
 
 func TestRelayerStart(t *testing.T) {
 	db := initTestDB(t)
@@ -34,11 +18,11 @@ func TestRelayerStart(t *testing.T) {
 	}
 	relayer, err := NewRelayer(config, db)
 	assert.NilError(t, err)
-	relayer.btcClient = &MockBitcoinClient{}
+	relayer.btcClient = &bitcoin.MockBitcoinClient{}
 
-	transactions := []database.Tx{
-		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: database.StatusPending},
-		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: database.StatusPending},
+	transactions := []dal.Tx{
+		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
+		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
 	}
 	for _, tx := range transactions {
 		err = db.InsertTx(tx)
@@ -55,16 +39,18 @@ func TestRelayerStart(t *testing.T) {
 	for _, tx := range transactions {
 		updatedTx, err := db.GetTx(tx.BtcTxID)
 		assert.NilError(t, err, "Error getting transaction")
-		assert.Equal(t, updatedTx.Status, database.StatusBroadcasted)
+		assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
 	}
 
 	relayer.Stop()
 }
 
-func initTestDB(t *testing.T) *database.DB {
+func initTestDB(t *testing.T) *dal.DB {
 	t.Helper()
 
-	db, err := database.NewDB(":memory:")
+	db, err := dal.NewDB(":memory:")
+	assert.NilError(t, err)
+	err = db.InitDB()
 	assert.NilError(t, err)
 	return db
 }

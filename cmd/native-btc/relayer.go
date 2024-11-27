@@ -6,10 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/database"
+	"github.com/gonative-cc/relayer/bitcoin"
+	"github.com/gonative-cc/relayer/dal"
 	"github.com/rs/zerolog/log"
 )
 
@@ -19,27 +19,19 @@ type Config struct {
 	BitcoinNode  string `json:"bitcoinNode"`
 }
 
-// BitcoinClient defines the interface with only the functions we need.
-type BitcoinClient interface {
-	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
-	Shutdown()
-}
-
 // Relayer broadcasts pending transactions from the database to the Bitcoin network.
 type Relayer struct {
 	config       Config
-	db           *database.DB
-	btcClient    BitcoinClient
+	db           *dal.DB
+	btcClient    bitcoin.BitcoinClient
 	shutdownChan chan struct{}
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration.
-func NewRelayer(config Config, db *database.DB) (*Relayer, error) {
-
-	// Init database connection
+func NewRelayer(config Config, db *dal.DB) (*Relayer, error) {
 	var err error
 	if db == nil {
-		db, err = database.NewDB(config.DatabasePath)
+		db, err = dal.NewDB(config.DatabasePath)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +62,10 @@ func NewRelayer(config Config, db *database.DB) (*Relayer, error) {
 func (r *Relayer) Start() {
 	go func() {
 		<-r.shutdownChan
-		// r.db.Close() TODO: add Close() function to DB so we can call it like this
+		err := r.db.Close()
+		if err != nil {
+			log.Err(err).Msg("Error closing database connection")
+		}
 		r.btcClient.Shutdown()
 	}()
 
@@ -94,7 +89,7 @@ func (r *Relayer) Start() {
 				continue
 			}
 
-			err = r.db.UpdateTxStatus(tx.BtcTxID, database.StatusBroadcasted)
+			err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusBroadcasted)
 			if err != nil {
 				log.Err(err).Msg("Error updating transaction status")
 			}
@@ -102,7 +97,7 @@ func (r *Relayer) Start() {
 			log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")
 		}
 
-		time.Sleep(time.Second * 10) // Check every 10 seconds
+		time.Sleep(time.Second * 10)
 	}
 }
 

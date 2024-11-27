@@ -65,11 +65,7 @@ func (db DB) InitDB() error {
 // InsertTx inserts a new transaction into the database
 func (db DB) InsertTx(tx Tx) error {
 	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.RawTx, tx.Status)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // GetTx retrives a transaction by its txid
@@ -111,9 +107,9 @@ func (db DB) GetPendingTxs() ([]Tx, error) {
 // UpdateTxStatus updates the status of a transaction by txid
 func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
 	_, err := db.conn.Exec(updateTransactionStatusSQL, status, txID)
-	if err != nil {
-		return err
-	}
+	return err
+}
 
-	return nil
+func (db DB) Close() error {
+	return db.conn.Close()
 }
