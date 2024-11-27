@@ -5,10 +5,11 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-// Mock Bitcoin RPC client for testing
-type MockBitcoinClient struct{}
+// MockClient Bitcoin RPC client for testing
+type MockClient struct{}
 
-func (m *MockBitcoinClient) SendRawTransaction(_ *wire.MsgTx, _ bool) (*chainhash.Hash, error) {
+// SendRawTransaction is a mock implementation that simulates sending a raw transaction.
+func (m *MockClient) SendRawTransaction(_ *wire.MsgTx, _ bool) (*chainhash.Hash, error) {
 	hash, err := chainhash.NewHashFromStr("0000000000000000000000000000000000000000000000000000000000000000")
 	if err != nil {
 		return nil, err
@@ -16,5 +17,6 @@ func (m *MockBitcoinClient) SendRawTransaction(_ *wire.MsgTx, _ bool) (*chainhas
 	return hash, nil
 }
 
-func (m *MockBitcoinClient) Shutdown() {
+// Shutdown is a mock implementation that does nothing.
+func (m *MockClient) Shutdown() {
 }

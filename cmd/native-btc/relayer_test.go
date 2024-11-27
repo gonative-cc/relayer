@@ -18,7 +18,7 @@ func TestRelayerStart(t *testing.T) {
 	}
 	relayer, err := NewRelayer(config, db)
 	assert.NilError(t, err)
-	relayer.btcClient = &bitcoin.MockBitcoinClient{}
+	relayer.btcClient = &bitcoin.MockClient{}
 
 	transactions := []dal.Tx{
 		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},

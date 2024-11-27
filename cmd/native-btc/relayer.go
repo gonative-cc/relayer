@@ -23,7 +23,7 @@ type Config struct {
 type Relayer struct {
 	config       Config
 	db           *dal.DB
-	btcClient    bitcoin.BitcoinClient
+	btcClient    bitcoin.Client
 	shutdownChan chan struct{}
 }
 
