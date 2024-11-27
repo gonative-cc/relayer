@@ -1,4 +1,4 @@
-package database
+package dal
 
 import (
 	"database/sql"
