@@ -7,7 +7,7 @@ import (
 )
 
 // TxStatus represents the different states of a transaction.
-type TxStatus int
+type TxStatus byte
 
 // Transaction status constants
 const (
@@ -46,9 +46,8 @@ type DB struct {
 
 // NewDB creates a new DB instance and initializes the database connection.
 func NewDB(dbPath string) (*DB, error) {
-	db := &DB{} // Create a new DB instance
+	db := &DB{}
 
-	// Initialize the database connection
 	var err error
 	db.conn, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -56,11 +55,7 @@ func NewDB(dbPath string) (*DB, error) {
 	}
 
 	_, err = db.conn.Exec(createTransactionsTableSQL)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil // Return the initialized DB instance
+	return db, err
 }
 
 // InsertTx inserts a new transaction into the database
