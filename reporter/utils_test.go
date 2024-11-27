@@ -17,7 +17,7 @@ import (
 	"github.com/babylonchain/vigilante/reporter"
 	vdatagen "github.com/babylonchain/vigilante/testutil/datagen"
 	"github.com/babylonchain/vigilante/testutil/mocks"
-	"github.com/babylonchain/vigilante/types"
+	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 func newMockReporter(t *testing.T, ctrl *gomock.Controller) (

@@ -33,3 +33,9 @@ type BTCSpvProof struct {
 	// Should have exactly 80 bytes
 	ConfirmingBtcHeader *BTCHeaderBytes
 }
+
+// from https://github.com/babylonchain/babylon/proto/babylon/btccheckpoint/v1/tx.proto#L17
+type MsgInsertBTCSpvProof struct {
+	Submitter string
+	Proofs    []*BTCSpvProof
+}

@@ -3,7 +3,7 @@ package reporter
 import (
 	"fmt"
 
-	"github.com/babylonchain/vigilante/types"
+	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 // blockEventHandler handles connected and disconnected blocks from the BTC client.

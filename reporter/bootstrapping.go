@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	bbntypes "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/vigilante/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 var (
@@ -255,10 +254,7 @@ func (r *Reporter) waitUntilBTCSync() error {
 		return err
 	}
 
-	hash, err := bbntypes.NewBTCHeaderHashBytesFromHex(tipRes.Header.HashHex)
-	if err != nil {
-		return err
-	}
+	hash := tipRes.Header.Hash
 
 	bbnLatestBlockHash = hash.ToChainhash()
 	bbnLatestBlockHeight = tipRes.Header.Height

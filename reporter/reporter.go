@@ -7,14 +7,14 @@ import (
 	"time"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/vigilante/config"
-	"github.com/babylonchain/vigilante/metrics"
-	"github.com/babylonchain/vigilante/types"
+	"github.com/gonative-cc/relayer/reporter/btctxformatter"
+	"github.com/gonative-cc/relayer/reporter/config"
+	"github.com/gonative-cc/relayer/reporter/types"
 	"go.uber.org/zap"
 )
 
 const (
-	BtcTxCurrentVersion uint8 = 0
+	BtcTxCurrentVersion btctxformatter.FormatVersion = 0
 )
 
 type Reporter struct {
@@ -34,7 +34,7 @@ type Reporter struct {
 	reorgList                     *reorgList
 	btcConfirmationDepth          uint64
 	checkpointFinalizationTimeout uint64
-	metrics                       *metrics.ReporterMetrics
+	metrics                       *ReporterMetrics
 	wg                            sync.WaitGroup
 	started                       bool
 	quit                          chan struct{}
@@ -48,7 +48,7 @@ func New(
 	babylonClient BabylonClient,
 	retrySleepTime,
 	maxRetrySleepTime time.Duration,
-	metrics *metrics.ReporterMetrics,
+	metrics *ReporterMetrics,
 ) (*Reporter, error) {
 	logger := parentLogger.With(zap.String("module", "reporter")).Sugar()
 	// retrieve k and w within btccParams

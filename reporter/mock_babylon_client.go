@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	config "github.com/babylonchain/babylon/client/config"
+	config "github.com/gonative-cc/relayer/reporter/config"
 	types "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	types0 "github.com/babylonchain/babylon/x/btclightclient/types"
 	chainhash "github.com/btcsuite/btcd/chaincfg/chainhash"

@@ -8,9 +8,8 @@ import (
 	pv "github.com/cosmos/relayer/v2/relayer/provider"
 
 	sdkmath "cosmossdk.io/math"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/babylonchain/vigilante/types"
+	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
@@ -22,7 +21,7 @@ func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
 
 // getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
 // should be submitted to Babylon from a given set of indexed blocks
-func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBlock) ([]*btclctypes.MsgInsertHeaders, error) {
+func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBlock) ([]*types.MsgInsertHeaders, error) {
 	var (
 		startPoint  = -1
 		ibsToSubmit []*types.IndexedBlock
@@ -49,7 +48,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBloc
 	// all headers are duplicated, no need to submit
 	if startPoint == -1 {
 		r.logger.Info("All headers are duplicated, no need to submit")
-		return []*btclctypes.MsgInsertHeaders{}, nil
+		return []*types.MsgInsertHeaders{}, nil
 	}
 
 	// wrap the headers to MsgInsertHeaders msgs from the subset of indexed blocks
@@ -57,7 +56,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBloc
 
 	blockChunks := chunkBy(ibsToSubmit, int(r.Cfg.MaxHeadersInMsg))
 
-	headerMsgsToSubmit := []*btclctypes.MsgInsertHeaders{}
+	headerMsgsToSubmit := []*types.MsgInsertHeaders{}
 
 	for _, ibChunk := range blockChunks {
 		msgInsertHeaders := types.NewMsgInsertHeaders(signer, ibChunk)
@@ -67,7 +66,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBloc
 	return headerMsgsToSubmit, nil
 }
 
-func (r *Reporter) submitHeaderMsgs(msg *btclctypes.MsgInsertHeaders) error {
+func (r *Reporter) submitHeaderMsgs(msg *types.MsgInsertHeaders) error {
 	// submit the headers
 	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
 		res, err := r.babylonClient.InsertHeaders(context.Background(), msg)
@@ -147,8 +146,8 @@ func (r *Reporter) extractCheckpoints(ib *types.IndexedBlock) int {
 func (r *Reporter) matchAndSubmitCheckpoints(signer string) (int, error) {
 	var (
 		res                  *pv.RelayerTxResponse
-		proofs               []*btcctypes.BTCSpvProof
-		msgInsertBTCSpvProof *btcctypes.MsgInsertBTCSpvProof
+		proofs               []*types.BTCSpvProof
+		msgInsertBTCSpvProof *types.MsgInsertBTCSpvProof
 		err                  error
 	)
 
