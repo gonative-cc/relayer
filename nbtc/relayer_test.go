@@ -7,6 +7,7 @@ import (
 
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/joho/godotenv"
 	"gotest.tools/assert"
 )
 
@@ -92,11 +93,8 @@ func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 
 func initTestDB(t *testing.T) *dal.DB {
 	t.Helper()
-
-	//TODO: figure out why the .env variables are not being loaded correctly
-	os.Setenv("BTC_RPC", "user")
-	os.Setenv("BTC_RPC_USER", "pass")
-	os.Setenv("BTC_RPC_PASS", "localhost:18334")
+	err := godotenv.Load("../.env") // load the env, it is needed for tests
+	assert.NilError(t, err)
 
 	db, err := dal.NewDB(":memory:")
 	assert.NilError(t, err)

@@ -53,7 +53,10 @@ test-unit-cover: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)' -coverprofile=$(TES
 test-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
 $(TEST_TARGETS): run-tests
 
-run-tests:
+copy-env:
+	@cp .env.example .env
+
+run-tests: copy-env
 ifneq (,$(shell which tparse 2>/dev/null))
 	@go test -mod=readonly -json $(ARGS) ./... | tparse
 else
