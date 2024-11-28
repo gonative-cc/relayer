@@ -54,13 +54,12 @@ test-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
 $(TEST_TARGETS): run-tests
 
 run-tests:
-	cp .env.example .env
-	ifneq (,$(shell which tparse 2>/dev/null))
-		@go test -mod=readonly -json $(ARGS) ./... | tparse
-	else
-		@go test -mod=readonly $(ARGS) ./...
-	endif
+ifneq (,$(shell which tparse 2>/dev/null))
+	@go test -mod=readonly -json $(ARGS) ./... | tparse
+else
+	@go test -mod=readonly $(ARGS) ./...
+endif
 
-	cover-html: test-unit-cover
-		@echo "--> Opening in the browser"
-		@go tool cover -html=$(TEST_COVERAGE_PROFILE)
+cover-html: test-unit-cover
+	@echo "--> Opening in the browser"
+	@go tool cover -html=$(TEST_COVERAGE_PROFILE)

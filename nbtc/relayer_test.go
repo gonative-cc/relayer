@@ -80,11 +80,11 @@ func Test_NewRelayer_DatabaseError(t *testing.T) {
 }
 
 func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
+	db := initTestDB(t)
 	// Clear the env variables
 	os.Unsetenv("BTC_RPC")
 	os.Unsetenv("BTC_RPC_USER")
 	os.Unsetenv("BTC_RPC_PASS")
-	db := initTestDB(t)
 	relayer, err := NewRelayer(db)
 	assert.ErrorContains(t, err, "missing env variables with Bitcoin node configuration")
 	assert.Assert(t, relayer == nil)
@@ -92,6 +92,11 @@ func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 
 func initTestDB(t *testing.T) *dal.DB {
 	t.Helper()
+
+	//TODO: figure out why the .env variables are not being loaded correctly
+	os.Setenv("BTC_RPC", "user")
+	os.Setenv("BTC_RPC_USER", "pass")
+	os.Setenv("BTC_RPC_PASS", "localhost:18334")
 
 	db, err := dal.NewDB(":memory:")
 	assert.NilError(t, err)
