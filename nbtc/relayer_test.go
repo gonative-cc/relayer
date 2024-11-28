@@ -10,7 +10,7 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestRelayer_Start(t *testing.T) {
+func Test_Start(t *testing.T) {
 	db := initTestDB(t)
 
 	relayer, err := NewRelayer(db)
@@ -47,10 +47,9 @@ func TestRelayer_Start(t *testing.T) {
 	relayer.db.Close()
 }
 
-func TestRelayer_processPendingTxs(t *testing.T) {
+func Test_processPendingTxs(t *testing.T) {
 	db := initTestDB(t)
 
-	// Insert mock transactions with "pending" status
 	transactions := []dal.Tx{
 		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
 		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
@@ -74,13 +73,13 @@ func TestRelayer_processPendingTxs(t *testing.T) {
 	}
 }
 
-func TestNewRelayer_DatabaseError(t *testing.T) {
+func Test_NewRelayer_DatabaseError(t *testing.T) {
 	relayer, err := NewRelayer(nil)
 	assert.ErrorContains(t, err, "database cannot be nil")
 	assert.Assert(t, relayer == nil)
 }
 
-func TestNewRelayer_MissingEnvVatiables(t *testing.T) {
+func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 	// Clear the env variables
 	os.Unsetenv("BTC_RPC")
 	os.Unsetenv("BTC_RPC_USER")
