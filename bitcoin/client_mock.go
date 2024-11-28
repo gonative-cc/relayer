@@ -13,6 +13,6 @@ func (m *MockClient) SendRawTransaction(_ *wire.MsgTx, _ bool) (*chainhash.Hash,
 	return chainhash.NewHashFromStr("0000000000000000000000000000000000000000000000000000000000000000")
 }
 
-// Shutdown is a mock implementation that does nothing.
+// Shutdown is a mock implementation that is used in tests.
 func (m *MockClient) Shutdown() {
 }
