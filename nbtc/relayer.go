@@ -68,7 +68,8 @@ func (r *Relayer) Start() error {
 			return nil
 		case <-ticker.C:
 			if err := r.processPendingTxs(); err != nil {
-				if err.Error() == "error updating transaction status" { //TODO: add proper error handling here and decide which errors we shutdown the relayer
+				//TODO: add proper error handling here and decide which errors we shutdown the relayer
+				if err.Error() == "error updating transaction status" {
 					log.Err(err).Msg("Critical error updating transaction status, shutting down")
 					close(r.shutdownChan)
 				} else {
