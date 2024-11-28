@@ -1,14 +1,15 @@
-package daltest
+package dal_test
 
 import (
 	"testing"
 
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/gonative-cc/relayer/dal/daltest"
 	"gotest.tools/v3/assert"
 )
 
 func TestInsertTx(t *testing.T) {
-	db := InitTestDB(t)
+	db := daltest.InitTestDB(t)
 
 	tx := dal.Tx{
 		BtcTxID: 1,
@@ -25,7 +26,7 @@ func TestInsertTx(t *testing.T) {
 }
 
 func TestGetPendingTxs(t *testing.T) {
-	db := InitTestDB(t)
+	db := daltest.InitTestDB(t)
 
 	transactions := []dal.Tx{
 		{BtcTxID: 1, RawTx: "tx1-hex", Status: dal.StatusPending},
@@ -43,7 +44,7 @@ func TestGetPendingTxs(t *testing.T) {
 }
 
 func TestUpdateTxStatus(t *testing.T) {
-	db := InitTestDB(t)
+	db := daltest.InitTestDB(t)
 	txID := uint64(1)
 	tx := dal.Tx{
 		BtcTxID: txID,
@@ -59,15 +60,4 @@ func TestUpdateTxStatus(t *testing.T) {
 	updatedTx, err := db.GetTx(txID)
 	assert.NilError(t, err)
 	assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
-}
-
-// InitTestDB initializes an in-memory database for testing purposes.
-func InitTestDB(t *testing.T) *dal.DB {
-	t.Helper()
-
-	db, err := dal.NewDB(":memory:")
-	assert.NilError(t, err)
-	err = db.InitDB()
-	assert.NilError(t, err)
-	return db
 }
