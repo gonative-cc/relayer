@@ -54,7 +54,7 @@ test-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
 $(TEST_TARGETS): run-tests
 
 copy-env:
-	@cp .env.example .env
+	@cp .env.example .env.test
 
 run-tests: copy-env
 ifneq (,$(shell which tparse 2>/dev/null))

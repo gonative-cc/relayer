@@ -93,7 +93,7 @@ func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 
 func initTestDB(t *testing.T) *dal.DB {
 	t.Helper()
-	err := godotenv.Load("../.env") // load the env, it is needed for tests
+	err := godotenv.Load("../.env.test") // load the env, it is needed for tests
 	assert.NilError(t, err)
 
 	db, err := dal.NewDB(":memory:")
