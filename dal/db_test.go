@@ -15,6 +15,7 @@ func TestInsertTx(t *testing.T) {
 		BtcTxID: 1,
 		RawTx:   "raw-transaction-hex",
 		Status:  dal.StatusPending,
+		Hash:    daltest.GetHashBytes(t, "1"),
 	}
 
 	err := db.InsertTx(tx)
@@ -27,16 +28,7 @@ func TestInsertTx(t *testing.T) {
 
 func TestGetPendingTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
-
-	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "tx1-hex", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "tx2-hex", Status: dal.StatusBroadcasted},
-		{BtcTxID: 3, RawTx: "tx3-hex", Status: dal.StatusPending},
-	}
-	for _, tx := range transactions {
-		err := db.InsertTx(tx)
-		assert.NilError(t, err)
-	}
+	daltest.PopulateDB(t, db)
 
 	pendingTxs, err := db.GetPendingTxs()
 	assert.NilError(t, err)
@@ -45,20 +37,11 @@ func TestGetPendingTxs(t *testing.T) {
 
 func TestGetBroadcastedTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
-
-	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "tx1-hex", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "tx2-hex", Status: dal.StatusBroadcasted},
-		{BtcTxID: 3, RawTx: "tx3-hex", Status: dal.StatusPending},
-	}
-	for _, tx := range transactions {
-		err := db.InsertTx(tx)
-		assert.NilError(t, err)
-	}
+	daltest.PopulateDB(t, db)
 
 	broadcastedTxs, err := db.GetBroadcastedTxs()
 	assert.NilError(t, err)
-	assert.Equal(t, len(broadcastedTxs), 1)
+	assert.Equal(t, len(broadcastedTxs), 2)
 }
 
 func TestUpdateTxStatus(t *testing.T) {
@@ -68,6 +51,7 @@ func TestUpdateTxStatus(t *testing.T) {
 		BtcTxID: txID,
 		RawTx:   "raw-transaction-hex",
 		Status:  dal.StatusPending,
+		Hash:    daltest.GetHashBytes(t, "1"),
 	}
 	err := db.InsertTx(tx)
 	assert.NilError(t, err)

@@ -7,27 +7,18 @@ import (
 
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/gonative-cc/relayer/dal/daltest"
 	"github.com/joho/godotenv"
 	"gotest.tools/assert"
 )
 
 func Test_Start(t *testing.T) {
 	db := initTestDB(t)
-
 	relayer, err := NewRelayer(db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
-	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
-	}
-	for _, tx := range transactions {
-		err = db.InsertTx(tx)
-		if err != nil {
-			assert.NilError(t, err)
-		}
-	}
+	txs := daltest.PopulateDB(t, db)
 
 	// Start the relayer in a separate goroutine
 	go func() {
@@ -37,29 +28,32 @@ func Test_Start(t *testing.T) {
 
 	time.Sleep(time.Second * 3)
 
-	relayer.Stop()
-
-	for _, tx := range transactions {
+	for _, tx := range txs {
 		updatedTx, err := db.GetTx(tx.BtcTxID)
 		assert.NilError(t, err, "Error getting transaction")
 		assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
 	}
 
+	time.Sleep(time.Second * 5)
+
+	for _, tx := range txs {
+		updatedTx, err := db.GetTx(tx.BtcTxID)
+		if tx.BtcTxID == 1 {
+			assert.NilError(t, err, "Error getting transaction")
+			assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
+		} else {
+			assert.NilError(t, err, "Error getting transaction")
+			assert.Equal(t, updatedTx.Status, dal.StatusConfirmed)
+		}
+	}
+
+	relayer.Stop()
 	relayer.db.Close()
 }
 
 func Test_processPendingTxs(t *testing.T) {
 	db := initTestDB(t)
-
-	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
-	}
-	for _, tx := range transactions {
-		err := db.InsertTx(tx)
-		assert.NilError(t, err)
-	}
-
+	txs := daltest.PopulateDB(t, db)
 	relayer, err := NewRelayer(db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
@@ -67,11 +61,32 @@ func Test_processPendingTxs(t *testing.T) {
 	err = relayer.processPendingTxs()
 	assert.NilError(t, err)
 
-	for _, tx := range transactions {
+	for _, tx := range txs {
 		updatedTx, err := db.GetTx(tx.BtcTxID)
 		assert.NilError(t, err)
 		assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
 	}
+}
+
+func Test_checkConfirmations(t *testing.T) {
+	db := initTestDB(t)
+	daltest.PopulateDB(t, db)
+	relayer, err := NewRelayer(db)
+	assert.NilError(t, err)
+	relayer.btcClient = &bitcoin.MockClient{}
+
+	relayer.checkConfirmations()
+
+	time.Sleep(time.Millisecond * 500)
+
+	updatedTx1, err := db.GetTx(1)
+	assert.NilError(t, err)
+	assert.Equal(t, updatedTx1.Status, dal.StatusBroadcasted)
+
+	updatedTx2, err := db.GetTx(2)
+	assert.NilError(t, err)
+	assert.Equal(t, updatedTx2.Status, dal.StatusConfirmed)
+
 }
 
 func Test_NewRelayer_DatabaseError(t *testing.T) {

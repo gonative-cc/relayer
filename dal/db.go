@@ -18,13 +18,14 @@ const (
 
 // SQL queries
 const (
-	insertTransactionSQL       = "INSERT INTO transactions(txid, rawtx, status) values(?,?,?)"
-	getTransactionsByStatusSQL = "SELECT txid, rawtx, status FROM transactions WHERE status = ?"
-	getTransactionByTxidSQL    = "SELECT txid, rawtx, status FROM transactions WHERE txid = ?"
+	insertTransactionSQL       = "INSERT INTO transactions(txid, hash, rawtx, status) values(?,?,?,?)"
+	getTransactionsByStatusSQL = "SELECT txid, hash, rawtx, status FROM transactions WHERE status = ?"
+	getTransactionByTxidSQL    = "SELECT txid, hash, rawtx, status FROM transactions WHERE txid = ?"
 	updateTransactionStatusSQL = "UPDATE transactions SET status = ? WHERE txid = ?"
 	createTransactionsTableSQL = `
         CREATE TABLE IF NOT EXISTS transactions (
             txid TEXT PRIMARY KEY,
+			hash BLOB NOT NULL,
             rawtx TEXT NOT NULL,
             status INTEGER NOT NULL NOT NULL
         )
@@ -34,6 +35,7 @@ const (
 // Tx represents a transaction record in the database.
 type Tx struct {
 	BtcTxID uint64   `json:"txid"`
+	Hash    []byte   `json:"hash"`
 	RawTx   string   `json:"rawtx"`
 	Status  TxStatus `json:"status"`
 	// TODO: other fields
@@ -64,7 +66,7 @@ func (db DB) InitDB() error {
 
 // InsertTx inserts a new transaction into the database
 func (db DB) InsertTx(tx Tx) error {
-	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.RawTx, tx.Status)
+	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.Hash, tx.RawTx, tx.Status)
 	return err
 }
 
@@ -72,7 +74,7 @@ func (db DB) InsertTx(tx Tx) error {
 func (db DB) GetTx(txID uint64) (*Tx, error) {
 	row := db.conn.QueryRow(getTransactionByTxidSQL, txID)
 	var tx Tx
-	err := row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
+	err := row.Scan(&tx.BtcTxID, &tx.Hash, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -104,7 +106,7 @@ func (db DB) getTxsByStatus(status TxStatus) ([]Tx, error) {
 	var transactions []Tx
 	for rows.Next() {
 		var tx Tx
-		err := rows.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
+		err := rows.Scan(&tx.BtcTxID, &tx.Hash, &tx.RawTx, &tx.Status)
 		if err != nil {
 			return nil, err
 		}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoin"
@@ -60,6 +61,7 @@ func NewRelayer(db *dal.DB) (*Relayer, error) {
 // Start starts the relayer's main loop to broadcast transactions.
 func (r *Relayer) Start() error {
 	ticker := time.NewTicker(time.Second * 2)
+	ticker2 := time.NewTicker(time.Second * 4) //TODO: this probably can run every minute or even more
 
 	for {
 		select {
@@ -76,6 +78,8 @@ func (r *Relayer) Start() error {
 					log.Err(err).Msg("Error processing transactions, continuing")
 				}
 			}
+		case <-ticker2.C:
+			r.checkConfirmations()
 		}
 	}
 }
@@ -110,6 +114,33 @@ func (r *Relayer) processPendingTxs() error {
 		log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")
 	}
 	return nil
+}
+
+// checkConfirmations checks all the broadcasted transactions to bitcoin and if confirmed updates the database accordingly.
+func (r *Relayer) checkConfirmations() {
+	broadcastedTxs, err := r.db.GetBroadcastedTxs()
+	if err != nil {
+		log.Err(err).Msg("Error getting broadcasted transactions")
+		return
+	}
+
+	for _, tx := range broadcastedTxs {
+		hash, _ := chainhash.NewHash(tx.Hash)
+		txDetails, err := r.btcClient.GetTransaction(hash)
+		if err != nil {
+			log.Err(err).Msgf("Error getting transaction details for txid: %d", tx.BtcTxID)
+			return
+		}
+
+		if txDetails.Confirmations >= 6 { // TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
+			err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusConfirmed)
+			if err != nil {
+				log.Err(err).Msgf("Error updating transaction status for txid: %d", tx.BtcTxID)
+			} else {
+				log.Info().Msgf("Transaction confirmed: %s", tx.Hash)
+			}
+		}
+	}
 }
 
 // Stop initiates a shutdown of the relayer.
