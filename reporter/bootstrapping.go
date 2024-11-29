@@ -254,7 +254,10 @@ func (r *Reporter) waitUntilBTCSync() error {
 		return err
 	}
 
-	hash := tipRes.Header.Hash
+	hash, err := types.NewBTCHeaderHashBytesFromHex(tipRes.Header.HashHex)
+	if err != nil {
+		return err
+	}
 
 	bbnLatestBlockHash = hash.ToChainhash()
 	bbnLatestBlockHeight = tipRes.Header.Height

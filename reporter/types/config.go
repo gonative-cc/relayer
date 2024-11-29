@@ -9,15 +9,9 @@ const (
 	maxHeadersInMsg = 100 // maximum number of headers in a MsgInsertHeaders message
 )
 
-// RelayerConfig defines configuration for the reporter.
-type RelayerConfig struct {
-	NetParams       string `mapstructure:"netparams"`          // should be mainnet|testnet|simnet|signet
-	BTCCacheSize    uint64 `mapstructure:"btc_cache_size"`     // size of the BTC cache
-	MaxHeadersInMsg uint32 `mapstructure:"max_headers_in_msg"` // maximum number of headers in a MsgInsertHeaders message
-}
-
 type (
 	SupportedBtcNetwork string
+	SupportedBtcBackend string
 )
 
 const (
@@ -26,9 +20,16 @@ const (
 	BtcSimnet  SupportedBtcNetwork = "simnet"
 	BtcRegtest SupportedBtcNetwork = "regtest"
 	BtcSignet  SupportedBtcNetwork = "signet"
+
+	Btcd     SupportedBtcBackend = "btcd"
+	Bitcoind SupportedBtcBackend = "bitcoind"
 )
 
 func (c SupportedBtcNetwork) String() string {
+	return string(c)
+}
+
+func (c SupportedBtcBackend) String() string {
 	return string(c)
 }
 
@@ -42,6 +43,22 @@ func GetValidNetParams() map[string]bool {
 	}
 
 	return params
+}
+
+func GetValidBtcBackends() map[SupportedBtcBackend]bool {
+	validBtcBackends := map[SupportedBtcBackend]bool{
+		Bitcoind: true,
+		Btcd:     true,
+	}
+
+	return validBtcBackends
+}
+
+// RelayerConfig defines configuration for the reporter.
+type RelayerConfig struct {
+	NetParams       string `mapstructure:"netparams"`          // should be mainnet|testnet|simnet|signet
+	BTCCacheSize    uint64 `mapstructure:"btc_cache_size"`     // size of the BTC cache
+	MaxHeadersInMsg uint32 `mapstructure:"max_headers_in_msg"` // maximum number of headers in a MsgInsertHeaders message
 }
 
 func (cfg *RelayerConfig) Validate() error {
