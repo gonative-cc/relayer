@@ -19,7 +19,7 @@ const (
 // SQL queries
 const (
 	insertTransactionSQL       = "INSERT INTO transactions(txid, rawtx, status) values(?,?,?)"
-	getPendingTransactionsSQL  = "SELECT txid, rawtx, status FROM transactions WHERE status = ?"
+	getTransactionsByStatusSQL = "SELECT txid, rawtx, status FROM transactions WHERE status = ?"
 	getTransactionByTxidSQL    = "SELECT txid, rawtx, status FROM transactions WHERE txid = ?"
 	updateTransactionStatusSQL = "UPDATE transactions SET status = ? WHERE txid = ?"
 	createTransactionsTableSQL = `
@@ -85,7 +85,17 @@ func (db DB) GetTx(txID uint64) (*Tx, error) {
 
 // GetPendingTxs retrieves all transactions with a "pending" status
 func (db DB) GetPendingTxs() ([]Tx, error) {
-	rows, err := db.conn.Query(getPendingTransactionsSQL, StatusPending)
+	return db.getTxsByStatus(StatusPending)
+}
+
+// GetBroadcastedTxs retrieves all transactions with a "broadcasted" status
+func (db DB) GetBroadcastedTxs() ([]Tx, error) {
+	return db.getTxsByStatus(StatusBroadcasted)
+}
+
+// getTxsByStatus retrieves all transactions with a given status
+func (db DB) getTxsByStatus(status TxStatus) ([]Tx, error) {
+	rows, err := db.conn.Query(getTransactionsByStatusSQL, status)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +120,7 @@ func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
 	return err
 }
 
+// Close closes the database connection
 func (db DB) Close() error {
 	return db.conn.Close()
 }

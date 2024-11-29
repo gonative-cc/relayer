@@ -43,6 +43,24 @@ func TestGetPendingTxs(t *testing.T) {
 	assert.Equal(t, len(pendingTxs), 2)
 }
 
+func TestGetBroadcastedTxs(t *testing.T) {
+	db := daltest.InitTestDB(t)
+
+	transactions := []dal.Tx{
+		{BtcTxID: 1, RawTx: "tx1-hex", Status: dal.StatusPending},
+		{BtcTxID: 2, RawTx: "tx2-hex", Status: dal.StatusBroadcasted},
+		{BtcTxID: 3, RawTx: "tx3-hex", Status: dal.StatusPending},
+	}
+	for _, tx := range transactions {
+		err := db.InsertTx(tx)
+		assert.NilError(t, err)
+	}
+
+	broadcastedTxs, err := db.GetBroadcastedTxs()
+	assert.NilError(t, err)
+	assert.Equal(t, len(broadcastedTxs), 1)
+}
+
 func TestUpdateTxStatus(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	txID := uint64(1)
