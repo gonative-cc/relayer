@@ -40,6 +40,10 @@ func CmdExecute() error {
 
 // CmdStart returns the CLI commands for the reporter
 func CmdStart() *cobra.Command {
+<<<<<<< HEAD
+=======
+	var babylonKeyDir string
+>>>>>>> c5c4b45 (add yaml config file reader; add minimal cli for bitcoin spv relayer)
 	var cfgFile = ""
 
 	cmd := &cobra.Command{
@@ -47,12 +51,20 @@ func CmdStart() *cobra.Command {
 		Short: "Vigilant reporter",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
+<<<<<<< HEAD
 				err              error
 				cfg              config.Config
 				btcClient        *btcclient.Client
 				nativeClient     *lcclient.Client
 				vigilantReporter *reporter.Reporter
 				nativeCloser     jsonrpc.ClientCloser
+=======
+				err       error
+				cfg       config.Config
+				btcClient *btcclient.Client
+				// babylonClient    *bbnclient.Client
+				// vigilantReporter *reporter.Reporter
+>>>>>>> c5c4b45 (add yaml config file reader; add minimal cli for bitcoin spv relayer)
 				// server           *rpcserver.Server
 			)
 
