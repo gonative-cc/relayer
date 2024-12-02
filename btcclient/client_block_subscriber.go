@@ -55,7 +55,8 @@ func NewWithBlockSubscriber(cfg *config.BTCConfig, retrySleepTime, maxRetrySleep
 		if err != nil {
 			return nil, fmt.Errorf("failed to get BTC backend: %v", err)
 		}
-		if backend != rpcclient.BitcoindPost19 {
+		if backend != rpcclient.BitcoindPre19 && backend != rpcclient.BitcoindPre22 &&
+			backend != rpcclient.BitcoindPre24 && backend != rpcclient.BitcoindPre24 && backend != rpcclient.BitcoindPost25 {
 			return nil, fmt.Errorf("zmq is only supported by bitcoind, but got %v", backend)
 		}
 
@@ -99,7 +100,7 @@ func NewWithBlockSubscriber(cfg *config.BTCConfig, retrySleepTime, maxRetrySleep
 		if err != nil {
 			return nil, fmt.Errorf("failed to get BTC backend: %v", err)
 		}
-		if backend != rpcclient.Btcd {
+		if backend != rpcclient.BtcdPre2401 && backend != rpcclient.BtcdPost2401 {
 			return nil, fmt.Errorf("websocket is only supported by btcd, but got %v", backend)
 		}
 
