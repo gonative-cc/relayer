@@ -5,8 +5,9 @@ go 1.23.1
 require (
 	github.com/babylonchain/babylon v0.8.6-0.20240605064737-7be9d5c57afb
 	github.com/babylonchain/vigilante v0.8.2
-	github.com/btcsuite/btcd v0.24.0
-	github.com/cometbft/cometbft v0.38.11
+	github.com/block-vision/sui-go-sdk v1.0.6
+	github.com/btcsuite/btcd v0.24.2
+	github.com/cometbft/cometbft v0.38.15
 	github.com/cosmos/cosmos-sdk v0.50.9
 	github.com/joho/godotenv v1.5.1
 	github.com/lightningnetwork/lnd v0.16.4-beta.rc1
