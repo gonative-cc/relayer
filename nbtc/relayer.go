@@ -36,7 +36,7 @@ func NewRelayer(btcClientConfig BtcClientConfig, processTxsInterval time.Duratio
 	}
 
 	if btcClientConfig.Host == "" || btcClientConfig.User == "" || btcClientConfig.Pass == "" {
-		err := fmt.Errorf("missing bitcion node configuration")
+		err := fmt.Errorf("missing bitcoin node configuration")
 		log.Err(err).Msg("")
 		return nil, err
 	}

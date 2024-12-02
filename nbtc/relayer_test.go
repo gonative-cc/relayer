@@ -103,7 +103,7 @@ func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 	// Clear the env variables
 	config.Host = ""
 	relayer, err := NewRelayer(config, 0, db)
-	assert.ErrorContains(t, err, "missing bitcion node configuration")
+	assert.ErrorContains(t, err, "missing bitcoin node configuration")
 	assert.Assert(t, relayer == nil)
 }
 
