@@ -2,6 +2,7 @@ package nbtc
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
 )
 
@@ -76,8 +78,8 @@ func (r *Relayer) Start() error {
 			return nil
 		case <-r.processTxsTicker.C:
 			if err := r.processPendingTxs(); err != nil {
-				//TODO: add proper error handling here and decide which errors we shutdown the relayer
-				if err.Error() == "DB: can't update tx status" {
+				var sqliteErr *sqlite3.Error
+				if errors.As(err, &sqliteErr) {
 					log.Err(err).Msg("Critical error updating transaction status, shutting down")
 					close(r.shutdownChan)
 				} else {
