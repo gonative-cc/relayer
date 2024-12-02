@@ -97,14 +97,12 @@ func (r *Relayer) processPendingTxs() error {
 
 		txHash, err := r.btcClient.SendRawTransaction(decodedTx, false)
 		if err != nil {
-			log.Err(err).Msg("Error broadcasting transaction")
-			return err
+			return fmt.Errorf("Error broadcasting transaction: %w", err)
 		}
 
 		err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusBroadcasted)
 		if err != nil {
-			log.Err(err).Msg("Error updating transaction status")
-			return err
+			return fmt.Errorf("DB: can't update tx status: %w", err)
 		}
 
 		log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")
