@@ -13,7 +13,7 @@ func TestInsertTx(t *testing.T) {
 
 	tx := dal.Tx{
 		BtcTxID: 1,
-		RawTx:   "raw-transaction-hex",
+		RawTx:   []byte("tx1-hex"),
 		Status:  dal.StatusPending,
 	}
 
@@ -29,9 +29,9 @@ func TestGetPendingTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
 
 	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "tx1-hex", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "tx2-hex", Status: dal.StatusBroadcasted},
-		{BtcTxID: 3, RawTx: "tx3-hex", Status: dal.StatusPending},
+		{BtcTxID: 1, RawTx: []byte("tx1-hex"), Status: dal.StatusPending},
+		{BtcTxID: 2, RawTx: []byte("tx2-hex"), Status: dal.StatusBroadcasted},
+		{BtcTxID: 3, RawTx: []byte("tx3-hex"), Status: dal.StatusPending},
 	}
 	for _, tx := range transactions {
 		err := db.InsertTx(tx)
@@ -48,7 +48,7 @@ func TestUpdateTxStatus(t *testing.T) {
 	txID := uint64(1)
 	tx := dal.Tx{
 		BtcTxID: txID,
-		RawTx:   "raw-transaction-hex",
+		RawTx:   []byte("tx1-hex"),
 		Status:  dal.StatusPending,
 	}
 	err := db.InsertTx(tx)

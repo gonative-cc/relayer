@@ -25,7 +25,7 @@ const (
 	createTransactionsTableSQL = `
         CREATE TABLE IF NOT EXISTS transactions (
             txid TEXT PRIMARY KEY,
-            rawtx TEXT NOT NULL,
+            rawtx BLOB NOT NULL,
             status INTEGER NOT NULL NOT NULL
         )
     `
@@ -34,7 +34,7 @@ const (
 // Tx represents a transaction record in the database.
 type Tx struct {
 	BtcTxID uint64   `json:"txid"`
-	RawTx   string   `json:"rawtx"`
+	RawTx   []byte   `json:"rawtx"`
 	Status  TxStatus `json:"status"`
 	// TODO: other fields
 }
@@ -110,6 +110,7 @@ func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
 	return err
 }
 
+// Close closes the db connection
 func (db DB) Close() error {
 	return db.conn.Close()
 }

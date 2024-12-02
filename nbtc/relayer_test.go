@@ -1,26 +1,44 @@
 package nbtc
 
 import (
-	"os"
 	"testing"
 	"time"
 
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
-	"github.com/joho/godotenv"
 	"gotest.tools/assert"
 )
+
+var config = BtcClientConfig{
+	Host:         "test_rpc",
+	User:         "test_user",
+	Pass:         "test_pass",
+	HTTPPostMode: true,
+	DisableTLS:   false,
+}
+
+var rawTxBytes = []byte{
+	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0xf2, 0x05,
+	0x2a, 0x01, 0x00, 0x00, 0x00, 0x19, 0x76, 0xa9, 0x14, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x88, 0xac, 0x00, 0x00,
+	0x00, 0x00,
+}
 
 func Test_Start(t *testing.T) {
 	db := initTestDB(t)
 
-	relayer, err := NewRelayer(db)
+	relayer, err := NewRelayer(config, 0, db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
 	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
+		{BtcTxID: 1, RawTx: rawTxBytes, Status: dal.StatusPending},
+		{BtcTxID: 2, RawTx: rawTxBytes, Status: dal.StatusPending},
 	}
 	for _, tx := range transactions {
 		err = db.InsertTx(tx)
@@ -35,7 +53,7 @@ func Test_Start(t *testing.T) {
 		assert.NilError(t, err)
 	}()
 
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 6)
 
 	relayer.Stop()
 
@@ -52,15 +70,15 @@ func Test_processPendingTxs(t *testing.T) {
 	db := initTestDB(t)
 
 	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0200f2052a010000001976a914000000000000000000000000000000000000000088ac00000000", Status: dal.StatusPending},
+		{BtcTxID: 1, RawTx: rawTxBytes, Status: dal.StatusPending},
+		{BtcTxID: 2, RawTx: rawTxBytes, Status: dal.StatusPending},
 	}
 	for _, tx := range transactions {
 		err := db.InsertTx(tx)
 		assert.NilError(t, err)
 	}
 
-	relayer, err := NewRelayer(db)
+	relayer, err := NewRelayer(config, 0, db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
@@ -75,7 +93,7 @@ func Test_processPendingTxs(t *testing.T) {
 }
 
 func Test_NewRelayer_DatabaseError(t *testing.T) {
-	relayer, err := NewRelayer(nil)
+	relayer, err := NewRelayer(config, 0, nil)
 	assert.ErrorContains(t, err, "database cannot be nil")
 	assert.Assert(t, relayer == nil)
 }
@@ -83,18 +101,14 @@ func Test_NewRelayer_DatabaseError(t *testing.T) {
 func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 	db := initTestDB(t)
 	// Clear the env variables
-	os.Unsetenv("BTC_RPC")
-	os.Unsetenv("BTC_RPC_USER")
-	os.Unsetenv("BTC_RPC_PASS")
-	relayer, err := NewRelayer(db)
-	assert.ErrorContains(t, err, "missing env variables with Bitcoin node configuration")
+	config.Host = ""
+	relayer, err := NewRelayer(config, 0, db)
+	assert.ErrorContains(t, err, "missing bitcion node configuration")
 	assert.Assert(t, relayer == nil)
 }
 
 func initTestDB(t *testing.T) *dal.DB {
 	t.Helper()
-	err := godotenv.Load("../.env.test") // load the env, it is needed for tests
-	assert.NilError(t, err)
 
 	db, err := dal.NewDB(":memory:")
 	assert.NilError(t, err)
