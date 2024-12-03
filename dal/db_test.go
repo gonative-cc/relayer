@@ -1,18 +1,20 @@
-package dal
+package dal_test
 
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/gonative-cc/relayer/dal"
+	"github.com/gonative-cc/relayer/dal/daltest"
+	"gotest.tools/v3/assert"
 )
 
 func TestInsertTx(t *testing.T) {
-	db := initTestDB(t)
+	db := daltest.InitTestDB(t)
 
-	tx := Tx{
+	tx := dal.Tx{
 		BtcTxID: 1,
-		RawTx:   "raw-transaction-hex",
-		Status:  StatusPending,
+		RawTx:   []byte("tx1-hex"),
+		Status:  dal.StatusPending,
 	}
 
 	err := db.InsertTx(tx)
@@ -24,12 +26,12 @@ func TestInsertTx(t *testing.T) {
 }
 
 func TestGetPendingTxs(t *testing.T) {
-	db := initTestDB(t)
+	db := daltest.InitTestDB(t)
 
-	transactions := []Tx{
-		{BtcTxID: 1, RawTx: "tx1-hex", Status: StatusPending},
-		{BtcTxID: 2, RawTx: "tx2-hex", Status: StatusBroadcasted},
-		{BtcTxID: 3, RawTx: "tx3-hex", Status: StatusPending},
+	transactions := []dal.Tx{
+		{BtcTxID: 1, RawTx: []byte("tx1-hex"), Status: dal.StatusPending},
+		{BtcTxID: 2, RawTx: []byte("tx2-hex"), Status: dal.StatusBroadcasted},
+		{BtcTxID: 3, RawTx: []byte("tx3-hex"), Status: dal.StatusPending},
 	}
 	for _, tx := range transactions {
 		err := db.InsertTx(tx)
@@ -42,32 +44,20 @@ func TestGetPendingTxs(t *testing.T) {
 }
 
 func TestUpdateTxStatus(t *testing.T) {
-	db := initTestDB(t)
-
+	db := daltest.InitTestDB(t)
 	txID := uint64(1)
-
-	tx := Tx{
+	tx := dal.Tx{
 		BtcTxID: txID,
-		RawTx:   "raw-transaction-hex",
-		Status:  StatusPending,
+		RawTx:   []byte("tx1-hex"),
+		Status:  dal.StatusPending,
 	}
 	err := db.InsertTx(tx)
 	assert.NilError(t, err)
 
-	err = db.UpdateTxStatus(txID, StatusBroadcasted)
+	err = db.UpdateTxStatus(txID, dal.StatusBroadcasted)
 	assert.NilError(t, err)
 
 	updatedTx, err := db.GetTx(txID)
 	assert.NilError(t, err)
-	assert.Equal(t, updatedTx.Status, StatusBroadcasted)
-}
-
-func initTestDB(t *testing.T) *DB {
-	t.Helper()
-
-	db, err := NewDB(":memory:")
-	assert.NilError(t, err)
-	err = db.InitDB()
-	assert.NilError(t, err)
-	return db
+	assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
 }
