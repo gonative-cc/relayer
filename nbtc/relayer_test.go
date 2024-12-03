@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"gotest.tools/assert"
 )
 
-var config = BtcClientConfig{
+var config = rpcclient.ConnConfig{
 	Host:         "test_rpc",
 	User:         "test_user",
 	Pass:         "test_pass",

@@ -14,15 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// BtcClientConfig holds the configuration for the Bitcoin RPC client.
-type BtcClientConfig struct {
-	Host         string `json:"host"`
-	User         string `json:"user"`
-	Pass         string `json:"pass"`
-	HTTPPostMode bool   `json:"httpPostMode"`
-	DisableTLS   bool   `json:"disableTLS"`
-}
-
 // Relayer broadcasts pending transactions from the database to the Bitcoin network.
 type Relayer struct {
 	db               *dal.DB
@@ -32,7 +23,7 @@ type Relayer struct {
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration.
-func NewRelayer(btcClientConfig BtcClientConfig, processTxsInterval time.Duration, db *dal.DB) (*Relayer, error) {
+func NewRelayer(btcClientConfig rpcclient.ConnConfig, processTxsInterval time.Duration, db *dal.DB) (*Relayer, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database cannot be nil")
 	}
@@ -43,15 +34,7 @@ func NewRelayer(btcClientConfig BtcClientConfig, processTxsInterval time.Duratio
 		return nil, err
 	}
 
-	connCfg := &rpcclient.ConnConfig{
-		Host:         btcClientConfig.Host,
-		User:         btcClientConfig.User,
-		Pass:         btcClientConfig.Pass,
-		HTTPPostMode: btcClientConfig.HTTPPostMode,
-		DisableTLS:   btcClientConfig.DisableTLS,
-	}
-
-	client, err := rpcclient.New(connCfg, nil)
+	client, err := rpcclient.New(&btcClientConfig, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +62,7 @@ func (r *Relayer) Start() error {
 		case <-r.processTxsTicker.C:
 			if err := r.processPendingTxs(); err != nil {
 				var sqliteErr *sqlite3.Error
+				//TODO: decide on which exact errors to continue and on which to stop the relayer
 				if errors.As(err, &sqliteErr) {
 					log.Err(err).Msg("Critical error updating transaction status, shutting down")
 					close(r.shutdownChan)
@@ -98,10 +82,8 @@ func (r *Relayer) processPendingTxs() error {
 	}
 
 	for _, tx := range pendingTxs {
-
 		var msgTx wire.MsgTx
-		err := msgTx.Deserialize(bytes.NewReader(tx.RawTx))
-		if err != nil {
+		if err := msgTx.Deserialize(bytes.NewReader(tx.RawTx)); err != nil {
 			return err
 		}
 
