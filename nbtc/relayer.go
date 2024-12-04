@@ -25,7 +25,12 @@ type Relayer struct {
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration.
-func NewRelayer(btcClientConfig rpcclient.ConnConfig, processTxsInterval time.Duration, confirmTxsInterval time.Duration, db *dal.DB) (*Relayer, error) {
+func NewRelayer(
+	btcClientConfig rpcclient.ConnConfig,
+	processTxsInterval time.Duration,
+	confirmTxsInterval time.Duration,
+	db *dal.DB,
+) (*Relayer, error) {
 
 	if db == nil {
 		return nil, fmt.Errorf("database cannot be nil")
@@ -77,7 +82,8 @@ func (r *Relayer) Start() error {
 					log.Err(err).Msg("Error processing transactions, continuing")
 				}
 			}
-		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database so probably we should wrap the db in a mutex
+		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
+		// so probably we should wrap the db in a mutex
 		case <-r.confirmTxsTicker.C:
 			if err := r.checkConfirmations(); err != nil {
 				var sqliteErr *sqlite3.Error
@@ -120,7 +126,8 @@ func (r *Relayer) processPendingTxs() error {
 	return nil
 }
 
-// checkConfirmations checks all the broadcasted transactions to bitcoin and if confirmed updates the database accordingly.
+// checkConfirmations checks all the broadcasted transactions to bitcoin
+// and if confirmed updates the database accordingly.
 func (r *Relayer) checkConfirmations() error {
 	broadcastedTxs, err := r.db.GetBroadcastedTxs()
 	if err != nil {
@@ -137,7 +144,8 @@ func (r *Relayer) checkConfirmations() error {
 			return fmt.Errorf("error getting transaction details: %w", err)
 		}
 
-		if txDetails.Confirmations >= 6 { // TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
+		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
+		if txDetails.Confirmations >= 6 {
 			err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusConfirmed)
 			if err != nil {
 				return fmt.Errorf("DB: can't update tx status: %w", err)
