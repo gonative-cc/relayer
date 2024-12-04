@@ -30,16 +30,6 @@ func TestGetPendingTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	daltest.PopulateDB(t, db)
 
-	transactions := []dal.Tx{
-		{BtcTxID: 1, RawTx: []byte("tx1-hex"), Status: dal.StatusPending},
-		{BtcTxID: 2, RawTx: []byte("tx2-hex"), Status: dal.StatusBroadcasted},
-		{BtcTxID: 3, RawTx: []byte("tx3-hex"), Status: dal.StatusPending},
-	}
-	for _, tx := range transactions {
-		err := db.InsertTx(tx)
-		assert.NilError(t, err)
-	}
-
 	pendingTxs, err := db.GetPendingTxs()
 	assert.NilError(t, err)
 	assert.Equal(t, len(pendingTxs), 2)

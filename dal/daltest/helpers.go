@@ -2,6 +2,7 @@ package daltest
 
 import (
 	"testing"
+
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gonative-cc/relayer/dal"
 	"gotest.tools/assert"
@@ -19,7 +20,7 @@ func InitTestDB(t *testing.T) *dal.DB {
 }
 
 // GetHashBytes creates a byte array from a hash string.
-func GetHashBytes(t *testing.T, hashString tring) []byte {
+func GetHashBytes(t *testing.T, hashString string) []byte {
 	t.Helper()
 	hash, err := chainhash.NewHashFromStr(hashString)
 	assert.NilError(t, err)
@@ -31,11 +32,23 @@ func GetHashBytes(t *testing.T, hashString tring) []byte {
 func PopulateDB(t *testing.T, db *dal.DB) []dal.Tx {
 	t.Helper()
 
+	var rawTxBytes = []byte{
+		0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0xf2, 0x05,
+		0x2a, 0x01, 0x00, 0x00, 0x00, 0x19, 0x76, 0xa9, 0x14, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x88, 0xac, 0x00, 0x00,
+		0x00, 0x00,
+	}
+
 	txs := []dal.Tx{
-		{BtcTxID: 1, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000001", Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "1")},
-		{BtcTxID: 2, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000002", Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "2")},
-		{BtcTxID: 3, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000003", Status: dal.StatusPending, Hash: GetHashBytes(t, "3")},
-		{BtcTxID: 4, RawTx: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a914000000000000000000000000000000000000000088ac00000004", Status: dal.StatusPending, Hash: GetHashBytes(t, "4")},
+		{BtcTxID: 1, RawTx: rawTxBytes, Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "1")},
+		{BtcTxID: 2, RawTx: rawTxBytes, Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "2")},
+		{BtcTxID: 3, RawTx: rawTxBytes, Status: dal.StatusPending, Hash: GetHashBytes(t, "3")},
+		{BtcTxID: 4, RawTx: rawTxBytes, Status: dal.StatusPending, Hash: GetHashBytes(t, "4")},
 	}
 	for _, tx := range txs {
 		err := db.InsertTx(tx)
