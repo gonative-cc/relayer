@@ -2,7 +2,6 @@ package daltest
 
 import (
 	"testing"
-
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gonative-cc/relayer/dal"
 	"gotest.tools/assert"
