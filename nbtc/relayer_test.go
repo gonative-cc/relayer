@@ -11,7 +11,7 @@ import (
 	"gotest.tools/assert"
 )
 
-var config = rpcclient.ConnConfig{
+var btcClientConfig = rpcclient.ConnConfig{
 	Host:         "test_rpc",
 	User:         "test_user",
 	Pass:         "test_pass",
@@ -19,11 +19,17 @@ var config = rpcclient.ConnConfig{
 	DisableTLS:   false,
 }
 
+var relayerConfig = RelayerConfig{
+	ProcessTxsInterval:    time.Second * 5,
+	ConfirmTxsInterval:    time.Second * 7,
+	ConfirmationThreshold: 6,
+}
+
 func Test_Start(t *testing.T) {
 	db := initTestDB(t)
 	txs := daltest.PopulateDB(t, db)
 
-	relayer, err := NewRelayer(config, 0, 0, db)
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
@@ -62,7 +68,7 @@ func Test_Start(t *testing.T) {
 func Test_processPendingTxs(t *testing.T) {
 	db := initTestDB(t)
 	txs := daltest.PopulateDB(t, db)
-	relayer, err := NewRelayer(config, 0, 0, db)
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
@@ -79,7 +85,7 @@ func Test_processPendingTxs(t *testing.T) {
 func Test_checkConfirmations(t *testing.T) {
 	db := initTestDB(t)
 	daltest.PopulateDB(t, db)
-	relayer, err := NewRelayer(config, 0, 0, db)
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
@@ -96,15 +102,15 @@ func Test_checkConfirmations(t *testing.T) {
 }
 
 func Test_NewRelayer_DatabaseError(t *testing.T) {
-	relayer, err := NewRelayer(config, 0, 0, nil)
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, nil)
 	assert.ErrorContains(t, err, "database cannot be nil")
 	assert.Assert(t, relayer == nil)
 }
 
 func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
 	db := initTestDB(t)
-	config.Host = ""
-	relayer, err := NewRelayer(config, 0, 0, db)
+	btcClientConfig.Host = ""
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
 	assert.ErrorContains(t, err, "missing bitcoin node configuration")
 	assert.Assert(t, relayer == nil)
 }

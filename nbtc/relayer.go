@@ -17,18 +17,25 @@ import (
 
 // Relayer broadcasts pending transactions from the database to the Bitcoin network.
 type Relayer struct {
-	db               *dal.DB
-	btcClient        bitcoin.Client
-	shutdownChan     chan struct{}
-	processTxsTicker *time.Ticker
-	confirmTxsTicker *time.Ticker
+	db                      *dal.DB
+	btcClient               bitcoin.Client
+	shutdownChan            chan struct{}
+	processTxsTicker        *time.Ticker
+	confirmTxsTicker        *time.Ticker
+	txConfirmationThreshold uint8
+}
+
+// RelayerConfig holds the configuration parameters for the Relayer.
+type RelayerConfig struct {
+	ProcessTxsInterval    time.Duration `json:"processTxsInterval"`
+	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
+	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration.
 func NewRelayer(
 	btcClientConfig rpcclient.ConnConfig,
-	processTxsInterval time.Duration,
-	confirmTxsInterval time.Duration,
+	relayerConfig RelayerConfig,
 	db *dal.DB,
 ) (*Relayer, error) {
 
@@ -49,20 +56,25 @@ func NewRelayer(
 		return nil, err
 	}
 
-	if processTxsInterval == 0 {
-		processTxsInterval = time.Second * 5
+	if relayerConfig.ProcessTxsInterval == 0 {
+		relayerConfig.ProcessTxsInterval = time.Second * 5
 	}
 
-	if confirmTxsInterval == 0 {
-		confirmTxsInterval = time.Second * 7
+	if relayerConfig.ConfirmTxsInterval == 0 {
+		relayerConfig.ConfirmTxsInterval = time.Second * 7
+	}
+
+	if relayerConfig.ConfirmationThreshold == 0 {
+		relayerConfig.ConfirmationThreshold = 6
 	}
 
 	return &Relayer{
-		db:               db,
-		btcClient:        client,
-		shutdownChan:     make(chan struct{}),
-		processTxsTicker: time.NewTicker(processTxsInterval),
-		confirmTxsTicker: time.NewTicker(confirmTxsInterval),
+		db:                      db,
+		btcClient:               client,
+		shutdownChan:            make(chan struct{}),
+		processTxsTicker:        time.NewTicker(relayerConfig.ProcessTxsInterval),
+		confirmTxsTicker:        time.NewTicker(relayerConfig.ConfirmTxsInterval),
+		txConfirmationThreshold: relayerConfig.ConfirmationThreshold,
 	}, nil
 }
 
@@ -147,7 +159,7 @@ func (r *Relayer) checkConfirmations() error {
 		}
 
 		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
-		if txDetails.Confirmations >= 6 {
+		if txDetails.Confirmations >= int64(r.txConfirmationThreshold) {
 			err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusConfirmed)
 			if err != nil {
 				return fmt.Errorf("DB: can't update tx status: %w", err)
