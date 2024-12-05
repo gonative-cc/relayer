@@ -23,3 +23,6 @@ go.work.sum
 
 # binaries
 out
+
+contrib/bitcoin
+contrib/regtest
