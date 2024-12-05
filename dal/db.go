@@ -59,13 +59,13 @@ func NewDB(dbPath string) (*DB, error) {
 }
 
 // InitDB initializes the database
-func (db DB) InitDB() error {
+func (db *DB) InitDB() error {
 	_, err := db.conn.Exec(createTransactionsTableSQL)
 	return err
 }
 
 // InsertTx inserts a new transaction into the database
-func (db DB) InsertTx(tx Tx) error {
+func (db *DB) InsertTx(tx Tx) error {
 	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.Hash, tx.RawTx, tx.Status)
 	return err
 }
@@ -117,7 +117,7 @@ func (db DB) getTxsByStatus(status TxStatus) ([]Tx, error) {
 }
 
 // UpdateTxStatus updates the status of a transaction by txid
-func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
+func (db *DB) UpdateTxStatus(txID uint64, status TxStatus) error {
 	_, err := db.conn.Exec(updateTransactionStatusSQL, status, txID)
 	return err
 }

@@ -33,7 +33,9 @@ func NewRelayer(
 ) (*Relayer, error) {
 
 	if db == nil {
-		return nil, fmt.Errorf("database cannot be nil")
+		err := fmt.Errorf("database cannot be nil")
+		log.Err(err).Msg("")
+		return nil, err
 	}
 
 	if btcClientConfig.Host == "" || btcClientConfig.User == "" || btcClientConfig.Pass == "" {
