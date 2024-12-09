@@ -36,6 +36,63 @@ Mock -> WIP -> alpha -> beta -> production
 | Native-\>Bitcoin | :x:    |
 | Bitcoin SPV      |        |
 
+## Database Interactions
+
+This part describes the database schema and interactions used in the relayer.
+
+### Schema
+
+The relayer uses a SQLite database to store and manage transaction data. The database has a single table named `transactions` with the following schema:
+
+| Column | Data Type | Description |
+|---|---|---|
+| `btc_tx_id` | INTEGER | The ID of the Bitcoin transaction (primary key) |
+| `raw_tx` | BLOB | The raw transaction data as a byte array |
+| `tx_hash` | BLOB | The transaction hash as a byte array |
+| `status` | INTEGER | The status of the transaction (0: Pending, 1: Signed, 2: Broadcasted, 3: Confirmed) |
+
+### Functions
+
+The relayer interacts with the database using the following functions:
+
+1. `InsertTx()`: Inserts a new transaction into the database.
+2. `GetTx()`: Retrieves a transaction by its ID.
+3. `GetPendingTxs()`: Retrieves all transactions with a "Pending" status.
+4. `UpdateTxStatus()`: Updates the status of a transaction.
+
+### Flow
+
+The following diagram illustrates the flow of a transaction through the relayer and the database. This is one `Relayer` but it interacts with three different networks (`Native`, `IKA` and `Bitcoin`)
+
+```mermaid
+flowchart TB
+ subgraph subGraph0["Relayer (Native network)"]
+    direction TB
+        B["Indexes transaction"]
+        A["User submits transaction"]
+  end
+ subgraph subGraph1["Relayer (IKA network)"]
+        E["IKA signs transaction"]
+        D["Sends to IKA for signing"]
+  end
+ subgraph subGraph2["Relayer (Bitcoin network)"]
+        H["Broadcasts Bitcoin transaction"]
+        G["Constructs Bitcoin transaction"]
+        I["Checks for confirmations"]
+  end
+    A --> B
+    B -- Stores transaction (Pending) --> Database["Database"]
+    Database -- Reads pending transaction --> D
+    D --> E
+    E -- Stores signed transaction --> Database
+    Database -- Reads signed transaction --> G
+    G --> H
+    H --> I
+    I -- Updates status to Confirmed --> Database
+
+    Database@{ shape: db}
+```
+
 ## Contributing
 
 Participating in open source is often a highly collaborative experience. We’re encouraged to create in public view, and we’re incentivized to welcome contributions of all kinds from people around the world.
