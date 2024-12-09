@@ -12,6 +12,7 @@ import (
 )
 
 func TestClient_ApproveAndSign(t *testing.T) {
+	t.Skip("Test to be run locally for debugging purposes only")
 	err := godotenv.Load("./../.env.test")
 	assert.Nil(t, err)
 
