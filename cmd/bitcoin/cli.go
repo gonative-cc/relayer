@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	bbnclient "github.com/babylonchain/babylon/client/client"
 	"github.com/gonative-cc/relayer/btcclient"
+	"github.com/gonative-cc/relayer/reporter"
 	"github.com/gonative-cc/relayer/reporter/config"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -45,11 +47,11 @@ func CmdStart() *cobra.Command {
 		Short: "Vigilant reporter",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
-				err       error
-				cfg       config.Config
-				btcClient *btcclient.Client
-				// babylonClient    *bbnclient.Client
-				// vigilantReporter *reporter.Reporter
+				err              error
+				cfg              config.Config
+				btcClient        *btcclient.Client
+				babylonClient    *bbnclient.Client
+				vigilantReporter *reporter.Reporter
 				// server           *rpcserver.Server
 			)
 
@@ -70,7 +72,12 @@ func CmdStart() *cobra.Command {
 
 			// create BTC client and connect to BTC server
 			// Note that vigilant reporter needs to subscribe to new BTC blocks
-			btcClient, err = btcclient.NewWithBlockSubscriber(&cfg.BTC, cfg.Common.RetrySleepTime, cfg.Common.MaxRetrySleepTime, rootLogger)
+			btcClient, err = btcclient.NewWithBlockSubscriber(
+				&cfg.BTC,
+				cfg.Common.RetrySleepTime,
+				cfg.Common.MaxRetrySleepTime,
+				rootLogger,
+			)
 			if err != nil {
 				panic(fmt.Errorf("failed to open BTC client: %w", err))
 			}
@@ -86,28 +93,28 @@ func CmdStart() *cobra.Command {
 					zap.Int64("time", tipBlock.Time))
 			}
 
-			// // create Babylon client. Note that requests from Babylon client are ad hoc
-			// babylonClient, err = bbnclient.New(&cfg.Babylon, nil)
-			// if err != nil {
-			// 	panic(fmt.Errorf("failed to open Babylon client: %w", err))
-			// }
+			// create Babylon client. Note that requests from Babylon client are ad hoc
+			babylonClient, err = bbnclient.New(&cfg.Babylon, nil)
+			if err != nil {
+				panic(fmt.Errorf("failed to open Babylon client: %w", err))
+			}
 
-			// // register reporter metrics
-			// reporterMetrics := reporter.NewReporterMetrics()
+			// register reporter metrics
+			reporterMetrics := reporter.NewReporterMetrics()
 
-			// // create reporter
-			// vigilantReporter, err = reporter.New(
-			// 	&cfg.Reporter,
-			// 	rootLogger,
-			// 	btcClient,
-			// 	babylonClient,
-			// 	cfg.Common.RetrySleepTime,
-			// 	cfg.Common.MaxRetrySleepTime,
-			// 	reporterMetrics,
-			// )
-			// if err != nil {
-			// 	panic(fmt.Errorf("failed to create vigilante reporter: %w", err))
-			// }
+			// create reporter
+			vigilantReporter, err = reporter.New(
+				&cfg.Reporter,
+				rootLogger,
+				btcClient,
+				babylonClient,
+				cfg.Common.RetrySleepTime,
+				cfg.Common.MaxRetrySleepTime,
+				reporterMetrics,
+			)
+			if err != nil {
+				panic(fmt.Errorf("failed to create vigilante reporter: %w", err))
+			}
 
 			// // create RPC server
 			// server, err = rpcserver.New(&cfg.GRPC, rootLogger, nil, vigilantReporter, nil, nil)
@@ -115,8 +122,8 @@ func CmdStart() *cobra.Command {
 			// 	panic(fmt.Errorf("failed to create reporter's RPC server: %w", err))
 			// }
 
-			// // start normal-case execution
-			// vigilantReporter.Start()
+			// start normal-case execution
+			vigilantReporter.Start()
 
 			// // start RPC server
 			// server.Start()

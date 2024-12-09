@@ -11,7 +11,7 @@ import (
 	"github.com/gonative-cc/relayer/reporter/types"
 )
 
-type BabylonClient interface {
+type NativeClient interface {
 	// gets the signer addr used to post txns to babylon chain
 	MustGetAddr() string
 	// chain level configuration (not used in relayer)

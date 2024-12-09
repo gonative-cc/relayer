@@ -27,7 +27,10 @@ func (r *Reporter) blockEventHandler() {
 			}
 
 			if errorRequiringBootstrap != nil {
-				r.logger.Warnf("Due to error in event processing: %v, bootstrap process need to be restarted", errorRequiringBootstrap)
+				r.logger.Warnf(
+					"Due to error in event processing: %v, bootstrap process need to be restarted",
+					errorRequiringBootstrap,
+				)
 				r.bootstrapWithRetries(true)
 			}
 
@@ -83,7 +86,10 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	blockHash := event.Header.BlockHash()
 	ib, mBlock, err := r.btcClient.GetBlockByHash(&blockHash)
 	if err != nil {
-		return fmt.Errorf("failed to get block %v with number %d ,from BTC client: %w", blockHash, event.Height, err)
+		return fmt.Errorf(
+			"failed to get block %v with number %d ,from BTC client: %w",
+			blockHash, event.Height, err,
+		)
 	}
 
 	// if the parent of the block is not the tip of the cache, then the cache is not up-to-date,
@@ -91,7 +97,10 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	parentHash := mBlock.Header.PrevBlock
 	cacheTip := r.btcCache.Tip() // NOTE: cache is guaranteed to be non-empty at this stage
 	if parentHash != cacheTip.BlockHash() {
-		return fmt.Errorf("cache (tip %d) is not up-to-date while connecting block %d, restart bootstrap process", cacheTip.Height, ib.Height)
+		return fmt.Errorf(
+			"cache (tip %d) is not up-to-date while connecting block %d, restart bootstrap process",
+			cacheTip.Height, ib.Height,
+		)
 	}
 
 	// otherwise, add the block to the cache
@@ -116,7 +125,10 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 
 		// if current branch is better than reorg branch, we can submit headers and clear reorg list
 		if currentBranchWork.GT(r.reorgList.removedBranchWork()) {
-			r.logger.Debugf("Current branch is better than reorg branch. Length of current branch: %d, work of branch: %s", len(currentBranch), currentBranchWork)
+			r.logger.Debugf(
+				"Current branch is better than reorg branch. Length of current branch: %d, work of branch: %s",
+				len(currentBranch), currentBranchWork,
+			)
 			headersToProcess = append(headersToProcess, currentBranch...)
 			r.reorgList.clear()
 		}
@@ -130,6 +142,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	}
 
 	// extracts and submits headers for each blocks in ibs
+	// UDIT: remove the signer and simply send the header to the LC API
 	signer := r.babylonClient.MustGetAddr()
 	_, err = r.ProcessHeaders(signer, headersToProcess)
 	if err != nil {

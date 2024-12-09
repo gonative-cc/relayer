@@ -21,14 +21,18 @@ func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
 
 // getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
 // should be submitted to Babylon from a given set of indexed blocks
-func (r *Reporter) getHeaderMsgsToSubmit(signer string, ibs []*types.IndexedBlock) ([]*types.MsgInsertHeaders, error) {
+func (r *Reporter) getHeaderMsgsToSubmit(
+	signer string,
+	ibs []*types.IndexedBlock,
+) ([]*types.MsgInsertHeaders, error) {
 	var (
 		startPoint  = -1
 		ibsToSubmit []*types.IndexedBlock
 		err         error
 	)
 
-	// find the first header that is not contained in BBN header chain, then submit since this header
+	// find the first header that is not contained in BBN header chain,
+	// then submit since this header
 	for i, header := range ibs {
 		blockHash := header.BlockHash()
 		var res *btclctypes.QueryContainsBytesResponse

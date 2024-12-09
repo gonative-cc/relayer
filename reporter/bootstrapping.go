@@ -28,7 +28,6 @@ type consistencyCheckInfo struct {
 // between BBN header chain and BTC main chain.` This makes sure that already confirmed chain is the same from point
 // of view of both chains.
 func (r *Reporter) checkConsistency() (*consistencyCheckInfo, error) {
-
 	tipRes, err := r.babylonClient.BTCHeaderChainTip()
 	if err != nil {
 		return nil, err
@@ -47,7 +46,8 @@ func (r *Reporter) checkConsistency() (*consistencyCheckInfo, error) {
 		consistencyCheckHeight = baseRes.Header.Height
 	}
 
-	// this checks whether header at already confirmed height is the same in reporter btc cache and in babylon btc light client
+	// this checks whether header at already confirmed height is the same in reporter btc cache
+	// and in babylon btc light client
 	if err := r.checkHeaderConsistency(consistencyCheckHeight); err != nil {
 		return nil, err
 	}
@@ -80,9 +80,14 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	}
 	r.logger.Debugf("BTC cache size: %d", r.btcCache.Size())
 
-	// Subscribe new blocks right after initialising BTC cache, in order to ensure subscribed blocks and cached blocks do not have overlap.
-	// Otherwise, if we subscribe too early, then they will have overlap, leading to duplicated header/ckpt submissions.
+	// Subscribe new blocks right after initialising BTC cache,
+	// in order to ensure subscribed blocks and cached blocks do not have overlap.
+	// Otherwise, if we subscribe too early, then they will have overlap,
+	// leading to duplicated header/ckpt submissions.
 	if !skipBlockSubscription {
+		// UDIT: check if in the bitcoin RPC spec and it's use?
+		// UDIT: it calls the btcd websockets method NotifyBlocks()
+		// UDIT: check how to implement this websocket method in bitcoin_mock_node
 		r.btcClient.MustSubscribeBlocks()
 	}
 
@@ -99,11 +104,15 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 
 	signer := r.babylonClient.MustGetAddr()
 
-	r.logger.Infof("BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.", btcLatestBlockHeight, consistencyInfo.bbnLatestBlockHeight, consistencyInfo.startSyncHeight)
+	r.logger.Infof(
+		"BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.",
+		btcLatestBlockHeight, consistencyInfo.bbnLatestBlockHeight, consistencyInfo.startSyncHeight,
+	)
 
 	// extracts and submits headers for each block in ibs
 	// Note: As we are retrieving blocks from btc cache from block just after confirmed block which
-	// we already checked for consistency, we can be sure that even if rest of the block headers is different than in Babylon
+	// we already checked for consistency, we can be sure that
+	// even if rest of the block headers is different than in Babylon
 	// due to reorg, our fork will be better than the one in Babylon.
 	_, err = r.ProcessHeaders(signer, ibs)
 	if err != nil {
@@ -123,12 +132,12 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 
 	r.logger.Infof("Size of the BTC cache: %d", r.btcCache.Size())
 
-	// fetch k+w blocks from cache and submit checkpoints
-	ibs = r.btcCache.GetAllBlocks()
-	_, _, err = r.ProcessCheckpoints(signer, ibs)
-	if err != nil {
-		r.logger.Warnf("Failed to submit checkpoints: %v", err)
-	}
+	// // fetch k+w blocks from cache and submit checkpoints
+	// ibs = r.btcCache.GetAllBlocks()
+	// _, _, err = r.ProcessCheckpoints(signer, ibs)
+	// if err != nil {
+	// 	r.logger.Warnf("Failed to submit checkpoints: %v", err)
+	// }
 
 	r.logger.Info("Successfully finished bootstrapping")
 	return nil
@@ -164,7 +173,9 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 		bootstrapRetryInterval,
 		bootstrapDelayType,
 		bootstrapErrReportType, retry.OnRetry(func(n uint, err error) {
-			r.logger.Warnf("Failed to bootstap reporter: %v. Attempt: %d, Max attempts: %d", err, n+1, bootstrapAttempts)
+			r.logger.Warnf(
+				"Failed to bootstap reporter: %v. Attempt: %d, Max attempts: %d", err, n+1, bootstrapAttempts,
+			)
 		})); err != nil {
 
 		if errors.Is(err, context.Canceled) {
@@ -194,6 +205,7 @@ func (r *Reporter) initBTCCache() error {
 	}
 
 	// get T, i.e., total block count in BBN header chain
+	// UDIT: replace here with Vu's LC chain tip API
 	tipRes, err := r.babylonClient.BTCHeaderChainTip()
 	if err != nil {
 		return err
@@ -201,6 +213,7 @@ func (r *Reporter) initBTCCache() error {
 	bbnLatestBlockHeight = tipRes.Header.Height
 
 	// Find the base height
+	// UDIT: check what is BTC base header here
 	baseRes, err := r.babylonClient.BTCBaseHeader()
 	if err != nil {
 		return err
@@ -217,6 +230,7 @@ func (r *Reporter) initBTCCache() error {
 		baseHeight = bbnBaseHeight
 	}
 
+	// UDIT: check what is tail blocks and if it's the bitcoin RPC spec?
 	ibs, err = r.btcClient.FindTailBlocksByHeight(baseHeight)
 	if err != nil {
 		panic(err)
@@ -244,11 +258,15 @@ func (r *Reporter) waitUntilBTCSync() error {
 	if err != nil {
 		return err
 	}
-	r.logger.Infof("BTC latest block hash and height: (%v, %d)", btcLatestBlockHash, btcLatestBlockHeight)
+	r.logger.Infof(
+		"BTC latest block hash and height: (%v, %d)", btcLatestBlockHash, btcLatestBlockHeight,
+	)
 
-	// TODO: if BTC falls behind BTCLightclient's base header, then the vigilante is incorrectly configured and should panic
+	// TODO: if BTC falls behind BTCLightclient's base header,
+	// then the vigilante is incorrectly configured and should panic
 
 	// Retrieve hash/height of the latest block in BBN header chain
+	// UDIT: replace here with Vu's LC chain tip API
 	tipRes, err := r.babylonClient.BTCHeaderChainTip()
 	if err != nil {
 		return err
@@ -261,11 +279,17 @@ func (r *Reporter) waitUntilBTCSync() error {
 
 	bbnLatestBlockHash = hash.ToChainhash()
 	bbnLatestBlockHeight = tipRes.Header.Height
-	r.logger.Infof("BBN header chain latest block hash and height: (%v, %d)", bbnLatestBlockHash, bbnLatestBlockHeight)
+	r.logger.Infof(
+		"BBN header chain latest block hash and height: (%v, %d)",
+		bbnLatestBlockHash, bbnLatestBlockHeight,
+	)
 
 	// If BTC chain is shorter than BBN header chain, pause until BTC catches up
 	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < bbnLatestBlockHeight {
-		r.logger.Infof("BTC chain (length %d) falls behind BBN header chain (length %d), wait until BTC catches up", btcLatestBlockHeight, bbnLatestBlockHeight)
+		r.logger.Infof(
+			"BTC chain (length %d) falls behind BBN header chain (length %d), wait until BTC catches up",
+			btcLatestBlockHeight, bbnLatestBlockHeight,
+		)
 
 		// periodically check if BTC catches up with BBN.
 		// When BTC catches up, break and continue the bootstrapping process
@@ -275,16 +299,23 @@ func (r *Reporter) waitUntilBTCSync() error {
 			if err != nil {
 				return err
 			}
+			// UDIT: replace here with Vu's LC chain tip API
 			tipRes, err = r.babylonClient.BTCHeaderChainTip()
 			if err != nil {
 				return err
 			}
 			bbnLatestBlockHeight = tipRes.Header.Height
 			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= bbnLatestBlockHeight {
-				r.logger.Infof("BTC chain (length %d) now catches up with BBN header chain (length %d), continue bootstrapping", btcLatestBlockHeight, bbnLatestBlockHeight)
+				r.logger.Infof(
+					"BTC chain (length %d) now catches up with BBN header chain (length %d), continue bootstrapping",
+					btcLatestBlockHeight, bbnLatestBlockHeight,
+				)
 				break
 			}
-			r.logger.Infof("BTC chain (length %d) still falls behind BBN header chain (length %d), keep waiting", btcLatestBlockHeight, bbnLatestBlockHeight)
+			r.logger.Infof(
+				"BTC chain (length %d) still falls behind BBN header chain (length %d), keep waiting",
+				btcLatestBlockHeight, bbnLatestBlockHeight,
+			)
 		}
 	}
 
@@ -296,12 +327,18 @@ func (r *Reporter) checkHeaderConsistency(consistencyCheckHeight uint64) error {
 
 	consistencyCheckBlock := r.btcCache.FindBlock(consistencyCheckHeight)
 	if consistencyCheckBlock == nil {
-		err = fmt.Errorf("cannot find the %d-th block of BBN header chain in BTC cache for initial consistency check", consistencyCheckHeight)
+		err = fmt.Errorf(
+			"cannot find the %d-th block of BBN header chain in BTC cache for initial consistency check",
+			consistencyCheckHeight,
+		)
 		panic(err)
 	}
 	consistencyCheckHash := consistencyCheckBlock.BlockHash()
 
-	r.logger.Debugf("block for consistency check: height %d, hash %v", consistencyCheckHeight, consistencyCheckHash)
+	r.logger.Debugf(
+		"block for consistency check: height %d, hash %v",
+		consistencyCheckHeight, consistencyCheckHash,
+	)
 
 	// Given that two consecutive BTC headers are chained via hash functions,
 	// generating a header that can be in two different positions in two different BTC header chains
@@ -312,7 +349,10 @@ func (r *Reporter) checkHeaderConsistency(consistencyCheckHeight uint64) error {
 		return err
 	}
 	if !res.Contains {
-		err = fmt.Errorf("BTC main chain is inconsistent with BBN header chain: k-deep block in BBN header chain: %v", consistencyCheckHash)
+		err = fmt.Errorf(
+			"BTC main chain is inconsistent with BBN header chain: k-deep block in BBN header chain: %v",
+			consistencyCheckHash,
+		)
 		panic(err)
 	}
 	return nil
