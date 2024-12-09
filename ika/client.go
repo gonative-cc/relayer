@@ -96,7 +96,7 @@ func (p *Client) ApproveAndSign(
 ) ([][]byte, error) {
 
 	//TODO: This function was only tested against dummy implementation of the dwallet module deployed locally.
-	//Once it is ready, test it again
+	// Once it is ready, test it again
 	req := models.MoveCallRequest{
 		Signer:          p.Signer.Address,
 		PackageObjectId: p.LcPackage,
