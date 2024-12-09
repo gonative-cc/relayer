@@ -92,10 +92,9 @@ func (p *Client) ApproveAndSign(
 	dwalletCapID string,
 	signMessagesID string,
 	messages [][]byte,
-	logger zerolog.Logger,
 ) ([][]byte, error) {
 
-	//TODO: This function was only tested against dummy implementation of the dwallet module deployed locally.
+	// TODO: This function was only tested against dummy implementation of the dwallet module deployed locally.
 	// Once it is ready, test it again
 	req := models.MoveCallRequest{
 		Signer:          p.Signer.Address,
@@ -111,20 +110,18 @@ func (p *Client) ApproveAndSign(
 	}
 	messageApprovals, err := p.c.MoveCall(ctx, req)
 	if err != nil {
-		logger.Err(err).Msg("Error calling move function:")
-		return nil, err
+		return nil, fmt.Errorf("error calling approve_messages function: %w", err)
 	}
 
 	req.Function = "sign"
-	req.TypeArguments = []interface{}
-	req.Argumetns = []interface{}{
+	req.TypeArguments = []interface{}{}
+	req.Arguments = []interface{}{
 		signMessagesID,
 		messageApprovals,
 	}
 	resp, err := p.c.MoveCall(ctx, req)
 	if err != nil {
-		logger.Err(err).Msg("Error calling move function:")
-		return nil, err
+		return nil, fmt.Errorf("error calling sign function: %w", err)
 	}
 
 	response, err := p.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
@@ -138,8 +135,7 @@ func (p *Client) ApproveAndSign(
 		RequestType: "WaitForLocalExecution",
 	})
 	if err != nil {
-		logger.Err(err).Msg("Error executing transaction block:")
-		return nil, err
+		return nil, fmt.Errorf("error executing transaction block: %w", err)
 	}
 
 	events, err := p.c.SuiGetEvents(ctx, models.SuiGetEventsRequest{
