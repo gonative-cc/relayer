@@ -115,17 +115,11 @@ func (p *Client) ApproveAndSign(
 		return nil, err
 	}
 
-	req = models.MoveCallRequest{
-		Signer:          p.Signer.Address,
-		PackageObjectId: p.LcPackage,
-		Module:          p.Module,
-		Function:        "sign",
-		TypeArguments:   []interface{}{},
-		Arguments: []interface{}{
-			signMessagesID,
-			messageApprovals,
-		},
-		GasBudget: p.GasBudget,
+	req.Function = "sign"
+	req.TypeArguments = []interface{}
+	req.Argumetns = []interface{}{
+		signMessagesID,
+		messageApprovals,
 	}
 	resp, err := p.c.MoveCall(ctx, req)
 	if err != nil {
