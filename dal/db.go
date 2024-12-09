@@ -18,13 +18,14 @@ const (
 
 // SQL queries
 const (
-	insertTransactionSQL       = "INSERT INTO transactions(txid, rawtx, status) values(?,?,?)"
-	getPendingTransactionsSQL  = "SELECT txid, rawtx, status FROM transactions WHERE status = ?"
-	getTransactionByTxidSQL    = "SELECT txid, rawtx, status FROM transactions WHERE txid = ?"
+	insertTransactionSQL       = "INSERT INTO transactions(txid, hash, rawtx, status) values(?,?,?,?)"
+	getTransactionsByStatusSQL = "SELECT txid, hash, rawtx, status FROM transactions WHERE status = ?"
+	getTransactionByTxidSQL    = "SELECT txid, hash, rawtx, status FROM transactions WHERE txid = ?"
 	updateTransactionStatusSQL = "UPDATE transactions SET status = ? WHERE txid = ?"
 	createTransactionsTableSQL = `
         CREATE TABLE IF NOT EXISTS transactions (
             txid TEXT PRIMARY KEY,
+			      hash BLOB NOT NULL,
             rawtx BLOB NOT NULL,
             status INTEGER NOT NULL NOT NULL
         )
@@ -34,6 +35,7 @@ const (
 // Tx represents a transaction record in the database.
 type Tx struct {
 	BtcTxID uint64   `json:"txid"`
+	Hash    []byte   `json:"hash"`
 	RawTx   []byte   `json:"rawtx"`
 	Status  TxStatus `json:"status"`
 	// TODO: other fields
@@ -57,14 +59,14 @@ func NewDB(dbPath string) (*DB, error) {
 }
 
 // InitDB initializes the database
-func (db DB) InitDB() error {
+func (db *DB) InitDB() error {
 	_, err := db.conn.Exec(createTransactionsTableSQL)
 	return err
 }
 
 // InsertTx inserts a new transaction into the database
-func (db DB) InsertTx(tx Tx) error {
-	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.RawTx, tx.Status)
+func (db *DB) InsertTx(tx Tx) error {
+	_, err := db.conn.Exec(insertTransactionSQL, tx.BtcTxID, tx.Hash, tx.RawTx, tx.Status)
 	return err
 }
 
@@ -72,7 +74,7 @@ func (db DB) InsertTx(tx Tx) error {
 func (db DB) GetTx(txID uint64) (*Tx, error) {
 	row := db.conn.QueryRow(getTransactionByTxidSQL, txID)
 	var tx Tx
-	err := row.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
+	err := row.Scan(&tx.BtcTxID, &tx.Hash, &tx.RawTx, &tx.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -85,7 +87,17 @@ func (db DB) GetTx(txID uint64) (*Tx, error) {
 
 // GetPendingTxs retrieves all transactions with a "pending" status
 func (db DB) GetPendingTxs() ([]Tx, error) {
-	rows, err := db.conn.Query(getPendingTransactionsSQL, StatusPending)
+	return db.getTxsByStatus(StatusPending)
+}
+
+// GetBroadcastedTxs retrieves all transactions with a "broadcasted" status
+func (db DB) GetBroadcastedTxs() ([]Tx, error) {
+	return db.getTxsByStatus(StatusBroadcasted)
+}
+
+// getTxsByStatus retrieves all transactions with a given status
+func (db DB) getTxsByStatus(status TxStatus) ([]Tx, error) {
+	rows, err := db.conn.Query(getTransactionsByStatusSQL, status)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +106,7 @@ func (db DB) GetPendingTxs() ([]Tx, error) {
 	var transactions []Tx
 	for rows.Next() {
 		var tx Tx
-		err := rows.Scan(&tx.BtcTxID, &tx.RawTx, &tx.Status)
+		err := rows.Scan(&tx.BtcTxID, &tx.Hash, &tx.RawTx, &tx.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +117,7 @@ func (db DB) GetPendingTxs() ([]Tx, error) {
 }
 
 // UpdateTxStatus updates the status of a transaction by txid
-func (db DB) UpdateTxStatus(txID uint64, status TxStatus) error {
+func (db *DB) UpdateTxStatus(txID uint64, status TxStatus) error {
 	_, err := db.conn.Exec(updateTransactionStatusSQL, status, txID)
 	return err
 }
