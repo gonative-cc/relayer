@@ -53,7 +53,7 @@ The relayer uses a SQLite database to store and manage transaction data. The dat
 
 ### Functions
 
-The relayer interacts with the database using the following functions:
+The relayer interacts with the database using the following functions in the `dal` package:
 
 1. `InsertTx()`: Inserts a new transaction into the database.
 2. `GetTx()`: Retrieves a transaction by its ID.
@@ -62,7 +62,7 @@ The relayer interacts with the database using the following functions:
 
 ### Flow
 
-The following diagram illustrates the flow of a transaction through the relayer and the database. This is one `Relayer` but it interacts with three different networks (`Native`, `IKA` and `Bitcoin`)
+The following diagram illustrates the flow of a transaction through the relayer and the database. This is one `Relayer`, but it interacts with three different networks (`Native`, `Ika` and `Bitcoin`)
 
 ```mermaid
 flowchart TB
@@ -71,9 +71,9 @@ flowchart TB
         B["Indexes transaction"]
         A["User submits transaction"]
   end
- subgraph subGraph1["Relayer (IKA network)"]
-        E["IKA signs transaction"]
-        D["Sends to IKA for signing"]
+ subgraph subGraph1["Relayer (Ika network)"]
+        E["Ika signs transaction"]
+        D["Sends to Ika for signing"]
   end
  subgraph subGraph2["Relayer (Bitcoin network)"]
         H["Broadcasts Bitcoin transaction"]
