@@ -81,7 +81,7 @@ func CmdStart() *cobra.Command {
 			if err := lcContract.Validate(); err != nil {
 				return err
 			}
-			ikaClient, err := ika.NewClient(c, signer, lcContract,
+			ikaClient, err := ika.NewClient(c, signer, lcContract, lcContract,
 				os.Getenv(IkaGasAcc), os.Getenv(IkaGasBudget))
 			if err != nil {
 				return err

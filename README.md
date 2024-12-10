@@ -36,6 +36,11 @@ Mock -> WIP -> alpha -> beta -> production
 | Native-\>Bitcoin | :x:    |
 | Bitcoin SPV      |        |
 
+## Documentation
+
+1. [Database interacitons](docs/db.md)
+2. [Flow diagram](docs/flow.md)
+
 ## Contributing
 
 Participating in open source is often a highly collaborative experience. We’re encouraged to create in public view, and we’re incentivized to welcome contributions of all kinds from people around the world.
