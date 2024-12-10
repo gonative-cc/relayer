@@ -18,8 +18,8 @@ func TestClient_ApproveAndSign(t *testing.T) {
 
 	localRPC := os.Getenv("LOCAL_RPC")
 	localMnemonic := os.Getenv("LOCAL_MNEMONIC")
-	lcPackage := os.Getenv("LC_PACKAGE")
-	lcModule := os.Getenv("LC_MODULE")
+	dwalletPackage := os.Getenv("LC_PACKAGE")
+	dWalletModule := os.Getenv("LC_MODULE")
 	gasAccount := os.Getenv("IKA_GAS_ACC")
 	gasBudget := os.Getenv("IKA_GAS_BUDGET")
 	lcFunction := "test"
@@ -32,8 +32,13 @@ func TestClient_ApproveAndSign(t *testing.T) {
 		cl,
 		s,
 		SuiCtrCall{
-			Package:  lcPackage,
-			Module:   lcModule,
+			Package:  dwalletPackage,
+			Module:   dWalletModule,
+			Function: lcFunction,
+		},
+		SuiCtrCall{
+			Package:  dwalletPackage,
+			Module:   dWalletModule,
 			Function: lcFunction,
 		},
 		gasAccount,

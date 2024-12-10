@@ -14,13 +14,15 @@ import (
 // Client is a wrapper around the Sui client that provides functionality
 // for interacting with Ika
 type Client struct {
-	c         *sui.Client
-	Signer    *signer.Signer
-	LcPackage string
-	Module    string
-	Function  string
-	GasAddr   string
-	GasBudget string
+	c              *sui.Client
+	Signer         *signer.Signer
+	LcPackage      string
+	LcModule       string
+	LcFunction     string
+	DWalletPackage string
+	DWalletModule  string
+	GasAddr        string
+	GasBudget      string
 }
 
 // SignOutputEventData represents the structure of the parsed JSON data
@@ -34,16 +36,19 @@ func NewClient(
 	c *sui.Client,
 	signer *signer.Signer,
 	ctr SuiCtrCall,
+	dwallet SuiCtrCall,
 	gasAddr, gasBudget string,
 ) (*Client, error) {
 	i := &Client{
-		c:         c,
-		Signer:    signer,
-		LcPackage: ctr.Package,
-		Module:    ctr.Module,
-		Function:  ctr.Function,
-		GasAddr:   gasAddr,
-		GasBudget: gasBudget,
+		c:              c,
+		Signer:         signer,
+		LcPackage:      ctr.Package,
+		LcModule:       ctr.Module,
+		LcFunction:     ctr.Function,
+		DWalletPackage: dwallet.Package,
+		DWalletModule:  dwallet.Module,
+		GasAddr:        gasAddr,
+		GasBudget:      gasBudget,
 	}
 	return i, nil
 }
@@ -58,8 +63,8 @@ func (p *Client) UpdateLC(
 	req := models.MoveCallRequest{
 		Signer:          p.Signer.Address,
 		PackageObjectId: p.LcPackage,
-		Module:          p.Module,
-		Function:        p.Function,
+		Module:          p.LcModule,
+		Function:        p.LcFunction,
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
 			lb,
@@ -98,8 +103,8 @@ func (p *Client) ApproveAndSign(
 	// Once it is ready, test it again
 	req := models.MoveCallRequest{
 		Signer:          p.Signer.Address,
-		PackageObjectId: p.LcPackage,
-		Module:          p.Module,
+		PackageObjectId: p.DWalletPackage,
+		Module:          p.DWalletModule,
 		Function:        "approve_messages",
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
