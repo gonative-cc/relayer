@@ -66,7 +66,7 @@ func (p *Processor) constructBtcTxsData(nativeTx *NativeTxData, signatures [][]b
 		return nil, err
 	}
 
-	var txs []*dal.Tx
+	txs := make([]*dal.Tx, 0, len(rawTxs))
 	for _, rawTx := range rawTxs {
 		tx := &dal.Tx{
 			BtcTxID: nativeTx.TxID,
@@ -89,7 +89,7 @@ func constructRawBtcTxs(nativeTx *NativeTxData, signatures [][]byte) ([][]byte, 
 	if nativeTx == nil || signatures == nil {
 		return nil, fmt.Errorf("empty")
 	}
-	var rawTxs [][]byte
+	rawTxs := make([][]byte, 0, len(signatures))
 
 	for i := range signatures {
 		rawTx := []byte(fmt.Sprintf("dummy_raw_tx_%d", i))
