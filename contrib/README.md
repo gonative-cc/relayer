@@ -6,7 +6,7 @@ Follow the instruction in [btcd README.md](https://github.com/btcsuite/btcd?tab=
 
 ## Run btcd with simnet mode 
 
-### Boothstrap the wallet and btc node
+### Bootstrap the wallet and btc node
 
 
 First you need start the btcd in simnet mode
@@ -24,12 +24,12 @@ Connect you wallet to btcd simmode. The password and user here must be the btcd 
 btcwallet --simnet -u=user -P=password
 ```
 
-Create a new address we will use this for --miningaddr, the address receive btc when mining a new block. Open a new terminal and run command below:
+Create a new address we will use this for `--miningaddr`, the address receive btc when mining a new block. Open a new terminal and run command below:
 ```bash
 btcctl --simnet --wallet --rpcuser=user --rpcpass=password getnewaddress
 ```
 
-Copy the address created by command above. Shutdown a btcd service and run with command below:
+Copy the address created by command above. Shutdown the btcd service and run with command below:
 
 ```
 btcd --simnet --rpcuser=user --rpcpass=password --miningaddr=<address>
@@ -46,14 +46,12 @@ btcctl --simnet --wallet --rpcuser=user --rpcpass=password generate 100
 
 ## Check information 
 
-
 Blockchain information
 ```bash 
 btcctl --simnet --wallet --rpcuser=user --rpcpass=password getblockchaininfo
 ```
 
 Miner balance 
-
 ```bash 
 btcctl --simnet --wallet --rpcuser=user --rpcpass=password getbalance
 ```
