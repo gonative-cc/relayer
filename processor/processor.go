@@ -72,11 +72,12 @@ func (p *Processor) constructBitcoinTxData(nativeTx *NativeTxData, signature []b
 
 // constructRawBitcoinTransaction constructs a raw Bitcoin transaction.
 // TODO: Implement the actual Bitcoin transaction construction logic.
-// Most likely we will need to include the singature produced by the network
+// Most likely we will need to include the signature produced by the network
 // and the tx itself should be available from native event
 func constructRawBitcoinTransaction(nativeTx *NativeTxData, signature []byte) ([]byte, error) {
 	// Return dummy data for now
-	println("nativeTx: %d", nativeTx)
-	println("signature: %d", signature)
+	if nativeTx == nil || signature == nil {
+		return nil, fmt.Errorf("empty arguments")
+	}
 	return []byte("dummy_raw_bitcoin_transaction"), nil
 }
