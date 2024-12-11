@@ -47,8 +47,8 @@ func PopulateDB(t *testing.T, db *dal.DB) []dal.Tx {
 	txs := []dal.Tx{
 		{BtcTxID: 1, RawTx: rawTxBytes, Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "1")},
 		{BtcTxID: 2, RawTx: rawTxBytes, Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "2")},
-		{BtcTxID: 3, RawTx: rawTxBytes, Status: dal.StatusPending, Hash: GetHashBytes(t, "3")},
-		{BtcTxID: 4, RawTx: rawTxBytes, Status: dal.StatusPending, Hash: GetHashBytes(t, "4")},
+		{BtcTxID: 3, RawTx: rawTxBytes, Status: dal.StatusSigned, Hash: GetHashBytes(t, "3")},
+		{BtcTxID: 4, RawTx: rawTxBytes, Status: dal.StatusSigned, Hash: GetHashBytes(t, "4")},
 	}
 	for _, tx := range txs {
 		err := db.InsertTx(tx)

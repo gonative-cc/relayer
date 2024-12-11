@@ -114,7 +114,7 @@ func (r *Relayer) Start() error {
 
 // processPendingTxs processes pending transactions from the database.
 func (r *Relayer) processPendingTxs() error {
-	pendingTxs, err := r.db.GetPendingTxs()
+	pendingTxs, err := r.db.GetSignedTxs()
 	if err != nil {
 		return err
 	}

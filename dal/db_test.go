@@ -13,7 +13,7 @@ func TestInsertTx(t *testing.T) {
 
 	tx := dal.Tx{
 		BtcTxID: 1,
-		Status:  dal.StatusPending,
+		Status:  dal.StatusSigned,
 		Hash:    daltest.GetHashBytes(t, "1"),
 		RawTx:   []byte("tx1-hex"),
 	}
@@ -26,13 +26,13 @@ func TestInsertTx(t *testing.T) {
 	assert.DeepEqual(t, retrievedTx, &tx)
 }
 
-func TestGetPendingTxs(t *testing.T) {
+func TestGetSignedTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	daltest.PopulateDB(t, db)
 
-	pendingTxs, err := db.GetPendingTxs()
+	signedTxs, err := db.GetSignedTxs()
 	assert.NilError(t, err)
-	assert.Equal(t, len(pendingTxs), 2)
+	assert.Equal(t, len(signedTxs), 2)
 }
 
 func TestGetBroadcastedTxs(t *testing.T) {
@@ -51,7 +51,7 @@ func TestUpdateTxStatus(t *testing.T) {
 		BtcTxID: txID,
 		Hash:    daltest.GetHashBytes(t, "1"),
 		RawTx:   []byte("tx1-hex"),
-		Status:  dal.StatusPending,
+		Status:  dal.StatusSigned,
 	}
 	err := db.InsertTx(tx)
 	assert.NilError(t, err)

@@ -12,6 +12,7 @@ type TxStatus byte
 // Transaction status constants
 const (
 	StatusPending TxStatus = iota
+	StatusSigned
 	StatusBroadcasted
 	StatusConfirmed
 )
@@ -85,9 +86,9 @@ func (db DB) GetTx(txID uint64) (*Tx, error) {
 	return &tx, nil
 }
 
-// GetPendingTxs retrieves all transactions with a "pending" status
-func (db DB) GetPendingTxs() ([]Tx, error) {
-	return db.getTxsByStatus(StatusPending)
+// GetSignedTxs retrieves all transactions with a "pending" status
+func (db DB) GetSignedTxs() ([]Tx, error) {
+	return db.getTxsByStatus(StatusSigned)
 }
 
 // GetBroadcastedTxs retrieves all transactions with a "broadcasted" status

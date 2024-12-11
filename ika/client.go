@@ -11,6 +11,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// IClient defines the methods required for interacting with the Ika network.
+type IClient interface {
+	UpdateLC(ctx context.Context, lb *tmtypes.LightBlock) (models.SuiTransactionBlockResponse, error)
+	ApproveAndSign(ctx context.Context, dwalletCapID, signMessagesID string, messages [][]byte) ([][]byte, error)
+}
+
 // Client is a wrapper around the Sui client that provides functionality
 // for interacting with Ika
 type Client struct {
