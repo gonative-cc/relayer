@@ -116,9 +116,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	}
 
 	// extracts and submits headers for each blocks in ibs
-	// UDIT: remove the signer and simply send the header to the LC API
-	signer := r.babylonClient.MustGetAddr()
-	_, err = r.ProcessHeaders(signer, headersToProcess)
+	_, err = r.ProcessHeaders(headersToProcess)
 	if err != nil {
 		r.logger.Warnf("Failed to submit header: %v", err)
 	}

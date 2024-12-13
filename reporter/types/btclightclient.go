@@ -1,18 +1,15 @@
 package types
 
-func NewMsgInsertHeaders(
-	signer string,
-	headers []*IndexedBlock,
-) *MsgInsertHeaders {
+import "github.com/btcsuite/btcd/wire"
 
-	headerBytes := make([]BTCHeaderBytes, len(headers))
+func NewMsgInsertHeaders(
+	headers []*IndexedBlock,
+) []*wire.BlockHeader {
+	headerBytes := make([]*wire.BlockHeader, len(headers))
 	for i, h := range headers {
 		header := h
-		headerBytes[i] = NewBTCHeaderBytesFromBlockHeader(header.Header)
+		headerBytes[i] = header.Header
 	}
 
-	return &MsgInsertHeaders{
-		Signer:  signer,
-		Headers: headerBytes,
-	}
+	return headerBytes
 }

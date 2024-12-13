@@ -3,7 +3,6 @@ package reporter
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -21,9 +20,8 @@ var (
 
 func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	var (
-		btcLatestBlockHeight uint64
-		ibs                  []*types.IndexedBlock
-		err                  error
+		ibs []*types.IndexedBlock
+		err error
 	)
 
 	// ensure BTC has caught up with BBN header chain
@@ -40,23 +38,12 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	// Subscribe new blocks right after initialising BTC cache,
 	// in order to ensure subscribed blocks and cached blocks do not have overlap.
 	// Otherwise, if we subscribe too early, then they will have overlap,
-	// leading to duplicated header/ckpt submissions.
+	// leading to duplicated header submissions.
 	if !skipBlockSubscription {
-		// UDIT: check if in the bitcoin RPC spec and it's use?
-		// UDIT: it calls the btcd websockets method NotifyBlocks()
-		// UDIT: check how to implement this websocket method in bitcoin_mock_node
 		r.btcClient.MustSubscribeBlocks()
 	}
 
-	// consistencyInfo, err := r.checkConsistency()
-
-	if err != nil {
-		return err
-	}
-
 	ibs = r.btcCache.GetAllBlocks()
-
-	signer := r.babylonClient.MustGetAddr()
 
 	// r.logger.Infof(
 	// 	"BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.",
@@ -68,7 +55,7 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	// we already checked for consistency, we can be sure that
 	// even if rest of the block headers is different than in Babylon
 	// due to reorg, our fork will be better than the one in Babylon.
-	_, err = r.ProcessHeaders(signer, ibs)
+	_, err = r.ProcessHeaders(ibs)
 	if err != nil {
 		// this can happen when there are two contentious vigilantes or if our btc node is behind.
 		r.logger.Errorf("Failed to submit headers: %v", err)
@@ -136,7 +123,7 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 }
 
 // initBTCCache fetches the blocks since T-k-w in the BTC canonical chain
-// where T is the height of the latest block in BBN header chain
+// where T is the height of the latest block in Native light client
 func (r *Reporter) initBTCCache() error {
 	var (
 		err                  error
@@ -150,16 +137,17 @@ func (r *Reporter) initBTCCache() error {
 		panic(err)
 	}
 
-	// get T, i.e., total block count in BBN header chain
+	// get T, i.e., total block count in Native light client
 	// UDIT: replace here with Vu's LC chain tip API
-	tipRes, err := r.babylonClient.BTCHeaderChainTip()
-	if err != nil {
-		return err
-	}
-	bbnLatestBlockHeight = tipRes.Header.Height
+	// tipRes, err := r.nativeClient.GetBTCHeaderChainTip()
+	// if err != nil {
+	// 	return err
+	// }
+	// TODO: add height return to LC RPC
+	bbnLatestBlockHeight = 1000
 
 	// Fetch block since `baseHeight = T - k` from BTC, where
-	// - T is total block count in BBN header chain
+	// - T is total block count in Native light client
 	// - k is btcConfirmationDepth of BBN
 	baseHeight = bbnLatestBlockHeight - r.btcConfirmationDepth + 1
 
@@ -200,18 +188,20 @@ func (r *Reporter) waitUntilBTCSync() error {
 
 	// Retrieve hash/height of the latest block in BBN header chain
 	// UDIT: replace here with Vu's LC chain tip API
-	tipRes, err := r.babylonClient.BTCHeaderChainTip()
+	tipRes, err := r.nativeClient.GetBTCHeaderChainTip()
 	if err != nil {
 		return err
 	}
 
-	hash, err := types.NewBTCHeaderHashBytesFromHex(tipRes.Header.HashHex)
-	if err != nil {
-		return err
-	}
+	// hash, err := types.NewBTCHeaderHashBytesFromHex(tipRes.Header.HashHex)
+	// if err != nil {
+	// 	return err
+	// }
 
-	bbnLatestBlockHash = hash.ToChainhash()
-	bbnLatestBlockHeight = tipRes.Header.Height
+	bbnLatestBlockHash = tipRes
+	// TODO: add height return to LC RPC
+	// bbnLatestBlockHeight = tipRes.Header.Height
+	bbnLatestBlockHeight = 1000
 	r.logger.Infof(
 		"BBN header chain latest block hash and height: (%v, %d)",
 		bbnLatestBlockHash, bbnLatestBlockHeight,
@@ -233,11 +223,13 @@ func (r *Reporter) waitUntilBTCSync() error {
 				return err
 			}
 			// UDIT: replace here with Vu's LC chain tip API
-			tipRes, err = r.babylonClient.BTCHeaderChainTip()
+			tipRes, err = r.nativeClient.GetBTCHeaderChainTip()
 			if err != nil {
 				return err
 			}
-			bbnLatestBlockHeight = tipRes.Header.Height
+			// TODO: add height return to LC RPC
+			// bbnLatestBlockHeight = tipRes.Header.Height
+			bbnLatestBlockHeight = 1000
 			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= bbnLatestBlockHeight {
 				r.logger.Infof(
 					"BTC chain (length %d) now catches up with BBN header chain (length %d), continue bootstrapping",
@@ -252,41 +244,5 @@ func (r *Reporter) waitUntilBTCSync() error {
 		}
 	}
 
-	return nil
-}
-
-func (r *Reporter) checkHeaderConsistency(consistencyCheckHeight uint64) error {
-	var err error
-
-	consistencyCheckBlock := r.btcCache.FindBlock(consistencyCheckHeight)
-	if consistencyCheckBlock == nil {
-		err = fmt.Errorf(
-			"cannot find the %d-th block of BBN header chain in BTC cache for initial consistency check",
-			consistencyCheckHeight,
-		)
-		panic(err)
-	}
-	consistencyCheckHash := consistencyCheckBlock.BlockHash()
-
-	r.logger.Debugf(
-		"block for consistency check: height %d, hash %v",
-		consistencyCheckHeight, consistencyCheckHash,
-	)
-
-	// Given that two consecutive BTC headers are chained via hash functions,
-	// generating a header that can be in two different positions in two different BTC header chains
-	// is as hard as breaking the hash function.
-	// So as long as the block exists on Babylon, it has to be at the same position as in Babylon as well.
-	res, err := r.babylonClient.ContainsBTCBlock(&consistencyCheckHash) // TODO: this API has error. Find out why
-	if err != nil {
-		return err
-	}
-	if !res.Contains {
-		err = fmt.Errorf(
-			"BTC main chain is inconsistent with BBN header chain: k-deep block in BBN header chain: %v",
-			consistencyCheckHash,
-		)
-		panic(err)
-	}
 	return nil
 }

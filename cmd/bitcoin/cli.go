@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	bbnclient "github.com/babylonchain/babylon/client/client"
+	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/gonative-cc/relayer/btcclient"
+	"github.com/gonative-cc/relayer/lcclient"
 	"github.com/gonative-cc/relayer/reporter"
 	"github.com/gonative-cc/relayer/reporter/config"
 	"github.com/spf13/cobra"
@@ -39,7 +40,6 @@ func CmdExecute() error {
 
 // CmdStart returns the CLI commands for the reporter
 func CmdStart() *cobra.Command {
-	var babylonKeyDir string
 	var cfgFile = ""
 
 	cmd := &cobra.Command{
@@ -50,8 +50,9 @@ func CmdStart() *cobra.Command {
 				err              error
 				cfg              config.Config
 				btcClient        *btcclient.Client
-				babylonClient    *bbnclient.Client
+				nativeClient     *lcclient.Client
 				vigilantReporter *reporter.Reporter
+				_                jsonrpc.ClientCloser
 				// server           *rpcserver.Server
 			)
 
@@ -63,11 +64,6 @@ func CmdStart() *cobra.Command {
 			rootLogger, err := cfg.CreateLogger()
 			if err != nil {
 				panic(fmt.Errorf("failed to create logger: %w", err))
-			}
-
-			// apply the flags from CLI
-			if len(babylonKeyDir) != 0 {
-				cfg.Babylon.KeyDirectory = babylonKeyDir
 			}
 
 			// create BTC client and connect to BTC server
@@ -94,7 +90,7 @@ func CmdStart() *cobra.Command {
 			}
 
 			// create Babylon client. Note that requests from Babylon client are ad hoc
-			babylonClient, err = bbnclient.New(&cfg.Babylon, nil)
+			nativeClient, _, err = lcclient.New("RPC_URL_HERE")
 			if err != nil {
 				panic(fmt.Errorf("failed to open Babylon client: %w", err))
 			}
@@ -107,7 +103,7 @@ func CmdStart() *cobra.Command {
 				&cfg.Reporter,
 				rootLogger,
 				btcClient,
-				babylonClient,
+				nativeClient,
 				cfg.Common.RetrySleepTime,
 				cfg.Common.MaxRetrySleepTime,
 				reporterMetrics,
@@ -133,7 +129,7 @@ func CmdStart() *cobra.Command {
 			// reporter.MetricsStart(addr, reporterMetrics.Registry)
 
 			// TODO: uncomment before pushing
-			// // SIGINT handling stuff
+			// SIGINT handling stuff
 			// addInterruptHandler(func() {
 			// 	// TODO: Does this need to wait for the grpc server to finish up any requests?
 			// 	rootLogger.Info("Stopping RPC server...")
@@ -151,13 +147,17 @@ func CmdStart() *cobra.Command {
 			// 	btcClient.WaitForShutdown()
 			// 	rootLogger.Info("BTC client shutdown")
 			// })
+			// addInterruptHandler(func() {
+			// 	rootLogger.Info("Stopping Native client...")
+			// 	nativeCloser()
+			// 	rootLogger.Info("Native client shutdown")
+			// })
 
 			// <-interruptHandlersDone
 			// rootLogger.Info("Shutdown complete")
 
 		},
 	}
-	cmd.Flags().StringVar(&babylonKeyDir, "babylon-key-dir", "", "Directory of the Babylon key")
 	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultConfigFile(), "config file")
 	return cmd
 }

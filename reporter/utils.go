@@ -1,11 +1,9 @@
 package reporter
 
 import (
-	"context"
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/reporter/types"
 )
 
@@ -17,11 +15,10 @@ func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
 }
 
 // getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
-// should be submitted to Babylon from a given set of indexed blocks
+// should be submitted to Native light client from a given set of indexed blocks
 func (r *Reporter) getHeaderMsgsToSubmit(
-	signer string,
 	ibs []*types.IndexedBlock,
-) ([]*types.MsgInsertHeaders, error) {
+) ([][]*wire.BlockHeader, error) {
 	var (
 		startPoint  = -1
 		ibsToSubmit []*types.IndexedBlock
@@ -30,17 +27,20 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 
 	// find the first header that is not contained in BBN header chain,
 	// then submit since this header
-	for i, header := range ibs {
-		blockHash := header.BlockHash()
-		var res *btclctypes.QueryContainsBytesResponse
+	for i, _ := range ibs {
+		// blockHash := header.BlockHash()
+		// var res *btclctypes.QueryContainsBytesResponse
+		var res bool
 		err = RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
-			res, err = r.babylonClient.ContainsBTCBlock(&blockHash)
+			// TODO: placeholder true is used here for now
+			// res, err = r.nativeClient.ContainsBTCBlock(&blockHash)
+			res = true
 			return err
 		})
 		if err != nil {
 			return nil, err
 		}
-		if !res.Contains {
+		if !res {
 			startPoint = i
 			break
 		}
@@ -49,7 +49,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 	// all headers are duplicated, no need to submit
 	if startPoint == -1 {
 		r.logger.Info("All headers are duplicated, no need to submit")
-		return []*types.MsgInsertHeaders{}, nil
+		return nil, nil
 	}
 
 	// wrap the headers to MsgInsertHeaders msgs from the subset of indexed blocks
@@ -57,36 +57,40 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 
 	blockChunks := chunkBy(ibsToSubmit, int(r.Cfg.MaxHeadersInMsg))
 
-	headerMsgsToSubmit := []*types.MsgInsertHeaders{}
+	headerMsgsToSubmit := [][]*wire.BlockHeader{}
 
 	for _, ibChunk := range blockChunks {
-		msgInsertHeaders := types.NewMsgInsertHeaders(signer, ibChunk)
+		msgInsertHeaders := types.NewMsgInsertHeaders(ibChunk)
 		headerMsgsToSubmit = append(headerMsgsToSubmit, msgInsertHeaders)
 	}
 
 	return headerMsgsToSubmit, nil
 }
 
-func (r *Reporter) submitHeaderMsgs(msg *types.MsgInsertHeaders) error {
+func (r *Reporter) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 	// submit the headers
 	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
-		res, err := r.babylonClient.InsertHeaders(context.Background(), msg)
+		err := r.nativeClient.InsertHeaders(msg)
 		if err != nil {
 			return err
 		}
-		r.logger.Infof("Successfully submitted %d headers to Babylon with response code %v", len(msg.Headers), res.Code)
+		r.logger.Infof(
+			"Successfully submitted %d headers to Babylon", len(msg),
+		)
 		return nil
 	})
 	if err != nil {
-		r.metrics.FailedHeadersCounter.Add(float64(len(msg.Headers)))
+		r.metrics.FailedHeadersCounter.Add(float64(len(msg)))
 		return fmt.Errorf("failed to submit headers: %w", err)
 	}
 
 	// update metrics
-	r.metrics.SuccessfulHeadersCounter.Add(float64(len(msg.Headers)))
+	r.metrics.SuccessfulHeadersCounter.Add(float64(len(msg)))
 	r.metrics.SecondsSinceLastHeaderGauge.Set(0)
-	for _, header := range msg.Headers {
-		r.metrics.NewReportedHeaderGaugeVec.WithLabelValues(header.Hash().String()).SetToCurrentTime()
+	for _, header := range msg {
+		r.metrics.NewReportedHeaderGaugeVec.WithLabelValues(
+			header.BlockHash().String(),
+		).SetToCurrentTime()
 	}
 
 	return err
@@ -94,9 +98,9 @@ func (r *Reporter) submitHeaderMsgs(msg *types.MsgInsertHeaders) error {
 
 // ProcessHeaders extracts and reports headers from a list of blocks
 // It returns the number of headers that need to be reported (after deduplication)
-func (r *Reporter) ProcessHeaders(signer string, ibs []*types.IndexedBlock) (int, error) {
+func (r *Reporter) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
 	// get a list of MsgInsertHeader msgs with headers to be submitted
-	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(signer, ibs)
+	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(ibs)
 	if err != nil {
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
@@ -112,19 +116,10 @@ func (r *Reporter) ProcessHeaders(signer string, ibs []*types.IndexedBlock) (int
 		if err := r.submitHeaderMsgs(msgs); err != nil {
 			return 0, fmt.Errorf("failed to submit headers: %w", err)
 		}
-		numSubmitted += len(msgs.Headers)
+		numSubmitted += len(msgs)
 	}
 
 	return numSubmitted, err
-}
-
-func calculateBranchWork(branch []*types.IndexedBlock) sdkmath.Uint {
-	var currenWork = sdkmath.ZeroUint()
-	for _, h := range branch {
-		headerWork := btclctypes.CalcHeaderWork(h.Header)
-		currenWork = btclctypes.CumulativeWork(headerWork, currenWork)
-	}
-	return currenWork
 }
 
 // push msg to channel c, or quit if quit channel is closed

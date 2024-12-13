@@ -1,27 +1,21 @@
 package reporter
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/gonative-cc/relayer/reporter/btctxformatter"
+	"github.com/gonative-cc/relayer/lcclient"
 	"github.com/gonative-cc/relayer/reporter/config"
 	"github.com/gonative-cc/relayer/reporter/types"
 	"go.uber.org/zap"
-)
-
-const (
-	BtcTxCurrentVersion btctxformatter.FormatVersion = 0
 )
 
 type Reporter struct {
 	Cfg    *config.ReporterConfig
 	logger *zap.SugaredLogger
 
-	btcClient     BTCClient
-	babylonClient BabylonClient
+	btcClient    BTCClient
+	nativeClient *lcclient.Client
 
 	// retry attributes
 	retrySleepTime    time.Duration
@@ -44,29 +38,15 @@ func New(
 	cfg *config.ReporterConfig,
 	parentLogger *zap.Logger,
 	btcClient BTCClient,
-	babylonClient BabylonClient,
+	nativeClient *lcclient.Client,
 	retrySleepTime,
 	maxRetrySleepTime time.Duration,
 	metrics *ReporterMetrics,
 ) (*Reporter, error) {
 	logger := parentLogger.With(zap.String("module", "reporter")).Sugar()
-	// retrieve k and w within btccParams
-	var (
-		btccParamsRes *btcctypes.QueryParamsResponse
-		err           error
-	)
-	err = RetryDo(retrySleepTime, maxRetrySleepTime, func() error {
-		btccParamsRes, err = babylonClient.BTCCheckpointParams()
-		return err
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get BTC Checkpoint parameters: %w", err)
-	}
-	k := btccParamsRes.Params.BtcConfirmationDepth
-	logger.Infof("BTCCheckpoint parameters: k = %d", k)
 
-	// // Note that BTC cache is initialised only after bootstrapping
-	// ckptCache := types.NewCheckpointCache(checkpointTag, BtcTxCurrentVersion)
+	k := uint64(10)
+	logger.Infof("BTCCheckpoint parameters: k = %d", k)
 
 	return &Reporter{
 		Cfg:               cfg,
@@ -74,7 +54,7 @@ func New(
 		retrySleepTime:    retrySleepTime,
 		maxRetrySleepTime: maxRetrySleepTime,
 		btcClient:         btcClient,
-		babylonClient:     babylonClient,
+		nativeClient:      nativeClient,
 		// CheckpointCache:   ckptCache,
 		// reorgList:                     newReorgList(),
 		btcConfirmationDepth: k,
@@ -147,6 +127,6 @@ func (r *Reporter) ShuttingDown() bool {
 
 // WaitForShutdown blocks until all vigilante goroutines have finished executing.
 func (r *Reporter) WaitForShutdown() {
-	// TODO: let Babylon client WaitForShutDown
+	// TODO: let Native client WaitForShutDown
 	r.wg.Wait()
 }
