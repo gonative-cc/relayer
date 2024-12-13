@@ -1,9 +1,6 @@
 package types
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -47,26 +44,26 @@ func (ib *IndexedBlock) BlockHash() chainhash.Hash {
 	return ib.Header.BlockHash()
 }
 
-// GenSPVProof generates a Merkle proof of a certain tx with index txIdx
-func (ib *IndexedBlock) GenSPVProof(txIdx int) (*BTCSpvProof, error) {
-	if txIdx < 0 {
-		return nil, fmt.Errorf("transaction index should not be negative")
-	}
-	if txIdx >= len(ib.Txs) {
-		return nil, fmt.Errorf("transaction index is out of scope: idx=%d, len(Txs)=%d", txIdx, len(ib.Txs))
-	}
+// // GenSPVProof generates a Merkle proof of a certain tx with index txIdx
+// func (ib *IndexedBlock) GenSPVProof(txIdx int) (*BTCSpvProof, error) {
+// 	if txIdx < 0 {
+// 		return nil, fmt.Errorf("transaction index should not be negative")
+// 	}
+// 	if txIdx >= len(ib.Txs) {
+// 		return nil, fmt.Errorf("transaction index is out of scope: idx=%d, len(Txs)=%d", txIdx, len(ib.Txs))
+// 	}
 
-	headerBytes := NewBTCHeaderBytesFromBlockHeader(ib.Header)
+// 	headerBytes := NewBTCHeaderBytesFromBlockHeader(ib.Header)
 
-	var txsBytes [][]byte
-	for _, tx := range ib.Txs {
-		var txBuf bytes.Buffer
-		if err := tx.MsgTx().Serialize(&txBuf); err != nil {
-			return nil, err
-		}
-		txBytes := txBuf.Bytes()
-		txsBytes = append(txsBytes, txBytes)
-	}
+// 	var txsBytes [][]byte
+// 	for _, tx := range ib.Txs {
+// 		var txBuf bytes.Buffer
+// 		if err := tx.MsgTx().Serialize(&txBuf); err != nil {
+// 			return nil, err
+// 		}
+// 		txBytes := txBuf.Bytes()
+// 		txsBytes = append(txsBytes, txBytes)
+// 	}
 
-	return SpvProofFromHeaderAndTransactions(&headerBytes, txsBytes, uint(txIdx))
-}
+// 	return SpvProofFromHeaderAndTransactions(&headerBytes, txsBytes, uint(txIdx))
+// }

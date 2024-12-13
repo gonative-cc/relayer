@@ -19,55 +19,12 @@ var (
 	bootstrapErrReportType = retry.LastErrorOnly(true)
 )
 
-type consistencyCheckInfo struct {
-	bbnLatestBlockHeight uint64
-	startSyncHeight      uint64
-}
-
-// checkConsistency checks whether the `max(bbn_tip_height - confirmation_depth, bbn_base_height)` block is same
-// between BBN header chain and BTC main chain.` This makes sure that already confirmed chain is the same from point
-// of view of both chains.
-func (r *Reporter) checkConsistency() (*consistencyCheckInfo, error) {
-	tipRes, err := r.babylonClient.BTCHeaderChainTip()
-	if err != nil {
-		return nil, err
-	}
-
-	// Find the base height of BBN header chain
-	baseRes, err := r.babylonClient.BTCBaseHeader()
-	if err != nil {
-		return nil, err
-	}
-
-	var consistencyCheckHeight uint64
-	if tipRes.Header.Height >= baseRes.Header.Height+r.btcConfirmationDepth {
-		consistencyCheckHeight = tipRes.Header.Height - r.btcConfirmationDepth
-	} else {
-		consistencyCheckHeight = baseRes.Header.Height
-	}
-
-	// this checks whether header at already confirmed height is the same in reporter btc cache
-	// and in babylon btc light client
-	if err := r.checkHeaderConsistency(consistencyCheckHeight); err != nil {
-		return nil, err
-	}
-
-	return &consistencyCheckInfo{
-		bbnLatestBlockHeight: tipRes.Header.Height,
-		// we are staring from the block after already confirmed block
-		startSyncHeight: consistencyCheckHeight + 1,
-	}, nil
-}
-
 func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	var (
 		btcLatestBlockHeight uint64
 		ibs                  []*types.IndexedBlock
 		err                  error
 	)
-
-	// if we are bootstraping, we will definitely not handle reorgs
-	r.reorgList.clear()
 
 	// ensure BTC has caught up with BBN header chain
 	if err := r.waitUntilBTCSync(); err != nil {
@@ -91,23 +48,20 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 		r.btcClient.MustSubscribeBlocks()
 	}
 
-	consistencyInfo, err := r.checkConsistency()
+	// consistencyInfo, err := r.checkConsistency()
 
 	if err != nil {
 		return err
 	}
 
-	ibs, err = r.btcCache.GetLastBlocks(consistencyInfo.startSyncHeight)
-	if err != nil {
-		panic(err)
-	}
+	ibs = r.btcCache.GetAllBlocks()
 
 	signer := r.babylonClient.MustGetAddr()
 
-	r.logger.Infof(
-		"BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.",
-		btcLatestBlockHeight, consistencyInfo.bbnLatestBlockHeight, consistencyInfo.startSyncHeight,
-	)
+	// r.logger.Infof(
+	// 	"BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.",
+	// 	btcLatestBlockHeight, consistencyInfo.bbnLatestBlockHeight, consistencyInfo.startSyncHeight,
+	// )
 
 	// extracts and submits headers for each block in ibs
 	// Note: As we are retrieving blocks from btc cache from block just after confirmed block which
@@ -122,8 +76,8 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 		return err
 	}
 
-	// trim cache to the latest k+w blocks on BTC (which are same as in BBN)
-	maxEntries := r.btcConfirmationDepth + r.checkpointFinalizationTimeout
+	// trim cache to the latest k blocks on BTC (which are same as in BBN)
+	maxEntries := r.btcConfirmationDepth
 	if err = r.btcCache.Resize(maxEntries); err != nil {
 		r.logger.Errorf("Failed to resize BTC cache: %v", err)
 		panic(err)
@@ -131,13 +85,6 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	r.btcCache.Trim()
 
 	r.logger.Infof("Size of the BTC cache: %d", r.btcCache.Size())
-
-	// // fetch k+w blocks from cache and submit checkpoints
-	// ibs = r.btcCache.GetAllBlocks()
-	// _, _, err = r.ProcessCheckpoints(signer, ibs)
-	// if err != nil {
-	// 	r.logger.Warnf("Failed to submit checkpoints: %v", err)
-	// }
 
 	r.logger.Info("Successfully finished bootstrapping")
 	return nil
@@ -194,7 +141,6 @@ func (r *Reporter) initBTCCache() error {
 	var (
 		err                  error
 		bbnLatestBlockHeight uint64
-		bbnBaseHeight        uint64
 		baseHeight           uint64
 		ibs                  []*types.IndexedBlock
 	)
@@ -212,23 +158,10 @@ func (r *Reporter) initBTCCache() error {
 	}
 	bbnLatestBlockHeight = tipRes.Header.Height
 
-	// Find the base height
-	// UDIT: check what is BTC base header here
-	baseRes, err := r.babylonClient.BTCBaseHeader()
-	if err != nil {
-		return err
-	}
-	bbnBaseHeight = baseRes.Header.Height
-
-	// Fetch block since `baseHeight = T - k - w` from BTC, where
+	// Fetch block since `baseHeight = T - k` from BTC, where
 	// - T is total block count in BBN header chain
 	// - k is btcConfirmationDepth of BBN
-	// - w is checkpointFinalizationTimeout of BBN
-	if bbnLatestBlockHeight > bbnBaseHeight+r.btcConfirmationDepth+r.checkpointFinalizationTimeout {
-		baseHeight = bbnLatestBlockHeight - r.btcConfirmationDepth - r.checkpointFinalizationTimeout + 1
-	} else {
-		baseHeight = bbnBaseHeight
-	}
+	baseHeight = bbnLatestBlockHeight - r.btcConfirmationDepth + 1
 
 	// UDIT: check what is tail blocks and if it's the bitcoin RPC spec?
 	ibs, err = r.btcClient.FindTailBlocksByHeight(baseHeight)

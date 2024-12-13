@@ -108,33 +108,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 
 	var headersToProcess []*types.IndexedBlock
 
-	if r.reorgList.size() > 0 {
-		// we are in the middle of reorg, we need to check whether we already have all blocks of better chain
-		// as reorgs in btc nodes happen only when better chain is available.
-		// 1. First we get oldest header from our reorg branch
-		// 2. Then we get all headers from our cache starting the height of the oldest header of new branch
-		// 3. then we calculate if work on new branch starting from the first reorged height is larger
-		// than removed branch work.
-		oldestBlockFromOldBranch := r.reorgList.getLastRemovedBlock()
-		currentBranch, err := r.btcCache.GetLastBlocks(oldestBlockFromOldBranch.height)
-		if err != nil {
-			panic(fmt.Errorf("failed to get block from cache after reorg: %w", err))
-		}
-
-		currentBranchWork := calculateBranchWork(currentBranch)
-
-		// if current branch is better than reorg branch, we can submit headers and clear reorg list
-		if currentBranchWork.GT(r.reorgList.removedBranchWork()) {
-			r.logger.Debugf(
-				"Current branch is better than reorg branch. Length of current branch: %d, work of branch: %s",
-				len(currentBranch), currentBranchWork,
-			)
-			headersToProcess = append(headersToProcess, currentBranch...)
-			r.reorgList.clear()
-		}
-	} else {
-		headersToProcess = append(headersToProcess, ib)
-	}
+	headersToProcess = append(headersToProcess, ib)
 
 	if len(headersToProcess) == 0 {
 		r.logger.Debug("No new headers to submit to Babylon")
@@ -149,11 +123,6 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 		r.logger.Warnf("Failed to submit header: %v", err)
 	}
 
-	// extracts and submits checkpoints for each blocks in ibs
-	_, _, err = r.ProcessCheckpoints(signer, headersToProcess)
-	if err != nil {
-		r.logger.Warnf("Failed to submit checkpoint: %v", err)
-	}
 	return nil
 }
 
@@ -169,13 +138,6 @@ func (r *Reporter) handleDisconnectedBlocks(event *types.BlockEvent) error {
 	if event.Header.BlockHash() != cacheTip.BlockHash() {
 		return fmt.Errorf("cache is not up-to-date while disconnecting block, restart bootstrap process")
 	}
-
-	// at this point, the block to be disconnected is the tip of the cache so we can
-	// add it to our reorg list
-	r.reorgList.addRemovedBlock(
-		uint64(cacheTip.Height),
-		cacheTip.Header,
-	)
 
 	// otherwise, remove the block from the cache
 	if err := r.btcCache.RemoveLast(); err != nil {

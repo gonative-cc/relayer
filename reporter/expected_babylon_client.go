@@ -24,9 +24,7 @@ type BabylonClient interface {
 	ContainsBTCBlock(blockHash *chainhash.Hash) (*btclctypes.QueryContainsBytesResponse, error)
 	// returns the block height and hash of tip block stored in babylon chain
 	BTCHeaderChainTip() (*btclctypes.QueryTipResponse, error)
-	// returns the block height and hash of base (k depth down from tip?) block stored in babylon chain
-	BTCBaseHeader() (*btclctypes.QueryBaseHeaderResponse, error)
 	// txn to insert bitcoin spv proofs to babylon chain
-	InsertBTCSpvProof(ctx context.Context, msg *types.MsgInsertBTCSpvProof) (*pv.RelayerTxResponse, error)
+	// InsertBTCSpvProof(ctx context.Context, msg *types.MsgInsertBTCSpvProof) (*pv.RelayerTxResponse, error)
 	Stop() error
 }

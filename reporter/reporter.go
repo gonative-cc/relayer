@@ -1,7 +1,6 @@
 package reporter
 
 import (
-	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
@@ -29,16 +28,16 @@ type Reporter struct {
 	maxRetrySleepTime time.Duration
 
 	// Internal states of the reporter
-	CheckpointCache               *types.CheckpointCache
-	btcCache                      *types.BTCCache
-	reorgList                     *reorgList
-	btcConfirmationDepth          uint64
-	checkpointFinalizationTimeout uint64
-	metrics                       *ReporterMetrics
-	wg                            sync.WaitGroup
-	started                       bool
-	quit                          chan struct{}
-	quitMu                        sync.Mutex
+	// CheckpointCache *types.CheckpointCache
+	btcCache *types.BTCCache
+	// reorgList                     *reorgList
+	btcConfirmationDepth uint64
+	// checkpointFinalizationTimeout uint64
+	metrics *ReporterMetrics
+	wg      sync.WaitGroup
+	started bool
+	quit    chan struct{}
+	quitMu  sync.Mutex
 }
 
 func New(
@@ -64,30 +63,23 @@ func New(
 		return nil, fmt.Errorf("failed to get BTC Checkpoint parameters: %w", err)
 	}
 	k := btccParamsRes.Params.BtcConfirmationDepth
-	w := btccParamsRes.Params.CheckpointFinalizationTimeout
-	// get checkpoint tag
-	checkpointTag, err := hex.DecodeString(btccParamsRes.Params.CheckpointTag)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode checkpoint tag: %w", err)
-	}
-	logger.Infof("BTCCheckpoint parameters: (k, w, tag) = (%d, %d, %s)", k, w, checkpointTag)
+	logger.Infof("BTCCheckpoint parameters: k = %d", k)
 
-	// Note that BTC cache is initialised only after bootstrapping
-	ckptCache := types.NewCheckpointCache(checkpointTag, BtcTxCurrentVersion)
+	// // Note that BTC cache is initialised only after bootstrapping
+	// ckptCache := types.NewCheckpointCache(checkpointTag, BtcTxCurrentVersion)
 
 	return &Reporter{
-		Cfg:                           cfg,
-		logger:                        logger,
-		retrySleepTime:                retrySleepTime,
-		maxRetrySleepTime:             maxRetrySleepTime,
-		btcClient:                     btcClient,
-		babylonClient:                 babylonClient,
-		CheckpointCache:               ckptCache,
-		reorgList:                     newReorgList(),
-		btcConfirmationDepth:          k,
-		checkpointFinalizationTimeout: w,
-		metrics:                       metrics,
-		quit:                          make(chan struct{}),
+		Cfg:               cfg,
+		logger:            logger,
+		retrySleepTime:    retrySleepTime,
+		maxRetrySleepTime: maxRetrySleepTime,
+		btcClient:         btcClient,
+		babylonClient:     babylonClient,
+		// CheckpointCache:   ckptCache,
+		// reorgList:                     newReorgList(),
+		btcConfirmationDepth: k,
+		metrics:              metrics,
+		quit:                 make(chan struct{}),
 	}, nil
 }
 

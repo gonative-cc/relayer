@@ -137,7 +137,10 @@ func (b *BTCCache) GetLastBlocks(stopHeight uint64) ([]*IndexedBlock, error) {
 	firstHeight := b.blocks[0].Height
 	lastHeight := b.blocks[len(b.blocks)-1].Height
 	if int32(stopHeight) < firstHeight || lastHeight < int32(stopHeight) {
-		return []*IndexedBlock{}, fmt.Errorf("the given stopHeight %d is out of range [%d, %d] of BTC cache", stopHeight, firstHeight, lastHeight)
+		return []*IndexedBlock{}, fmt.Errorf(
+			"the given stopHeight %d is out of range [%d, %d] of BTC cache",
+			stopHeight, firstHeight, lastHeight,
+		)
 	}
 
 	var j int
