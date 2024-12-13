@@ -19,7 +19,7 @@ func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {
 	clientHandler := Client{}
 
 	closeHandler, err := jsonrpc.NewClient(
-		ctx, rpcUrl, "", &clientHandler, nil,
+		ctx, rpcUrl, "RPCServerHandler", &clientHandler, nil,
 	)
-	return &Client{}, closeHandler, err
+	return &clientHandler, closeHandler, err
 }

@@ -52,7 +52,7 @@ func CmdStart() *cobra.Command {
 				btcClient        *btcclient.Client
 				nativeClient     *lcclient.Client
 				vigilantReporter *reporter.Reporter
-				_                jsonrpc.ClientCloser
+				nativeCloser     jsonrpc.ClientCloser
 				// server           *rpcserver.Server
 			)
 
@@ -90,7 +90,7 @@ func CmdStart() *cobra.Command {
 			}
 
 			// create Babylon client. Note that requests from Babylon client are ad hoc
-			nativeClient, _, err = lcclient.New("RPC_URL_HERE")
+			nativeClient, nativeCloser, err = lcclient.New("RPC_URL_HERE")
 			if err != nil {
 				panic(fmt.Errorf("failed to open Babylon client: %w", err))
 			}
@@ -147,14 +147,14 @@ func CmdStart() *cobra.Command {
 			// 	btcClient.WaitForShutdown()
 			// 	rootLogger.Info("BTC client shutdown")
 			// })
-			// addInterruptHandler(func() {
-			// 	rootLogger.Info("Stopping Native client...")
-			// 	nativeCloser()
-			// 	rootLogger.Info("Native client shutdown")
-			// })
+			addInterruptHandler(func() {
+				rootLogger.Info("Stopping Native client...")
+				nativeCloser()
+				rootLogger.Info("Native client shutdown")
+			})
 
-			// <-interruptHandlersDone
-			// rootLogger.Info("Shutdown complete")
+			<-interruptHandlersDone
+			rootLogger.Info("Shutdown complete")
 
 		},
 	}
