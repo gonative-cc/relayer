@@ -1,4 +1,4 @@
-package processor
+package native2ika
 
 import (
 	"context"
