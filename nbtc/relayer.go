@@ -15,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Relayer broadcasts pending transactions from the database to the Bitcoin network.
+// Relayer broadcasts signed transactions from the database to the Bitcoin network.
 type Relayer struct {
 	db                      *dal.DB
 	btcClient               bitcoin.Client
@@ -86,7 +86,7 @@ func (r *Relayer) Start() error {
 			r.btcClient.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			if err := r.processPendingTxs(); err != nil {
+			if err := r.processSignedTxs(); err != nil {
 				var sqliteErr *sqlite3.Error
 				//TODO: decide on which exact errors to continue and on which to stop the relayer
 				if errors.As(err, &sqliteErr) {
@@ -112,14 +112,14 @@ func (r *Relayer) Start() error {
 	}
 }
 
-// processPendingTxs processes pending transactions from the database.
-func (r *Relayer) processPendingTxs() error {
-	pendingTxs, err := r.db.GetSignedTxs()
+// processSignedTxs processes signed transactions from the database.
+func (r *Relayer) processSignedTxs() error {
+	signedTxs, err := r.db.GetSignedTxs()
 	if err != nil {
 		return err
 	}
 
-	for _, tx := range pendingTxs {
+	for _, tx := range signedTxs {
 		var msgTx wire.MsgTx
 		if err := msgTx.Deserialize(bytes.NewReader(tx.RawTx)); err != nil {
 			return err

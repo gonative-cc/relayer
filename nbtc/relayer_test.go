@@ -65,14 +65,14 @@ func Test_Start(t *testing.T) {
 	relayer.db.Close()
 }
 
-func Test_processPendingTxs(t *testing.T) {
+func Test_processSignedTxs(t *testing.T) {
 	db := initTestDB(t)
 	txs := daltest.PopulateDB(t, db)
 	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
 	assert.NilError(t, err)
 	relayer.btcClient = &bitcoin.MockClient{}
 
-	err = relayer.processPendingTxs()
+	err = relayer.processSignedTxs()
 	assert.NilError(t, err)
 
 	for _, tx := range txs {
