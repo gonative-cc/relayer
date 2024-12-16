@@ -86,7 +86,7 @@ func (db DB) GetTx(txID uint64) (*Tx, error) {
 	return &tx, nil
 }
 
-// GetSignedTxs retrieves all transactions with a "pending" status
+// GetSignedTxs retrieves all transactions with a "signed" status
 func (db DB) GetSignedTxs() ([]Tx, error) {
 	return db.getTxsByStatus(StatusSigned)
 }

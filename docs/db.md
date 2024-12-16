@@ -19,5 +19,6 @@ The relayer interacts with the database using the following functions in the `da
 
 1. `InsertTx()`: Inserts a new transaction into the database.
 2. `GetTx()`: Retrieves a transaction by its ID.
-3. `GetPendingTxs()`: Retrieves all transactions with a "Pending" status.
-4. `UpdateTxStatus()`: Updates the status of a transaction.
+3. `GetSignedTxs()`: Retrieves all transactions with a `signed` status.
+4. `GetBroadcastedTxs()`: Retrives all transactions with a `broadcasted` status.
+5. `UpdateTxStatus()`: Updates the status of a transaction.
