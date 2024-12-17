@@ -17,7 +17,11 @@ func NewMockClient() *MockClient {
 }
 
 // UpdateLC is a mock implementation used in tests.
-func (p *MockClient) UpdateLC(_ context.Context, _ *tmtypes.LightBlock, _ zerolog.Logger) (models.SuiTransactionBlockResponse, error) {
+func (p *MockClient) UpdateLC(
+	_ context.Context,
+	_ *tmtypes.LightBlock,
+	_ zerolog.Logger,
+) (models.SuiTransactionBlockResponse, error) {
 	return models.SuiTransactionBlockResponse{}, nil
 }
 

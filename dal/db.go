@@ -42,10 +42,13 @@ const (
 			status INTEGER NOT NULL DEFAULT 0
 		)
 	`
-	InsertNativeTx          = "INSERT INTO native_transactions(txid, dwallet_cap_id, sign_messages_id, messages, status) VALUES(?,?,?,?,?)"
+	InsertNativeTx = `INSERT INTO native_transactions(txid, dwallet_cap_id, sign_messages_id, messages, status)
+	 VALUES(?,?,?,?,?)`
 	updateNativeTxStatusSQL = "UPDATE native_transactions SET status = ? WHERE txid = ?"
-	getNativeTxsByStatusSQL = "SELECT txid, dwallet_cap_id, sign_messages_id, messages, status FROM native_transactions WHERE status = ?"
-	getNativeTxByTxidSQL    = "SELECT txid, dwallet_cap_id, sign_messages_id, messages, status FROM native_transactions WHERE txid = ?"
+	getNativeTxsByStatusSQL = `SELECT txid, dwallet_cap_id, sign_messages_id, messages, status
+	 FROM native_transactions WHERE status = ?`
+	getNativeTxByTxidSQL = `SELECT txid, dwallet_cap_id, sign_messages_id, messages, status
+	 FROM native_transactions WHERE txid = ?`
 )
 
 // NativeTxStatus represents the different states of a native transaction.

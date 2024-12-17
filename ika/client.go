@@ -13,7 +13,11 @@ import (
 
 // Client defines the methods required for interacting with the Ika network.
 type Client interface {
-	UpdateLC(ctx context.Context, lb *tmtypes.LightBlock, logger zerolog.Logger) (models.SuiTransactionBlockResponse, error)
+	UpdateLC(
+		ctx context.Context,
+		lb *tmtypes.LightBlock,
+		logger zerolog.Logger,
+	) (models.SuiTransactionBlockResponse, error)
 	ApproveAndSign(ctx context.Context, dwalletCapID, signMessagesID string, messages [][]byte) ([][]byte, error)
 }
 
