@@ -63,3 +63,44 @@ endif
 cover-html: test-unit-cover
 	@echo "--> Opening in the browser"
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
+
+###############################################################################
+##                                Infrastructure                             ##
+###############################################################################
+
+BITCOIND_SNAPSHOT=$(shell pwd)/contrib/snapshot
+BITCOIND_DATA=$(shell pwd)/contrib/regtest
+
+run-bitcoind:
+	@docker run -v $(BITCOIND_DATA):/bitcoin/.bitcoin --name=bitcoind-node -d \
+        -p 18444:8333 \
+        -p 127.0.0.1:18443:8332 \
+        -e REGTEST=1 \
+        -e DISABLEWALLET=0 \
+        -e PRINTTOCONSOLE=1 \
+        -e RPCUSER=mysecretrpcuser \
+        -e RPCPASSWORD=mysecretrpcpassword \
+        kylemanna/bitcoind
+	@sleep 1
+	@docker exec -it bitcoind-node bitcoin-cli -regtest -rpcport=8332 loadwallet "nativewallet"
+
+create-bitcoind: snapshot run-bitcoind
+
+start-bitcoind:
+	@docker start bitcoind-node
+
+stop-bitcoind:
+	@docker stop bitcoind-node
+
+delete-bitcoind:
+	@docker rm -f bitcoind-node
+
+restart-bitcoind: delete-bitcoind create-bitcoind
+
+snapshot:
+	@rm -rf $(BITCOIND_DATA)
+	@cp -rf $(BITCOIND_SNAPSHOT) $(BITCOIND_DATA)
+
+
+
+
