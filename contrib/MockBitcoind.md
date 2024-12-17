@@ -16,11 +16,11 @@ make stop-bitcoind
 
 ## Start bitcoind node
 
-You can start bitcoind node again. This command will keep any state you change on bitcoind node.
+You can start bitcoind node again. This command will keep any state changes on the bitcoind node.
 
 ## Restart bitcoind node
 
-Restart bitcoind will create node with snapshot data.
+Restarting bitcoind will create node with a snapshot data.
 
 ```bash
 make restart-bitcoind

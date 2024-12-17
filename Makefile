@@ -84,9 +84,9 @@ run-bitcoind:
 	@sleep 1
 	@docker exec -it bitcoind-node bitcoin-cli -regtest -rpcport=8332 loadwallet "nativewallet"
 
-create-bitcoind: snapshot run-bitcoind
+bitcoind-reinit: bitcoinregtest-snapshot bitcoind-run
 
-start-bitcoind:
+bitcoind-start:
 	@docker start bitcoind-node
 
 stop-bitcoind:
@@ -97,7 +97,7 @@ delete-bitcoind:
 
 restart-bitcoind: delete-bitcoind create-bitcoind
 
-snapshot:
+bitcoinregtest-snapshot:
 	@rm -rf $(BITCOIND_DATA)
 	@cp -rf $(BITCOIND_SNAPSHOT) $(BITCOIND_DATA)
 
