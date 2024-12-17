@@ -48,8 +48,10 @@ const (
 	getNativeTxByTxidSQL    = "SELECT txid, dwallet_cap_id, sign_messages_id, messages, status FROM native_transactions WHERE txid = ?"
 )
 
+// NativeTxStatus represents the different states of a native transaction.
 type NativeTxStatus int
 
+// Native ransaction status constants
 const (
 	NativeTxStatusPending   NativeTxStatus = 0
 	NativeTxStatusProcessed NativeTxStatus = 1

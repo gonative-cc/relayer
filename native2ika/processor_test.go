@@ -11,8 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProcessor_ProcessTxs(t *testing.T) {
+// newIkaProcessor creates a new Processor instance with a mocked IKA client and populated database.
+func newIkaProcessor(t *testing.T) *Processor {
 	db := daltest.InitTestDB(t)
+	daltest.PopulateNativeDB(t, db)
 
 	mockIkaClient := ika.NewMockClient()
 
@@ -21,44 +23,17 @@ func TestProcessor_ProcessTxs(t *testing.T) {
 		db:        db,
 	}
 
-	nativeTx := &NativeTxData{
-		TxID:           123,
-		DWalletCapID:   "capID",
-		SignMessagesID: "msgID",
-		Messages:       [][]byte{{1, 2, 3}},
-	}
-
-	err := processor.ProcessTxs(context.Background(), nativeTx, &sync.Mutex{})
-	assert.Nil(t, err)
-
-	retrievedTx, err := db.GetTx(nativeTx.TxID)
-	assert.Nil(t, err)
-	assert.Equal(t, retrievedTx.BtcTxID, uint64(nativeTx.TxID))
-	assert.Equal(t, retrievedTx.Status, dal.StatusSigned)
-
+	return processor
 }
 
-func TestProcessor_ProcessTxs_Multiple(t *testing.T) {
-	db := daltest.InitTestDB(t)
+func TestProcessor_ProcessTxs(t *testing.T) {
+	processor := newIkaProcessor(t)
 
-	mockIkaClient := ika.NewMockClient()
-
-	processor := &Processor{
-		ikaClient: mockIkaClient,
-		db:        db,
-	}
-	nativeTx := &NativeTxData{
-		TxID:           123,
-		DWalletCapID:   "capID",
-		SignMessagesID: "msgID",
-		Messages:       [][]byte{{1, 1, 1}, {2, 2, 2}, {3, 3, 3}},
-	}
-
-	err := processor.ProcessTxs(context.Background(), nativeTx, &sync.Mutex{})
+	err := processor.ProcessTxs(context.Background(), &sync.Mutex{})
 	assert.Nil(t, err)
 
-	retrievedTx, err := db.GetTx(nativeTx.TxID)
+	retrievedTxs, err := processor.db.GetSignedTxs()
 	assert.Nil(t, err)
-	assert.Equal(t, retrievedTx.BtcTxID, uint64(nativeTx.TxID))
-	assert.Equal(t, retrievedTx.Status, dal.StatusSigned)
+	assert.Equal(t, len(retrievedTxs), 2)
+	assert.Equal(t, retrievedTxs[0].Status, dal.StatusSigned)
 }
