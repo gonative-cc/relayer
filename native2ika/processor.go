@@ -9,25 +9,14 @@ import (
 	"github.com/gonative-cc/relayer/ika"
 )
 
-// Message is an alias for []byte, representing a single message.
-type Message = []byte
-
-// NativeTxData represents the data extracted from a Native chain transaction.
-type NativeTxData struct {
-	TxID           uint64    `json:"tx_id"` // TODO: do we need multiple TxIDs here?
-	DWalletCapID   string    `json:"dwallet_cap_id"`
-	SignMessagesID string    `json:"sign_messages_id"`
-	Messages       []Message `json:"messages"`
-}
-
 // Processor handles processing transactions from the Native chain to IKA for signing.
 type Processor struct {
-	ikaClient ika.IClient
+	ikaClient ika.Client
 	db        *dal.DB
 }
 
 // NewProcessor creates a new Processor instance.
-func NewProcessor(ikaClient ika.IClient, db *dal.DB) *Processor {
+func NewProcessor(ikaClient ika.Client, db *dal.DB) *Processor {
 	return &Processor{
 		ikaClient: ikaClient,
 		db:        db,
@@ -35,24 +24,42 @@ func NewProcessor(ikaClient ika.IClient, db *dal.DB) *Processor {
 }
 
 // ProcessTxs processes a transaction from the Native chain.
-func (p *Processor) ProcessTxs(ctx context.Context, nativeTx *NativeTxData, mu *sync.Mutex) error {
+func (p *Processor) ProcessTxs(ctx context.Context, mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	signatures, err := p.ikaClient.ApproveAndSign(ctx, nativeTx.DWalletCapID, nativeTx.SignMessagesID, nativeTx.Messages)
+	nativeTxs, err := p.db.GetNativeTxsByStatus(dal.NativeTxStatusPending)
 	if err != nil {
-		return fmt.Errorf("error calling ApproveAndSign: %w", err)
+		return fmt.Errorf("getting unprocessed native txs from db: %w", err)
 	}
 
-	txs, err := p.constructBtcTxsData(nativeTx, signatures)
-	if err != nil {
-		return fmt.Errorf("error appending signatures: %w", err)
+	if len(nativeTxs) == 0 {
+		fmt.Println("No native transactions to process.")
+		return nil
 	}
 
-	for _, tx := range txs {
-		err = p.db.InsertTx(*tx)
+	for _, nativeTx := range nativeTxs {
+
+		signatures, err := p.ikaClient.ApproveAndSign(ctx, nativeTx.DWalletCapID, nativeTx.SignMessagesID, nativeTx.Messages)
 		if err != nil {
-			return fmt.Errorf("error storing transaction in database: %w", err)
+			return fmt.Errorf("error calling ApproveAndSign: %w", err)
+		}
+
+		txs, err := p.constructBtcTxsData(&nativeTx, signatures)
+		if err != nil {
+			return fmt.Errorf("error appending signatures: %w", err)
+		}
+
+		for _, tx := range txs {
+			err = p.db.InsertTx(*tx)
+			if err != nil {
+				return fmt.Errorf("error storing transaction in database: %w", err)
+			}
+		}
+
+		err = p.db.UpdateNativeTxStatus(nativeTx.TxID, dal.NativeTxStatusProcessed)
+		if err != nil {
+			return fmt.Errorf("updating native tx status: %w", err)
 		}
 	}
 
@@ -60,7 +67,7 @@ func (p *Processor) ProcessTxs(ctx context.Context, nativeTx *NativeTxData, mu *
 }
 
 // constructBtcTxsData constructs Bitcoin transactions data from Native transactions data and IKA signatures.
-func (p *Processor) constructBtcTxsData(nativeTx *NativeTxData, signatures [][]byte) ([]*dal.Tx, error) {
+func (p *Processor) constructBtcTxsData(nativeTx *dal.NativeTx, signatures [][]byte) ([]*dal.Tx, error) {
 	rawTxs, err := constructRawBtcTxs(nativeTx, signatures)
 	if err != nil {
 		return nil, err
@@ -84,7 +91,7 @@ func (p *Processor) constructBtcTxsData(nativeTx *NativeTxData, signatures [][]b
 // TODO: Implement the actual Bitcoin transaction construction logic.
 // Most likely we will need to include the signature produced by the network
 // and the tx itself should be available from native event
-func constructRawBtcTxs(nativeTx *NativeTxData, signatures [][]byte) ([][]byte, error) {
+func constructRawBtcTxs(nativeTx *dal.NativeTx, signatures [][]byte) ([][]byte, error) {
 	// Return dummy data for now
 	if nativeTx == nil || signatures == nil {
 		return nil, fmt.Errorf("empty")

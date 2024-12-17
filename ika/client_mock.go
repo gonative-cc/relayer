@@ -5,6 +5,7 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/models"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/rs/zerolog"
 )
 
 // MockClient is a mock implementation of the Client interface for testing.
@@ -16,7 +17,11 @@ func NewMockClient() *MockClient {
 }
 
 // UpdateLC is a mock implementation used in tests.
-func (p *MockClient) UpdateLC(_ context.Context, _ *tmtypes.LightBlock) (models.SuiTransactionBlockResponse, error) {
+func (p *MockClient) UpdateLC(
+	_ context.Context,
+	_ *tmtypes.LightBlock,
+	_ zerolog.Logger,
+) (models.SuiTransactionBlockResponse, error) {
 	return models.SuiTransactionBlockResponse{}, nil
 }
 
