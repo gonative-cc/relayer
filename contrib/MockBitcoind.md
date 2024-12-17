@@ -5,25 +5,29 @@
 Create a new bitcoind node with snapshot data
 
 ```bash
-make create-bitcoind
+make bitcoind-run
 ```
 
 ## Stop bitcoind node
 
 ```bash
-make stop-bitcoind
+make bitcoind-stop
 ```
 
 ## Start bitcoind node
 
 You can start bitcoind node again. This command will keep any state changes on the bitcoind node.
 
+```bash
+make bitcoind-start
+```
+
 ## Restart bitcoind node
 
 Restarting bitcoind will create node with a snapshot data.
 
 ```bash
-make restart-bitcoind
+make bitcoind-reinit
 ```
 
 ## Interact with bitcoind node
