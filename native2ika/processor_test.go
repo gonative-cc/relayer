@@ -26,10 +26,10 @@ func newIkaProcessor(t *testing.T) *Processor {
 	return processor
 }
 
-func TestProcessor_ProcessTxs(t *testing.T) {
+func TestProcessor_ProcessPendingTxs(t *testing.T) {
 	processor := newIkaProcessor(t)
 
-	err := processor.ProcessTxs(context.Background(), &sync.Mutex{})
+	err := processor.ProcessPendingTxs(context.Background(), &sync.Mutex{})
 	assert.Nil(t, err)
 
 	retrievedTxs, err := processor.db.GetSignedTxs()

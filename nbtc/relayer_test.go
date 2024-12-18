@@ -1,6 +1,7 @@
 package nbtc
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,6 +9,9 @@ import (
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
+	"github.com/gonative-cc/relayer/ika"
+	"github.com/gonative-cc/relayer/ika2btc"
+	"github.com/gonative-cc/relayer/native2ika"
 	"gotest.tools/assert"
 )
 
@@ -28,14 +32,21 @@ var relayerConfig = RelayerConfig{
 func Test_Start(t *testing.T) {
 	db := initTestDB(t)
 	txs := daltest.PopulateDB(t, db)
+	nativeTxs := daltest.PopulateNativeDB(t, db)
 
-	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
+	mockIkaClient := ika.NewMockClient()
+	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
+	btcProcessor.BtcClient = &bitcoin.MockClient{}
+	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
+
+	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor)
 	assert.NilError(t, err)
-	relayer.btcClient = &bitcoin.MockClient{}
+
+	ctx := context.Background()
 
 	// Start the relayer in a separate goroutine
 	go func() {
-		err := relayer.Start()
+		err := relayer.Start(ctx)
 		assert.NilError(t, err)
 	}()
 
@@ -61,58 +72,14 @@ func Test_Start(t *testing.T) {
 		}
 	}
 
+	for _, nativeTx := range nativeTxs {
+		updatedTx, err := db.GetNativeTx(nativeTx.TxID)
+		assert.NilError(t, err, "Error getting transaction")
+		assert.Equal(t, updatedTx.Status, dal.NativeTxStatusProcessed)
+	}
+
 	relayer.Stop()
 	relayer.db.Close()
-}
-
-func Test_processSignedTxs(t *testing.T) {
-	db := initTestDB(t)
-	txs := daltest.PopulateDB(t, db)
-	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
-	assert.NilError(t, err)
-	relayer.btcClient = &bitcoin.MockClient{}
-
-	err = relayer.processSignedTxs()
-	assert.NilError(t, err)
-
-	for _, tx := range txs {
-		updatedTx, err := db.GetTx(tx.BtcTxID)
-		assert.NilError(t, err)
-		assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
-	}
-}
-
-func Test_checkConfirmations(t *testing.T) {
-	db := initTestDB(t)
-	daltest.PopulateDB(t, db)
-	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
-	assert.NilError(t, err)
-	relayer.btcClient = &bitcoin.MockClient{}
-
-	relayer.checkConfirmations()
-
-	updatedTx1, err := db.GetTx(1)
-	assert.NilError(t, err)
-	assert.Equal(t, updatedTx1.Status, dal.StatusBroadcasted)
-
-	updatedTx2, err := db.GetTx(2)
-	assert.NilError(t, err)
-	assert.Equal(t, updatedTx2.Status, dal.StatusConfirmed)
-
-}
-
-func Test_NewRelayer_DatabaseError(t *testing.T) {
-	relayer, err := NewRelayer(btcClientConfig, relayerConfig, nil)
-	assert.ErrorContains(t, err, "database cannot be nil")
-	assert.Assert(t, relayer == nil)
-}
-
-func Test_NewRelayer_MissingEnvVatiables(t *testing.T) {
-	db := initTestDB(t)
-	btcClientConfig.Host = ""
-	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
-	assert.ErrorContains(t, err, "missing bitcoin node configuration")
-	assert.Assert(t, relayer == nil)
 }
 
 func initTestDB(t *testing.T) *dal.DB {

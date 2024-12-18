@@ -23,8 +23,8 @@ func NewProcessor(ikaClient ika.Client, db *dal.DB) *Processor {
 	}
 }
 
-// ProcessTxs processes a transaction from the Native chain.
-func (p *Processor) ProcessTxs(ctx context.Context, mu *sync.Mutex) error {
+// ProcessPendingTxs processes a transaction from the Native chain.
+func (p *Processor) ProcessPendingTxs(ctx context.Context, mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
 
