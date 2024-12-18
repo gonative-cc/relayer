@@ -52,5 +52,5 @@ bitcoin-cli -regtest -rpcuser=user -rpcpassword=password generate
 
 ## Reference
 
-- [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface)
+- [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface/)
 - [Bitlights Labs dev env](https://blog.bitlightlabs.com/posts/setup-local-development-env-regtest)
