@@ -2,7 +2,9 @@
 
 ## Requirements
 
-Make sure you have docker and docker-compose-plugin installed and docker service is running.
+Make sure you have docker and docker-compose-plugin installed, and the docker service is running.
+
+- docker-compose version >= 2.30.0.
 
 ## Initialization
 
@@ -41,7 +43,7 @@ docker exec -it bitcoind-node /bin/bash
 Then you can generate a block:
 
 ```sh
-bitcoin-cli -regtest generate
+bitcoin-cli -regtest generate <number-block>
 ```
 
 If RPC params are required, you can provide them:
@@ -49,7 +51,7 @@ If RPC params are required, you can provide them:
 ```sh
 bitcoin-cli -regtest -rpcuser=user -rpcpassword=password generate
 ```
-
+More information in [developer.bitcoin.org -> testing](https://developer.bitcoin.org/examples/testing.html).
 ## Reference
 
 - [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface/)
