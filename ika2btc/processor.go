@@ -8,13 +8,14 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/rs/zerolog/log"
 )
 
 // Processor handles processing transactions from IKA to Bitcoin.
 type Processor struct {
-	btcClient               *rpcclient.Client
+	BtcClient               bitcoin.Client
 	db                      *dal.DB
 	txConfirmationThreshold uint8
 }
@@ -44,7 +45,7 @@ func NewProcessor(
 	}
 
 	return &Processor{
-		btcClient:               client,
+		BtcClient:               client,
 		db:                      db,
 		txConfirmationThreshold: confirmationThreshold,
 	}, nil
@@ -66,7 +67,7 @@ func (p *Processor) ProcessSignedTxs(mu *sync.Mutex) error {
 			return err
 		}
 
-		txHash, err := p.btcClient.SendRawTransaction(&msgTx, false)
+		txHash, err := p.BtcClient.SendRawTransaction(&msgTx, false)
 		if err != nil {
 			return fmt.Errorf("error broadcasting transaction: %w", err)
 		}
@@ -97,7 +98,7 @@ func (p *Processor) CheckConfirmations(mu *sync.Mutex) error {
 		if err != nil {
 			return err
 		}
-		txDetails, err := p.btcClient.GetTransaction(hash)
+		txDetails, err := p.BtcClient.GetTransaction(hash)
 		if err != nil {
 			return fmt.Errorf("error getting transaction details: %w", err)
 		}
@@ -116,5 +117,5 @@ func (p *Processor) CheckConfirmations(mu *sync.Mutex) error {
 
 // Shutdown shuts down the Bitcoin RPC client.
 func (p *Processor) Shutdown() {
-	p.btcClient.Shutdown()
+	p.BtcClient.Shutdown()
 }

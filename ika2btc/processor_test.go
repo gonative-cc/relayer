@@ -3,7 +3,6 @@ package ika2btc
 import (
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gonative-cc/relayer/bitcoin"
@@ -20,18 +19,12 @@ var btcClientConfig = rpcclient.ConnConfig{
 	DisableTLS:   false,
 }
 
-var relayerConfig = RelayerConfig{
-	ProcessTxsInterval:    time.Second * 5,
-	ConfirmTxsInterval:    time.Second * 7,
-	ConfirmationThreshold: 6,
-}
-
 func TestProcessor_ProcessSignedTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	txs := daltest.PopulateDB(t, db)
-	processor, err := NewProcessor(btcClientConfig, relayerConfig.ConfirmationThreshold, db)
+	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.NilError(t, err)
-	processor.btcClient = &bitcoin.MockClient{}
+	processor.BtcClient = &bitcoin.MockClient{}
 
 	var mu sync.Mutex
 	err = processor.ProcessSignedTxs(&mu)
@@ -47,9 +40,9 @@ func TestProcessor_ProcessSignedTxs(t *testing.T) {
 func TestProcessor_CheckConfirmations(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	daltest.PopulateDB(t, db)
-	processor, err := NewProcessor(btcClientConfig, relayerConfig.ConfirmationThreshold, db)
+	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.NilError(t, err)
-	processor.btcClient = &bitcoin.MockClient{}
+	processor.BtcClient = &bitcoin.MockClient{}
 
 	var mu sync.Mutex
 	err = processor.CheckConfirmations(&mu)
@@ -65,7 +58,7 @@ func TestProcessor_CheckConfirmations(t *testing.T) {
 }
 
 func TestNewProcessor_DatabaseError(t *testing.T) {
-	processor, err := NewProcessor(btcClientConfig, relayerConfig.ConfirmationThreshold, nil)
+	processor, err := NewProcessor(btcClientConfig, 6, nil)
 	assert.ErrorContains(t, err, "database cannot be nil")
 	assert.Assert(t, processor == nil)
 }
@@ -73,7 +66,7 @@ func TestNewProcessor_DatabaseError(t *testing.T) {
 func TestNewProcessor_MissingBtcConfig(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	btcClientConfig.Host = ""
-	processor, err := NewProcessor(btcClientConfig, relayerConfig.ConfirmationThreshold, db)
+	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.ErrorContains(t, err, "missing bitcoin node configuration")
 	assert.Assert(t, processor == nil)
 }

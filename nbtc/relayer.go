@@ -1,6 +1,7 @@
 package nbtc
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -72,34 +73,15 @@ func NewRelayer(
 }
 
 // Start starts the relayer's main loop.
-func (r *Relayer) Start() error {
+func (r *Relayer) Start(ctx context.Context) error {
 	for {
 		select {
 		case <-r.shutdownChan:
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			// 1. Process transactions from the Native chain
-			// if err := r.nativeProcessor.ProcessTxs(ctx, &r.dbMutex); err != nil {
-			// 	var sqliteErr *sqlite3.Error
-			// 	if errors.As(err, &sqliteErr) {
-			// 		log.Err(err).Msg("Critical error with the database, shutting down")
-			// 		close(r.shutdownChan)
-			// 	} else {
-			// 		log.Err(err).Msg("Error processing native transactions, continuing")
-			// 	}
-			// }
-			// 2. Process transactions for Bitcoin
-			if err := r.btcProcessor.ProcessSignedTxs(&r.dbMutex); err != nil {
-				var sqliteErr *sqlite3.Error
-				//TODO: decide on which exact errors to continue and on which to stop the relayer
-				if errors.As(err, &sqliteErr) {
-					log.Err(err).Msg("Critical error updating transaction status, shutting down")
-					close(r.shutdownChan)
-				} else {
-					log.Err(err).Msg("Error processing bitcoin transactions, continuing")
-				}
-			}
+			r.processNativeTxs(ctx)
+			r.processBitcoinTxs()
 		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
 		// so probably we should wrap the db in a mutex
 		case <-r.confirmTxsTicker.C:
@@ -114,6 +96,38 @@ func (r *Relayer) Start() error {
 			}
 		}
 	}
+}
+
+// processNativeTxs processes transactions from the Native chain.
+func (r *Relayer) processNativeTxs(ctx context.Context) error {
+	if err := r.nativeProcessor.ProcessPendingTxs(ctx, &r.dbMutex); err != nil {
+		var sqliteErr *sqlite3.Error
+		//TODO: decide on which exact errors to continue and on which to stop the relayer
+		if errors.As(err, &sqliteErr) {
+			log.Err(err).Msg("Critical error with the database, shutting down")
+			close(r.shutdownChan)
+		} else {
+			log.Err(err).Msg("Error processing native transactions, continuing")
+		}
+		return err
+	}
+	return nil
+}
+
+// processBitcoinTxs processes signed transactions for Bitcoin.
+func (r *Relayer) processBitcoinTxs() error {
+	if err := r.btcProcessor.ProcessSignedTxs(&r.dbMutex); err != nil {
+		var sqliteErr *sqlite3.Error
+		//TODO: decide on which exact errors to continue and on which to stop the relayer
+		if errors.As(err, &sqliteErr) {
+			log.Err(err).Msg("Critical error updating transaction status, shutting down")
+			close(r.shutdownChan)
+		} else {
+			log.Err(err).Msg("Error processing bitcoin transactions, continuing")
+		}
+		return err
+	}
+	return nil
 }
 
 // Stop initiates a shutdown of the relayer.
