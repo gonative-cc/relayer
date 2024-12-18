@@ -68,41 +68,11 @@ cover-html: test-unit-cover
 ##                                Infrastructure                             ##
 ###############################################################################
 
-BITCOIND_IMAGE="kylemanna/bitcoind@sha256:2400e64960457b22be55299a2d7fa2aaa217f3dfc4afb84387e5511fe8ce5055"
-BITCOIND_SNAPSHOT=$(shell pwd)/contrib/snapshot
-BITCOIND_DATA=$(shell pwd)/contrib/regtest
 WALLET="nativewallet"
 
-bitcoind-run:
-	@docker run -v $(BITCOIND_DATA):/bitcoin/.bitcoin --name=bitcoind-node -d \
-        -p 18444:8333 \
-        -p 127.0.0.1:18443:8332 \
-        -e REGTEST=1 \
-        -e DISABLEWALLET=0 \
-        -e PRINTTOCONSOLE=1 \
-        -e RPCUSER=mysecretrpcuser \
-        -e RPCPASSWORD=mysecretrpcpassword \
-        $(BITCOIND_IMAGE)
-	@sleep 2
-	@docker exec -it bitcoind-node bitcoin-cli -regtest -rpcport=8332 loadwallet $(WALLET)
+bitcoind-init:
+	@rm -rf ./contrib/bitcoind-data
+	@cp -rf ./contrib/bitcoind-snapshot contrib/bitcoind-data
 
-bitcoind-reinit: bitcoinregtest-snapshot bitcoind-remove bitcoind-run
-
-bitcoind-start:
-	@docker start bitcoind-node
-
-bitcoind-stop:
-	@docker stop bitcoind-node
-
-bitcoind-remove:
-	@docker rm -f bitcoind-node
-
-restart-bitcoind: bitcoind-remove bitcoind-run
-
-bitcoinregtest-snapshot:
-	@rm -rf $(BITCOIND_DATA)
-	@cp -rf $(BITCOIND_SNAPSHOT) $(BITCOIND_DATA)
-
-
-
-
+bitcoind-load-wallet:
+	@docker exec -it bitcoind-node bitcoin-cli -regtest loadwallet $(WALLET)

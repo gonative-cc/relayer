@@ -1,37 +1,56 @@
 # Run bitcoind regtest node
 
-## Create bitcoind node
+## Requirements
 
-Create a new bitcoind node with snapshot data
+Make sure you have docker and docker-compose-plugin installed and docker service is running.
 
-```bash
-make bitcoind-run
+## Initialization
+
+```sh
+make bitcoind-init
+```
+
+Start a new terminal where you will run a container with bitcoind, by default the nativewallet will be loaded:
+
+```sh
+cd contrib; docker compose up
 ```
 
 ## Stop bitcoind node
 
-```bash
-make bitcoind-stop
+To stop the node just press `ctrl-c` in the terminal running a node.
+
+To remove a container:
+
+```sh
+docker compose down
 ```
 
-## Start bitcoind node
+## Interact with the bitcoind node
 
-You can start bitcoind node again. This command will keep any state changes on the bitcoind node.
-
-```bash
-make bitcoind-start
+```sh
+docker exec -it bitcoind-node bitcoin-cli -regtest <args>
 ```
 
-## Restart bitcoind node
+Or enter bash in the container:
 
-Restarting bitcoind will create node with a snapshot data.
-
-```bash
-make bitcoind-reinit
+```sh
+docker exec -it bitcoind-node /bin/bash
 ```
 
-## Interact with bitcoind node
+Then you can generate a block:
 
-```bash
- docker exec -it bitcoind-node bitcoin-cli -regtest -rpcport=8332 <args>
+```sh
+bitcoin-cli -regtest generate
 ```
+
+If RPC params are required, you can provide them:
+
+```sh
+bitcoin-cli -regtest -rpcuser=user -rpcpassword=password generate
+```
+
+## Reference
+
+- [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface)
+- [Bitlights Labs dev env](https://blog.bitlightlabs.com/posts/setup-local-development-env-regtest)
