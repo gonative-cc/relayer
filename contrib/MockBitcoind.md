@@ -51,7 +51,9 @@ If RPC params are required, you can provide them:
 ```sh
 bitcoin-cli -regtest -rpcuser=user -rpcpassword=password generate
 ```
+
 More information in [developer.bitcoin.org -> testing](https://developer.bitcoin.org/examples/testing.html).
+
 ## Reference
 
 - [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface/)
