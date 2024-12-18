@@ -80,8 +80,8 @@ func (r *Relayer) Start(ctx context.Context) error {
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			r.processNativeTxs(ctx)
-			r.processBitcoinTxs()
+			_ = r.processNativeTxs(ctx)
+			_ = r.processBitcoinTxs()
 		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
 		// so probably we should wrap the db in a mutex
 		case <-r.confirmTxsTicker.C:
