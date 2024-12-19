@@ -5,7 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,8 @@ import (
 // newIkaProcessor creates a new Processor instance with a mocked IKA client and populated database.
 func newIkaProcessor(t *testing.T) *Processor {
 	db := daltest.InitTestDB(t)
-	daltest.PopulateNativeDB(t, db)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
 
 	mockIkaClient := ika.NewMockClient()
 
@@ -29,11 +29,18 @@ func newIkaProcessor(t *testing.T) *Processor {
 func TestProcessor_ProcessTxs(t *testing.T) {
 	processor := newIkaProcessor(t)
 
-	err := processor.ProcessTxs(context.Background(), &sync.Mutex{})
+	// before signing
+	retrievedSignRequests, err := processor.db.GetSignedIkaSignRequests()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(retrievedSignRequests))
+	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
+
+	err = processor.ProcessTxs(context.Background(), &sync.Mutex{})
 	assert.Nil(t, err)
 
-	retrievedTxs, err := processor.db.GetSignedTxs()
+	// after signing
+	retrievedSignRequests, err = processor.db.GetSignedIkaSignRequests()
 	assert.Nil(t, err)
-	assert.Equal(t, len(retrievedTxs), 2)
-	assert.Equal(t, retrievedTxs[0].Status, dal.StatusSigned)
+	assert.Equal(t, 3, len(retrievedSignRequests))
+	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
 }
