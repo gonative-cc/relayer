@@ -267,6 +267,14 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 
 // GetBitcoinTxsToBroadcast retrieves IkaSignRequests that have been signed by IKA
 // and are due to be broadcasted to bitcoin.
+//
+// This function checks for the following conditions:
+// - The IkaSignRequest must have a final signature (final_sig IS NOT NULL).
+// - There must be no corresponding entry in the bitcoin_txs table, OR
+// - There must be only one corresponding entry in the bitcoin_txs table with a status of "Pending".
+//
+// The reason for checking these conditions is that we cannot have a Bitcoin transaction hash (btc_tx_id)
+// before the first broadcast attempt.
 func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
 	const getSignedIkaSignRequestsSQL = `
         SELECT sr.id, sr.payload, sr.dwallet_id, sr.user_sig, sr.final_sig, sr.timestamp
