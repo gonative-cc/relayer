@@ -114,14 +114,15 @@ func (r *Relayer) Start() error {
 
 // processSignedTxs processes signed transactions from the database.
 func (r *Relayer) processSignedTxs() error {
-	signedTxs, err := r.db.GetSignedTxs()
+	signedTxs, err := r.db.GetSignedIkaSignRequests()
 	if err != nil {
 		return err
 	}
 
 	for _, tx := range signedTxs {
+		rawTx := append(tx.Payload, tx.FinalSig...)
 		var msgTx wire.MsgTx
-		if err := msgTx.Deserialize(bytes.NewReader(tx.RawTx)); err != nil {
+		if err := msgTx.Deserialize(bytes.NewReader(rawTx)); err != nil {
 			return err
 		}
 
@@ -129,8 +130,9 @@ func (r *Relayer) processSignedTxs() error {
 		if err != nil {
 			return fmt.Errorf("error broadcasting transaction: %w", err)
 		}
+		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
-		err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusBroadcasted)
+		err = r.db.InsertBtcTx(dal.BitcoinTx{TxID: tx.ID, Status: dal.Broadcasted, BtcTxID: txHash.CloneBytes(), Timestamp: uint64(time.Now().Unix()), Note: ""})
 		if err != nil {
 			return fmt.Errorf("DB: can't update tx status: %w", err)
 		}
@@ -143,13 +145,13 @@ func (r *Relayer) processSignedTxs() error {
 // checkConfirmations checks all the broadcasted transactions to bitcoin
 // and if confirmed updates the database accordingly.
 func (r *Relayer) checkConfirmations() error {
-	broadcastedTxs, err := r.db.GetBroadcastedTxs()
+	broadcastedTxs, err := r.db.GetBroadcastedBitcoinTxsInfo()
 	if err != nil {
 		return err
 	}
 
 	for _, tx := range broadcastedTxs {
-		hash, err := chainhash.NewHash(tx.Hash)
+		hash, err := chainhash.NewHash(tx.BtcTxID)
 		if err != nil {
 			return err
 		}
@@ -160,11 +162,11 @@ func (r *Relayer) checkConfirmations() error {
 
 		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
 		if txDetails.Confirmations >= int64(r.txConfirmationThreshold) {
-			err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusConfirmed)
+			err = r.db.UpdateBitcoinTxToConfirmed(tx.TxID, tx.BtcTxID)
 			if err != nil {
 				return fmt.Errorf("DB: can't update tx status: %w", err)
 			}
-			log.Info().Msgf("Transaction confirmed: %s", tx.Hash)
+			log.Info().Msgf("Transaction confirmed: %s", tx.BtcTxID)
 		}
 	}
 	return nil
