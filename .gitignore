@@ -24,4 +24,4 @@ go.work.sum
 # binaries
 out
 
-contrib/regtest
+contrib/bitcoind-data
