@@ -15,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Relayer broadcasts pending transactions from the database to the Bitcoin network.
+// Relayer broadcasts signed transactions from the database to the Bitcoin network.
 type Relayer struct {
 	db                      *dal.DB
 	btcClient               bitcoin.Client
@@ -86,7 +86,7 @@ func (r *Relayer) Start() error {
 			r.btcClient.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			if err := r.processPendingTxs(); err != nil {
+			if err := r.processSignedTxs(); err != nil {
 				var sqliteErr *sqlite3.Error
 				//TODO: decide on which exact errors to continue and on which to stop the relayer
 				if errors.As(err, &sqliteErr) {
@@ -112,16 +112,19 @@ func (r *Relayer) Start() error {
 	}
 }
 
-// processPendingTxs processes pending transactions from the database.
-func (r *Relayer) processPendingTxs() error {
-	pendingTxs, err := r.db.GetPendingTxs()
+// processSignedTxs processes signed transactions from the database.
+func (r *Relayer) processSignedTxs() error {
+	signedTxs, err := r.db.GetBitcoinTxsToBroadcast()
 	if err != nil {
 		return err
 	}
 
-	for _, tx := range pendingTxs {
+	for _, tx := range signedTxs {
+		rawTx := make([]byte, 0, len(tx.Payload)+len(tx.FinalSig))
+		rawTx = append(rawTx, tx.Payload...)
+		rawTx = append(rawTx, tx.FinalSig...)
 		var msgTx wire.MsgTx
-		if err := msgTx.Deserialize(bytes.NewReader(tx.RawTx)); err != nil {
+		if err := msgTx.Deserialize(bytes.NewReader(rawTx)); err != nil {
 			return err
 		}
 
@@ -129,8 +132,15 @@ func (r *Relayer) processPendingTxs() error {
 		if err != nil {
 			return fmt.Errorf("error broadcasting transaction: %w", err)
 		}
+		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
-		err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusBroadcasted)
+		err = r.db.InsertBtcTx(dal.BitcoinTx{
+			SrID:      tx.ID,
+			Status:    dal.Broadcasted,
+			BtcTxID:   txHash.CloneBytes(),
+			Timestamp: time.Now().Unix(),
+			Note:      "",
+		})
 		if err != nil {
 			return fmt.Errorf("DB: can't update tx status: %w", err)
 		}
@@ -143,13 +153,13 @@ func (r *Relayer) processPendingTxs() error {
 // checkConfirmations checks all the broadcasted transactions to bitcoin
 // and if confirmed updates the database accordingly.
 func (r *Relayer) checkConfirmations() error {
-	broadcastedTxs, err := r.db.GetBroadcastedTxs()
+	broadcastedTxs, err := r.db.GetBroadcastedBitcoinTxsInfo()
 	if err != nil {
 		return err
 	}
 
 	for _, tx := range broadcastedTxs {
-		hash, err := chainhash.NewHash(tx.Hash)
+		hash, err := chainhash.NewHash(tx.BtcTxID)
 		if err != nil {
 			return err
 		}
@@ -160,11 +170,11 @@ func (r *Relayer) checkConfirmations() error {
 
 		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
 		if txDetails.Confirmations >= int64(r.txConfirmationThreshold) {
-			err = r.db.UpdateTxStatus(tx.BtcTxID, dal.StatusConfirmed)
+			err = r.db.UpdateBitcoinTxToConfirmed(tx.TxID, tx.BtcTxID)
 			if err != nil {
 				return fmt.Errorf("DB: can't update tx status: %w", err)
 			}
-			log.Info().Msgf("Transaction confirmed: %s", tx.Hash)
+			log.Info().Msgf("Transaction confirmed: %s", tx.BtcTxID)
 		}
 	}
 	return nil
