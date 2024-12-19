@@ -46,10 +46,14 @@ func PopulateSignRequests(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
 	}
 
 	requests := []dal.IkaSignRequest{
-		{ID: 1, Payload: rawTxBytes, DWalletID: "dwallet1", UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()},
-		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2", UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: time.Now().Unix()},
-		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3", UserSig: "user_sig3", FinalSig: nil, Timestamp: time.Now().Unix()},
-		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4", UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: time.Now().Unix()},
+		{ID: 1, Payload: rawTxBytes, DWalletID: "dwallet1",
+			UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()},
+		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2",
+			UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: time.Now().Unix()},
+		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3",
+			UserSig: "user_sig3", FinalSig: nil, Timestamp: time.Now().Unix()},
+		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4",
+			UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: time.Now().Unix()},
 	}
 
 	for _, request := range requests {

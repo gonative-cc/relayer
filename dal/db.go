@@ -138,7 +138,15 @@ func (db *DB) InsertIkaSignRequest(signReq IkaSignRequest) error {
 	const insertIkaSignRequestSQL = `
 		INSERT INTO ika_sign_requests (id, payload, dwallet_id, user_sig, final_sig, timestamp) 
 		VALUES (?, ?, ?, ?, ?, ?)`
-	_, err := db.conn.Exec(insertIkaSignRequestSQL, signReq.ID, signReq.Payload, signReq.DWalletID, signReq.UserSig, signReq.FinalSig, signReq.Timestamp)
+	_, err := db.conn.Exec(
+		insertIkaSignRequestSQL,
+		signReq.ID,
+		signReq.Payload,
+		signReq.DWalletID,
+		signReq.UserSig,
+		signReq.FinalSig,
+		signReq.Timestamp,
+	)
 	return err
 }
 
@@ -168,7 +176,14 @@ func (db DB) GetIkaSignRequestByID(id uint64) (*IkaSignRequest, error) {
 		WHERE id = ?`
 	row := db.conn.QueryRow(getIkaSignRequestByIDSQL, id)
 	var signReq IkaSignRequest
-	err := row.Scan(&signReq.ID, &signReq.Payload, &signReq.DWalletID, &signReq.UserSig, &signReq.FinalSig, &signReq.Timestamp)
+	err := row.Scan(
+		&signReq.ID,
+		&signReq.Payload,
+		&signReq.DWalletID,
+		&signReq.UserSig,
+		&signReq.FinalSig,
+		&signReq.Timestamp,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -229,7 +244,15 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 	row := db.conn.QueryRow(getIkaSignRequestWithStatusSQL, id)
 	var request IkaSignRequest
 	var status IkaTxStatus
-	err := row.Scan(&request.ID, &request.Payload, &request.DWalletID, &request.UserSig, &request.FinalSig, &request.Timestamp, &status)
+	err := row.Scan(
+		&request.ID,
+		&request.Payload,
+		&request.DWalletID,
+		&request.UserSig,
+		&request.FinalSig,
+		&request.Timestamp,
+		&status,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, 0, nil
@@ -258,7 +281,14 @@ func (db *DB) GetSignedIkaSignRequests() ([]IkaSignRequest, error) {
 	var requests []IkaSignRequest
 	for rows.Next() {
 		var request IkaSignRequest
-		err := rows.Scan(&request.ID, &request.Payload, &request.DWalletID, &request.UserSig, &request.FinalSig, &request.Timestamp)
+		err := rows.Scan(
+			&request.ID,
+			&request.Payload,
+			&request.DWalletID,
+			&request.UserSig,
+			&request.FinalSig,
+			&request.Timestamp,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -313,7 +343,14 @@ func (db *DB) GetPendingIkaSignRequests() ([]IkaSignRequest, error) {
 	var requests []IkaSignRequest
 	for rows.Next() {
 		var request IkaSignRequest
-		err := rows.Scan(&request.ID, &request.Payload, &request.DWalletID, &request.UserSig, &request.FinalSig, &request.Timestamp)
+		err := rows.Scan(
+			&request.ID,
+			&request.Payload,
+			&request.DWalletID,
+			&request.UserSig,
+			&request.FinalSig,
+			&request.Timestamp,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}

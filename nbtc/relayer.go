@@ -134,7 +134,13 @@ func (r *Relayer) processSignedTxs() error {
 		}
 		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
-		err = r.db.InsertBtcTx(dal.BitcoinTx{TxID: tx.ID, Status: dal.Broadcasted, BtcTxID: txHash.CloneBytes(), Timestamp: time.Now().Unix(), Note: ""})
+		err = r.db.InsertBtcTx(dal.BitcoinTx{
+			TxID:      tx.ID,
+			Status:    dal.Broadcasted,
+			BtcTxID:   txHash.CloneBytes(),
+			Timestamp: time.Now().Unix(),
+			Note:      "",
+		})
 		if err != nil {
 			return fmt.Errorf("DB: can't update tx status: %w", err)
 		}
