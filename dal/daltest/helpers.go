@@ -2,6 +2,7 @@ package daltest
 
 import (
 	"testing"
+	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gonative-cc/relayer/dal"
@@ -28,8 +29,8 @@ func GetHashBytes(t *testing.T, hashString string) []byte {
 
 }
 
-// PopulateDB inserts a set of predefined transactions into the database.
-func PopulateDB(t *testing.T, db *dal.DB) []dal.Tx {
+// PopulateSignRequests inserts a set of predefined IkaSignRequest into the database.
+func PopulateSignRequests(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
 	t.Helper()
 
 	var rawTxBytes = []byte{
@@ -44,16 +45,65 @@ func PopulateDB(t *testing.T, db *dal.DB) []dal.Tx {
 		0x00, 0x00,
 	}
 
-	txs := []dal.Tx{
-		{BtcTxID: 1, RawTx: rawTxBytes, Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "1")},
-		{BtcTxID: 2, RawTx: rawTxBytes, Status: dal.StatusBroadcasted, Hash: GetHashBytes(t, "2")},
-		{BtcTxID: 3, RawTx: rawTxBytes, Status: dal.StatusPending, Hash: GetHashBytes(t, "3")},
-		{BtcTxID: 4, RawTx: rawTxBytes, Status: dal.StatusPending, Hash: GetHashBytes(t, "4")},
+	requests := []dal.IkaSignRequest{
+		{ID: 1, Payload: rawTxBytes, DWalletID: "dwallet1",
+			UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()},
+		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2",
+			UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: time.Now().Unix()},
+		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3",
+			UserSig: "user_sig3", FinalSig: nil, Timestamp: time.Now().Unix()},
+		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4",
+			UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: time.Now().Unix()},
 	}
-	for _, tx := range txs {
-		err := db.InsertTx(tx)
+
+	for _, request := range requests {
+		err := db.InsertIkaSignRequest(request)
 		assert.NilError(t, err)
 	}
 
-	return txs
+	return requests
+}
+
+// PopulateIkaTxs inserts a set of predefined IkaTxs into the database.
+func PopulateIkaTxs(t *testing.T, db *dal.DB) []dal.IkaTx {
+	t.Helper()
+
+	ikaTxs := []dal.IkaTx{
+		{SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix(), Note: "some error"},
+	}
+
+	for _, tx := range ikaTxs {
+		err := db.InsertIkaTx(tx)
+		assert.NilError(t, err)
+	}
+
+	return ikaTxs
+}
+
+// PopulateBitcoinTxs inserts a set of predefined BitcoinTxs into the database.
+func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
+	t.Helper()
+
+	bitcoinTxs := []dal.BitcoinTx{
+		{SrID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
+	}
+
+	for _, tx := range bitcoinTxs {
+		err := db.InsertBtcTx(tx)
+		assert.NilError(t, err)
+	}
+
+	return bitcoinTxs
+}
+
+// PopulateDB inserts a set of predefined data to all the tables.
+func PopulateDB(t *testing.T, db *dal.DB) {
+	t.Helper()
+	PopulateBitcoinTxs(t, db)
+	PopulateIkaTxs(t, db)
+	PopulateSignRequests(t, db)
 }

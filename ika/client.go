@@ -11,9 +11,19 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Client is a wrapper around the Sui client that provides functionality
+// Client defines the methods required for interacting with the Ika network.
+type Client interface {
+	UpdateLC(
+		ctx context.Context,
+		lb *tmtypes.LightBlock,
+		logger zerolog.Logger,
+	) (models.SuiTransactionBlockResponse, error)
+	ApproveAndSign(ctx context.Context, dwalletCapID, signMessagesID string, messages [][]byte) ([][]byte, error)
+}
+
+// client is a wrapper around the Sui client that provides functionality
 // for interacting with Ika
-type Client struct {
+type client struct {
 	c              *sui.Client
 	Signer         *signer.Signer
 	LcPackage      string
@@ -38,8 +48,8 @@ func NewClient(
 	ctr SuiCtrCall,
 	dwallet SuiCtrCall,
 	gasAddr, gasBudget string,
-) (*Client, error) {
-	i := &Client{
+) (Client, error) {
+	i := &client{
 		c:              c,
 		Signer:         signer,
 		LcPackage:      ctr.Package,
@@ -55,7 +65,7 @@ func NewClient(
 
 // UpdateLC sends light blocks to the Native Light Client module in the Ika blockchain.
 // It returns the transaction response and an error if any occurred.
-func (p *Client) UpdateLC(
+func (p *client) UpdateLC(
 	ctx context.Context,
 	lb *tmtypes.LightBlock,
 	logger zerolog.Logger,
@@ -92,7 +102,7 @@ func (p *Client) UpdateLC(
 }
 
 // ApproveAndSign approves and signs a set of messages using the IKA network. Returns its signatures
-func (p *Client) ApproveAndSign(
+func (p *client) ApproveAndSign(
 	ctx context.Context,
 	dwalletCapID string,
 	signMessagesID string,

@@ -23,12 +23,12 @@ type Indexer struct {
 	lowestBlock int
 	logger      zerolog.Logger
 
-	ika *ika.Client
+	ika ika.Client
 }
 
 // NewIndexer returns a new indexer struct with open connections.
 func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
-	startBlockHeight int, ika *ika.Client) (*Indexer, error) {
+	startBlockHeight int, ika ika.Client) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),
