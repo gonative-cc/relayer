@@ -20,7 +20,8 @@ type IkaSignRequest struct {
 
 // IkaTx represents a row in the `ika_txs` table.
 type IkaTx struct {
-	TxID      uint64      `json:"tx_id"`
+    // SrId is a ika sign request ID
+	SrID      uint64      `json:"tx_id"` 
 	Status    IkaTxStatus `json:"status"`
 	IkaTxID   string      `json:"ika_tx_id"`
 	Timestamp int64       `json:"time"`
@@ -29,7 +30,8 @@ type IkaTx struct {
 
 // BitcoinTx represents a row in the `bitcoin_txs` table.
 type BitcoinTx struct {
-	TxID      uint64          `json:"tx_id"`
+	// SrId is a ika sign request ID
+	SrID      uint64          `json:"tx_id"`
 	Status    BitcoinTxStatus `json:"status"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
 	Timestamp int64           `json:"time"`
@@ -94,11 +96,11 @@ func (db *DB) InitDB() error {
 			dwallet_id TEXT NOT NULL,
 			user_sig TEXT NOT NULL,
 			final_sig BLOB,
-			timestamp INTEGER
+			timestamp INTEGER NOT NULL
 		)`
 	const createIkaTxsTableSQL = `
 		CREATE TABLE IF NOT EXISTS ika_txs (
-			tx_id INTEGER NOT NULL,
+			sr_id INTEGER NOT NULL,  -- sign request
 			status INTEGER NOT NULL,
 			ika_tx_id TEXT NOT NULL,
 			timestamp INTEGER NOT NULL,
@@ -109,7 +111,7 @@ func (db *DB) InitDB() error {
 
 	const createBitcoinTxsTableSQL = `
 		CREATE TABLE IF NOT EXISTS bitcoin_txs (
-			tx_id INTEGER NOT NULL,
+			sr_id INTEGER NOT NULL,
 			status INTEGER NOT NULL,
 			btc_tx_id BlOB NOT NULL,
 			timestamp INTEGER NOT NULL,
@@ -194,8 +196,8 @@ func (db DB) GetIkaSignRequestByID(id uint64) (*IkaSignRequest, error) {
 	return &signReq, nil
 }
 
-// GetIkaTxByTxIDAndIkaTxID retrieves an Ika transaction by its primary key (tx_id and ika_tx_id).
-func (db *DB) GetIkaTxByTxIDAndIkaTxID(txID uint64, ikaTxID string) (*IkaTx, error) {
+// GetIkaTx retrieves an Ika transaction by its primary key (sr_id and ika_tx_id).
+func (db *DB) GetIkaTx(signRequestID uint64, ikaTxID string) (*IkaTx, error) {
 	const getIkaTxByTxIDAndIkaTxIDSQL = `
         SELECT tx_id, status, ika_tx_id, timestamp, note
         FROM ika_txs
@@ -213,8 +215,8 @@ func (db *DB) GetIkaTxByTxIDAndIkaTxID(txID uint64, ikaTxID string) (*IkaTx, err
 	return &ikaTx, nil
 }
 
-// GetBitcoinTxByTxIDAndBtcTxID retrieves a Bitcoin transaction by its primary key (tx_id and btc_tx_id).
-func (db *DB) GetBitcoinTxByTxIDAndBtcTxID(txID uint64, btcTxID []byte) (*BitcoinTx, error) {
+// GetBitcoinTx retrieves a Bitcoin transaction by its primary key (sr_id and btc_tx_id).
+func (db *DB) GetBitcoinTx(signRequestID uint64, btcTxID []byte) (*BitcoinTx, error) {
 	const getBitcoinTxByTxIDAndBtcTxIDSQL = `
         SELECT tx_id, status, btc_tx_id, timestamp, note
         FROM bitcoin_txs
@@ -257,7 +259,7 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 		if err == sql.ErrNoRows {
 			return nil, 0, nil
 		}
-		return nil, 0, fmt.Errorf("failed to scan row: %w", err)
+		return nil, 0, fmt.Errorf("failed to query IkaSignRequest & IkaTxStatus: %w", err)
 	}
 
 	return &request, status, nil
@@ -265,7 +267,7 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 
 // GetSignedIkaSignRequests retrieves IkaSignRequests that have been signed by IKA
 // and do not have a corresponding BitcoinTx with "Broadcasted" status.
-func (db *DB) GetSignedIkaSignRequests() ([]IkaSignRequest, error) {
+func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
 	const getSignedIkaSignRequestsSQL = `
         SELECT sr.id, sr.payload, sr.dwallet_id, sr.user_sig, sr.final_sig, sr.timestamp
         FROM ika_sign_requests sr
@@ -298,7 +300,7 @@ func (db *DB) GetSignedIkaSignRequests() ([]IkaSignRequest, error) {
 	return requests, nil
 }
 
-// GetBroadcastedBitcoinTxsInfo retrieves BitcoinTxInfo for transactions with "Broadcasted" status
+// GetBroadcastedBitcoinTxInfo queries Bitcoin transactions that has been braodcasted but not confirmed.
 // that do not have a "Confirmed" status.
 func (db *DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
 	const getBroadcastedBitcoinTxsInfoSQL = `

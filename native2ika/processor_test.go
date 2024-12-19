@@ -18,12 +18,10 @@ func newIkaProcessor(t *testing.T) *Processor {
 
 	mockIkaClient := ika.NewMockClient()
 
-	processor := &Processor{
+	return &Processor{
 		ikaClient: mockIkaClient,
 		db:        db,
 	}
-
-	return processor
 }
 
 func TestProcessor_ProcessTxs(t *testing.T) {
