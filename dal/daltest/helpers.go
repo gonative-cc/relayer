@@ -29,8 +29,8 @@ func GetHashBytes(t *testing.T, hashString string) []byte {
 
 }
 
-// PopulateDB inserts a set of predefined IkaSignRequest into the database.
-func PopulateDB(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
+// PopulateSignRequests inserts a set of predefined IkaSignRequest into the database.
+func PopulateSignRequests(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
 	t.Helper()
 
 	var rawTxBytes = []byte{
@@ -50,7 +50,6 @@ func PopulateDB(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
 		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2", UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: uint64(time.Now().Unix())},
 		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3", UserSig: "user_sig3", FinalSig: nil, Timestamp: uint64(time.Now().Unix())},
 		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4", UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: uint64(time.Now().Unix())},
-		// ... add more requests as needed
 	}
 
 	for _, request := range requests {
@@ -84,10 +83,9 @@ func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
-		{TxID: 1, Status: dal.Pending, BtcTxId: GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 2, Status: dal.Pending, BtcTxId: GetHashBytes(t, "2"), Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 1, Status: dal.Broadcasted, BtcTxId: GetHashBytes(t, "3"), Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 1, Status: dal.Confirmed, BtcTxId: GetHashBytes(t, "4"), Timestamp: uint64(time.Now().Unix()), Note: ""},
+		{TxID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: ""},
+		{TxID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: uint64(time.Now().Unix()), Note: ""},
+		{TxID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: uint64(time.Now().Unix()), Note: ""},
 	}
 
 	for _, tx := range bitcoinTxs {

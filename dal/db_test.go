@@ -9,7 +9,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestInsertIkaSignRequest(t *testing.T) {
+func Test_InsertIkaSignRequest(t *testing.T) {
 	db := daltest.InitTestDB(t)
 
 	request := dal.IkaSignRequest{
@@ -24,104 +24,139 @@ func TestInsertIkaSignRequest(t *testing.T) {
 	err := db.InsertIkaSignRequest(request)
 	assert.NilError(t, err)
 
-	retrievedReq, err := db.GetIkaSignRequest(1)
+	retrievedReq, err := db.GetIkaSignRequestByID(1)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, retrievedReq, &request)
 }
 
-// func TestGetSignedTxs(t *testing.T) {
-// 	db := daltest.InitTestDB(t)
-// 	daltest.PopulateDB(t, db)
+func Test_InsertIkaTx(t *testing.T) {
+	db := daltest.InitTestDB(t)
 
-// 	signedTxs, err := db.GetSignedTxs()
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, len(signedTxs), 2)
-// }
+	ikaTx := dal.IkaTx{
+		TxID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: uint64(time.Now().Unix()), Note: "",
+	}
 
-// func TestGetBroadcastedTxs(t *testing.T) {
-// 	db := daltest.InitTestDB(t)
-// 	daltest.PopulateDB(t, db)
+	err := db.InsertIkaTx(ikaTx)
+	assert.NilError(t, err)
 
-// 	broadcastedTxs, err := db.GetBroadcastedTxs()
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, len(broadcastedTxs), 2)
-// }
+	retrievedTx, err := db.GetIkaTxByTxIDAndIkaTxID(1, "ika_tx_1")
+	assert.NilError(t, err)
+	assert.DeepEqual(t, retrievedTx, &ikaTx)
+}
 
-// func TestUpdateTxStatus(t *testing.T) {
-// 	db := daltest.InitTestDB(t)
-// 	txID := uint64(1)
-// 	tx := dal.Tx{
-// 		BtcTxID: txID,
-// 		Hash:    daltest.GetHashBytes(t, "1"),
-// 		RawTx:   []byte("tx1-hex"),
-// 		Status:  dal.StatusSigned,
-// 	}
-// 	err := db.InsertIkaSignRequest(tx)
-// 	assert.NilError(t, err)
+func Test_InsertBitcoinTx(t *testing.T) {
+	db := daltest.InitTestDB(t)
 
-// 	err = db.UpdateTxStatus(txID, dal.StatusBroadcasted)
-// 	assert.NilError(t, err)
+	bitcoinTx := dal.BitcoinTx{
+		TxID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: "",
+	}
 
-// 	updatedTx, err := db.GetIkaSignRequest(txID)
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
-// }
+	err := db.InsertBtcTx(bitcoinTx)
+	assert.NilError(t, err)
 
-// func TestInsertNativeTx(t *testing.T) {
-// 	db := daltest.InitTestDB(t)
+	retrievedTx, err := db.GetBitcoinTxByTxIDAndBtcTxID(1, daltest.GetHashBytes(t, "1"))
+	assert.NilError(t, err)
+	assert.DeepEqual(t, retrievedTx, &bitcoinTx)
+}
 
-// 	tx := dal.NativeTx{
-// 		TxID:           1,
-// 		DWalletCapID:   "dwallet-cap-id",
-// 		SignMessagesID: "sign-message-id",
-// 		Messages:       [][]byte{[]byte("message1"), []byte("message2")},
-// 		Status:         dal.Success,
-// 	}
+func Test_GetIkaSignRequestByID(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	requests := daltest.PopulateSignRequests(t, db)
 
-// 	err := db.InsertNativeTx(tx)
-// 	assert.NilError(t, err)
+	request, err := db.GetIkaSignRequestByID(requests[0].ID)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, *request, requests[0])
+}
 
-// 	retrievedTxs, err := db.GetIkaTxsByStatus(dal.Success)
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, len(retrievedTxs), 1)
-// 	assert.Equal(t, retrievedTxs[0].TxID, tx.TxID)
-// 	assert.Equal(t, retrievedTxs[0].DWalletCapID, tx.DWalletCapID)
-// 	assert.Equal(t, retrievedTxs[0].SignMessagesID, tx.SignMessagesID)
-// 	assert.Equal(t, len(retrievedTxs[0].Messages), 2)
-// 	assert.Equal(t, retrievedTxs[0].Status, tx.Status)
-// }
+func Test_GetIkaTxByTxIDAndIkaTxID(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	ikaTxs := daltest.PopulateIkaTxs(t, db)
 
-// func TestUpdateNativeTxStatus(t *testing.T) {
-// 	db := daltest.InitTestDB(t)
-// 	txID := uint64(1)
+	ikaTx, err := db.GetIkaTxByTxIDAndIkaTxID(ikaTxs[0].TxID, ikaTxs[0].IkaTxID)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, *ikaTx, ikaTxs[0])
+}
 
-// 	tx := dal.NativeTx{
-// 		TxID:           txID,
-// 		DWalletCapID:   "dwallet-cap-id",
-// 		SignMessagesID: "sign-message-id",
-// 		Messages:       [][]byte{[]byte("message1")},
-// 		Status:         dal.Success,
-// 	}
-// 	err := db.InsertNativeTx(tx)
-// 	assert.NilError(t, err)
+func Test_GetBitcoinTxByTxIDAndBtcTxID(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	btcTxs := daltest.PopulateBitcoinTxs(t, db)
 
-// 	err = db.UpdateNativeTxStatus(txID, dal.Failed)
-// 	assert.NilError(t, err)
+	btcTx, err := db.GetBitcoinTxByTxIDAndBtcTxID(btcTxs[0].TxID, btcTxs[0].BtcTxID)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, *btcTx, btcTxs[0])
+}
 
-// 	updatedTx, err := db.GetIkaTx(txID)
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, updatedTx.Status, dal.Failed)
-// }
+func Test_GetPendingIkaSignRequests(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	daltest.PopulateSignRequests(t, db)
 
-// func TestGetIkaTxsByStatus(t *testing.T) {
-// 	db := daltest.InitTestDB(t)
-// 	daltest.PopulateNativeDB(t, db)
+	requests, err := db.GetPendingIkaSignRequests()
+	assert.NilError(t, err)
+	assert.Equal(t, len(requests), 2)
+}
 
-// 	pendingTxs, err := db.GetIkaTxsByStatus(dal.Success)
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, len(pendingTxs), 2)
+func Test_GetSignedIkaSignRequests(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
 
-// 	processedTxs, err := db.GetIkaTxsByStatus(dal.Failed)
-// 	assert.NilError(t, err)
-// 	assert.Equal(t, len(processedTxs), 1)
-// }
+	signedTxs, err := db.GetSignedIkaSignRequests()
+	assert.NilError(t, err)
+	assert.Equal(t, len(signedTxs), 1)
+}
+
+func Test_GetBroadcastedBitcoinTxsInfo(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
+
+	signedTxs, err := db.GetBroadcastedBitcoinTxsInfo()
+	assert.NilError(t, err)
+	assert.Equal(t, len(signedTxs), 1)
+}
+
+func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
+	db := daltest.InitTestDB(t)
+	requestID := uint64(1)
+	request := dal.IkaSignRequest{
+		ID:        1,
+		Payload:   []byte("payload"),
+		DWalletID: "dwallet_id",
+		UserSig:   "user_sig",
+		FinalSig:  nil,
+		Timestamp: uint64(time.Now().Unix()),
+	}
+
+	finalSig := []byte("final_sig1")
+	err := db.InsertIkaSignRequest(request)
+	assert.NilError(t, err)
+
+	err = db.UpdateIkaSignRequestFinalSig(requestID, finalSig)
+	assert.NilError(t, err)
+
+	updatedRequest, err := db.GetIkaSignRequestByID(requestID)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, updatedRequest.FinalSig, finalSig)
+}
+
+func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
+	db := daltest.InitTestDB(t)
+
+	bitcoinTx := dal.BitcoinTx{
+		TxID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: "",
+	}
+
+	err := db.InsertBtcTx(bitcoinTx)
+	assert.NilError(t, err)
+
+	tx, err := db.GetBitcoinTxByTxIDAndBtcTxID(bitcoinTx.TxID, bitcoinTx.BtcTxID)
+	assert.NilError(t, err)
+	assert.Equal(t, tx.Status, dal.Pending)
+
+	err = db.UpdateBitcoinTxToConfirmed(bitcoinTx.TxID, bitcoinTx.BtcTxID)
+	assert.NilError(t, err)
+
+	confirmedTx, err := db.GetBitcoinTxByTxIDAndBtcTxID(bitcoinTx.TxID, bitcoinTx.BtcTxID)
+	assert.NilError(t, err)
+	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
+}
