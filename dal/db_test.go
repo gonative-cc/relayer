@@ -18,7 +18,7 @@ func Test_InsertIkaSignRequest(t *testing.T) {
 		DWalletID: "dwallet_id",
 		UserSig:   "user_sig",
 		FinalSig:  nil,
-		Timestamp: uint64(time.Now().Unix()),
+		Timestamp: time.Now().Unix(),
 	}
 
 	err := db.InsertIkaSignRequest(request)
@@ -33,7 +33,7 @@ func Test_InsertIkaTx(t *testing.T) {
 	db := daltest.InitTestDB(t)
 
 	ikaTx := dal.IkaTx{
-		TxID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: uint64(time.Now().Unix()), Note: "",
+		TxID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: "",
 	}
 
 	err := db.InsertIkaTx(ikaTx)
@@ -48,7 +48,7 @@ func Test_InsertBitcoinTx(t *testing.T) {
 	db := daltest.InitTestDB(t)
 
 	bitcoinTx := dal.BitcoinTx{
-		TxID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: "",
+		TxID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: "",
 	}
 
 	err := db.InsertBtcTx(bitcoinTx)
@@ -124,7 +124,7 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 		DWalletID: "dwallet_id",
 		UserSig:   "user_sig",
 		FinalSig:  nil,
-		Timestamp: uint64(time.Now().Unix()),
+		Timestamp: time.Now().Unix(),
 	}
 
 	finalSig := []byte("final_sig1")
@@ -143,7 +143,7 @@ func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	db := daltest.InitTestDB(t)
 
 	bitcoinTx := dal.BitcoinTx{
-		TxID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: "",
+		TxID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: "",
 	}
 
 	err := db.InsertBtcTx(bitcoinTx)

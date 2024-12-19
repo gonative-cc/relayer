@@ -46,10 +46,10 @@ func PopulateSignRequests(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
 	}
 
 	requests := []dal.IkaSignRequest{
-		{ID: 1, Payload: rawTxBytes, DWalletID: "dwallet1", UserSig: "user_sig1", FinalSig: nil, Timestamp: uint64(time.Now().Unix())},
-		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2", UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: uint64(time.Now().Unix())},
-		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3", UserSig: "user_sig3", FinalSig: nil, Timestamp: uint64(time.Now().Unix())},
-		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4", UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: uint64(time.Now().Unix())},
+		{ID: 1, Payload: rawTxBytes, DWalletID: "dwallet1", UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()},
+		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2", UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: time.Now().Unix()},
+		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3", UserSig: "user_sig3", FinalSig: nil, Timestamp: time.Now().Unix()},
+		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4", UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: time.Now().Unix()},
 	}
 
 	for _, request := range requests {
@@ -65,9 +65,9 @@ func PopulateIkaTxs(t *testing.T, db *dal.DB) []dal.IkaTx {
 	t.Helper()
 
 	ikaTxs := []dal.IkaTx{
-		{TxID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: uint64(time.Now().Unix()), Note: "some error"},
+		{TxID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: ""},
+		{TxID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix(), Note: ""},
+		{TxID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix(), Note: "some error"},
 	}
 
 	for _, tx := range ikaTxs {
@@ -83,9 +83,9 @@ func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
-		{TxID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: uint64(time.Now().Unix()), Note: ""},
-		{TxID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: uint64(time.Now().Unix()), Note: ""},
+		{TxID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
+		{TxID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
+		{TxID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
 	}
 
 	for _, tx := range bitcoinTxs {

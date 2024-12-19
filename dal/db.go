@@ -15,7 +15,7 @@ type IkaSignRequest struct {
 	DWalletID string    `json:"dwallet_id"`
 	UserSig   string    `json:"user_sig"`
 	FinalSig  Signature `json:"final_sig"`
-	Timestamp uint64    `json:"time"`
+	Timestamp int64     `json:"time"`
 }
 
 // IkaTx represents a row in the `ika_txs` table.
@@ -23,7 +23,7 @@ type IkaTx struct {
 	TxID      uint64      `json:"tx_id"`
 	Status    IkaTxStatus `json:"status"`
 	IkaTxID   string      `json:"ika_tx_id"`
-	Timestamp uint64      `json:"time"`
+	Timestamp int64       `json:"time"`
 	Note      string      `json:"note"`
 }
 
@@ -32,7 +32,7 @@ type BitcoinTx struct {
 	TxID      uint64          `json:"tx_id"`
 	Status    BitcoinTxStatus `json:"status"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
-	Timestamp uint64          `json:"time"`
+	Timestamp int64           `json:"time"`
 	Note      string          `json:"note"`
 }
 
@@ -153,10 +153,10 @@ func (db *DB) InsertIkaTx(tx IkaTx) error {
 
 // InsertBtcTx inserts a new Bitcoin transaction into the database.
 func (db *DB) InsertBtcTx(tx BitcoinTx) error {
-	const insertBitcoinTxSQL = `
+	_, err := db.conn.Exec(`
 		INSERT INTO bitcoin_txs (tx_id, status, btc_tx_id, timestamp, note) 
-		VALUES (?, ?, ?, ?, ?)`
-	_, err := db.conn.Exec(insertBitcoinTxSQL, tx.TxID, tx.Status, tx.BtcTxID, tx.Timestamp, tx.Note)
+		VALUES (?, ?, ?, ?, ?)`,
+		tx.TxID, tx.Status, tx.BtcTxID, tx.Timestamp, tx.Note)
 	return err
 }
 
@@ -340,7 +340,7 @@ func (db *DB) UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature) error 
 
 // UpdateBitcoinTxToConfirmed updates the bitcoin transaction to `Confirmed`.
 func (db *DB) UpdateBitcoinTxToConfirmed(id uint64, txID []byte) error {
-	timestamp := uint64(time.Now().Unix())
+	timestamp := time.Now().Unix()
 	_, err := db.conn.Exec(`
         UPDATE bitcoin_txs 
         SET status = ?, timestamp = ?

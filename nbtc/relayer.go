@@ -120,7 +120,9 @@ func (r *Relayer) processSignedTxs() error {
 	}
 
 	for _, tx := range signedTxs {
-		rawTx := append(tx.Payload, tx.FinalSig...)
+		rawTx := make([]byte, 0, len(tx.Payload)+len(tx.FinalSig))
+		rawTx = append(rawTx, tx.Payload...)
+		rawTx = append(rawTx, tx.FinalSig...)
 		var msgTx wire.MsgTx
 		if err := msgTx.Deserialize(bytes.NewReader(rawTx)); err != nil {
 			return err
@@ -132,7 +134,7 @@ func (r *Relayer) processSignedTxs() error {
 		}
 		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
-		err = r.db.InsertBtcTx(dal.BitcoinTx{TxID: tx.ID, Status: dal.Broadcasted, BtcTxID: txHash.CloneBytes(), Timestamp: uint64(time.Now().Unix()), Note: ""})
+		err = r.db.InsertBtcTx(dal.BitcoinTx{TxID: tx.ID, Status: dal.Broadcasted, BtcTxID: txHash.CloneBytes(), Timestamp: time.Now().Unix(), Note: ""})
 		if err != nil {
 			return fmt.Errorf("DB: can't update tx status: %w", err)
 		}
