@@ -69,9 +69,9 @@ func PopulateIkaTxs(t *testing.T, db *dal.DB) []dal.IkaTx {
 	t.Helper()
 
 	ikaTxs := []dal.IkaTx{
-		{TxID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: ""},
-		{TxID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix(), Note: ""},
-		{TxID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix(), Note: "some error"},
+		{SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix(), Note: "some error"},
 	}
 
 	for _, tx := range ikaTxs {
@@ -87,9 +87,9 @@ func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
-		{TxID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
-		{TxID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
-		{TxID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
 	}
 
 	for _, tx := range bitcoinTxs {
@@ -98,4 +98,12 @@ func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
 	}
 
 	return bitcoinTxs
+}
+
+// PopulateDB inserts a set of predefined data to all the tables.
+func PopulateDB(t *testing.T, db *dal.DB) {
+	t.Helper()
+	PopulateBitcoinTxs(t, db)
+	PopulateIkaTxs(t, db)
+	PopulateSignRequests(t, db)
 }
