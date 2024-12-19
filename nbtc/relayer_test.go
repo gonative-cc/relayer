@@ -27,9 +27,7 @@ var relayerConfig = RelayerConfig{
 
 func Test_Start(t *testing.T) {
 	db := initTestDB(t)
-	daltest.PopulateSignRequests(t, db)
-	daltest.PopulateBitcoinTxs(t, db)
-	daltest.PopulateIkaTxs(t, db)
+	daltest.PopulateDB(t, db)
 
 	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
 	assert.NilError(t, err)
@@ -43,13 +41,13 @@ func Test_Start(t *testing.T) {
 
 	time.Sleep(time.Second * 6)
 
-	confirmedTx, err := db.GetBitcoinTxByTxIDAndBtcTxID(2, daltest.GetHashBytes(t, "0"))
+	confirmedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
 
 	time.Sleep(time.Second * 3)
 
-	confirmedTx, err = db.GetBitcoinTxByTxIDAndBtcTxID(2, daltest.GetHashBytes(t, "0"))
+	confirmedTx, err = db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 
@@ -68,7 +66,7 @@ func Test_processSignedTxs(t *testing.T) {
 	err = relayer.processSignedTxs()
 	assert.NilError(t, err)
 
-	updatedTx, err := db.GetBitcoinTxByTxIDAndBtcTxID(2, daltest.GetHashBytes(t, "0"))
+	updatedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, updatedTx.Status, dal.Broadcasted)
 }
@@ -83,7 +81,7 @@ func Test_checkConfirmations(t *testing.T) {
 
 	relayer.checkConfirmations()
 
-	uupdatedTx, err := db.GetBitcoinTxByTxIDAndBtcTxID(4, daltest.GetHashBytes(t, "3"))
+	uupdatedTx, err := db.GetBitcoinTx(4, daltest.GetHashBytes(t, "3"))
 	assert.NilError(t, err)
 	assert.Equal(t, uupdatedTx.Status, dal.Confirmed)
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika"
+	"github.com/rs/zerolog/log"
 )
 
 // Processor handles processing transactions from the Native chain to IKA for signing.
@@ -34,7 +35,7 @@ func (p *Processor) ProcessSignRequests(ctx context.Context, mu *sync.Mutex) err
 	}
 
 	if len(ikaSignRequests) == 0 {
-		fmt.Println("No pendning ika sign requests.")
+		log.Debug().Msg("No pendning ika sign requests.")
 		return nil
 	}
 

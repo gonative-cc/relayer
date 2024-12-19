@@ -24,20 +24,20 @@ func newIkaProcessor(t *testing.T) *Processor {
 	}
 }
 
-func TestProcessor_ProcessTxs(t *testing.T) {
+func TestProcessor_ProcessSignRequests(t *testing.T) {
 	processor := newIkaProcessor(t)
 
 	// before signing
-	retrievedSignRequests, err := processor.db.GetSignedIkaSignRequests()
+	retrievedSignRequests, err := processor.db.GetBitcoinTxsToBroadcast()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
 
-	err = processor.ProcessTxs(context.Background(), &sync.Mutex{})
+	err = processor.ProcessSignRequests(context.Background(), &sync.Mutex{})
 	assert.Nil(t, err)
 
 	// after signing
-	retrievedSignRequests, err = processor.db.GetSignedIkaSignRequests()
+	retrievedSignRequests, err = processor.db.GetBitcoinTxsToBroadcast()
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)

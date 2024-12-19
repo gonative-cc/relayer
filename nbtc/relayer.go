@@ -114,7 +114,7 @@ func (r *Relayer) Start() error {
 
 // processSignedTxs processes signed transactions from the database.
 func (r *Relayer) processSignedTxs() error {
-	signedTxs, err := r.db.GetSignedIkaSignRequests()
+	signedTxs, err := r.db.GetBitcoinTxsToBroadcast()
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (r *Relayer) processSignedTxs() error {
 		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
 		err = r.db.InsertBtcTx(dal.BitcoinTx{
-			TxID:      tx.ID,
+			SrID:      tx.ID,
 			Status:    dal.Broadcasted,
 			BtcTxID:   txHash.CloneBytes(),
 			Timestamp: time.Now().Unix(),

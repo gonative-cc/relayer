@@ -265,8 +265,8 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 	return &request, status, nil
 }
 
-// GetSignedIkaSignRequests retrieves IkaSignRequests that have been signed by IKA
-// and do not have a corresponding BitcoinTx with "Broadcasted" status.
+// GetBitcoinTxsToBroadcast retrieves IkaSignRequests that have been signed by IKA
+// and are due to be broadcasted to bitcoin.
 func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
 	const getSignedIkaSignRequestsSQL = `
         SELECT sr.id, sr.payload, sr.dwallet_id, sr.user_sig, sr.final_sig, sr.timestamp
@@ -300,7 +300,7 @@ func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
 	return requests, nil
 }
 
-// GetBroadcastedBitcoinTxInfo queries Bitcoin transactions that has been braodcasted but not confirmed.
+// GetBroadcastedBitcoinTxsInfo queries Bitcoin transactions that has been braodcasted but not confirmed.
 // that do not have a "Confirmed" status.
 func (db *DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
 	const getBroadcastedBitcoinTxsInfoSQL = `
