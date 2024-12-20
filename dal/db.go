@@ -2,7 +2,6 @@ package dal
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
