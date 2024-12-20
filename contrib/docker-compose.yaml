@@ -6,18 +6,19 @@ services:
     # restart: unless-stopped
     volumes:
       - ./bitcoind-data:/bitcoin/.bitcoin
+    environment:
+      - REGTEST=1 
+      - DISABLEWALLET=0 
+      - PRINTTOCONSOLE=1
+      - RPCUSER=user
+      - RPCPASSWORD=password
+
     ports:
-      - 18333:18333
-      - 127.0.0.1:18332:18332
-    command:
-      -printtoconsole
-      -rpcuser=user
-      -rpcpassword=password
-      -regtest
-      -rest
+      - 18444:8333
+      - 127.0.0.1:18443:8332
     post_start:
       - command: "sleep 0.5"
-      - command: "bitcoin-cli -regtest loadwallet nativewallet"
+      - command: "bitcoin-cli -regtest -rpcport=8332 loadwallet nativewallet"
 
   btcd:
     profiles:
