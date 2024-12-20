@@ -38,7 +38,9 @@ Mock -> WIP -> alpha -> beta -> production
 
 ## Documentation
 
-1. [Database interacitons](docs/db.md)
+1. Database
+   - [interacitons](docs/db.md)
+   - [schema diagram](docs/schema.md)
 2. [Flow diagram](docs/flow.md)
 
 ## Contributing
