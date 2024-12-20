@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -56,14 +57,17 @@ func (p *Processor) ProcessSignedTxs(mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	signedTxs, err := p.db.GetSignedTxs()
+	signedTxs, err := p.db.GetBitcoinTxsToBroadcast()
 	if err != nil {
 		return err
 	}
 
 	for _, tx := range signedTxs {
+		rawTx := make([]byte, 0, len(tx.Payload)+len(tx.FinalSig))
+		rawTx = append(rawTx, tx.Payload...)
+		rawTx = append(rawTx, tx.FinalSig...)
 		var msgTx wire.MsgTx
-		if err := msgTx.Deserialize(bytes.NewReader(tx.RawTx)); err != nil {
+		if err := msgTx.Deserialize(bytes.NewReader(rawTx)); err != nil {
 			return err
 		}
 
@@ -71,8 +75,15 @@ func (p *Processor) ProcessSignedTxs(mu *sync.Mutex) error {
 		if err != nil {
 			return fmt.Errorf("error broadcasting transaction: %w", err)
 		}
+		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
-		err = p.db.UpdateTxStatus(tx.BtcTxID, dal.StatusBroadcasted)
+		err = p.db.InsertBtcTx(dal.BitcoinTx{
+			SrID:      tx.ID,
+			Status:    dal.Broadcasted,
+			BtcTxID:   txHash.CloneBytes(),
+			Timestamp: time.Now().Unix(),
+			Note:      "",
+		})
 		if err != nil {
 			return fmt.Errorf("DB: can't update tx status: %w", err)
 		}
@@ -88,13 +99,13 @@ func (p *Processor) CheckConfirmations(mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	broadcastedTxs, err := p.db.GetBroadcastedTxs()
+	broadcastedTxs, err := p.db.GetBroadcastedBitcoinTxsInfo()
 	if err != nil {
 		return err
 	}
 
 	for _, tx := range broadcastedTxs {
-		hash, err := chainhash.NewHash(tx.Hash)
+		hash, err := chainhash.NewHash(tx.BtcTxID)
 		if err != nil {
 			return err
 		}
@@ -105,11 +116,11 @@ func (p *Processor) CheckConfirmations(mu *sync.Mutex) error {
 
 		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
 		if txDetails.Confirmations >= int64(p.txConfirmationThreshold) {
-			err = p.db.UpdateTxStatus(tx.BtcTxID, dal.StatusConfirmed)
+			err = p.db.UpdateBitcoinTxToConfirmed(tx.TxID, tx.BtcTxID)
 			if err != nil {
 				return fmt.Errorf("DB: can't update tx status: %w", err)
 			}
-			log.Info().Msgf("Transaction confirmed: %s", tx.Hash)
+			log.Info().Msgf("Transaction confirmed: %s", tx.BtcTxID)
 		}
 	}
 	return nil

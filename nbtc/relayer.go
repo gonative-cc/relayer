@@ -49,6 +49,18 @@ func NewRelayer(
 		return nil, err
 	}
 
+	if nativeProcessor == nil {
+		err := fmt.Errorf("nativeProcessor cannot be nil")
+		log.Err(err).Msg("")
+		return nil, err
+	}
+
+	if btcProcessor == nil {
+		err := fmt.Errorf("btcProcessor cannot be nil")
+		log.Err(err).Msg("")
+		return nil, err
+	}
+
 	if relayerConfig.ProcessTxsInterval == 0 {
 		relayerConfig.ProcessTxsInterval = time.Second * 5
 	}
@@ -80,18 +92,8 @@ func (r *Relayer) Start(ctx context.Context) error {
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-// 			_ = r.processNativeTxs(ctx)
-// 			_ = r.processBitcoinTxs()
-			if err := r.processSignedTxs(); err != nil {
-				var sqliteErr *sqlite3.Error
-				//TODO: decide on which exact errors to continue and on which to stop the relayer
-				if errors.As(err, &sqliteErr) {
-					log.Err(err).Msg("Critical error updating transaction status, shutting down")
-					close(r.shutdownChan)
-				} else {
-					log.Err(err).Msg("Error processing transactions, continuing")
-				}
-			}
+			_ = r.processSignRequests(ctx)
+			_ = r.processSignedTxs()
 		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
 		// so probably we should wrap the db in a mutex
 		case <-r.confirmTxsTicker.C:
@@ -108,98 +110,33 @@ func (r *Relayer) Start(ctx context.Context) error {
 	}
 }
 
-// // processNativeTxs processes transactions from the Native chain.
-// func (r *Relayer) processNativeTxs(ctx context.Context) error {
-// 	if err := r.nativeProcessor.ProcessPendingTxs(ctx, &r.dbMutex); err != nil {
-// 		var sqliteErr *sqlite3.Error
-// 		//TODO: decide on which exact errors to continue and on which to stop the relayer
-// 		if errors.As(err, &sqliteErr) {
-// 			log.Err(err).Msg("Critical error with the database, shutting down")
-// 			close(r.shutdownChan)
-// 		} else {
-// 			log.Err(err).Msg("Error processing native transactions, continuing")
-// 		}
-// 		return err
-// }
-// processSignedTxs processes signed transactions from the database.
-func (r *Relayer) processSignedTxs() error {
-	signedTxs, err := r.db.GetBitcoinTxsToBroadcast()
-	if err != nil {
+// processSignRequests processes signd requests from the Native chain.
+func (r *Relayer) processSignRequests(ctx context.Context) error {
+	if err := r.nativeProcessor.ProcessSignRequests(ctx, &r.dbMutex); err != nil {
+		var sqliteErr *sqlite3.Error
+		//TODO: decide on which exact errors to continue and on which to stop the relayer
+		if errors.As(err, &sqliteErr) {
+			log.Err(err).Msg("Critical error with the database, shutting down")
+			close(r.shutdownChan)
+		} else {
+			log.Err(err).Msg("Error processing native transactions, continuing")
+		}
 		return err
-	}
-
-	for _, tx := range signedTxs {
-		rawTx := make([]byte, 0, len(tx.Payload)+len(tx.FinalSig))
-		rawTx = append(rawTx, tx.Payload...)
-		rawTx = append(rawTx, tx.FinalSig...)
-		var msgTx wire.MsgTx
-		if err := msgTx.Deserialize(bytes.NewReader(rawTx)); err != nil {
-			return err
-		}
-
-		txHash, err := r.btcClient.SendRawTransaction(&msgTx, false)
-		if err != nil {
-			return fmt.Errorf("error broadcasting transaction: %w", err)
-		}
-		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
-
-		err = r.db.InsertBtcTx(dal.BitcoinTx{
-			SrID:      tx.ID,
-			Status:    dal.Broadcasted,
-			BtcTxID:   txHash.CloneBytes(),
-			Timestamp: time.Now().Unix(),
-			Note:      "",
-		})
-		if err != nil {
-			return fmt.Errorf("DB: can't update tx status: %w", err)
-		}
-
-		log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")
 	}
 	return nil
 }
 
-// // processBitcoinTxs processes signed transactions for Bitcoin.
-// func (r *Relayer) processBitcoinTxs() error {
-// 	if err := r.btcProcessor.ProcessSignedTxs(&r.dbMutex); err != nil {
-// 		var sqliteErr *sqlite3.Error
-// 		//TODO: decide on which exact errors to continue and on which to stop the relayer
-// 		if errors.As(err, &sqliteErr) {
-// 			log.Err(err).Msg("Critical error updating transaction status, shutting down")
-// 			close(r.shutdownChan)
-// 		} else {
-// 			log.Err(err).Msg("Error processing bitcoin transactions, continuing")
-//     }
-//   }
-// }
-
-// checkConfirmations checks all the broadcasted transactions to bitcoin
-// and if confirmed updates the database accordingly.
-func (r *Relayer) checkConfirmations() error {
-	broadcastedTxs, err := r.db.GetBroadcastedBitcoinTxsInfo()
-	if err != nil {
-		return err
-	}
-
-	for _, tx := range broadcastedTxs {
-		hash, err := chainhash.NewHash(tx.BtcTxID)
-		if err != nil {
-			return err
+// processSignedTxs processes signed transactions and broadcasts them to Bitcoin.
+func (r *Relayer) processSignedTxs() error {
+	if err := r.btcProcessor.ProcessSignedTxs(&r.dbMutex); err != nil {
+		var sqliteErr *sqlite3.Error
+		//TODO: decide on which exact errors to continue and on which to stop the relayer
+		if errors.As(err, &sqliteErr) {
+			log.Err(err).Msg("Critical error updating transaction status, shutting down")
+			close(r.shutdownChan)
+		} else {
+			log.Err(err).Msg("Error processing bitcoin transactions, continuing")
 		}
-		txDetails, err := r.btcClient.GetTransaction(hash)
-		if err != nil {
-			return fmt.Errorf("error getting transaction details: %w", err)
-		}
-
-		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
-		if txDetails.Confirmations >= int64(r.txConfirmationThreshold) {
-			err = r.db.UpdateBitcoinTxToConfirmed(tx.TxID, tx.BtcTxID)
-			if err != nil {
-				return fmt.Errorf("DB: can't update tx status: %w", err)
-			}
-			log.Info().Msgf("Transaction confirmed: %s", tx.BtcTxID)
-		}
-		return err
 	}
 	return nil
 }

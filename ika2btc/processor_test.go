@@ -21,7 +21,8 @@ var btcClientConfig = rpcclient.ConnConfig{
 
 func TestProcessor_ProcessSignedTxs(t *testing.T) {
 	db := daltest.InitTestDB(t)
-	txs := daltest.PopulateDB(t, db)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
 	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.NilError(t, err)
 	processor.BtcClient = &bitcoin.MockClient{}
@@ -30,16 +31,15 @@ func TestProcessor_ProcessSignedTxs(t *testing.T) {
 	err = processor.ProcessSignedTxs(&mu)
 	assert.NilError(t, err)
 
-	for _, tx := range txs {
-		updatedTx, err := db.GetTx(tx.BtcTxID)
-		assert.NilError(t, err)
-		assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
-	}
+	updatedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	assert.NilError(t, err)
+	assert.Equal(t, updatedTx.Status, dal.Broadcasted)
 }
 
 func TestProcessor_CheckConfirmations(t *testing.T) {
 	db := daltest.InitTestDB(t)
-	daltest.PopulateDB(t, db)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
 	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.NilError(t, err)
 	processor.BtcClient = &bitcoin.MockClient{}
@@ -48,13 +48,9 @@ func TestProcessor_CheckConfirmations(t *testing.T) {
 	err = processor.CheckConfirmations(&mu)
 	assert.NilError(t, err)
 
-	updatedTx1, err := db.GetTx(1)
+	updatedTx, err := db.GetBitcoinTx(4, daltest.GetHashBytes(t, "3"))
 	assert.NilError(t, err)
-	assert.Equal(t, updatedTx1.Status, dal.StatusBroadcasted)
-
-	updatedTx2, err := db.GetTx(2)
-	assert.NilError(t, err)
-	assert.Equal(t, updatedTx2.Status, dal.StatusConfirmed)
+	assert.Equal(t, updatedTx.Status, dal.Confirmed)
 }
 
 func TestNewProcessor_DatabaseError(t *testing.T) {

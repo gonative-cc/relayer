@@ -5,7 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/stretchr/testify/assert"
