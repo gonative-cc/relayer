@@ -26,7 +26,7 @@ The relayer uses a SQLite database to store and manage transaction data. The dat
 | `ika_tx_id` | TEXT | The ID of the IKA transaction |
 | `timestamp` | INTEGER | The timestamp of the IKA transaction (Unix timestamp) |
 | `note` | TEXT |  Any notes or error messages related to the IKA transaction |
-| **`sr_id`, `ika_tx_id`** | **Primary Key** |  The combination of `sr_id` and `ika_tx_id` uniquely identifies a row in this table | 
+| **`sr_id`, `ika_tx_id`** | **Primary Key** |  The combination of `sr_id` and `ika_tx_id` uniquely identifies a row in this table |
 
 ### bitcoin_txs
 
