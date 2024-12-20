@@ -7,6 +7,7 @@ import (
 
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika"
+	"github.com/rs/zerolog/log"
 )
 
 // Processor handles processing transactions from the Native chain to IKA for signing.
@@ -23,85 +24,35 @@ func NewProcessor(ikaClient ika.Client, db *dal.DB) *Processor {
 	}
 }
 
-// ProcessPendingTxs processes a transaction from the Native chain.
-func (p *Processor) ProcessPendingTxs(ctx context.Context, mu *sync.Mutex) error {
+// ProcessSignRequests queries sign requests from Native and handles them.
+func (p *Processor) ProcessSignRequests(ctx context.Context, mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	nativeTxs, err := p.db.GetNativeTxsByStatus(dal.NativeTxStatusPending)
+	ikaSignRequests, err := p.db.GetPendingIkaSignRequests()
 	if err != nil {
-		return fmt.Errorf("getting unprocessed native txs from db: %w", err)
+		return fmt.Errorf("error getting pending ika sign requests from db: %w", err)
 	}
 
-	if len(nativeTxs) == 0 {
-		fmt.Println("No native transactions to process.")
+	if len(ikaSignRequests) == 0 {
+		log.Debug().Msg("No pendning ika sign requests.")
 		return nil
 	}
 
-	for _, nativeTx := range nativeTxs {
-
-		signatures, err := p.ikaClient.ApproveAndSign(ctx, nativeTx.DWalletCapID, nativeTx.SignMessagesID, nativeTx.Messages)
+	for _, sr := range ikaSignRequests {
+		payloads := [][]byte{sr.Payload} // TODO: this wont be needed in the future when we support singing in batches
+		signatures, err := p.ikaClient.ApproveAndSign(ctx, sr.DWalletID, sr.UserSig, payloads)
 		if err != nil {
 			return fmt.Errorf("error calling ApproveAndSign: %w", err)
 		}
 
-		txs, err := p.constructBtcTxsData(&nativeTx, signatures)
+		err = p.db.UpdateIkaSignRequestFinalSig(sr.ID, signatures[0])
 		if err != nil {
-			return fmt.Errorf("error appending signatures: %w", err)
+			return fmt.Errorf("error storing signature in database: %w", err)
 		}
 
-		for _, tx := range txs {
-			err = p.db.InsertTx(*tx)
-			if err != nil {
-				return fmt.Errorf("error storing transaction in database: %w", err)
-			}
-		}
-
-		err = p.db.UpdateNativeTxStatus(nativeTx.TxID, dal.NativeTxStatusProcessed)
-		if err != nil {
-			return fmt.Errorf("updating native tx status: %w", err)
-		}
+		// TODO: insert transaction to IkaTx table
 	}
 
 	return nil
-}
-
-// constructBtcTxsData constructs Bitcoin transactions data from Native transactions data and IKA signatures.
-func (p *Processor) constructBtcTxsData(nativeTx *dal.NativeTx, signatures [][]byte) ([]*dal.Tx, error) {
-	rawTxs, err := constructRawBtcTxs(nativeTx, signatures)
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]*dal.Tx, 0, len(rawTxs))
-	for _, rawTx := range rawTxs {
-		tx := &dal.Tx{
-			BtcTxID: nativeTx.TxID,
-			RawTx:   rawTx,
-			Hash:    []byte(""),
-			Status:  dal.StatusSigned,
-		}
-		txs = append(txs, tx)
-	}
-
-	return txs, nil
-}
-
-// constructRawBitcoinTransaction constructs a raw Bitcoin transaction.
-// TODO: Implement the actual Bitcoin transaction construction logic.
-// Most likely we will need to include the signature produced by the network
-// and the tx itself should be available from native event
-func constructRawBtcTxs(nativeTx *dal.NativeTx, signatures [][]byte) ([][]byte, error) {
-	// Return dummy data for now
-	if nativeTx == nil || signatures == nil {
-		return nil, fmt.Errorf("empty")
-	}
-	rawTxs := make([][]byte, 0, len(signatures))
-
-	for i := range signatures {
-		rawTx := []byte(fmt.Sprintf("dummy_raw_tx_%d", i))
-		rawTxs = append(rawTxs, rawTx)
-	}
-
-	return rawTxs, nil
 }

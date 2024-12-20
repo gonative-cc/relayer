@@ -31,9 +31,7 @@ var relayerConfig = RelayerConfig{
 
 func Test_Start(t *testing.T) {
 	db := initTestDB(t)
-	txs := daltest.PopulateDB(t, db)
-	nativeTxs := daltest.PopulateNativeDB(t, db)
-
+	daltest.PopulateDB(t, db)
 	mockIkaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
@@ -52,31 +50,57 @@ func Test_Start(t *testing.T) {
 
 	time.Sleep(time.Second * 6)
 
-	for _, tx := range txs {
-
-		updatedTx, err := db.GetTx(tx.BtcTxID)
-		assert.NilError(t, err, "Error getting transaction")
-		assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
-	}
+	confirmedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	assert.NilError(t, err)
+	assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
 
 	time.Sleep(time.Second * 3)
 
-	for _, tx := range txs {
-		updatedTx, err := db.GetTx(tx.BtcTxID)
-		if tx.BtcTxID == 1 {
-			assert.NilError(t, err, "Error getting transaction")
-			assert.Equal(t, updatedTx.Status, dal.StatusBroadcasted)
-		} else {
-			assert.NilError(t, err, "Error getting transaction")
-			assert.Equal(t, updatedTx.Status, dal.StatusConfirmed)
-		}
-	}
+	confirmedTx, err = db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	assert.NilError(t, err)
+	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 
-	for _, nativeTx := range nativeTxs {
-		updatedTx, err := db.GetNativeTx(nativeTx.TxID)
-		assert.NilError(t, err, "Error getting transaction")
-		assert.Equal(t, updatedTx.Status, dal.NativeTxStatusProcessed)
-	}
+	relayer.Stop()
+	relayer.db.Close()
+}
+
+func Test_processSignedTxs(t *testing.T) {
+	db := initTestDB(t)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
+	assert.NilError(t, err)
+	relayer.btcClient = &bitcoin.MockClient{}
+
+	err = relayer.processSignedTxs()
+	assert.NilError(t, err)
+
+	updatedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	assert.NilError(t, err)
+	assert.Equal(t, updatedTx.Status, dal.Broadcasted)
+}
+
+func Test_checkConfirmations(t *testing.T) {
+	db := initTestDB(t)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, db)
+	assert.NilError(t, err)
+	relayer.btcClient = &bitcoin.MockClient{}
+
+	relayer.checkConfirmations()
+
+	uupdatedTx, err := db.GetBitcoinTx(4, daltest.GetHashBytes(t, "3"))
+	assert.NilError(t, err)
+	assert.Equal(t, uupdatedTx.Status, dal.Confirmed)
+
+}
+
+func Test_NewRelayer_DatabaseError(t *testing.T) {
+	relayer, err := NewRelayer(btcClientConfig, relayerConfig, nil)
+	assert.ErrorContains(t, err, "database cannot be nil")
+	assert.Assert(t, relayer == nil)
+}
 
 	relayer.Stop()
 	relayer.db.Close()

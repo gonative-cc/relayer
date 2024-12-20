@@ -14,26 +14,32 @@ import (
 // newIkaProcessor creates a new Processor instance with a mocked IKA client and populated database.
 func newIkaProcessor(t *testing.T) *Processor {
 	db := daltest.InitTestDB(t)
-	daltest.PopulateNativeDB(t, db)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
 
 	mockIkaClient := ika.NewMockClient()
 
-	processor := &Processor{
+	return &Processor{
 		ikaClient: mockIkaClient,
 		db:        db,
 	}
-
-	return processor
 }
 
-func TestProcessor_ProcessPendingTxs(t *testing.T) {
+func TestProcessor_ProcessSignRequests(t *testing.T) {
 	processor := newIkaProcessor(t)
 
-	err := processor.ProcessPendingTxs(context.Background(), &sync.Mutex{})
+	// before signing
+	retrievedSignRequests, err := processor.db.GetBitcoinTxsToBroadcast()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(retrievedSignRequests))
+	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
+
+	err = processor.ProcessSignRequests(context.Background(), &sync.Mutex{})
 	assert.Nil(t, err)
 
-	retrievedTxs, err := processor.db.GetSignedTxs()
+	// after signing
+	retrievedSignRequests, err = processor.db.GetBitcoinTxsToBroadcast()
 	assert.Nil(t, err)
-	assert.Equal(t, len(retrievedTxs), 2)
-	assert.Equal(t, retrievedTxs[0].Status, dal.StatusSigned)
+	assert.Equal(t, 3, len(retrievedSignRequests))
+	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
 }
