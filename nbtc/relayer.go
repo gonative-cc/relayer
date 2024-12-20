@@ -137,6 +137,7 @@ func (r *Relayer) processSignedTxs() error {
 		} else {
 			log.Err(err).Msg("Error processing bitcoin transactions, continuing")
 		}
+		return err
 	}
 	return nil
 }
