@@ -6,7 +6,6 @@ This part describes the database schema and interactions used in the relayer.
 
 The relayer uses a SQLite database to store and manage transaction data. The database has three tables:
 
-
 ### ika_sign_requests
 
 | Column | Data Type | Description |
@@ -47,21 +46,21 @@ The relayer interacts with the database using the following functions in the `da
 ### IKA Sign Requests
 
 1. `InsertIkaSignRequest(request IkaSignRequest)`: Inserts a new IKA sign request into the `ika_sign_requests` table.
-2.  `GetIkaSignRequestByID(id uint64)`: Retrieves an IKA sign request by its ID.
-3.  `GetPendingIkaSignRequests()`: Retrieves all IKA sign requests that have not yet been successfully processed by IKA. This means the `final_sig` column in the `ika_sign_requests` table is NULL.
-4.  `UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature)`: Updates the final signature of an IkaSignRequest in the database.
-5.  `GetSignedIkaSignRequests()`: Retrieves `IkaSignRequest`s that have been signed by IKA and have not yet been broadcasted to the Bitcoin network.
+2. `GetIkaSignRequestByID(id uint64)`: Retrieves an IKA sign request by its ID.
+3. `GetPendingIkaSignRequests()`: Retrieves all IKA sign requests that have not yet been successfully processed by IKA. This means the `final_sig` column in the `ika_sign_requests` table is NULL.
+4. `UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature)`: Updates the final signature of an IkaSignRequest in the database.
+5. `GetSignedIkaSignRequests()`: Retrieves `IkaSignRequest`s that have been signed by IKA and have not yet been broadcasted to the Bitcoin network.
 
 ### IKA Transactions
 
-1.  `InsertIkaTx(tx IkaTx)`: Inserts a new IKA transaction into the `ika_txs` table.
-2.  `GetIkaTx(signRequestID uint64, ikaTxID string)`: Retrieves an IKA transaction by its primary key.
+1. `InsertIkaTx(tx IkaTx)`: Inserts a new IKA transaction into the `ika_txs` table.
+2. `GetIkaTx(signRequestID uint64, ikaTxID string)`: Retrieves an IKA transaction by its primary key.
 
 ### Bitcoin Transactions
 
-1.  `InsertBitcoinTx(tx BitcoinTx)`: Inserts a new Bitcoin transaction into the `bitcoin_txs` table.
-2.  `GetBitcoinTx(signRequestID uint64, btcTxID []byte)`: Retrieves a Bitcoin transaction by its primary key.
-3.  `GetPendingBitcoinTxs()`: Retrieves all Bitcoin transactions with a "pending" status from the database.
-4.  `GetBroadcastedBitcoinTxs()`: Retrieves all Bitcoin transactions with a "broadcasted" status from the database.
-5.  `GetBroadcastedBitcoinTxsInfo()`: Retrieves `BitcoinTxInfo` for transactions with "Broadcasted" status that do not have a "Confirmed" status.
-6.  `UpdateBitcoinTxToConfirmed(id uint64, txID []byte)`: Updates the Bitcoin transaction to `Confirmed` status and updates its timestamp.
+1. `InsertBitcoinTx(tx BitcoinTx)`: Inserts a new Bitcoin transaction into the `bitcoin_txs` table.
+2. `GetBitcoinTx(signRequestID uint64, btcTxID []byte)`: Retrieves a Bitcoin transaction by its primary key.
+3. `GetPendingBitcoinTxs()`: Retrieves all Bitcoin transactions with a "pending" status from the database.
+4. `GetBroadcastedBitcoinTxs()`: Retrieves all Bitcoin transactions with a "broadcasted" status from the database.
+5. `GetBroadcastedBitcoinTxsInfo()`: Retrieves `BitcoinTxInfo` for transactions with "Broadcasted" status that do not have a "Confirmed" status.
+6. `UpdateBitcoinTxToConfirmed(id uint64, txID []byte)`: Updates the Bitcoin transaction to `Confirmed` status and updates its timestamp.
