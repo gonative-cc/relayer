@@ -107,23 +107,3 @@ func PopulateDB(t *testing.T, db *dal.DB) {
 	PopulateIkaTxs(t, db)
 	PopulateSignRequests(t, db)
 }
-
-// PopulateNativeDB inserts a set of predefined native transactions into the database.
-func PopulateNativeDB(t *testing.T, db *dal.DB) []dal.NativeTx {
-	t.Helper()
-	messages := [][]byte{[]byte("message1"), []byte("message2")}
-	nativeTxs := []dal.NativeTx{
-		{TxID: 10, DWalletCapID: "dwallet1", SignMessagesID: "sign1", Messages: messages,
-			Status: dal.NativeTxStatusPending},
-		{TxID: 11, DWalletCapID: "dwallet2", SignMessagesID: "sign2", Messages: messages,
-			Status: dal.NativeTxStatusPending},
-		{TxID: 12, DWalletCapID: "dwallet3", SignMessagesID: "sign3", Messages: messages,
-			Status: dal.NativeTxStatusProcessed},
-	}
-
-	for _, tx := range nativeTxs {
-		err := db.InsertNativeTx(tx)
-		assert.NilError(t, err)
-	}
-	return nativeTxs
-}
