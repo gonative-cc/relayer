@@ -29,9 +29,7 @@ func NewProcessor(
 ) (*Processor, error) {
 
 	if db == nil {
-		err := fmt.Errorf("database cannot be nil")
-		log.Err(err).Msg("")
-		return nil, err
+		return nil, ErrNoDB
 	}
 
 	if btcClientConfig.Host == "" || btcClientConfig.User == "" || btcClientConfig.Pass == "" {
@@ -52,8 +50,8 @@ func NewProcessor(
 	}, nil
 }
 
-// ProcessSignedTxs processes signed transactions from the database.
-func (p *Processor) ProcessSignedTxs(mu *sync.Mutex) error {
+// Run starts a loop to query and process signed transactions from the database.
+func (p *Processor) Run(mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -85,7 +83,7 @@ func (p *Processor) ProcessSignedTxs(mu *sync.Mutex) error {
 			Note:      "",
 		})
 		if err != nil {
-			return fmt.Errorf("DB: can't update tx status: %w", err)
+			return fmt.Errorf("DB: can't update tx status: {tx: %d, err: %w}", tx.ID, err)
 		}
 
 		log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")

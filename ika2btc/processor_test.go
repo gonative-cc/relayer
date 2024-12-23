@@ -19,13 +19,8 @@ var btcClientConfig = rpcclient.ConnConfig{
 	DisableTLS:   false,
 }
 
-func TestProcessor_ProcessSignedTxs(t *testing.T) {
-	db := daltest.InitTestDB(t)
-	daltest.PopulateSignRequests(t, db)
-	daltest.PopulateBitcoinTxs(t, db)
-	processor, err := NewProcessor(btcClientConfig, 6, db)
-	assert.NilError(t, err)
-	processor.BtcClient = &bitcoin.MockClient{}
+func TestProcessSignedTxs(t *testing.T) {
+	db, processor := initProcessor(t)
 
 	var mu sync.Mutex
 	err = processor.ProcessSignedTxs(&mu)
@@ -36,7 +31,7 @@ func TestProcessor_ProcessSignedTxs(t *testing.T) {
 	assert.Equal(t, updatedTx.Status, dal.Broadcasted)
 }
 
-func TestProcessor_CheckConfirmations(t *testing.T) {
+func TestCheckConfirmations(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	daltest.PopulateSignRequests(t, db)
 	daltest.PopulateBitcoinTxs(t, db)
@@ -53,16 +48,16 @@ func TestProcessor_CheckConfirmations(t *testing.T) {
 	assert.Equal(t, updatedTx.Status, dal.Confirmed)
 }
 
-func TestNewProcessor_DatabaseError(t *testing.T) {
+func TestNewProcessor(t *testing.T) {
+	// missing db
 	processor, err := NewProcessor(btcClientConfig, 6, nil)
-	assert.ErrorContains(t, err, "database cannot be nil")
-	assert.Assert(t, processor == nil)
-}
-
-func TestNewProcessor_MissingBtcConfig(t *testing.T) {
+	assert.ErrorIs(t, err, ErrNoDB)
+	assert.Assert(t, processor)
+	
+	// missing BTC config
 	db := daltest.InitTestDB(t)
 	btcClientConfig.Host = ""
-	processor, err := NewProcessor(btcClientConfig, 6, db)
-	assert.ErrorContains(t, err, "missing bitcoin node configuration")
-	assert.Assert(t, processor == nil)
+	processor, err = NewProcessor(btcClientConfig, 6, db)
+	assert.ErrorIs(t, err, ErrNoBtcConfig)
+	assert.Assert(t, processor)
 }
