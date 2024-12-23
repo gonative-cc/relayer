@@ -51,7 +51,6 @@ These functions manage the lifecycle of IKA sign requests within the `ika_sign_r
 
 These functions manage IKA transaction records in the `ika_txs` table.
 
-
 ### Bitcoin Transaction
 
 These functions manage Bitcoin transaction records in the `bitcoin_txs` table.
