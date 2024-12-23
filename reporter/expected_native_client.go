@@ -11,6 +11,6 @@ type NativeClient interface {
 	// returns if given block hash is already written to native light client
 	ContainsBTCBlock(blockHash *chainhash.Hash) (bool, error)
 	// returns the block height and hash of tip block stored in native light client
-	BTCHeaderChainTip() (*chainhash.Hash, error)
+	BTCHeaderChainTip() (int64, *chainhash.Hash, error)
 	Stop() error
 }
