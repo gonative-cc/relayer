@@ -16,8 +16,8 @@
 
 A software that monitors and relayers:
 
-- CometBFT blocks to update Native -> Ika light client
-- Bitcoin blocks to update Bitcoin -> Native light client
+- CometBFT blocks to update Native light client on Ika
+- Bitcoin blocks to update Bitcoin light client on Native
 - Bitcoin SPV proofs to verify dWallet holdings
 - Native -> Bitcoin transaction relayer
 
@@ -38,7 +38,9 @@ Mock -> WIP -> alpha -> beta -> production
 
 ## Documentation
 
-1. [Database interacitons](docs/db.md)
+1. Database
+   - [interacitons](docs/db.md)
+   - [schema diagram](docs/schema.md)
 2. [Flow diagram](docs/flow.md)
 
 ## Contributing
@@ -46,6 +48,8 @@ Mock -> WIP -> alpha -> beta -> production
 Participating in open source is often a highly collaborative experience. We’re encouraged to create in public view, and we’re incentivized to welcome contributions of all kinds from people around the world.
 
 Check out [contributing repo](https://github.com/gonative-cc/contributig) for our guidelines & policies for how to contribute. Note: we require DCO! Thank you to all those who have contributed!
+
+After cloning the repository, make sure to run `make setup-hooks`.
 
 ### Security
 
