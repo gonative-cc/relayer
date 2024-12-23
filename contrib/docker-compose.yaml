@@ -8,10 +8,16 @@ services:
       - ./bitcoind-data:/bitcoin/.bitcoin
     ports:
       # regtest ports
+      - 127.0.0.1:28332:28332 # zmq blocks
+      - 127.0.0.1:28333:28333 # zmq tx
       - 127.0.0.1:18443:18443 # json-rpc
       - 127.0.0.1:18444:18444
       - 127.0.0.1:18445:18445
     command: -printtoconsole
+      -zmqpubrawblock=tcp://0.0.0.0:28332
+      -zmqpubhashblock=tcp://0.0.0.0:28332
+      -zmqpubrawtx=tcp://0.0.0.0:28333
+      -zmqpubhashtx=tcp://0.0.0.0:28333
       -rpcuser=user
       -rpcpassword=password
       -regtest
