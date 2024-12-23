@@ -12,7 +12,7 @@ Usage:
 
 Change log entries are to be added to the Unreleased section and in one of the following subsections: Features, Breaking Changes, Bug Fixes. Example entry:
 
-- [#<PR-number>](https://github.com/gonative-cc/relayer/pull/<PR-number>) <description>
+* [#<PR-number>](https://github.com/gonative-cc/relayer/pull/<PR-number>) <description>
 -->
 
 # CHANGELOG
@@ -21,7 +21,7 @@ Change log entries are to be added to the Unreleased section and in one of the f
 
 ### Features
 
-- Added new functions in the `dal` package:
+* [#73](https://github.com/gonative-cc/relayer/pull/73) Added new functions in the `dal` package:
   - `InsertIkaSignRequest(request IkaSignRequest)`: Inserts a new IKA sign request.
   - `GetIkaSignRequestByID(id uint64)`: Retrieves an IKA sign request by ID.
   - `GetPendingIkaSignRequests()`: Retrieves pending IKA sign requests (no final signature).
