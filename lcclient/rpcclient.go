@@ -11,7 +11,7 @@ import (
 type Client struct {
 	Ping                 func(int) int
 	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
-	GetBTCHeaderChainTip func() (*chainhash.Hash, error)
+	GetBTCHeaderChainTip func() (int64, *chainhash.Hash, error)
 }
 
 func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {
