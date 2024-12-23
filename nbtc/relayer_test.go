@@ -9,10 +9,11 @@ import (
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
+	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native2ika"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 var btcClientConfig = rpcclient.ConnConfig{
@@ -64,36 +65,50 @@ func Test_Start(t *testing.T) {
 	relayer.db.Close()
 }
 
-func Test_NewRelayer_DatabaseError(t *testing.T) {
+func TestNewRelayer_ErrorCases(t *testing.T) {
 	db := initTestDB(t)
 	mockIkaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
 
-	relayer, err := NewRelayer(relayerConfig, nil, nativeProcessor, btcProcessor)
-	assert.ErrorContains(t, err, "database cannot be nil")
-	assert.Assert(t, relayer == nil)
-}
+	testCases := []struct {
+		name            string
+		db              *dal.DB
+		nativeProcessor *native2ika.Processor
+		btcProcessor    *ika2btc.Processor
+		expectedError   error
+	}{
+		{
+			name:            "DatabaseError",
+			db:              nil,
+			nativeProcessor: nativeProcessor,
+			btcProcessor:    btcProcessor,
+			expectedError:   err.ErrNoDB,
+		},
+		{
+			name:            "NativeProcessorError",
+			db:              db,
+			nativeProcessor: nil,
+			btcProcessor:    btcProcessor,
+			expectedError:   err.ErrNoNativeProcessor,
+		},
+		{
+			name:            "BtcProcessorError",
+			db:              db,
+			nativeProcessor: nativeProcessor,
+			btcProcessor:    nil,
+			expectedError:   err.ErrNoBtcProcessor,
+		},
+	}
 
-func Test_NewRelayer_NativeProcessorError(t *testing.T) {
-	db := initTestDB(t)
-	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
-	btcProcessor.BtcClient = &bitcoin.MockClient{}
-
-	relayer, err := NewRelayer(relayerConfig, db, nil, btcProcessor)
-	assert.ErrorContains(t, err, "nativeProcessor cannot be nil")
-	assert.Assert(t, relayer == nil)
-}
-
-func Test_NewRelayer_BtcProcessorError(t *testing.T) {
-	db := initTestDB(t)
-	mockIkaClient := ika.NewMockClient()
-	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, nil)
-	assert.ErrorContains(t, err, "btcProcessor cannot be nil")
-	assert.Assert(t, relayer == nil)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			relayer, err := NewRelayer(relayerConfig, tc.db, tc.nativeProcessor, tc.btcProcessor)
+			assert.ErrorIs(t, err, tc.expectedError)
+			assert.Assert(t, relayer == nil)
+		})
+	}
 }
 
 func initTestDB(t *testing.T) *dal.DB {

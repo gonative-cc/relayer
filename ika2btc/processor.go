@@ -3,7 +3,6 @@ package ika2btc
 import (
 	"bytes"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -11,6 +10,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/gonative-cc/relayer/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,13 +29,11 @@ func NewProcessor(
 ) (*Processor, error) {
 
 	if db == nil {
-		return nil, ErrNoDB
+		return nil, errors.ErrNoDB
 	}
 
 	if btcClientConfig.Host == "" || btcClientConfig.User == "" || btcClientConfig.Pass == "" {
-		err := fmt.Errorf("missing bitcoin node configuration")
-		log.Err(err).Msg("")
-		return nil, err
+		return nil, errors.ErrNoBtcConfig
 	}
 
 	client, err := rpcclient.New(&btcClientConfig, nil)
@@ -51,10 +49,7 @@ func NewProcessor(
 }
 
 // Run starts a loop to query and process signed transactions from the database.
-func (p *Processor) Run(mu *sync.Mutex) error {
-	mu.Lock()
-	defer mu.Unlock()
-
+func (p *Processor) Run() error {
 	signedTxs, err := p.db.GetBitcoinTxsToBroadcast()
 	if err != nil {
 		return err
@@ -93,10 +88,7 @@ func (p *Processor) Run(mu *sync.Mutex) error {
 
 // CheckConfirmations checks all the broadcasted transactions to bitcoin
 // and if confirmed updates the database accordingly.
-func (p *Processor) CheckConfirmations(mu *sync.Mutex) error {
-	mu.Lock()
-	defer mu.Unlock()
-
+func (p *Processor) CheckConfirmations() error {
 	broadcastedTxs, err := p.db.GetBroadcastedBitcoinTxsInfo()
 	if err != nil {
 		return err

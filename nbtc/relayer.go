@@ -3,11 +3,10 @@ package nbtc
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 	"time"
 
 	"github.com/gonative-cc/relayer/dal"
+	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/mattn/go-sqlite3"
@@ -20,7 +19,6 @@ import (
 // - btcProcessor: To broadcast signed transactions to Bitcoin and monitor confirmations.
 type Relayer struct {
 	db               *dal.DB
-	dbMutex          sync.Mutex
 	nativeProcessor  *native2ika.Processor
 	btcProcessor     *ika2btc.Processor
 	shutdownChan     chan struct{}
@@ -44,19 +42,19 @@ func NewRelayer(
 ) (*Relayer, error) {
 
 	if db == nil {
-		err := fmt.Errorf("database cannot be nil")
+		err := err.ErrNoDB
 		log.Err(err).Msg("")
 		return nil, err
 	}
 
 	if nativeProcessor == nil {
-		err := fmt.Errorf("nativeProcessor cannot be nil")
+		err := err.ErrNoNativeProcessor
 		log.Err(err).Msg("")
 		return nil, err
 	}
 
 	if btcProcessor == nil {
-		err := fmt.Errorf("btcProcessor cannot be nil")
+		err := err.ErrNoBtcProcessor
 		log.Err(err).Msg("")
 		return nil, err
 	}
@@ -75,7 +73,6 @@ func NewRelayer(
 
 	return &Relayer{
 		db:               db,
-		dbMutex:          sync.Mutex{},
 		nativeProcessor:  nativeProcessor,
 		btcProcessor:     btcProcessor,
 		shutdownChan:     make(chan struct{}),
@@ -97,7 +94,7 @@ func (r *Relayer) Start(ctx context.Context) error {
 		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
 		// so probably we should wrap the db in a mutex
 		case <-r.confirmTxsTicker.C:
-			if err := r.btcProcessor.CheckConfirmations(&r.dbMutex); err != nil {
+			if err := r.btcProcessor.CheckConfirmations(); err != nil {
 				var sqliteErr *sqlite3.Error
 				if errors.As(err, &sqliteErr) {
 					log.Err(err).Msg("Critical error updating transaction status, shutting down")
@@ -112,7 +109,7 @@ func (r *Relayer) Start(ctx context.Context) error {
 
 // processSignRequests processes signd requests from the Native chain.
 func (r *Relayer) processSignRequests(ctx context.Context) error {
-	if err := r.nativeProcessor.ProcessSignRequests(ctx, &r.dbMutex); err != nil {
+	if err := r.nativeProcessor.Run(ctx); err != nil {
 		var sqliteErr *sqlite3.Error
 		//TODO: decide on which exact errors to continue and on which to stop the relayer
 		if errors.As(err, &sqliteErr) {
@@ -128,7 +125,7 @@ func (r *Relayer) processSignRequests(ctx context.Context) error {
 
 // processSignedTxs processes signed transactions and broadcasts them to Bitcoin.
 func (r *Relayer) processSignedTxs() error {
-	if err := r.btcProcessor.ProcessSignedTxs(&r.dbMutex); err != nil {
+	if err := r.btcProcessor.Run(); err != nil {
 		var sqliteErr *sqlite3.Error
 		//TODO: decide on which exact errors to continue and on which to stop the relayer
 		if errors.As(err, &sqliteErr) {

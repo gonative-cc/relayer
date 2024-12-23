@@ -1,13 +1,13 @@
 package ika2btc
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
+	"github.com/gonative-cc/relayer/errors"
 	"gotest.tools/v3/assert"
 )
 
@@ -20,10 +20,8 @@ var btcClientConfig = rpcclient.ConnConfig{
 }
 
 func TestProcessSignedTxs(t *testing.T) {
-	db, processor := initProcessor(t)
-
-	var mu sync.Mutex
-	err = processor.ProcessSignedTxs(&mu)
+	processor, db := initProcessor(t)
+	err := processor.Run()
 	assert.NilError(t, err)
 
 	updatedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
@@ -32,15 +30,9 @@ func TestProcessSignedTxs(t *testing.T) {
 }
 
 func TestCheckConfirmations(t *testing.T) {
-	db := daltest.InitTestDB(t)
-	daltest.PopulateSignRequests(t, db)
-	daltest.PopulateBitcoinTxs(t, db)
-	processor, err := NewProcessor(btcClientConfig, 6, db)
-	assert.NilError(t, err)
+	processor, db := initProcessor(t)
 	processor.BtcClient = &bitcoin.MockClient{}
-
-	var mu sync.Mutex
-	err = processor.CheckConfirmations(&mu)
+	err := processor.CheckConfirmations()
 	assert.NilError(t, err)
 
 	updatedTx, err := db.GetBitcoinTx(4, daltest.GetHashBytes(t, "3"))
@@ -51,13 +43,27 @@ func TestCheckConfirmations(t *testing.T) {
 func TestNewProcessor(t *testing.T) {
 	// missing db
 	processor, err := NewProcessor(btcClientConfig, 6, nil)
-	assert.ErrorIs(t, err, ErrNoDB)
-	assert.Assert(t, processor)
-	
+	assert.ErrorIs(t, err, errors.ErrNoDB)
+	assert.Assert(t, processor == nil)
+
 	// missing BTC config
 	db := daltest.InitTestDB(t)
 	btcClientConfig.Host = ""
 	processor, err = NewProcessor(btcClientConfig, 6, db)
-	assert.ErrorIs(t, err, ErrNoBtcConfig)
-	assert.Assert(t, processor)
+	assert.ErrorIs(t, err, errors.ErrNoBtcConfig)
+	assert.Assert(t, processor == nil)
+}
+
+// initProcessor initializes processor with a mock Bitcoin client and a populated database.
+func initProcessor(t *testing.T) (*Processor, *dal.DB) {
+	t.Helper()
+
+	db := daltest.InitTestDB(t)
+	daltest.PopulateSignRequests(t, db)
+	daltest.PopulateBitcoinTxs(t, db)
+	processor, err := NewProcessor(btcClientConfig, 6, db)
+	assert.NilError(t, err)
+	processor.BtcClient = &bitcoin.MockClient{}
+
+	return processor, db
 }
