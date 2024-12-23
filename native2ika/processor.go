@@ -3,7 +3,6 @@ package native2ika
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika"
@@ -24,11 +23,8 @@ func NewProcessor(ikaClient ika.Client, db *dal.DB) *Processor {
 	}
 }
 
-// ProcessSignRequests queries sign requests from Native and handles them.
-func (p *Processor) ProcessSignRequests(ctx context.Context, mu *sync.Mutex) error {
-	mu.Lock()
-	defer mu.Unlock()
-
+// Run queries sign requests from Native and handles them.
+func (p *Processor) Run(ctx context.Context) error {
 	ikaSignRequests, err := p.db.GetPendingIkaSignRequests()
 	if err != nil {
 		return fmt.Errorf("error getting pending ika sign requests from db: %w", err)

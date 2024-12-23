@@ -48,7 +48,7 @@ type BitcoinTxInfo struct {
 // IkaTxStatus represents the different states of a native transaction.
 type IkaTxStatus byte
 
-// Ika ransaction status constants
+// Ika transaction status constants
 const (
 	Success IkaTxStatus = iota
 	Failed
@@ -57,7 +57,7 @@ const (
 // BitcoinTxStatus represents the different states of a bitcoin transaction.
 type BitcoinTxStatus byte
 
-// Bitcoin ransaction status constants
+// Bitcoin transaction status constants
 const (
 	Pending BitcoinTxStatus = iota
 	Broadcasted

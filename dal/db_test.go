@@ -31,7 +31,6 @@ func Test_InsertIkaSignRequest(t *testing.T) {
 
 func Test_InsertIkaTx(t *testing.T) {
 	db := daltest.InitTestDB(t)
-
 	ikaTx := dal.IkaTx{
 		SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: "",
 	}
@@ -141,7 +140,6 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 
 func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	db := daltest.InitTestDB(t)
-
 	bitcoinTx := dal.BitcoinTx{
 		SrID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: "",
 	}

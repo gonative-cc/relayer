@@ -2,7 +2,6 @@ package native2ika
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	"github.com/gonative-cc/relayer/dal/daltest"
@@ -24,7 +23,7 @@ func newIkaProcessor(t *testing.T) *Processor {
 	}
 }
 
-func TestProcessor_ProcessSignRequests(t *testing.T) {
+func TestRun(t *testing.T) {
 	processor := newIkaProcessor(t)
 
 	// before signing
@@ -33,7 +32,7 @@ func TestProcessor_ProcessSignRequests(t *testing.T) {
 	assert.Equal(t, 1, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
 
-	err = processor.ProcessSignRequests(context.Background(), &sync.Mutex{})
+	err = processor.Run(context.Background())
 	assert.Nil(t, err)
 
 	// after signing
