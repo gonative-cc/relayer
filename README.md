@@ -16,8 +16,8 @@
 
 A software that monitors and relayers:
 
-- CometBFT blocks to update Native -> Ika light client
-- Bitcoin blocks to update Bitcoin -> Native light client
+- CometBFT blocks to update Native light client on Ika
+- Bitcoin blocks to update Bitcoin light client on Native
 - Bitcoin SPV proofs to verify dWallet holdings
 - Native -> Bitcoin transaction relayer
 
@@ -38,7 +38,9 @@ Mock -> WIP -> alpha -> beta -> production
 
 ## Documentation
 
-1. [Database interacitons](docs/db.md)
+1. Database
+   - [interacitons](docs/db.md)
+   - [schema diagram](docs/schema.md)
 2. [Flow diagram](docs/flow.md)
 
 ## Contributing
