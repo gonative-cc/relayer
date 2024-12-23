@@ -1,20 +1,23 @@
 services:
   bitcoind:
     container_name: bitcoind-node
-    hostname: bitcoind-node
+    # hostname: bitcoind-node
     image: kylemanna/bitcoind@sha256:2400e64960457b22be55299a2d7fa2aaa217f3dfc4afb84387e5511fe8ce5055
     # restart: unless-stopped
     volumes:
       - ./bitcoind-data:/bitcoin/.bitcoin
     ports:
-      - 18333:18333
-      - 127.0.0.1:18332:18332
-    command:
-      -printtoconsole
+      # regtest ports
+      - 127.0.0.1:18443:18443 # json-rpc
+      - 127.0.0.1:18444:18444
+      - 127.0.0.1:18445:18445
+    command: -printtoconsole
       -rpcuser=user
       -rpcpassword=password
       -regtest
       -rest
+      -rpcbind=0.0.0.0:18443
+      -rpcallowip=0.0.0.0/0
     post_start:
       - command: "sleep 0.5"
       - command: "bitcoin-cli -regtest loadwallet nativewallet"
