@@ -41,7 +41,7 @@ jobs:
             **/**.go
           FILES: |
             go.mod
-            go.sum'
+            go.sum
       - name: Install dependencies
         run: |
           sudo apt-get update
