@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog/log"
@@ -11,15 +12,17 @@ import (
 
 // Processor handles processing transactions from the Native chain to IKA for signing.
 type Processor struct {
-	ikaClient ika.Client
-	db        *dal.DB
+	ikaClient    ika.Client
+	db           *dal.DB
+	blockFetcher BlockFetcher
 }
 
 // NewProcessor creates a new Processor instance.
-func NewProcessor(ikaClient ika.Client, db *dal.DB) *Processor {
+func NewProcessor(ikaClient ika.Client, db *dal.DB, blockFetcher BlockFetcher) *Processor {
 	return &Processor{
-		ikaClient: ikaClient,
-		db:        db,
+		ikaClient:    ikaClient,
+		db:           db,
+		blockFetcher: blockFetcher,
 	}
 }
 
@@ -48,6 +51,41 @@ func (p *Processor) Run(ctx context.Context) error {
 		}
 
 		// TODO: insert transaction to IkaTx table
+	}
+
+	return nil
+}
+
+// ProcessBlock processes a block from the Native chain and extracts the necessary data to be stored in the database.
+func (p *Processor) ProcessBlock(block *tmtypes.Block) error {
+	for _, event := range block.Event {
+		var dwalletID string
+		var userSig string
+		var payload string
+		for _, field := range event.fields {
+			if field.Key == "dwalletID" {
+				dwalletID = field.Value
+			} else if field.Key == "userSig" {
+				userSig = field.Value
+			} else if field.Key == "payload" {
+				payload = field.Value
+			}
+			// any other fields
+		}
+
+		signRequest := dal.IkaSignRequest{
+			ID:        uint64(block.Header.Height), // Use the block height as the ID
+			Payload:   payload,
+			DWalletID: dwalletID,
+			UserSig:   userSig,
+			FinalSig:  nil,
+			Timestamp: block.Header.Time.Unix(),
+		}
+
+		err := p.db.InsertIkaSignRequest(signRequest)
+		if err != nil {
+			return fmt.Errorf("failed to insert IkaSignRequest: %w", err)
+		}
 	}
 
 	return nil
