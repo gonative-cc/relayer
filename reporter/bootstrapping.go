@@ -138,12 +138,12 @@ func (r *Reporter) initBTCCache() error {
 	}
 
 	// get T, i.e., total block count in Native light client
-	chainBlockHeight, _, err := r.nativeClient.GetBTCHeaderChainTip()
+	chainBlock, err := r.nativeClient.GetBTCHeaderChainTip()
 	if err != nil {
 		return err
 	}
 	// TODO: add height return to LC RPC
-	bbnLatestBlockHeight = uint64(chainBlockHeight)
+	bbnLatestBlockHeight = uint64(chainBlock.Height)
 
 	// Fetch block since `baseHeight = T - k` from BTC, where
 	// - T is total block count in Native light client
@@ -186,7 +186,7 @@ func (r *Reporter) waitUntilBTCSync() error {
 	// then the vigilante is incorrectly configured and should panic
 
 	// Retrieve hash/height of the latest block in BBN header chain
-	_, chainBlockHash, err := r.nativeClient.GetBTCHeaderChainTip()
+	chainBlock, err := r.nativeClient.GetBTCHeaderChainTip()
 	if err != nil {
 		return err
 	}
@@ -196,10 +196,10 @@ func (r *Reporter) waitUntilBTCSync() error {
 	// 	return err
 	// }
 
-	bbnLatestBlockHash = chainBlockHash
+	bbnLatestBlockHash = chainBlock.Hash
 	// TODO: add height return to LC RPC
 	// bbnLatestBlockHeight = tipRes.Header.Height
-	bbnLatestBlockHeight = 1000
+	bbnLatestBlockHeight = uint64(chainBlock.Height)
 	r.logger.Infof(
 		"BBN header chain latest block hash and height: (%v, %d)",
 		bbnLatestBlockHash, bbnLatestBlockHeight,
@@ -221,13 +221,13 @@ func (r *Reporter) waitUntilBTCSync() error {
 				return err
 			}
 			// UDIT: replace here with Vu's LC chain tip API
-			chainHeight, _, err := r.nativeClient.GetBTCHeaderChainTip()
+			chainBlock, err := r.nativeClient.GetBTCHeaderChainTip()
 			if err != nil {
 				return err
 			}
 			// TODO: add height return to LC RPC
 			// bbnLatestBlockHeight = tipRes.Header.Height
-			bbnLatestBlockHeight = uint64(chainHeight)
+			bbnLatestBlockHeight = uint64(chainBlock.Height)
 			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= bbnLatestBlockHeight {
 				r.logger.Infof(
 					"BTC chain (length %d) now catches up with BBN header chain (length %d), continue bootstrapping",

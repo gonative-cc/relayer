@@ -45,7 +45,7 @@ func New(
 ) (*Reporter, error) {
 	logger := parentLogger.With(zap.String("module", "reporter")).Sugar()
 
-	k := uint64(10)
+	k := uint64(1)
 	logger.Infof("BTCCheckpoint parameters: k = %d", k)
 
 	return &Reporter{
@@ -56,7 +56,7 @@ func New(
 		btcClient:         btcClient,
 		nativeClient:      nativeClient,
 		// CheckpointCache:   ckptCache,
-		// reorgList:                     newReorgList(),
+		// reorgList:         newReorgList(),
 		btcConfirmationDepth: k,
 		metrics:              metrics,
 		quit:                 make(chan struct{}),

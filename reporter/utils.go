@@ -27,14 +27,13 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 
 	// find the first header that is not contained in BBN header chain,
 	// then submit since this header
-	for i, _ := range ibs {
-		// blockHash := header.BlockHash()
-		// var res *btclctypes.QueryContainsBytesResponse
+	for i, header := range ibs {
+		r.logger.Debug(header.Height)
+		blockHash := header.BlockHash()
 		var res bool
 		err = RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
 			// TODO: placeholder true is used here for now
-			// res, err = r.nativeClient.ContainsBTCBlock(&blockHash)
-			res = true
+			res, err = r.nativeClient.ContainsBTCBlock(&blockHash)
 			return err
 		})
 		if err != nil {

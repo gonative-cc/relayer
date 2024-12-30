@@ -8,10 +8,16 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 )
 
+type Block struct {
+	Hash   *chainhash.Hash
+	Height int64
+}
+
 type Client struct {
 	Ping                 func(int) int
 	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
-	GetBTCHeaderChainTip func() (int64, *chainhash.Hash, error)
+	GetBTCHeaderChainTip func() (*Block, error)
+	ContainsBTCBlock     func(blockHash *chainhash.Hash) (bool, error)
 }
 
 func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {
