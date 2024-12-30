@@ -1,0 +1,81 @@
+common:
+  log-format: "auto" # format of the log (json|auto|console|logfmt)
+  log-level: "debug" # log level (debug|warn|error|panic|fatal)
+  retry-sleep-time: 5s
+  max-retry-sleep-time: 5m
+btc:
+  no-client-tls: true # use true for bitcoind as it does not support tls
+  ca-file: $HOME/.btcd/rpc.cert
+  endpoint: localhost:18443 # use port 18443 for bitcoind regtest
+  estimate-mode: CONSERVATIVE # only needed by bitcoind
+  tx-fee-max: 20000 # maximum tx fee, 20,000sat/kvb
+  tx-fee-min: 1000 # minimum tx fee, 1,000sat/kvb
+  default-fee: 1000 # 1,000sat/kvb
+  target-block-num: 2
+  wallet-endpoint: localhost:18554
+  wallet-password: password
+  wallet-name: default
+  wallet-lock-time: 10
+  wallet-ca-file: $HOME/.btcwallet/rpc.cert
+  net-params: regtest  # use regtest for bitcoind as it does not support simnet
+  username: user
+  password: password
+  reconnect-attempts: 3
+  btc-backend: bitcoind # {btcd, bitcoind}
+  zmq-seq-endpoint: tcp://127.0.0.1:28332  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
+  zmq-block-endpoint: tcp://127.0.0.1:28332
+  zmq-tx-endpoint: tcp://127.0.0.1:28333
+babylon:
+  key: node0
+  chain-id: chain-test
+  rpc-addr: http://localhost:26657
+  grpc-addr: https://localhost:9090
+  account-prefix: bbn
+  keyring-backend: test
+  gas-adjustment: 1.2
+  gas-prices: 2ubbn
+  key-directory: $TESTNET_PATH/node0/babylond
+  debug: true
+  timeout: 20s
+  block-timeout: ~
+  output-format: json
+  submitter-address: bbn1v6k7k9s8md3k29cu9runasstq5zaa0lpznk27w
+  sign-mode: direct
+grpc:
+  onetime-tls-key: true
+  rpc-key: ""
+  rpc-cert: $TESTNET_PATH/vigilante/rpc.cert
+  endpoints:
+    - localhost:8080
+grpcweb:
+  placeholder: grpcwebconfig
+metrics:
+  host: 0.0.0.0
+  server-port: 2112
+submitter:
+  netparams: simnet
+  buffer-size: 10
+  resubmit-fee-multiplier: 1
+  polling-interval-seconds: 60
+  resend-interval-seconds: 1800
+reporter:
+  netparams: simnet
+  btc_cache_size: 1000
+  max_headers_in_msg: 100
+monitor:
+  checkpoint-buffer-size: 1000
+  btc-block-buffer-size: 1000
+  btc-cache-size: 1000
+  btc-confirmation-depth: 6
+  liveness-check-interval-seconds: 100
+  max-live-btc-heights: 200
+  enable-liveness-checker: true
+  enable-slasher: true
+  btcnetparams: simnet
+btcstaking-tracker:
+  check-delegations-interval: 1m
+  delegations-batch-size: 100
+  check-if-delegation-active-interval: 5m
+  retry-submit-unbonding-interval: 1m
+  max-jitter-interval: 30s
+  btcnetparams: simnet
