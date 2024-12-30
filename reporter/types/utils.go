@@ -115,3 +115,30 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 
 	return branch, nil
 }
+
+func SpvProofFromHeaderAndTransactions(
+	headerBytes *BTCHeaderBytes,
+	transactions [][]byte,
+	transactionIdx uint,
+) (*BTCSpvProof, error) {
+	proof, e := CreateProofForIdx(transactions, transactionIdx)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var flatProof []byte
+
+	for _, h := range proof {
+		flatProof = append(flatProof, h.CloneBytes()...)
+	}
+
+	spvProof := BTCSpvProof{
+		BtcTransaction:      transactions[transactionIdx],
+		BtcTransactionIndex: uint32(transactionIdx),
+		MerkleNodes:         flatProof,
+		ConfirmingBtcHeader: headerBytes,
+	}
+
+	return &spvProof, nil
+}
