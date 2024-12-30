@@ -222,7 +222,8 @@ func (b *BTCCache) Resize(maxEntries uint64) error {
 	return nil
 }
 
-// Trim trims BTCCache to only keep the latest `maxEntries` blocks, and set `maxEntries` to be the cache size
+// Trim trims BTCCache to only keep the latest `maxEntries` blocks,
+// and set `maxEntries` to be the cache size
 func (b *BTCCache) Trim() {
 	b.Lock()
 	defer b.Unlock()

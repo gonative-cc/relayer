@@ -90,7 +90,7 @@ func CmdStart() *cobra.Command {
 			}
 
 			// create Babylon client. Note that requests from Babylon client are ad hoc
-			nativeClient, nativeCloser, err = lcclient.New("RPC_URL_HERE")
+			nativeClient, nativeCloser, err = lcclient.New("http://localhost:9797")
 			if err != nil {
 				panic(fmt.Errorf("failed to open Babylon client: %w", err))
 			}
