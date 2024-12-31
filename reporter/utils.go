@@ -149,7 +149,7 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 		)
 
 		// submit the checkpoint to Babylon
-		res, err := r.nativeClient.VerifySPV(msgSpvProof)
+		res, err := r.nativeClient.VerifySPV(&msgSpvProof)
 		if err != nil {
 			r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
 			r.metrics.FailedCheckpointsCounter.Inc()
