@@ -16,7 +16,7 @@ type Block struct {
 type Client struct {
 	Ping                 func(int) int
 	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
-	GetBTCHeaderChainTip func() (*Block, error)
+	GetBTCHeaderChainTip func() (Block, error)
 	ContainsBTCBlock     func(blockHash *chainhash.Hash) (bool, error)
 }
 
