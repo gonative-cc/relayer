@@ -1,5 +1,7 @@
 package types
 
+import "github.com/btcsuite/btcd/chaincfg/chainhash"
+
 // Consider we have a Merkle tree with following structure:
 //
 //	          ROOT
@@ -18,7 +20,10 @@ package types
 // By looking at 010 we would know that H4 is a right sibling,
 // H12 is left, H5555 is right again.
 type BTCSpvProof struct {
-	// Valid bitcoin transaction containing OP_RETURN opcode.
+	// TODO: (update comment) Valid btc header which confirms btc_transaction.
+	// Should have exactly 80 bytes
+	ConfirmingBtcBlockHash chainhash.Hash
+	// TODO: (update comment) Valid bitcoin transaction containing OP_RETURN opcode.
 	BtcTransaction []byte
 	// Index of transaction within the block. Index is needed to determine if
 	// currently hashed node is left or right.
@@ -29,13 +34,31 @@ type BTCSpvProof struct {
 	// ||  32_bytes_of_node3 so the length of the proof will always be divisible
 	// by 32.
 	MerkleNodes []byte
-	// Valid btc header which confirms btc_transaction.
-	// Should have exactly 80 bytes
-	ConfirmingBtcHeader *BTCHeaderBytes
+}
+
+func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string) MsgSpvProof {
+	merklePath := make([]chainhash.Hash, len(btcSpvProof.MerkleNodes)/32)
+	for i := 0; i < len(btcSpvProof.MerkleNodes)/32; i++ {
+		copy(merklePath[i][:], btcSpvProof.MerkleNodes[i*32:(i+1)*32])
+	}
+
+	return MsgSpvProof{
+		blockHash:  btcSpvProof.ConfirmingBtcBlockHash,
+		txId:       txId,
+		txIndex:    btcSpvProof.BtcTransactionIndex,
+		merklePath: merklePath,
+	}
 }
 
 // from https://github.com/babylonchain/babylon/proto/babylon/btccheckpoint/v1/tx.proto#L17
 type MsgInsertBTCSpvProof struct {
 	// Submitter string
 	Proofs []*BTCSpvProof
+}
+
+type MsgSpvProof struct {
+	blockHash  chainhash.Hash
+	txId       string // 32bytes hash value in string hex format
+	txIndex    uint32 // index of transaction in block
+	merklePath []chainhash.Hash
 }

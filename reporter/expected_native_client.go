@@ -3,6 +3,7 @@ package reporter
 import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 type NativeClient interface {
@@ -12,5 +13,7 @@ type NativeClient interface {
 	ContainsBTCBlock(blockHash *chainhash.Hash) (bool, error)
 	// returns the block height and hash of tip block stored in native light client
 	BTCHeaderChainTip() (int64, *chainhash.Hash, error)
+	// returns if spvProof is valid or not
+	VerifySPV(spvProof types.MsgSpvProof) (int, error)
 	Stop() error
 }

@@ -134,10 +134,10 @@ func SpvProofFromHeaderAndTransactions(
 	}
 
 	spvProof := BTCSpvProof{
-		BtcTransaction:      transactions[transactionIdx],
-		BtcTransactionIndex: uint32(transactionIdx),
-		MerkleNodes:         flatProof,
-		ConfirmingBtcHeader: headerBytes,
+		ConfirmingBtcBlockHash: headerBytes.ToBlockHeader().BlockHash(),
+		BtcTransaction:         transactions[transactionIdx],
+		BtcTransactionIndex:    uint32(transactionIdx),
+		MerkleNodes:            flatProof,
 	}
 
 	return &spvProof, nil
