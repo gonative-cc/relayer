@@ -43,10 +43,10 @@ func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string) SPVProof {
 	}
 
 	return SPVProof{
-		blockHash:  btcSpvProof.ConfirmingBtcBlockHash,
-		txId:       txId,
-		txIndex:    btcSpvProof.BtcTransactionIndex,
-		merklePath: merklePath,
+		BlockHash:  btcSpvProof.ConfirmingBtcBlockHash,
+		TxId:       txId,
+		TxIndex:    btcSpvProof.BtcTransactionIndex,
+		MerklePath: merklePath,
 	}
 }
 
@@ -57,8 +57,8 @@ type MsgInsertBTCSpvProof struct {
 }
 
 type SPVProof struct {
-	blockHash  chainhash.Hash
-	txId       string // 32bytes hash value in string hex format
-	txIndex    uint32 // index of transaction in block
-	merklePath []chainhash.Hash
+	BlockHash  chainhash.Hash
+	TxId       string // 32bytes hash value in string hex format
+	TxIndex    uint32 // index of transaction in block
+	MerklePath []chainhash.Hash
 }
