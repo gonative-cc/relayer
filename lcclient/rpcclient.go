@@ -19,7 +19,7 @@ type Client struct {
 	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
 	GetBTCHeaderChainTip func() (Block, error)
 	ContainsBTCBlock     func(blockHash *chainhash.Hash) (bool, error)
-	VerifySPV            func(spvProof types.MsgSpvProof) (int, error)
+	VerifySPV            func(spvProof types.SPVProof) (int, error)
 }
 
 func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {

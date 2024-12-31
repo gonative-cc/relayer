@@ -14,6 +14,6 @@ type NativeClient interface {
 	// returns the block height and hash of tip block stored in native light client
 	BTCHeaderChainTip() (int64, *chainhash.Hash, error)
 	// returns if spvProof is valid or not
-	VerifySPV(spvProof types.MsgSpvProof) (int, error)
+	VerifySPV(spvProof types.SPVProof) (int, error)
 	Stop() error
 }
