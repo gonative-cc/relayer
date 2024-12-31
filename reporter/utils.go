@@ -137,6 +137,10 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 			continue
 		}
 
+		r.logger.Infof(
+			"Successfully constructed spv proof %v", proof,
+		)
+
 		// wrap to MsgSpvProof
 		msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID())
 
