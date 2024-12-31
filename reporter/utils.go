@@ -144,6 +144,10 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 		// wrap to MsgSpvProof
 		msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID())
 
+		r.logger.Infof(
+			"Successfully constructed MsgSpvProof %v", msgSpvProof,
+		)
+
 		// submit the checkpoint to Babylon
 		res, err := r.nativeClient.VerifySPV(msgSpvProof)
 		if err != nil {
