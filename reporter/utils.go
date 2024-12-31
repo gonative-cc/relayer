@@ -1,9 +1,7 @@
 package reporter
 
 import (
-	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/reporter/types"
@@ -123,109 +121,73 @@ func (r *Reporter) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
 	return numSubmitted, err
 }
 
-func (r *Reporter) submitTransactions() (int, error) {
-	var (
-		res                  *pv.RelayerTxResponse
-		proofs               []*btcctypes.BTCSpvProof
-		msgInsertBTCSpvProof *btcctypes.MsgInsertBTCSpvProof
-		err                  error
-	)
+func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, error) {
+	numSubmittedTxs := 0
 
-	// get matched ckpt parts from the ckptCache
-	// Note that Match() has ensured the checkpoints are always ordered by epoch number
-	r.CheckpointCache.Match()
-	numMatchedCkpts := r.CheckpointCache.NumCheckpoints()
-
-	if numMatchedCkpts == 0 {
-		r.logger.Debug("Found no matched pair of checkpoint segments in this match attempt")
-		return numMatchedCkpts, nil
-	}
-
-	// for each matched checkpoint, wrap to MsgInsertBTCSpvProof and send to Babylon
-	// Note that this is a while loop that keeps popping checkpoints in the cache
-	for {
-		// pop the earliest checkpoint
-		// if popping a nil checkpoint, then all checkpoints are popped, break the for loop
-		ckpt := r.CheckpointCache.PopEarliestCheckpoint()
-		if ckpt == nil {
-			break
-		}
-
-		r.logger.Info("Found a matched pair of checkpoint segments!")
-
-		// fetch the first checkpoint in cache and construct spv proof
-		proofs = ckpt.MustGenSPVProofs()
-
-		// wrap to MsgInsertBTCSpvProof
-		msgInsertBTCSpvProof = types.MustNewMsgInsertBTCSpvProof(signer, proofs)
-
-		// submit the checkpoint to Babylon
-		res, err = r.babylonClient.InsertBTCSpvProof(context.Background(), msgInsertBTCSpvProof)
-		if err != nil {
-			r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
-			r.metrics.FailedCheckpointsCounter.Inc()
-			continue
-		}
-		r.logger.Infof("Successfully submitted MsgInsertBTCSpvProof with response %d", res.Code)
-		r.metrics.SuccessfulCheckpointsCounter.Inc()
-		r.metrics.SecondsSinceLastCheckpointGauge.Set(0)
-		tx1Block := ckpt.Segments[0].AssocBlock
-		tx2Block := ckpt.Segments[1].AssocBlock
-		r.metrics.NewReportedCheckpointGaugeVec.WithLabelValues(
-			strconv.Itoa(int(ckpt.Epoch)),
-			strconv.Itoa(int(tx1Block.Height)),
-			tx1Block.Txs[ckpt.Segments[0].TxIdx].Hash().String(),
-			tx2Block.Txs[ckpt.Segments[1].TxIdx].Hash().String(),
-		).SetToCurrentTime()
-	}
-
-	return numMatchedCkpts, nil
-}
-
-func (r *Reporter) extractTransactions(ib *types.IndexedBlock) int {
-	// for each tx, try to extract a ckpt segment from it.
-	// If there is a ckpt segment, cache it to ckptCache locally
-	numCkptSegs := 0
-
-	for _, tx := range ib.Txs {
+	for txIdx, tx := range ib.Txs {
 		if tx == nil {
 			r.logger.Warnf("Found a nil tx in block %v", ib.BlockHash())
 			continue
 		}
 
-		// cache the segment to ckptCache
-		ckptSeg := types.NewCkptSegment(ib, tx)
-		if ckptSeg != nil {
-			r.logger.Infof("Found a checkpoint segment in tx %v with index %d: %v", tx.Hash(), ckptSeg.Index, ckptSeg.Data)
-			if err := r.CheckpointCache.AddSegment(ckptSeg); err != nil {
-				r.logger.Errorf("Failed to add the ckpt segment in tx %v to the ckptCache: %v", tx.Hash(), err)
-				continue
-			}
-			numCkptSegs += 1
+		// construct spv proof from tx
+		proof, err := ib.GenSPVProof(txIdx)
+		if err != nil {
+			r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
+			continue
 		}
+
+		// wrap to MsgSpvProof
+		msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID())
+
+		// submit the checkpoint to Babylon
+		res, err := r.nativeClient.VerifySPV(msgSpvProof)
+		if err != nil {
+			r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
+			r.metrics.FailedCheckpointsCounter.Inc()
+			continue
+		}
+
+		r.logger.Infof("Successfully submitted MsgInsertBTCSpvProof with response %d", res)
+		numSubmittedTxs += 1
+
+		// metrics sent to prometheous instance
+		r.metrics.SuccessfulCheckpointsCounter.Inc()
+		r.metrics.SecondsSinceLastCheckpointGauge.Set(0)
+		// tx1Block := ckpt.Segments[0].AssocBlock
+		// tx2Block := ckpt.Segments[1].AssocBlock
+		// r.metrics.NewReportedCheckpointGaugeVec.WithLabelValues(
+		// 	strconv.Itoa(int(ckpt.Epoch)),
+		// 	strconv.Itoa(int(tx1Block.Height)),
+		// 	tx1Block.Txs[ckpt.Segments[0].TxIdx].Hash().String(),
+		// 	tx2Block.Txs[ckpt.Segments[1].TxIdx].Hash().String(),
+		// ).SetToCurrentTime()
 	}
 
-	return numCkptSegs
+	return numSubmittedTxs, nil
 }
 
 // ProcessTransactions tries to extract valid transactions from a list of blocks
 // It returns the number of valid transactions segments, and the number of valid transactions
-func (r *Reporter) ProcessTransactions(ibs []*types.IndexedBlock) (int, int, error) {
-	var numTxsSegs int
+func (r *Reporter) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {
+	var numTxs int
 
-	// extract transaction segments from the blocks
+	// extract transactions from the blocks
 	for _, ib := range ibs {
-		numTxsSegs += r.extractTransactions(ib)
+		numBlockTxs, err := r.extractAndSubmitTransactions(ib)
+		if err != nil {
+			return numTxs, fmt.Errorf(
+				"failed to extract transactions from block %v: %w", ib.BlockHash(), err,
+			)
+		}
+		numTxs += numBlockTxs
 	}
 
-	if numTxsSegs > 0 {
-		r.logger.Infof("Found %d transaction segments", numTxsSegs)
+	if numTxs > 0 {
+		r.logger.Infof("Submitted %d transactions", numTxs)
 	}
 
-	// match and submit checkpoint segments
-	numMatchedCkpts, err := r.submitTransactions(signer)
-
-	return numTxsSegs, numMatchedCkpts, err
+	return numTxs, nil
 }
 
 // push msg to channel c, or quit if quit channel is closed

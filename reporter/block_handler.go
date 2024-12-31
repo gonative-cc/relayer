@@ -122,7 +122,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	}
 
 	// extracts and submits checkpoints for each blocks in ibs
-	_, _, err = r.ProcessTransactions(headersToProcess)
+	_, err = r.ProcessTransactions(headersToProcess)
 	if err != nil {
 		r.logger.Warnf("Failed to submit checkpoint: %v", err)
 	}

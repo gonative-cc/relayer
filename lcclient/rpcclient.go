@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/filecoin-project/go-jsonrpc"
+	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 type Block struct {
@@ -18,6 +19,7 @@ type Client struct {
 	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
 	GetBTCHeaderChainTip func() (Block, error)
 	ContainsBTCBlock     func(blockHash *chainhash.Hash) (bool, error)
+	VerifySPV            func(spvProof types.MsgSpvProof) (int, error)
 }
 
 func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {
