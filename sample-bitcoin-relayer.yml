@@ -22,7 +22,7 @@ btc:
   password: password
   reconnect-attempts: 3
   btc-backend: bitcoind # {btcd, bitcoind}
-  zmq-seq-endpoint: tcp://127.0.0.1:28332  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
+  zmq-seq-endpoint: tcp://127.0.0.1:28331  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
   zmq-block-endpoint: tcp://127.0.0.1:28332
   zmq-tx-endpoint: tcp://127.0.0.1:28333
 babylon:
