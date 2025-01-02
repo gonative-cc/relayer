@@ -13,3 +13,6 @@ var ErrNoNativeProcessor = errors.New("nativeProcessor cannot be nil")
 
 // ErrNoNativeProcessor is returned when the btcProcessor is nil.
 var ErrNoBtcProcessor = errors.New("btcProcessor cannot be nil")
+
+// ErrNoBlockchain is returned when the blockchain is nil.
+var ErrNoBlockchain = errors.New("blockchain cannot be nil")
