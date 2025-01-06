@@ -38,7 +38,7 @@ func CmdExecute() error {
 	return rootCmd.Execute()
 }
 
-// CmdStart returns the CLI commands for the reporter
+// CmdStart returns the CLI commands for the bitcoin-spv
 func CmdStart() *cobra.Command {
 	var cfgFile = ""
 
@@ -47,12 +47,12 @@ func CmdStart() *cobra.Command {
 		Short: "An relayer for Bitcoin blocks -> Native",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
-				err              error
-				cfg              config.Config
-				btcClient        *btcclient.Client
-				nativeClient     *lcclient.Client
-				vigilantReporter *bitcoinspv.Reporter
-				nativeCloser     jsonrpc.ClientCloser
+				err          error
+				cfg          config.Config
+				btcClient    *btcclient.Client
+				nativeClient *lcclient.Client
+				spvRelayer   *bitcoinspv.Reporter
+				nativeCloser jsonrpc.ClientCloser
 				// server           *rpcserver.Server
 			)
 
@@ -67,7 +67,7 @@ func CmdStart() *cobra.Command {
 			}
 
 			// create BTC client and connect to BTC server
-			// Note that vigilant reporter needs to subscribe to new BTC blocks
+			// Note that bitcoin-spv relayer needs to subscribe to new BTC blocks
 			btcClient, err = btcclient.NewWithBlockSubscriber(
 				&cfg.BTC,
 				cfg.Common.RetrySleepTime,
@@ -89,44 +89,44 @@ func CmdStart() *cobra.Command {
 					zap.Int64("time", tipBlock.Time))
 			}
 
-			// create Babylon client. Note that requests from Babylon client are ad hoc
+			// create Native client. Note that requests from Native client are ad hoc
 			nativeClient, nativeCloser, err = lcclient.New("http://localhost:9797")
 			if err != nil {
-				panic(fmt.Errorf("failed to open Babylon client: %w", err))
+				panic(fmt.Errorf("failed to open Native client: %w", err))
 			}
 
-			// register reporter metrics
-			reporterMetrics := bitcoinspv.NewReporterMetrics()
+			// register relayer metrics
+			relayerMetrics := bitcoinspv.NewReporterMetrics()
 
-			// create reporter
-			vigilantReporter, err = bitcoinspv.New(
+			// create relayer
+			spvRelayer, err = bitcoinspv.New(
 				&cfg.Reporter,
 				rootLogger,
 				btcClient,
 				nativeClient,
 				cfg.Common.RetrySleepTime,
 				cfg.Common.MaxRetrySleepTime,
-				reporterMetrics,
+				relayerMetrics,
 			)
 			if err != nil {
-				panic(fmt.Errorf("failed to create vigilante reporter: %w", err))
+				panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))
 			}
 
 			// // create RPC server
-			// server, err = rpcserver.New(&cfg.GRPC, rootLogger, nil, vigilantReporter, nil, nil)
+			// server, err = rpcserver.New(&cfg.GRPC, rootLogger, nil, spvRelayer, nil, nil)
 			// if err != nil {
-			// 	panic(fmt.Errorf("failed to create reporter's RPC server: %w", err))
+			// 	panic(fmt.Errorf("failed to create bitcoin-spv relayer's RPC server: %w", err))
 			// }
 
 			// start normal-case execution
-			vigilantReporter.Start()
+			spvRelayer.Start()
 
 			// // start RPC server
 			// server.Start()
 
 			// // start Prometheus metrics server
 			// addr := fmt.Sprintf("%s:%d", cfg.Metrics.Host, cfg.Metrics.ServerPort)
-			// reporter.MetricsStart(addr, reporterMetrics.Registry)
+			// spvRelayer.MetricsStart(addr, relayerMetrics.Registry)
 
 			// TODO: uncomment before pushing
 			// SIGINT handling stuff
@@ -137,9 +137,9 @@ func CmdStart() *cobra.Command {
 			// 	rootLogger.Info("RPC server shutdown")
 			// })
 			// addInterruptHandler(func() {
-			// 	rootLogger.Info("Stopping reporter...")
-			// 	vigilantReporter.Stop()
-			// 	rootLogger.Info("Reporter shutdown")
+			// 	rootLogger.Info("Stopping relayer...")
+			// 	spvRelayer.Stop()
+			// 	rootLogger.Info("Relayer shutdown")
 			// })
 			// addInterruptHandler(func() {
 			// 	rootLogger.Info("Stopping BTC client...")
