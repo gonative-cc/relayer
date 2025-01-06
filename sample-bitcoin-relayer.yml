@@ -52,30 +52,7 @@ grpcweb:
 metrics:
   host: 0.0.0.0
   server-port: 2112
-submitter:
-  netparams: simnet
-  buffer-size: 10
-  resubmit-fee-multiplier: 1
-  polling-interval-seconds: 60
-  resend-interval-seconds: 1800
 reporter:
   netparams: simnet
   btc_cache_size: 1000
   max_headers_in_msg: 100
-monitor:
-  checkpoint-buffer-size: 1000
-  btc-block-buffer-size: 1000
-  btc-cache-size: 1000
-  btc-confirmation-depth: 6
-  liveness-check-interval-seconds: 100
-  max-live-btc-heights: 200
-  enable-liveness-checker: true
-  enable-slasher: true
-  btcnetparams: simnet
-btcstaking-tracker:
-  check-delegations-interval: 1m
-  delegations-batch-size: 100
-  check-if-delegation-active-interval: 5m
-  retry-submit-unbonding-interval: 1m
-  max-jitter-interval: 30s
-  btcnetparams: simnet

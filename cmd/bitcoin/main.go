@@ -8,6 +8,7 @@ import (
 	"github.com/gonative-cc/relayer/env"
 )
 
+// NOTE: not copied
 func main() {
 	if err := env.Init(); err != nil {
 		fmt.Println("\n>> Err setting up env ", err)

@@ -6,6 +6,7 @@ import (
 	"github.com/gonative-cc/relayer/reporter/types"
 )
 
+// NOTE: not copied
 type NativeClient interface {
 	// txn to insert bitcoin block headers to native light client
 	InsertHeaders(blockHeaders []*wire.BlockHeader) error

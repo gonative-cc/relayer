@@ -36,6 +36,7 @@ type BTCSpvProof struct {
 	MerkleNodes []byte
 }
 
+// NOTE: not copied
 func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string, txHash *chainhash.Hash) SPVProof {
 	merklePath := make([]chainhash.Hash, (len(btcSpvProof.MerkleNodes)/32)+1)
 	for i := 0; i < len(btcSpvProof.MerkleNodes)/32; i++ {
@@ -58,6 +59,7 @@ type MsgInsertBTCSpvProof struct {
 	Proofs []*BTCSpvProof
 }
 
+// NOTE: not copied
 type SPVProof struct {
 	BlockHash  chainhash.Hash
 	TxId       string // 32bytes hash value in string hex format

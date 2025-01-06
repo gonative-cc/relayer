@@ -121,6 +121,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 		r.logger.Warnf("Failed to submit header: %v", err)
 	}
 
+	// NOTE: not copied
 	// extracts and submits checkpoints for each blocks in ibs
 	_, err = r.ProcessTransactions(headersToProcess)
 	if err != nil {

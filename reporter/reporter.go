@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// NOTE: modified
 type Reporter struct {
 	Cfg    *config.ReporterConfig
 	logger *zap.SugaredLogger
@@ -23,15 +24,13 @@ type Reporter struct {
 
 	// Internal states of the reporter
 	// CheckpointCache *types.CheckpointCache
-	btcCache *types.BTCCache
-	// reorgList                     *reorgList
+	btcCache             *types.BTCCache
 	btcConfirmationDepth uint64
-	// checkpointFinalizationTimeout uint64
-	metrics *ReporterMetrics
-	wg      sync.WaitGroup
-	started bool
-	quit    chan struct{}
-	quitMu  sync.Mutex
+	metrics              *ReporterMetrics
+	wg                   sync.WaitGroup
+	started              bool
+	quit                 chan struct{}
+	quitMu               sync.Mutex
 }
 
 func New(
@@ -56,7 +55,6 @@ func New(
 		btcClient:         btcClient,
 		nativeClient:      nativeClient,
 		// CheckpointCache:   ckptCache,
-		// reorgList:         newReorgList(),
 		btcConfirmationDepth: k,
 		metrics:              metrics,
 		quit:                 make(chan struct{}),

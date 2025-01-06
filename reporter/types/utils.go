@@ -36,7 +36,6 @@ func GetWrappedTxs(msg *wire.MsgBlock) []*btcutil.Tx {
 // of the leaf which supposed to be proven
 // it returns list of hashes required to prove given index
 func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhash.Hash {
-
 	var branch []*chainhash.Hash
 
 	// size represents number of merkle nodes at given level. At 0 level, number of
@@ -116,6 +115,7 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 	return branch, nil
 }
 
+// NOTE: modified
 func SpvProofFromHeaderAndTransactions(
 	headerBytes *BTCHeaderBytes,
 	transactions [][]byte,

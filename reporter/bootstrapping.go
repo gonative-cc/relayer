@@ -108,7 +108,8 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 		bootstrapDelayType,
 		bootstrapErrReportType, retry.OnRetry(func(n uint, err error) {
 			r.logger.Warnf(
-				"Failed to bootstap reporter: %v. Attempt: %d, Max attempts: %d", err, n+1, bootstrapAttempts,
+				"Failed to bootstap reporter: %v. Attempt: %d, Max attempts: %d",
+				err, n+1, bootstrapAttempts,
 			)
 		})); err != nil {
 
@@ -150,7 +151,6 @@ func (r *Reporter) initBTCCache() error {
 	// - k is btcConfirmationDepth of BBN
 	baseHeight = bbnLatestBlockHeight - r.btcConfirmationDepth + 1
 
-	// UDIT: check what is tail blocks and if it's the bitcoin RPC spec?
 	ibs, err = r.btcClient.FindTailBlocksByHeight(baseHeight)
 	if err != nil {
 		panic(err)
@@ -220,7 +220,6 @@ func (r *Reporter) waitUntilBTCSync() error {
 			if err != nil {
 				return err
 			}
-			// UDIT: replace here with Vu's LC chain tip API
 			chainBlock, err := r.nativeClient.GetBTCHeaderChainTip()
 			if err != nil {
 				return err

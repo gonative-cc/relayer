@@ -44,7 +44,7 @@ func CmdStart() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "reporter",
-		Short: "Vigilant reporter",
+		Short: "An relayer for Bitcoin blocks -> Native",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
 				err              error
@@ -155,7 +155,6 @@ func CmdStart() *cobra.Command {
 
 			<-interruptHandlersDone
 			rootLogger.Info("Shutdown complete")
-
 		},
 	}
 	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultConfigFile(), "config file")

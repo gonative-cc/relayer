@@ -66,6 +66,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 	return headerMsgsToSubmit, nil
 }
 
+// NOTE: modified
 func (r *Reporter) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 	// submit the headers
 	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
@@ -95,6 +96,7 @@ func (r *Reporter) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 	return err
 }
 
+// NOTE: modified
 // ProcessHeaders extracts and reports headers from a list of blocks
 // It returns the number of headers that need to be reported (after deduplication)
 func (r *Reporter) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
@@ -121,6 +123,7 @@ func (r *Reporter) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
 	return numSubmitted, err
 }
 
+// NOTE: modified
 func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, error) {
 	numSubmittedTxs := 0
 
@@ -175,6 +178,7 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 	return numSubmittedTxs, nil
 }
 
+// NOTE: not copied
 // ProcessTransactions tries to extract valid transactions from a list of blocks
 // It returns the number of valid transactions segments, and the number of valid transactions
 func (r *Reporter) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {

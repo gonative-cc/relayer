@@ -9,11 +9,13 @@ import (
 	"github.com/gonative-cc/relayer/reporter/types"
 )
 
+// NOTE: not copied
 type Block struct {
 	Hash   *chainhash.Hash
 	Height int64
 }
 
+// NOTE: not copied
 type Client struct {
 	Ping                 func(int) int
 	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
@@ -22,6 +24,7 @@ type Client struct {
 	VerifySPV            func(spvProof *types.SPVProof) (int, error)
 }
 
+// NOTE: not copied
 func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {
 	ctx := context.Background()
 	clientHandler := Client{}
