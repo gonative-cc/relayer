@@ -36,11 +36,13 @@ type BTCSpvProof struct {
 	MerkleNodes []byte
 }
 
-func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string) SPVProof {
-	merklePath := make([]chainhash.Hash, len(btcSpvProof.MerkleNodes)/32)
+func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string, txHash *chainhash.Hash) SPVProof {
+	merklePath := make([]chainhash.Hash, (len(btcSpvProof.MerkleNodes)/32)+1)
 	for i := 0; i < len(btcSpvProof.MerkleNodes)/32; i++ {
 		copy(merklePath[i][:], btcSpvProof.MerkleNodes[i*32:(i+1)*32])
 	}
+	// copy txHash to end of merklePath
+	copy(merklePath[len(merklePath)-1][:], txHash[:])
 
 	return SPVProof{
 		BlockHash:  btcSpvProof.ConfirmingBtcBlockHash,

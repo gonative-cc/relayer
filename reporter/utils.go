@@ -142,7 +142,7 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 		)
 
 		// wrap to MsgSpvProof
-		msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID())
+		msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID(), tx.Hash())
 
 		r.logger.Infof(
 			"Successfully constructed MsgSpvProof %v", msgSpvProof,
