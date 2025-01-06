@@ -7,7 +7,7 @@ import (
 
 	"github.com/lightningnetwork/lnd/lnwallet/chainfee"
 
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 // BTCConfig defines configuration for the Bitcoin client

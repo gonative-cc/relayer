@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 func GetBTCParams(net string) (*chaincfg.Params, error) {

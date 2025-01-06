@@ -1,4 +1,4 @@
-package reporter
+package bitcoinspv
 
 // TODO: unit tests on Bootstrap by using mocks
 

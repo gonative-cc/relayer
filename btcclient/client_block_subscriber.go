@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/gonative-cc/relayer/reporter"
 	"go.uber.org/zap"
 
+	"github.com/gonative-cc/relayer/bitcoinspv"
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/gonative-cc/relayer/btcclient/zmq"
-	"github.com/gonative-cc/relayer/reporter/config"
-	"github.com/gonative-cc/relayer/reporter/types"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
@@ -118,7 +118,7 @@ func (c *Client) subscribeBlocksByWebSocket() error {
 }
 
 func (c *Client) mustSubscribeBlocksByWebSocket() {
-	if err := reporter.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
 		return c.subscribeBlocksByWebSocket()
 	}); err != nil {
 		panic(err)

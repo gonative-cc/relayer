@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 const (

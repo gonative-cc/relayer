@@ -7,7 +7,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	zmq "github.com/pebbe/zmq4"
 )
 

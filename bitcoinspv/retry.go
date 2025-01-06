@@ -1,4 +1,4 @@
-package reporter
+package bitcoinspv
 
 import (
 	"crypto/rand"

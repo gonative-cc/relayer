@@ -1,4 +1,4 @@
-package reporter
+package bitcoinspv
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 var (

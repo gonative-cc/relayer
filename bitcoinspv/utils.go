@@ -1,10 +1,10 @@
-package reporter
+package bitcoinspv
 
 import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {

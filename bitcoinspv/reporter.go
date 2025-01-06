@@ -1,12 +1,12 @@
-package reporter
+package bitcoinspv
 
 import (
 	"sync"
 	"time"
 
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/gonative-cc/relayer/lcclient"
-	"github.com/gonative-cc/relayer/reporter/config"
-	"github.com/gonative-cc/relayer/reporter/types"
 	"go.uber.org/zap"
 )
 

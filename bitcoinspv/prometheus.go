@@ -1,11 +1,11 @@
-package reporter
+package bitcoinspv
 
 import (
 	"net/http"
 	_ "net/http/pprof"
 	"regexp"
 
-	"github.com/gonative-cc/relayer/reporter/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

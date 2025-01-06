@@ -7,8 +7,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/gonative-cc/relayer/reporter/config"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 type BTCClient interface {

@@ -14,9 +14,9 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	"go.uber.org/zap"
 
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/gonative-cc/relayer/btcclient/zmq"
-	"github.com/gonative-cc/relayer/reporter/config"
-	"github.com/gonative-cc/relayer/reporter/types"
 )
 
 var _ BTCClient = &Client{}

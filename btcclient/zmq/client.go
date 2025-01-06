@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 )

@@ -1,9 +1,9 @@
-package reporter
+package bitcoinspv
 
 import (
 	"fmt"
 
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 // blockEventHandler handles connected and disconnected blocks from the BTC client.

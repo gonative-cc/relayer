@@ -6,10 +6,10 @@ import (
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/reporter"
+	"github.com/gonative-cc/relayer/bitcoinspv"
 	"go.uber.org/zap"
 
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 // GetBestBlock provides similar functionality with the btcd.rpcclient.GetBestBlock function
@@ -66,7 +66,7 @@ func (c *Client) getBestBlockHashWithRetry() (*chainhash.Hash, error) {
 		err       error
 	)
 
-	if err := reporter.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
 		blockHash, err = c.GetBestBlockHash()
 		if err != nil {
 			return err
@@ -86,7 +86,7 @@ func (c *Client) getBlockHashWithRetry(height uint64) (*chainhash.Hash, error) {
 		err       error
 	)
 
-	if err := reporter.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
 		blockHash, err = c.GetBlockHash(int64(height))
 		if err != nil {
 			return err
@@ -106,7 +106,7 @@ func (c *Client) getBlockWithRetry(hash *chainhash.Hash) (*wire.MsgBlock, error)
 		err   error
 	)
 
-	if err := reporter.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
 		block, err = c.GetBlock(hash)
 		if err != nil {
 			return err
@@ -126,7 +126,7 @@ func (c *Client) getBlockVerboseWithRetry(hash *chainhash.Hash) (*btcjson.GetBlo
 		err          error
 	)
 
-	if err := reporter.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
 		blockVerbose, err = c.GetBlockVerbose(hash)
 		if err != nil {
 			return err

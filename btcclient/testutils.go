@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gonative-cc/relayer/reporter/config"
-	"github.com/gonative-cc/relayer/reporter/types"
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 func NewTestClientWithWsSubscriber(rpcClient *rpcclient.Client, cfg *config.BTCConfig, retrySleepTime time.Duration, maxRetrySleepTime time.Duration, blockEventChan chan *types.BlockEvent) (*Client, error) {

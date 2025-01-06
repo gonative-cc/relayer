@@ -5,10 +5,10 @@ import (
 	"os"
 
 	"github.com/filecoin-project/go-jsonrpc"
+	"github.com/gonative-cc/relayer/bitcoinspv"
+	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/btcclient"
 	"github.com/gonative-cc/relayer/lcclient"
-	"github.com/gonative-cc/relayer/reporter"
-	"github.com/gonative-cc/relayer/reporter/config"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -23,7 +23,7 @@ const (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "reporter",
+		Use:   "bitcoin-spv",
 		Short: "An relayer for Bitcoin blocks -> Native",
 	}
 )
@@ -43,7 +43,7 @@ func CmdStart() *cobra.Command {
 	var cfgFile = ""
 
 	cmd := &cobra.Command{
-		Use:   "reporter",
+		Use:   "bitcoin-spv",
 		Short: "An relayer for Bitcoin blocks -> Native",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
@@ -51,7 +51,7 @@ func CmdStart() *cobra.Command {
 				cfg              config.Config
 				btcClient        *btcclient.Client
 				nativeClient     *lcclient.Client
-				vigilantReporter *reporter.Reporter
+				vigilantReporter *bitcoinspv.Reporter
 				nativeCloser     jsonrpc.ClientCloser
 				// server           *rpcserver.Server
 			)
@@ -96,10 +96,10 @@ func CmdStart() *cobra.Command {
 			}
 
 			// register reporter metrics
-			reporterMetrics := reporter.NewReporterMetrics()
+			reporterMetrics := bitcoinspv.NewReporterMetrics()
 
 			// create reporter
-			vigilantReporter, err = reporter.New(
+			vigilantReporter, err = bitcoinspv.New(
 				&cfg.Reporter,
 				rootLogger,
 				btcClient,
