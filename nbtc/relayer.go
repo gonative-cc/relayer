@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/gonative-cc/relayer/dal"
 	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika2btc"
-	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
+	"github.com/tinylib/msgp/msgp"
 )
 
 // Relayer handles the flow of transactions from the Native chain to Bitcoin.
@@ -21,15 +20,15 @@ import (
 // - nativeProcessor: To send transactions from Native to IKA for signing.
 // - btcProcessor: To broadcast signed transactions to Bitcoin and monitor confirmations.
 type Relayer struct {
-	db                 *dal.DB
-	nativeProcessor    *native2ika.Processor
-	btcProcessor       *ika2btc.Processor
-	shutdownChan       chan struct{}
-	processTxsTicker   *time.Ticker
-	confirmTxsTicker   *time.Ticker
-	fetchBlocksTicker  *time.Ticker
-	blockchain         native.Blockchain
-	fetchedBlockHeight int64
+	db                       *dal.DB
+	nativeProcessor          *native2ika.Processor
+	btcProcessor             *ika2btc.Processor
+	shutdownChan             chan struct{}
+	processTxsTicker         *time.Ticker
+	confirmTxsTicker         *time.Ticker
+	fetchBlocksTicker        *time.Ticker
+	fetcher                  native2ika.SignRequestFetcher
+	latestFetchedSignRequest uint64
 }
 
 // RelayerConfig holds the configuration parameters for the Relayer.
@@ -38,7 +37,7 @@ type RelayerConfig struct {
 	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
 	FetchBlocksInterval   time.Duration `json:"fetchBlocksInterval"`
 	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
-	BlockHeigh            int64         `jsoin:"blockHeight"`
+	FetchFrom             uint64        `jsoin:"fetchFrom"`
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
@@ -47,7 +46,7 @@ func NewRelayer(
 	db *dal.DB,
 	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
-	blockchain native.Blockchain,
+	fetcher native2ika.SignRequestFetcher,
 ) (*Relayer, error) {
 
 	if db == nil {
@@ -68,8 +67,8 @@ func NewRelayer(
 		return nil, err
 	}
 
-	if blockchain == nil {
-		err := err.ErrNoBlockchain
+	if fetcher == nil {
+		err := err.ErrNoFetcher
 		log.Err(err).Msg("")
 		return nil, err
 	}
@@ -91,15 +90,15 @@ func NewRelayer(
 	}
 
 	return &Relayer{
-		db:                 db,
-		nativeProcessor:    nativeProcessor,
-		btcProcessor:       btcProcessor,
-		shutdownChan:       make(chan struct{}),
-		processTxsTicker:   time.NewTicker(relayerConfig.ProcessTxsInterval),
-		confirmTxsTicker:   time.NewTicker(relayerConfig.ConfirmTxsInterval),
-		fetchBlocksTicker:  time.NewTicker(relayerConfig.FetchBlocksInterval),
-		blockchain:         blockchain,
-		fetchedBlockHeight: relayerConfig.BlockHeigh,
+		db:                       db,
+		nativeProcessor:          nativeProcessor,
+		btcProcessor:             btcProcessor,
+		shutdownChan:             make(chan struct{}),
+		processTxsTicker:         time.NewTicker(relayerConfig.ProcessTxsInterval),
+		confirmTxsTicker:         time.NewTicker(relayerConfig.ConfirmTxsInterval),
+		fetchBlocksTicker:        time.NewTicker(relayerConfig.FetchBlocksInterval),
+		fetcher:                  fetcher,
+		latestFetchedSignRequest: relayerConfig.FetchFrom,
 	}, nil
 }
 
@@ -126,8 +125,14 @@ func (r *Relayer) Start(ctx context.Context) error {
 				}
 			}
 		case <-r.fetchBlocksTicker.C:
-			if err := r.fetchAndProcessNativeBlocks(ctx); err != nil {
-				//TODO: add error handling here
+			if err := r.fetchAndStoreNativeSignRequests(ctx); err != nil {
+				var sqliteErr *sqlite3.Error
+				if errors.As(err, &sqliteErr) {
+					log.Err(err).Msg("Critical error saving signing request, shutting down")
+					close(r.shutdownChan)
+				} else {
+					log.Err(err).Msg("Error processing blocks, continuing")
+				}
 			}
 		}
 	}
@@ -165,41 +170,33 @@ func (r *Relayer) processSignedTxs() error {
 	return nil
 }
 
-// fetchAndProcessNativeBlocks fetches and processes blocks from the Native chain.
-func (r *Relayer) fetchAndProcessNativeBlocks(ctx context.Context) error {
-	//TODO: decide how many blocks we want to process at a time, do we process all of them, or a limited amount of blocks??
-	startHeight := r.fetchedBlockHeight
-	for height := startHeight; height < startHeight+20; height++ {
-		block, _, err := r.blockchain.Block(ctx, height)
-		if err != nil {
-			log.Err(err).Msg("Error fetching block, continuing")
-			continue
-		}
+// fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
+func (r *Relayer) fetchAndStoreNativeSignRequests(ctx context.Context) error {
+	//TODO: decide how many signre quests we want to process at a time
+	signRequests, err := r.fetcher.GetBtcSignRequests(int(r.latestFetchedSignRequest), 5)
+	if err != nil {
+		log.Err(err).Msg("Error fetching sign requests from native, continuing")
+	}
 
-		err = r.processNativeBlock(block)
+	for _, sr := range signRequests {
+		err = r.storeSignRequest(sr)
 		if err != nil {
 			log.Err(err).Msg("Error processing block, continuing")
 			continue
 		}
-
-		r.fetchedBlockHeight = height
 	}
+
+	r.latestFetchedSignRequest += 5
 	return nil
 }
 
-// processNativeBlock processes a single block from the Native chain.
-func (r *Relayer) processNativeBlock(block *tmtypes.Block) error {
+// storeSignRequest processes a single block from the Native chain.
+func (r *Relayer) storeSignRequest(signRequest native2ika.SignRequestBytes) error {
 	//TODO: add proper information extraction logic from the block events here
-	signRequest := dal.IkaSignRequest{
-		ID:        uint64(block.Height),
-		Payload:   []byte("payload"),
-		DWalletID: "dwallet_id",
-		UserSig:   "user_sig",
-		FinalSig:  nil,
-		Timestamp: time.Now().Unix(),
-	}
+	req := native2ika.SignRequest{}
+	req.MarshalMsg(signRequest)
 
-	err := r.db.InsertIkaSignRequest(signRequest)
+	err := r.db.InsertIkaSignRequest(msgp.Unmarshal(signRequest))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)
 	}

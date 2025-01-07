@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
 	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
-	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
+	"github.com/tinylib/msgp/msgp"
 	"gotest.tools/v3/assert"
 )
 
@@ -30,7 +29,7 @@ var relayerConfig = RelayerConfig{
 	ProcessTxsInterval:    time.Second * 5,
 	ConfirmTxsInterval:    time.Second * 7,
 	ConfirmationThreshold: 6,
-	BlockHeigh:            1,
+	FetchFrom:             1,
 }
 
 func Test_Start(t *testing.T) {
@@ -40,9 +39,9 @@ func Test_Start(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockBlockchain := native.MockBlockchain{}
+	mockFetcher := native2ika.MockSignRequestFetcher{}
 
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockBlockchain)
+	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
 
 	ctx := context.Background()
@@ -75,7 +74,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockBlockchain := native.MockBlockchain{}
+	mockFetcher := native2ika.MockSignRequestFetcher{}
 
 	testCases := []struct {
 		name            string
@@ -83,7 +82,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 		nativeProcessor *native2ika.Processor
 		btcProcessor    *ika2btc.Processor
 		expectedError   error
-		blockchain      native.Blockchain
+		fetcher         native2ika.SignRequestFetcher
 	}{
 		{
 			name:            "DatabaseError",
@@ -91,7 +90,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			nativeProcessor: nativeProcessor,
 			btcProcessor:    btcProcessor,
 			expectedError:   err.ErrNoDB,
-			blockchain:      mockBlockchain,
+			fetcher:         mockFetcher,
 		},
 		{
 			name:            "NativeProcessorError",
@@ -99,7 +98,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			nativeProcessor: nil,
 			btcProcessor:    btcProcessor,
 			expectedError:   err.ErrNoNativeProcessor,
-			blockchain:      mockBlockchain,
+			fetcher:         mockFetcher,
 		},
 		{
 			name:            "BtcProcessorError",
@@ -107,64 +106,63 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			nativeProcessor: nativeProcessor,
 			btcProcessor:    nil,
 			expectedError:   err.ErrNoBtcProcessor,
-			blockchain:      mockBlockchain,
+			fetcher:         mockFetcher,
 		},
 		{
 			name:            "BlockchainError",
 			db:              db,
 			nativeProcessor: nativeProcessor,
 			btcProcessor:    btcProcessor,
-			expectedError:   err.ErrNoBlockchain,
-			blockchain:      nil,
+			expectedError:   err.ErrNoFetcher,
+			fetcher:         nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			relayer, err := NewRelayer(relayerConfig, tc.db, tc.nativeProcessor, tc.btcProcessor, tc.blockchain)
+			relayer, err := NewRelayer(relayerConfig, tc.db, tc.nativeProcessor, tc.btcProcessor, tc.fetcher)
 			assert.ErrorIs(t, err, tc.expectedError)
 			assert.Assert(t, relayer == nil)
 		})
 	}
 }
 
-func TestRelayer_fetchAndProcessNativeBlocks(t *testing.T) {
+func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	db := initTestDB(t)
 	mockIkaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockBlockchain := native.MockBlockchain{}
+	mockFetcher := native2ika.MockSignRequestFetcher{}
 
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockBlockchain)
+	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
 
-	err = relayer.fetchAndProcessNativeBlocks(context.Background())
+	err = relayer.fetchAndStoreNativeSignRequests(context.Background())
 	assert.NilError(t, err)
 
-	assert.Equal(t, relayer.fetchedBlockHeight, int64(20)) // Should be 20 after fetching 20 blocks
+	assert.Equal(t, relayer.latestFetchedSignRequest, int64(20)) // Should be 20 after fetching 20 blocks
 
 	requests, err := db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 20) // Should be 20 inserted requests
 }
 
-func TestRelayer_processNativeBlock(t *testing.T) {
+func TestRelayer_storeSignRequest(t *testing.T) {
 	db := initTestDB(t)
 	mockIkaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockBlockchain := native.MockBlockchain{}
+	mockFetcher := native2ika.MockSignRequestFetcher{}
 
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockBlockchain)
+	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
 
-	block := &tmtypes.Block{
-		Header: tmtypes.Header{Height: 1},
-	}
+	sr := native2ika.SignRequest{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
+		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
 
-	err = relayer.processNativeBlock(block)
+	err = relayer.storeSignRequest(msgp.Marshal(sr))
 	assert.NilError(t, err)
 
 	requests, err := db.GetPendingIkaSignRequests()
