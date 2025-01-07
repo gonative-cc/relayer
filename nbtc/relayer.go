@@ -12,7 +12,6 @@ import (
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
-	"github.com/tinylib/msgp/msgp"
 )
 
 // Relayer handles the flow of transactions from the Native chain to Bitcoin.
@@ -194,9 +193,9 @@ func (r *Relayer) fetchAndStoreNativeSignRequests(ctx context.Context) error {
 func (r *Relayer) storeSignRequest(signRequest native2ika.SignRequestBytes) error {
 	//TODO: add proper information extraction logic from the block events here
 	req := native2ika.SignRequest{}
-	req.MarshalMsg(signRequest)
+	_, _ = req.UnmarshalMsg(signRequest)
 
-	err := r.db.InsertIkaSignRequest(msgp.Unmarshal(signRequest))
+	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(req))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)
 	}

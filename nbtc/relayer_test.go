@@ -13,7 +13,6 @@ import (
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native2ika"
-	"github.com/tinylib/msgp/msgp"
 	"gotest.tools/v3/assert"
 )
 
@@ -161,8 +160,9 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 
 	sr := native2ika.SignRequest{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
+	packedSr, _ := sr.MarshalMsg(nil)
 
-	err = relayer.storeSignRequest(msgp.Marshal(sr))
+	err = relayer.storeSignRequest(packedSr)
 	assert.NilError(t, err)
 
 	requests, err := db.GetPendingIkaSignRequests()

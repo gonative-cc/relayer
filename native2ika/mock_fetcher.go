@@ -3,8 +3,6 @@ package native2ika
 import (
 	"fmt"
 	"time"
-
-	"github.com/tinylib/msgp/msgp"
 )
 
 var rawTxBytes = []byte{
@@ -61,7 +59,7 @@ func (m MockSignRequestFetcher) GetBtcSignRequests(from int, limit int) ([]SignR
 	}
 
 	for _, req := range m.SampleRequests[from:to] {
-		packed, err := msgp.Marshal(req)
+		packed, err := req.MarshalMsg(nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal SignRequest: %w", err)
 		}
