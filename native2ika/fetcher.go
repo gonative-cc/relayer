@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 )
 
 //go:generate msgp
@@ -33,8 +35,15 @@ type APISignRequestFetcher struct {
 
 // GetBtcSignRequests retrieves sign requests from the API.
 func (f *APISignRequestFetcher) GetBtcSignRequests(from, limit int) ([]SignRequest, error) {
-	url := fmt.Sprintf("%s/bitcoin/signrequests?from=%d&limit=%d", f.APIURL, from, limit)
-	resp, err := http.Get(url)
+	u, err := url.Parse(f.APIURL) // Parse the base URL
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse API URL: %w", err)
+	}
+	q := u.Query()
+	q.Set("from", strconv.Itoa(from))
+	q.Set("limit", strconv.Itoa(limit))
+	u.RawQuery = q.Encode()
+	resp, err := http.Get(u.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to make API request: %w", err)
 	}
