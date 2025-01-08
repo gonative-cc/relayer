@@ -201,14 +201,14 @@ func (r *Reporter) waitUntilBTCSync() error {
 	// bbnLatestBlockHeight = tipRes.Header.Height
 	bbnLatestBlockHeight = uint64(chainBlock.Height)
 	r.logger.Infof(
-		"BBN header chain latest block hash and height: (%v, %d)",
+		"Light client header chain latest block hash and height: (%v, %d)",
 		bbnLatestBlockHash, bbnLatestBlockHeight,
 	)
 
 	// If BTC chain is shorter than BBN header chain, pause until BTC catches up
 	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < bbnLatestBlockHeight {
 		r.logger.Infof(
-			"BTC chain (length %d) falls behind BBN header chain (length %d), wait until BTC catches up",
+			"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
 			btcLatestBlockHeight, bbnLatestBlockHeight,
 		)
 
@@ -229,13 +229,13 @@ func (r *Reporter) waitUntilBTCSync() error {
 			bbnLatestBlockHeight = uint64(chainBlock.Height)
 			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= bbnLatestBlockHeight {
 				r.logger.Infof(
-					"BTC chain (length %d) now catches up with BBN header chain (length %d), continue bootstrapping",
+					"BTC chain (length %d) now catches up with light client header chain (length %d), continue bootstrapping",
 					btcLatestBlockHeight, bbnLatestBlockHeight,
 				)
 				break
 			}
 			r.logger.Infof(
-				"BTC chain (length %d) still falls behind BBN header chain (length %d), keep waiting",
+				"BTC chain (length %d) still falls behind light client header chain (length %d), keep waiting",
 				btcLatestBlockHeight, bbnLatestBlockHeight,
 			)
 		}

@@ -28,7 +28,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 	// find the first header that is not contained in BBN header chain,
 	// then submit since this header
 	for i, header := range ibs {
-		r.logger.Debug(header.Height)
+		// r.logger.Debug(header.Height)
 		blockHash := header.BlockHash()
 		var res bool
 		err = RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {

@@ -87,7 +87,7 @@ func (r *Reporter) Start() {
 	// start record time-related metrics
 	r.metrics.RecordMetrics()
 
-	r.logger.Infof("Successfully started the vigilant reporter")
+	r.logger.Infof("Successfully started the spv relayer")
 }
 
 // quitChan atomically reads the quit channel.
