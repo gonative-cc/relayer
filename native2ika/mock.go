@@ -64,10 +64,8 @@ func mockJSONAPI(w http.ResponseWriter, r *http.Request) {
 func generateMockSignRequests(from, limit int) []SignRequest {
 	var requests []SignRequest
 	for i := from; i < from+limit; i++ {
-		if i+1 < 0 {
-			panic(fmt.Sprintf("integer overflow: i+1 = %d", i+1))
-		}
 		req := SignRequest{
+			// nolint: gosec // This is a mock function, and overflow is unlikely.
 			ID:        uint64(i + 1),
 			Payload:   rawTxBytes,
 			DWalletID: fmt.Sprintf("dwallet%d", i+1),
