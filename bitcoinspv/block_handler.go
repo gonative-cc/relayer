@@ -111,7 +111,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	headersToProcess = append(headersToProcess, ib)
 
 	if len(headersToProcess) == 0 {
-		r.logger.Debug("No new headers to submit to Babylon")
+		r.logger.Debug("No new headers to submit to Native light client")
 		return nil
 	}
 

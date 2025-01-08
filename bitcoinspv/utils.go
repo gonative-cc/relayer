@@ -75,7 +75,7 @@ func (r *Reporter) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 			return err
 		}
 		r.logger.Infof(
-			"Successfully submitted %d headers to Babylon", len(msg),
+			"Successfully submitted %d headers to light client", len(msg),
 		)
 		return nil
 	})
@@ -151,7 +151,7 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 			"Successfully constructed MsgSpvProof %v", msgSpvProof,
 		)
 
-		// submit the checkpoint to Babylon
+		// submit the checkpoint to light client
 		res, err := r.nativeClient.VerifySPV(&msgSpvProof)
 		if err != nil {
 			r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
