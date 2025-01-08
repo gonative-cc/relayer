@@ -14,8 +14,7 @@ type SignRequest struct {
 
 type SignRequestBytes []byte
 
-// SignRequestFetcher is an interface for getting sign requests from the Native network
-// destined for the Bitcoin network.
+// SignRequestFetcher is an interface for getting sign requests from the Native network.
 type SignRequestFetcher interface {
 	GetBtcSignRequests(from int, limit int) ([]SignRequestBytes, error)
 }

@@ -28,7 +28,7 @@ var relayerConfig = RelayerConfig{
 	ProcessTxsInterval:    time.Second * 5,
 	ConfirmTxsInterval:    time.Second * 7,
 	ConfirmationThreshold: 6,
-	FetchFrom:             1,
+	FetchFrom:             0,
 }
 
 func Test_Start(t *testing.T) {
@@ -132,19 +132,19 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher := native2ika.MockSignRequestFetcher{}
+	mockFetcher := native2ika.MockSignRequestFetcher{SampleRequests: native2ika.GetMockSignRequests()}
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
 
-	err = relayer.fetchAndStoreNativeSignRequests(context.Background())
+	err = relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
 
-	assert.Equal(t, relayer.latestFetchedSignRequest, int64(20)) // Should be 20 after fetching 20 blocks
+	assert.Equal(t, relayer.fetchFrom, uint64(5)) // Should be 5 after fetching 5 sign requests
 
 	requests, err := db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
-	assert.Equal(t, len(requests), 20) // Should be 20 inserted requests
+	assert.Equal(t, len(requests), 5) // Should be 5 inserted requests
 }
 
 func TestRelayer_storeSignRequest(t *testing.T) {

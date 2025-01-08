@@ -19,15 +19,15 @@ import (
 // - nativeProcessor: To send transactions from Native to IKA for signing.
 // - btcProcessor: To broadcast signed transactions to Bitcoin and monitor confirmations.
 type Relayer struct {
-	db                       *dal.DB
-	nativeProcessor          *native2ika.Processor
-	btcProcessor             *ika2btc.Processor
-	shutdownChan             chan struct{}
-	processTxsTicker         *time.Ticker
-	confirmTxsTicker         *time.Ticker
-	fetchBlocksTicker        *time.Ticker
-	fetcher                  native2ika.SignRequestFetcher
-	latestFetchedSignRequest uint64
+	db                *dal.DB
+	nativeProcessor   *native2ika.Processor
+	btcProcessor      *ika2btc.Processor
+	shutdownChan      chan struct{}
+	processTxsTicker  *time.Ticker
+	confirmTxsTicker  *time.Ticker
+	fetchBlocksTicker *time.Ticker
+	fetcher           native2ika.SignRequestFetcher
+	fetchFrom         uint64
 }
 
 // RelayerConfig holds the configuration parameters for the Relayer.
@@ -89,15 +89,15 @@ func NewRelayer(
 	}
 
 	return &Relayer{
-		db:                       db,
-		nativeProcessor:          nativeProcessor,
-		btcProcessor:             btcProcessor,
-		shutdownChan:             make(chan struct{}),
-		processTxsTicker:         time.NewTicker(relayerConfig.ProcessTxsInterval),
-		confirmTxsTicker:         time.NewTicker(relayerConfig.ConfirmTxsInterval),
-		fetchBlocksTicker:        time.NewTicker(relayerConfig.FetchBlocksInterval),
-		fetcher:                  fetcher,
-		latestFetchedSignRequest: relayerConfig.FetchFrom,
+		db:                db,
+		nativeProcessor:   nativeProcessor,
+		btcProcessor:      btcProcessor,
+		shutdownChan:      make(chan struct{}),
+		processTxsTicker:  time.NewTicker(relayerConfig.ProcessTxsInterval),
+		confirmTxsTicker:  time.NewTicker(relayerConfig.ConfirmTxsInterval),
+		fetchBlocksTicker: time.NewTicker(relayerConfig.FetchBlocksInterval),
+		fetcher:           fetcher,
+		fetchFrom:         relayerConfig.FetchFrom,
 	}, nil
 }
 
@@ -124,7 +124,7 @@ func (r *Relayer) Start(ctx context.Context) error {
 				}
 			}
 		case <-r.fetchBlocksTicker.C:
-			if err := r.fetchAndStoreNativeSignRequests(ctx); err != nil {
+			if err := r.fetchAndStoreNativeSignRequests(); err != nil {
 				var sqliteErr *sqlite3.Error
 				if errors.As(err, &sqliteErr) {
 					log.Err(err).Msg("Critical error saving signing request, shutting down")
@@ -170,9 +170,9 @@ func (r *Relayer) processSignedTxs() error {
 }
 
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
-func (r *Relayer) fetchAndStoreNativeSignRequests(ctx context.Context) error {
-	//TODO: decide how many signre quests we want to process at a time
-	signRequests, err := r.fetcher.GetBtcSignRequests(int(r.latestFetchedSignRequest), 5)
+func (r *Relayer) fetchAndStoreNativeSignRequests() error {
+	//TODO: decide how many sign requests we want to process at a time
+	signRequests, err := r.fetcher.GetBtcSignRequests(int(r.fetchFrom), 5)
 	if err != nil {
 		log.Err(err).Msg("Error fetching sign requests from native, continuing")
 	}
@@ -185,13 +185,12 @@ func (r *Relayer) fetchAndStoreNativeSignRequests(ctx context.Context) error {
 		}
 	}
 
-	r.latestFetchedSignRequest += 5
+	r.fetchFrom += 5
 	return nil
 }
 
 // storeSignRequest processes a single block from the Native chain.
 func (r *Relayer) storeSignRequest(signRequest native2ika.SignRequestBytes) error {
-	//TODO: add proper information extraction logic from the block events here
 	req := native2ika.SignRequest{}
 	_, _ = req.UnmarshalMsg(signRequest)
 
