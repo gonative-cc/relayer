@@ -18,7 +18,12 @@ import (
 
 // NewWithBlockSubscriber creates a new BTC client that subscribes to newly connected/disconnected blocks
 // used by vigilant reporter
-func NewWithBlockSubscriber(cfg *config.BTCConfig, retrySleepTime, maxRetrySleepTime time.Duration, parentLogger *zap.Logger) (*Client, error) {
+func NewWithBlockSubscriber(
+	cfg *config.BTCConfig,
+	retrySleepTime,
+	maxRetrySleepTime time.Duration,
+	parentLogger *zap.Logger,
+) (*Client, error) {
 	client := &Client{}
 	params, err := GetBTCParams(cfg.NetParams)
 	if err != nil {

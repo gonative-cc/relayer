@@ -22,7 +22,7 @@ type Reporter struct {
 	retrySleepTime    time.Duration
 	maxRetrySleepTime time.Duration
 
-	// Internal states of the reporter
+	// Internal states of the relayer
 	// CheckpointCache *types.CheckpointCache
 	btcCache             *types.BTCCache
 	btcConfirmationDepth uint64
@@ -42,7 +42,7 @@ func New(
 	maxRetrySleepTime time.Duration,
 	metrics *ReporterMetrics,
 ) (*Reporter, error) {
-	logger := parentLogger.With(zap.String("module", "reporter")).Sugar()
+	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
 	k := uint64(1)
 	logger.Infof("BTCCheckpoint parameters: k = %d", k)

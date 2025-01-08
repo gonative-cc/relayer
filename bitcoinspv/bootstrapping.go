@@ -108,7 +108,7 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 		bootstrapDelayType,
 		bootstrapErrReportType, retry.OnRetry(func(n uint, err error) {
 			r.logger.Warnf(
-				"Failed to bootstap reporter: %v. Attempt: %d, Max attempts: %d",
+				"Failed to bootstap relayer: %v. Attempt: %d, Max attempts: %d",
 				err, n+1, bootstrapAttempts,
 			)
 		})); err != nil {
@@ -119,7 +119,7 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 		}
 
 		// we failed to bootstrap multiple time, we should panic as something unexpected is happening.
-		r.logger.Fatalf("Failed to bootstrap reporter: %v after %d attempts", err, bootstrapAttempts)
+		r.logger.Fatalf("Failed to bootstrap relayer: %v after %d attempts", err, bootstrapAttempts)
 	}
 }
 
