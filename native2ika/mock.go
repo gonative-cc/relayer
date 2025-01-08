@@ -39,7 +39,7 @@ func mockJSONAPI(w http.ResponseWriter, r *http.Request) {
 	mockRequests := generateMockSignRequests(from, limit)
 
 	// Marshal the data
-	var encodedRequests []SignRequestBytes
+	encodedRequests := make([]SignRequestBytes, 0, len(mockRequests))
 	for _, req := range mockRequests {
 		packed, err := req.MarshalMsg(nil)
 		if err != nil {
@@ -64,6 +64,9 @@ func mockJSONAPI(w http.ResponseWriter, r *http.Request) {
 func generateMockSignRequests(from, limit int) []SignRequest {
 	var requests []SignRequest
 	for i := from; i < from+limit; i++ {
+		if i+1 < 0 {
+			panic(fmt.Sprintf("integer overflow: i+1 = %d", i+1))
+		}
 		req := SignRequest{
 			ID:        uint64(i + 1),
 			Payload:   rawTxBytes,

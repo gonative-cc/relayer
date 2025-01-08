@@ -27,7 +27,7 @@ type Relayer struct {
 	confirmTxsTicker  *time.Ticker
 	fetchBlocksTicker *time.Ticker
 	fetcher           native2ika.SignRequestFetcher
-	fetchFrom         uint64
+	fetchFrom         int
 }
 
 // RelayerConfig holds the configuration parameters for the Relayer.
@@ -36,7 +36,7 @@ type RelayerConfig struct {
 	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
 	FetchBlocksInterval   time.Duration `json:"fetchBlocksInterval"`
 	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
-	FetchFrom             uint64        `jsoin:"fetchFrom"`
+	FetchFrom             int           `jsoin:"fetchFrom"`
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
@@ -172,17 +172,13 @@ func (r *Relayer) processSignedTxs() error {
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
 func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 	//TODO: decide how many sign requests we want to process at a time
-	signRequests, err := r.fetcher.GetBtcSignRequests(int(r.fetchFrom), 5)
+	signRequests, err := r.fetcher.GetBtcSignRequests(r.fetchFrom, 5)
 	if err != nil {
 		log.Err(err).Msg("Error fetching sign requests from native, continuing")
 	}
 
 	for _, sr := range signRequests {
-		err = r.storeSignRequest(sr)
-		if err != nil {
-			log.Err(err).Msg("Error processing block, continuing")
-			continue
-		}
+		return r.storeSignRequest(sr)
 	}
 
 	r.fetchFrom += 5
