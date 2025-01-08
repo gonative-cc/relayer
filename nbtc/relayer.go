@@ -189,12 +189,9 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 	return nil
 }
 
-// storeSignRequest processes a single block from the Native chain.
-func (r *Relayer) storeSignRequest(signRequest native2ika.SignRequestBytes) error {
-	req := native2ika.SignRequest{}
-	_, _ = req.UnmarshalMsg(signRequest)
-
-	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(req))
+// storeSignRequest stores a single SignRequest from the Native chain.
+func (r *Relayer) storeSignRequest(signRequest native2ika.SignRequest) error {
+	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(signRequest))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)
 	}

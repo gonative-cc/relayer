@@ -38,7 +38,8 @@ func Test_Start(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher := native2ika.MockSignRequestFetcher{}
+	mockFetcher, err := native2ika.NewMockAPISignRequestFetcher()
+	assert.NilError(t, err)
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
@@ -73,7 +74,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher := native2ika.MockSignRequestFetcher{}
+	mockFetcher, _ := native2ika.NewMockAPISignRequestFetcher()
 
 	testCases := []struct {
 		name            string
@@ -132,7 +133,8 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher := native2ika.MockSignRequestFetcher{SampleRequests: native2ika.GetMockSignRequests()}
+	mockFetcher, err := native2ika.NewMockAPISignRequestFetcher()
+	assert.NilError(t, err)
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
@@ -153,16 +155,16 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher := native2ika.MockSignRequestFetcher{}
+	mockFetcher, err := native2ika.NewMockAPISignRequestFetcher()
+	assert.NilError(t, err)
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
 
 	sr := native2ika.SignRequest{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
-	packedSr, _ := sr.MarshalMsg(nil)
 
-	err = relayer.storeSignRequest(packedSr)
+	err = relayer.storeSignRequest(sr)
 	assert.NilError(t, err)
 
 	requests, err := db.GetPendingIkaSignRequests()
