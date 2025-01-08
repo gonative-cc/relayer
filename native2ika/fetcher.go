@@ -74,7 +74,7 @@ func (f *APISignRequestFetcher) GetBtcSignRequests(from, limit int) ([]SignReque
 		}
 
 		requests = append(requests, req)
-		encoded, _ := req.MarshalMsg(nil) // We need it here to caluclate the offset
+		encoded, _ := req.MarshalMsg(nil) // We need it here to calculate the offset
 		offset += len(encoded)
 	}
 
