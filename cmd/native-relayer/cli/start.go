@@ -28,6 +28,8 @@ var startCmd = &cobra.Command{
 
 		// TODO:Set up logging based on verbose flag
 
+		//TODO: use the config values to init the db and the processors and clients
+
 		db, err := dal.NewDB(":memory:")
 		if err != nil {
 			// TODO:Handle error
@@ -56,7 +58,14 @@ var startCmd = &cobra.Command{
 
 		nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
 
-		relayer, err := nbtc.NewRelayer(*config, db, nativeProcessor, btcProcessor)
+		relayer, err := nbtc.NewRelayer(
+			nbtc.RelayerConfig{
+				ProcessTxsInterval:    config.ProcessTxsInterval,
+				ConfirmTxsInterval:    config.ConfirmTxsInterval,
+				ConfirmationThreshold: config.BtcConfirmationThreshold,
+			},
+			db, nativeProcessor,
+			btcProcessor)
 		if err != nil {
 			// TODO:Handle error
 		}
