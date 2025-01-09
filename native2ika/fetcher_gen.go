@@ -7,7 +7,7 @@ import (
 )
 
 // DecodeMsg implements msgp.Decodable
-func (z *SignRequest) DecodeMsg(dc *msgp.Reader) (err error) {
+func (z *SignReq) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
 	var zb0001 uint32
@@ -72,7 +72,7 @@ func (z *SignRequest) DecodeMsg(dc *msgp.Reader) (err error) {
 }
 
 // EncodeMsg implements msgp.Encodable
-func (z *SignRequest) EncodeMsg(en *msgp.Writer) (err error) {
+func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 	// map header, size 6
 	// write "id"
 	err = en.Append(0x86, 0xa2, 0x69, 0x64)
@@ -138,7 +138,7 @@ func (z *SignRequest) EncodeMsg(en *msgp.Writer) (err error) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z *SignRequest) MarshalMsg(b []byte) (o []byte, err error) {
+func (z *SignReq) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 6
 	// string "id"
@@ -163,7 +163,7 @@ func (z *SignRequest) MarshalMsg(b []byte) (o []byte, err error) {
 }
 
 // UnmarshalMsg implements msgp.Unmarshaler
-func (z *SignRequest) UnmarshalMsg(bts []byte) (o []byte, err error) {
+func (z *SignReq) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	var field []byte
 	_ = field
 	var zb0001 uint32
@@ -229,59 +229,94 @@ func (z *SignRequest) UnmarshalMsg(bts []byte) (o []byte, err error) {
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z *SignRequest) Msgsize() (s int) {
+func (z *SignReq) Msgsize() (s int) {
 	s = 1 + 3 + msgp.Uint64Size + 8 + msgp.BytesPrefixSize + len(z.Payload) + 11 + msgp.StringPrefixSize + len(z.DWalletID) + 9 + msgp.StringPrefixSize + len(z.UserSig) + 10 + msgp.BytesPrefixSize + len(z.FinalSig) + 5 + msgp.Int64Size
 	return
 }
 
 // DecodeMsg implements msgp.Decodable
-func (z *SignRequestBytes) DecodeMsg(dc *msgp.Reader) (err error) {
-	{
-		var zb0001 []byte
-		zb0001, err = dc.ReadBytes([]byte((*z)))
+func (z *SignReqs) DecodeMsg(dc *msgp.Reader) (err error) {
+	var zb0002 uint32
+	zb0002, err = dc.ReadArrayHeader()
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if cap((*z)) >= int(zb0002) {
+		(*z) = (*z)[:zb0002]
+	} else {
+		(*z) = make(SignReqs, zb0002)
+	}
+	for zb0001 := range *z {
+		err = (*z)[zb0001].DecodeMsg(dc)
 		if err != nil {
-			err = msgp.WrapError(err)
+			err = msgp.WrapError(err, zb0001)
 			return
 		}
-		(*z) = SignRequestBytes(zb0001)
 	}
 	return
 }
 
 // EncodeMsg implements msgp.Encodable
-func (z SignRequestBytes) EncodeMsg(en *msgp.Writer) (err error) {
-	err = en.WriteBytes([]byte(z))
+func (z SignReqs) EncodeMsg(en *msgp.Writer) (err error) {
+	err = en.WriteArrayHeader(uint32(len(z)))
 	if err != nil {
 		err = msgp.WrapError(err)
 		return
+	}
+	for zb0003 := range z {
+		err = z[zb0003].EncodeMsg(en)
+		if err != nil {
+			err = msgp.WrapError(err, zb0003)
+			return
+		}
 	}
 	return
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z SignRequestBytes) MarshalMsg(b []byte) (o []byte, err error) {
+func (z SignReqs) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	o = msgp.AppendBytes(o, []byte(z))
+	o = msgp.AppendArrayHeader(o, uint32(len(z)))
+	for zb0003 := range z {
+		o, err = z[zb0003].MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, zb0003)
+			return
+		}
+	}
 	return
 }
 
 // UnmarshalMsg implements msgp.Unmarshaler
-func (z *SignRequestBytes) UnmarshalMsg(bts []byte) (o []byte, err error) {
-	{
-		var zb0001 []byte
-		zb0001, bts, err = msgp.ReadBytesBytes(bts, []byte((*z)))
+func (z *SignReqs) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var zb0002 uint32
+	zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if cap((*z)) >= int(zb0002) {
+		(*z) = (*z)[:zb0002]
+	} else {
+		(*z) = make(SignReqs, zb0002)
+	}
+	for zb0001 := range *z {
+		bts, err = (*z)[zb0001].UnmarshalMsg(bts)
 		if err != nil {
-			err = msgp.WrapError(err)
+			err = msgp.WrapError(err, zb0001)
 			return
 		}
-		(*z) = SignRequestBytes(zb0001)
 	}
 	o = bts
 	return
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z SignRequestBytes) Msgsize() (s int) {
-	s = msgp.BytesPrefixSize + len([]byte(z))
+func (z SignReqs) Msgsize() (s int) {
+	s = msgp.ArrayHeaderSize
+	for zb0003 := range z {
+		s += z[zb0003].Msgsize()
+	}
 	return
 }

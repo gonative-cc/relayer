@@ -19,23 +19,23 @@ import (
 // - nativeProcessor: To send transactions from Native to IKA for signing.
 // - btcProcessor: To broadcast signed transactions to Bitcoin and monitor confirmations.
 type Relayer struct {
-	db                *dal.DB
-	nativeProcessor   *native2ika.Processor
-	btcProcessor      *ika2btc.Processor
-	shutdownChan      chan struct{}
-	processTxsTicker  *time.Ticker
-	confirmTxsTicker  *time.Ticker
-    // native Sign Request
-	signReqTicker *time.Ticker
-	signReqFetcher           native2ika.SignRequestFetcher
-	signReqStart         int
+	db               *dal.DB
+	nativeProcessor  *native2ika.Processor
+	btcProcessor     *ika2btc.Processor
+	shutdownChan     chan struct{}
+	processTxsTicker *time.Ticker
+	confirmTxsTicker *time.Ticker
+	// native Sign Request
+	signReqTicker  *time.Ticker
+	signReqFetcher native2ika.SignReqFetcher
+	signReqStart   int
 }
 
 // RelayerConfig holds the configuration parameters for the Relayer.
 type RelayerConfig struct {
 	ProcessTxsInterval    time.Duration `json:"processTxsInterval"`
 	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
-	FetchBlocksInterval   time.Duration `json:"fetchBlocksInterval"`
+	FetchSignReqInterval  time.Duration `json:"fetchSignReqInterval"`
 	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
 	FetchFrom             int           `jsoin:"fetchFrom"`
 }
@@ -46,7 +46,7 @@ func NewRelayer(
 	db *dal.DB,
 	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
-	fetcher native2ika.SignRequestFetcher,
+	fetcher native2ika.SignReqFetcher,
 ) (*Relayer, error) {
 
 	if db == nil {
@@ -81,8 +81,8 @@ func NewRelayer(
 		relayerConfig.ConfirmTxsInterval = time.Second * 7
 	}
 
-	if relayerConfig.FetchBlocksInterval == 0 {
-		relayerConfig.FetchBlocksInterval = time.Second * 10
+	if relayerConfig.FetchSignReqInterval == 0 {
+		relayerConfig.FetchSignReqInterval = time.Second * 10
 	}
 
 	if relayerConfig.ConfirmationThreshold == 0 {
@@ -90,15 +90,15 @@ func NewRelayer(
 	}
 
 	return &Relayer{
-		db:                db,
-		nativeProcessor:   nativeProcessor,
-		btcProcessor:      btcProcessor,
-		shutdownChan:      make(chan struct{}),
-		processTxsTicker:  time.NewTicker(relayerConfig.ProcessTxsInterval),
-		confirmTxsTicker:  time.NewTicker(relayerConfig.ConfirmTxsInterval),
-		signReqTicker: time.NewTicker(relayerConfig.FetchBlocksInterval),
-		fetcher:           fetcher,
-		fetchFrom:         relayerConfig.FetchFrom,
+		db:               db,
+		nativeProcessor:  nativeProcessor,
+		btcProcessor:     btcProcessor,
+		shutdownChan:     make(chan struct{}),
+		processTxsTicker: time.NewTicker(relayerConfig.ProcessTxsInterval),
+		confirmTxsTicker: time.NewTicker(relayerConfig.ConfirmTxsInterval),
+		signReqTicker:    time.NewTicker(relayerConfig.FetchSignReqInterval),
+		signReqFetcher:   fetcher,
+		signReqStart:     relayerConfig.FetchFrom,
 	}, nil
 }
 
@@ -124,7 +124,7 @@ func (r *Relayer) Start(ctx context.Context) error {
 					log.Err(err).Msg("Error processing transactions, continuing")
 				}
 			}
-		case <-r.fetchBlocksTicker.C:
+		case <-r.signReqTicker.C:
 			if err := r.fetchAndStoreNativeSignRequests(); err != nil {
 				var sqliteErr *sqlite3.Error
 				if errors.As(err, &sqliteErr) {
@@ -173,21 +173,24 @@ func (r *Relayer) processSignedTxs() error {
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
 func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 	//TODO: decide how many sign requests we want to process at a time
-	signRequests, err := r.fetcher.GetBtcSignRequests(r.fetchFrom, 5)
+	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqStart, 5)
 	if err != nil {
 		log.Err(err).Msg("Error fetching sign requests from native, continuing")
 	}
 
 	for _, sr := range signRequests {
-		return r.storeSignRequest(sr)
+		err = r.storeSignRequest(sr)
+		if err != nil {
+			return err
+		}
 	}
 
-	r.fetchFrom += 5
+	r.signReqStart += 5
 	return nil
 }
 
-// storeSignRequest stores a single SignRequest from the Native chain.
-func (r *Relayer) storeSignRequest(signRequest native2ika.SignRequest) error {
+// storeSignRequest stores a single SignReq from the Native chain.
+func (r *Relayer) storeSignRequest(signRequest native2ika.SignReq) error {
 	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(signRequest))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)

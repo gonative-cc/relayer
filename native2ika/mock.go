@@ -3,6 +3,7 @@ package native2ika
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"time"
 )
 
@@ -38,33 +39,27 @@ func mockJSONAPI(w http.ResponseWriter, r *http.Request) {
 
 	mockRequests := generateMockSignRequests(from, limit)
 
-	// Marshal the data
-	encodedRequests := make([]SignRequestBytes, 0, len(mockRequests))
-	for _, req := range mockRequests {
-		packed, err := req.MarshalMsg(nil)
-		if err != nil {
-			http.Error(w, "Failed to encode MessagePack", http.StatusInternalServerError)
-			return
-		}
-		encodedRequests = append(encodedRequests, packed)
+	// Marshal the entire slice
+	encodedRequests, err := mockRequests.MarshalMsg(nil)
+	if err != nil {
+		http.Error(w, "Failed to encode MessagePack", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/x-msgpack")
 
-	for _, encoded := range encodedRequests {
-		_, err := w.Write(encoded)
-		if err != nil {
-			http.Error(w, "Failed to write response", http.StatusInternalServerError)
-			return
-		}
+	_, err = w.Write(encodedRequests)
+	if err != nil {
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
 	}
 }
 
 // generateMockSignRequests generates mock SignRequest data dynamically.
-func generateMockSignRequests(from, limit int) []SignRequest {
-	var requests []SignRequest
+func generateMockSignRequests(from, limit int) SignReqs {
+	var requests []SignReq
 	for i := from; i < from+limit; i++ {
-		req := SignRequest{
+		req := SignReq{
 			//nolint: gosec // This is a mock function, and overflow is unlikely.
 			ID:        uint64(i + 1),
 			Payload:   rawTxBytes,
@@ -75,4 +70,15 @@ func generateMockSignRequests(from, limit int) []SignRequest {
 		requests = append(requests, req)
 	}
 	return requests
+}
+
+// NewMockAPISignRequestFetcher creates a new APISignRequestFetcher with a mock API URL.
+func NewMockAPISignRequestFetcher() (*APISignRequestFetcher, error) {
+	// Create a mock HTTP server
+	ts := httptest.NewServer(http.HandlerFunc(mockJSONAPI))
+	fetcher := &APISignRequestFetcher{
+		APIURL: ts.URL,
+	}
+
+	return fetcher, nil
 }

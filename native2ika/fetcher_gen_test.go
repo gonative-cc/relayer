@@ -9,8 +9,8 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-func TestMarshalUnmarshalSignRequest(t *testing.T) {
-	v := SignRequest{}
+func TestMarshalUnmarshalSignReq(t *testing.T) {
+	v := SignReq{}
 	bts, err := v.MarshalMsg(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -32,8 +32,8 @@ func TestMarshalUnmarshalSignRequest(t *testing.T) {
 	}
 }
 
-func BenchmarkMarshalMsgSignRequest(b *testing.B) {
-	v := SignRequest{}
+func BenchmarkMarshalMsgSignReq(b *testing.B) {
+	v := SignReq{}
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -41,8 +41,8 @@ func BenchmarkMarshalMsgSignRequest(b *testing.B) {
 	}
 }
 
-func BenchmarkAppendMsgSignRequest(b *testing.B) {
-	v := SignRequest{}
+func BenchmarkAppendMsgSignReq(b *testing.B) {
+	v := SignReq{}
 	bts := make([]byte, 0, v.Msgsize())
 	bts, _ = v.MarshalMsg(bts[0:0])
 	b.SetBytes(int64(len(bts)))
@@ -53,8 +53,8 @@ func BenchmarkAppendMsgSignRequest(b *testing.B) {
 	}
 }
 
-func BenchmarkUnmarshalSignRequest(b *testing.B) {
-	v := SignRequest{}
+func BenchmarkUnmarshalSignReq(b *testing.B) {
+	v := SignReq{}
 	bts, _ := v.MarshalMsg(nil)
 	b.ReportAllocs()
 	b.SetBytes(int64(len(bts)))
@@ -67,17 +67,17 @@ func BenchmarkUnmarshalSignRequest(b *testing.B) {
 	}
 }
 
-func TestEncodeDecodeSignRequest(t *testing.T) {
-	v := SignRequest{}
+func TestEncodeDecodeSignReq(t *testing.T) {
+	v := SignReq{}
 	var buf bytes.Buffer
 	msgp.Encode(&buf, &v)
 
 	m := v.Msgsize()
 	if buf.Len() > m {
-		t.Log("WARNING: TestEncodeDecodeSignRequest Msgsize() is inaccurate")
+		t.Log("WARNING: TestEncodeDecodeSignReq Msgsize() is inaccurate")
 	}
 
-	vn := SignRequest{}
+	vn := SignReq{}
 	err := msgp.Decode(&buf, &vn)
 	if err != nil {
 		t.Error(err)
@@ -91,8 +91,8 @@ func TestEncodeDecodeSignRequest(t *testing.T) {
 	}
 }
 
-func BenchmarkEncodeSignRequest(b *testing.B) {
-	v := SignRequest{}
+func BenchmarkEncodeSignReq(b *testing.B) {
+	v := SignReq{}
 	var buf bytes.Buffer
 	msgp.Encode(&buf, &v)
 	b.SetBytes(int64(buf.Len()))
@@ -105,8 +105,121 @@ func BenchmarkEncodeSignRequest(b *testing.B) {
 	en.Flush()
 }
 
-func BenchmarkDecodeSignRequest(b *testing.B) {
-	v := SignRequest{}
+func BenchmarkDecodeSignReq(b *testing.B) {
+	v := SignReq{}
+	var buf bytes.Buffer
+	msgp.Encode(&buf, &v)
+	b.SetBytes(int64(buf.Len()))
+	rd := msgp.NewEndlessReader(buf.Bytes(), b)
+	dc := msgp.NewReader(rd)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := v.DecodeMsg(dc)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func TestMarshalUnmarshalSignReqs(t *testing.T) {
+	v := SignReqs{}
+	bts, err := v.MarshalMsg(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	left, err := v.UnmarshalMsg(bts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(left) > 0 {
+		t.Errorf("%d bytes left over after UnmarshalMsg(): %q", len(left), left)
+	}
+
+	left, err = msgp.Skip(bts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(left) > 0 {
+		t.Errorf("%d bytes left over after Skip(): %q", len(left), left)
+	}
+}
+
+func BenchmarkMarshalMsgSignReqs(b *testing.B) {
+	v := SignReqs{}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		v.MarshalMsg(nil)
+	}
+}
+
+func BenchmarkAppendMsgSignReqs(b *testing.B) {
+	v := SignReqs{}
+	bts := make([]byte, 0, v.Msgsize())
+	bts, _ = v.MarshalMsg(bts[0:0])
+	b.SetBytes(int64(len(bts)))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bts, _ = v.MarshalMsg(bts[0:0])
+	}
+}
+
+func BenchmarkUnmarshalSignReqs(b *testing.B) {
+	v := SignReqs{}
+	bts, _ := v.MarshalMsg(nil)
+	b.ReportAllocs()
+	b.SetBytes(int64(len(bts)))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := v.UnmarshalMsg(bts)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func TestEncodeDecodeSignReqs(t *testing.T) {
+	v := SignReqs{}
+	var buf bytes.Buffer
+	msgp.Encode(&buf, &v)
+
+	m := v.Msgsize()
+	if buf.Len() > m {
+		t.Log("WARNING: TestEncodeDecodeSignReqs Msgsize() is inaccurate")
+	}
+
+	vn := SignReqs{}
+	err := msgp.Decode(&buf, &vn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	buf.Reset()
+	msgp.Encode(&buf, &v)
+	err = msgp.NewReader(&buf).Skip()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func BenchmarkEncodeSignReqs(b *testing.B) {
+	v := SignReqs{}
+	var buf bytes.Buffer
+	msgp.Encode(&buf, &v)
+	b.SetBytes(int64(buf.Len()))
+	en := msgp.NewWriter(msgp.Nowhere)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		v.EncodeMsg(en)
+	}
+	en.Flush()
+}
+
+func BenchmarkDecodeSignReqs(b *testing.B) {
+	v := SignReqs{}
 	var buf bytes.Buffer
 	msgp.Encode(&buf, &v)
 	b.SetBytes(int64(buf.Len()))

@@ -82,7 +82,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 		nativeProcessor *native2ika.Processor
 		btcProcessor    *ika2btc.Processor
 		expectedError   error
-		fetcher         native2ika.SignRequestFetcher
+		fetcher         native2ika.SignReqFetcher
 	}{
 		{
 			name:            "DatabaseError",
@@ -142,7 +142,7 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	err = relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
 
-	assert.Equal(t, relayer.fetchFrom, uint64(5)) // Should be 5 after fetching 5 sign requests
+	assert.Equal(t, relayer.signReqStart, 5) // Should be 5 after fetching 5 sign requests
 
 	requests, err := db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
@@ -161,7 +161,7 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
 	assert.NilError(t, err)
 
-	sr := native2ika.SignRequest{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
+	sr := native2ika.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
 
 	err = relayer.storeSignRequest(sr)
