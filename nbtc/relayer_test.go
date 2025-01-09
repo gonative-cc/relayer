@@ -16,6 +16,15 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+// testSuite holds the common dependencies
+type testSuite struct {
+	db              *dal.DB
+	mockIkaClient   *ika.MockClient
+	btcProcessor    *ika2btc.Processor
+	nativeProcessor *native2ika.Processor
+	mockFetcher     *native2ika.APISignRequestFetcher
+}
+
 var btcClientConfig = rpcclient.ConnConfig{
 	Host:         "test_rpc",
 	User:         "test_user",
@@ -31,17 +40,32 @@ var relayerConfig = RelayerConfig{
 	FetchFrom:             0,
 }
 
-func Test_Start(t *testing.T) {
+// setupTestProcessor initializes the common dependencies
+func setupTestSuite(t *testing.T) *testSuite {
 	db := initTestDB(t)
-	daltest.PopulateDB(t, db)
 	mockIkaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
 	mockFetcher, err := native2ika.NewMockAPISignRequestFetcher()
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
+	return &testSuite{
+		db:              db,
+		mockIkaClient:   mockIkaClient,
+		btcProcessor:    btcProcessor,
+		nativeProcessor: nativeProcessor,
+		mockFetcher:     mockFetcher,
+	}
+}
+
+func Test_Start(t *testing.T) {
+	ts := setupTestSuite(t)
+	daltest.PopulateDB(t, ts.db)
+
+	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.mockFetcher)
 	assert.NilError(t, err)
 
 	ctx := context.Background()
@@ -54,13 +78,13 @@ func Test_Start(t *testing.T) {
 
 	time.Sleep(time.Second * 6)
 
-	confirmedTx, err := db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
 
 	time.Sleep(time.Second * 3)
 
-	confirmedTx, err = db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	confirmedTx, err = ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 
@@ -69,13 +93,7 @@ func Test_Start(t *testing.T) {
 }
 
 func TestNewRelayer_ErrorCases(t *testing.T) {
-	db := initTestDB(t)
-	mockIkaClient := ika.NewMockClient()
-	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
-	btcProcessor.BtcClient = &bitcoin.MockClient{}
-	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher, _ := native2ika.NewMockAPISignRequestFetcher()
-
+	ts := setupTestSuite(t)
 	testCases := []struct {
 		name            string
 		db              *dal.DB
@@ -87,32 +105,32 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 		{
 			name:            "DatabaseError",
 			db:              nil,
-			nativeProcessor: nativeProcessor,
-			btcProcessor:    btcProcessor,
+			nativeProcessor: ts.nativeProcessor,
+			btcProcessor:    ts.btcProcessor,
 			expectedError:   err.ErrNoDB,
-			fetcher:         mockFetcher,
+			fetcher:         ts.mockFetcher,
 		},
 		{
 			name:            "NativeProcessorError",
-			db:              db,
+			db:              ts.db,
 			nativeProcessor: nil,
-			btcProcessor:    btcProcessor,
+			btcProcessor:    ts.btcProcessor,
 			expectedError:   err.ErrNoNativeProcessor,
-			fetcher:         mockFetcher,
+			fetcher:         ts.mockFetcher,
 		},
 		{
 			name:            "BtcProcessorError",
-			db:              db,
-			nativeProcessor: nativeProcessor,
+			db:              ts.db,
+			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    nil,
 			expectedError:   err.ErrNoBtcProcessor,
-			fetcher:         mockFetcher,
+			fetcher:         ts.mockFetcher,
 		},
 		{
 			name:            "BlockchainError",
-			db:              db,
-			nativeProcessor: nativeProcessor,
-			btcProcessor:    btcProcessor,
+			db:              ts.db,
+			nativeProcessor: ts.nativeProcessor,
+			btcProcessor:    ts.btcProcessor,
 			expectedError:   err.ErrNoFetcher,
 			fetcher:         nil,
 		},
@@ -128,15 +146,8 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 }
 
 func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
-	db := initTestDB(t)
-	mockIkaClient := ika.NewMockClient()
-	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
-	btcProcessor.BtcClient = &bitcoin.MockClient{}
-	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher, err := native2ika.NewMockAPISignRequestFetcher()
-	assert.NilError(t, err)
-
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
+	ts := setupTestSuite(t)
+	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.mockFetcher)
 	assert.NilError(t, err)
 
 	err = relayer.fetchAndStoreNativeSignRequests()
@@ -144,21 +155,14 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 
 	assert.Equal(t, relayer.signReqStart, 5) // Should be 5 after fetching 5 sign requests
 
-	requests, err := db.GetPendingIkaSignRequests()
+	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 5) // Should be 5 inserted requests
 }
 
 func TestRelayer_storeSignRequest(t *testing.T) {
-	db := initTestDB(t)
-	mockIkaClient := ika.NewMockClient()
-	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
-	btcProcessor.BtcClient = &bitcoin.MockClient{}
-	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher, err := native2ika.NewMockAPISignRequestFetcher()
-	assert.NilError(t, err)
-
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, mockFetcher)
+	ts := setupTestSuite(t)
+	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.mockFetcher)
 	assert.NilError(t, err)
 
 	sr := native2ika.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
@@ -167,7 +171,7 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	err = relayer.storeSignRequest(sr)
 	assert.NilError(t, err)
 
-	requests, err := db.GetPendingIkaSignRequests()
+	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 1)
 }
