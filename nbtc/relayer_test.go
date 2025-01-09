@@ -38,6 +38,7 @@ var relayerConfig = RelayerConfig{
 	ConfirmTxsInterval:    time.Second * 7,
 	ConfirmationThreshold: 6,
 	FetchFrom:             0,
+	FetchLimit:            5,
 }
 
 // setupTestProcessor initializes the common dependencies

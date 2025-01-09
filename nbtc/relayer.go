@@ -26,9 +26,10 @@ type Relayer struct {
 	processTxsTicker *time.Ticker
 	confirmTxsTicker *time.Ticker
 	// native Sign Request
-	signReqTicker  *time.Ticker
-	signReqFetcher native2ika.SignReqFetcher
-	signReqStart   int
+	signReqTicker     *time.Ticker
+	signReqFetcher    native2ika.SignReqFetcher
+	signReqStart      int
+	signReqFetchLimit int
 }
 
 // RelayerConfig holds the configuration parameters for the Relayer.
@@ -37,7 +38,8 @@ type RelayerConfig struct {
 	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
 	FetchSignReqInterval  time.Duration `json:"fetchSignReqInterval"`
 	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
-	FetchFrom             int           `jsoin:"fetchFrom"`
+	FetchFrom             int           `json:"fetchFrom"`
+	FetchLimit            int           `json:"fetchLimit"`
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
@@ -90,15 +92,16 @@ func NewRelayer(
 	}
 
 	return &Relayer{
-		db:               db,
-		nativeProcessor:  nativeProcessor,
-		btcProcessor:     btcProcessor,
-		shutdownChan:     make(chan struct{}),
-		processTxsTicker: time.NewTicker(relayerConfig.ProcessTxsInterval),
-		confirmTxsTicker: time.NewTicker(relayerConfig.ConfirmTxsInterval),
-		signReqTicker:    time.NewTicker(relayerConfig.FetchSignReqInterval),
-		signReqFetcher:   fetcher,
-		signReqStart:     relayerConfig.FetchFrom,
+		db:                db,
+		nativeProcessor:   nativeProcessor,
+		btcProcessor:      btcProcessor,
+		shutdownChan:      make(chan struct{}),
+		processTxsTicker:  time.NewTicker(relayerConfig.ProcessTxsInterval),
+		confirmTxsTicker:  time.NewTicker(relayerConfig.ConfirmTxsInterval),
+		signReqTicker:     time.NewTicker(relayerConfig.FetchSignReqInterval),
+		signReqFetcher:    fetcher,
+		signReqStart:      relayerConfig.FetchFrom,
+		signReqFetchLimit: relayerConfig.FetchLimit,
 	}, nil
 }
 
@@ -172,8 +175,7 @@ func (r *Relayer) processSignedTxs() error {
 
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
 func (r *Relayer) fetchAndStoreNativeSignRequests() error {
-	//TODO: decide how many sign requests we want to process at a time
-	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqStart, 5)
+	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqStart, r.signReqFetchLimit)
 	if err != nil {
 		log.Err(err).Msg("Error fetching sign requests from native, continuing")
 	}
