@@ -11,8 +11,8 @@ import (
 
 //go:generate msgp
 
-// SignRequest represents a signature request.
-type SignRequest struct {
+// SignReq represents a signature request.
+type SignReq struct {
 	ID        uint64 `msg:"id"`
 	Payload   []byte `msg:"payload"`
 	DWalletID string `msg:"dwallet_id"`
@@ -21,10 +21,10 @@ type SignRequest struct {
 	Timestamp int64  `msg:"time"`
 }
 
-type SignRequestBytes []byte
+type SignReqBytes []byte
 
 // SignRequestFetcher is an interface for getting sign requests from the Native network.
-type SignRequestFetcher interface {
+type SignReqFetcher interface {
 	GetBtcSignRequests(from int, limit int) ([]SignRequest, error)
 }
 

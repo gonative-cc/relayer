@@ -25,9 +25,10 @@ type Relayer struct {
 	shutdownChan      chan struct{}
 	processTxsTicker  *time.Ticker
 	confirmTxsTicker  *time.Ticker
-	fetchBlocksTicker *time.Ticker
-	fetcher           native2ika.SignRequestFetcher
-	fetchFrom         int
+    // native Sign Request
+	signReqTicker *time.Ticker
+	signReqFetcher           native2ika.SignRequestFetcher
+	signReqStart         int
 }
 
 // RelayerConfig holds the configuration parameters for the Relayer.
@@ -95,7 +96,7 @@ func NewRelayer(
 		shutdownChan:      make(chan struct{}),
 		processTxsTicker:  time.NewTicker(relayerConfig.ProcessTxsInterval),
 		confirmTxsTicker:  time.NewTicker(relayerConfig.ConfirmTxsInterval),
-		fetchBlocksTicker: time.NewTicker(relayerConfig.FetchBlocksInterval),
+		signReqTicker: time.NewTicker(relayerConfig.FetchBlocksInterval),
 		fetcher:           fetcher,
 		fetchFrom:         relayerConfig.FetchFrom,
 	}, nil
