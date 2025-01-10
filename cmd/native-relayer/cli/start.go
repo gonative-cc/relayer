@@ -47,7 +47,7 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error creating Sui client")
 			os.Exit(1)
 		}
-		signer, err := signer.NewSignertWithMnemonic(config.IkaSignerMnemonic)
+		ikaSigner, err := signer.NewSignertWithMnemonic(config.IkaSignerMnemonic)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating signer with mnemonic")
 			os.Exit(1)
@@ -99,8 +99,10 @@ var startCmd = &cobra.Command{
 				ConfirmTxsInterval:    config.ConfirmTxsInterval,
 				ConfirmationThreshold: config.BtcConfirmationThreshold,
 			},
-			db, nativeProcessor,
-			btcProcessor)
+			db,
+			nativeProcessor,
+			btcProcessor,
+	)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating relayer")
 			os.Exit(1)
