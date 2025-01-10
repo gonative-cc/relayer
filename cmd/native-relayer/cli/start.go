@@ -32,7 +32,7 @@ var startCmd = &cobra.Command{
 
 		// TODO:Set up logging based on verbose flag
 
-		db, err := dal.NewDB(config.DbFile)
+		db, err := dal.NewDB(config.DBFile)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating database")
 			os.Exit(1)
@@ -76,9 +76,9 @@ var startCmd = &cobra.Command{
 
 		btcProcessor, err := ika2btc.NewProcessor(
 			rpcclient.ConnConfig{
-				Host:         config.BtcRpcHost,
-				User:         config.BtcRpcUser,
-				Pass:         config.BtcRpcPass,
+				Host:         config.BtcRPCHost,
+				User:         config.BtcRPCUser,
+				Pass:         config.BtcRPCPass,
 				HTTPPostMode: true,
 				DisableTLS:   false,
 			},
