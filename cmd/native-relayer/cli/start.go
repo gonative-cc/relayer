@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/block-vision/sui-go-sdk/signer"
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
@@ -14,6 +16,7 @@ import (
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/gonative-cc/relayer/nbtc"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -23,40 +26,72 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := loadConfig()
 		if err != nil {
-			// TODO:Handle error
+			log.Error().Err(err).Msg("Error loading config")
+			os.Exit(1)
 		}
 
 		// TODO:Set up logging based on verbose flag
 
-		//TODO: use the config values to init the db and the processors and clients
-
-		db, err := dal.NewDB(":memory:")
+		db, err := dal.NewDB(config.DbFile)
 		if err != nil {
-			// TODO:Handle error
+			log.Error().Err(err).Msg("Error creating database")
+			os.Exit(1)
 		}
 		if err := db.InitDB(); err != nil {
-			// TODO:Handle error
+			log.Error().Err(err).Msg("Error initializing database")
+			os.Exit(1)
 		}
 
-		mockIkaClient := ika.NewMockClient()
+		suiClient := sui.NewSuiClient(config.IkaRPC).(*sui.Client)
+		if suiClient == nil {
+			log.Error().Err(err).Msg("Error creating Sui client")
+			os.Exit(1)
+		}
+		signer, err := signer.NewSignertWithMnemonic(config.IkaSignerMnemonic)
+		if err != nil {
+			log.Error().Err(err).Msg("Error creating signer with mnemonic")
+			os.Exit(1)
+		}
+
+		ikaClient, err := ika.NewClient(
+			suiClient,
+			signer,
+			ika.SuiCtrCall{
+				Package:  config.IkaNativeLcPackage,
+				Module:   config.IkaNativeLcModule,
+				Function: config.IkaNativeLcFunction,
+			},
+			ika.SuiCtrCall{
+				Package:  config.IkaNativeLcPackage,
+				Module:   config.IkaNativeLcModule,
+				Function: config.IkaNativeLcFunction,
+			},
+			config.IkaGasAcc,
+			config.IkaGasBudget,
+		)
+		if err != nil {
+			log.Error().Err(err).Msg("Error creating IKA client")
+			os.Exit(1)
+		}
 
 		btcProcessor, err := ika2btc.NewProcessor(
 			rpcclient.ConnConfig{
-				Host:         "test_rpc",
-				User:         "test_user",
-				Pass:         "test_pass",
+				Host:         config.BtcRpcHost,
+				User:         config.BtcRpcUser,
+				Pass:         config.BtcRpcPass,
 				HTTPPostMode: true,
 				DisableTLS:   false,
 			},
-			6,
+			config.BtcConfirmationThreshold,
 			db,
 		)
 		if err != nil {
-			// TODO:Handle error
+			log.Error().Err(err).Msg("Error creating Bitcoin processor")
+			os.Exit(1)
 		}
 		btcProcessor.BtcClient = &bitcoin.MockClient{}
 
-		nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
+		nativeProcessor := native2ika.NewProcessor(ikaClient, db)
 
 		relayer, err := nbtc.NewRelayer(
 			nbtc.RelayerConfig{
@@ -67,14 +102,15 @@ var startCmd = &cobra.Command{
 			db, nativeProcessor,
 			btcProcessor)
 		if err != nil {
-			// TODO:Handle error
+			log.Error().Err(err).Msg("Error creating relayer")
+			os.Exit(1)
 		}
 
 		relayerWg.Add(1)
 		go func() {
 			defer relayerWg.Done()
 			if err := relayer.Start(context.Background()); err != nil {
-				// TODO:Handle error
+				log.Error().Err(err).Msg("Relayer encountered an error")
 			}
 		}()
 

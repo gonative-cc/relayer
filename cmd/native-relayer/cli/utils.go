@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Configuration struct to match your YAML structure
+// Configuration struct
 type Config struct {
 	NativeRPC                string        `mapstructure:"native_rpc"`
 	NativeGRPC               string        `mapstructure:"native_grpc"`
@@ -19,7 +19,7 @@ type Config struct {
 	IkaNativeLcModule        string        `mapstructure:"ika_native_lc_module"`
 	IkaNativeLcFunction      string        `mapstructure:"ika_native_lc_function"`
 	IkaGasAcc                string        `mapstructure:"ika_gas_acc"`
-	IkaGasBudget             uint64        `mapstructure:"ika_gas_budget"`
+	IkaGasBudget             string        `mapstructure:"ika_gas_budget"`
 	BtcRpcHost               string        `mapstructure:"btc_rpc_host"`
 	BtcRpcUser               string        `mapstructure:"btc_rpc_user"`
 	BtcRpcPass               string        `mapstructure:"btc_rpc_pass"`
