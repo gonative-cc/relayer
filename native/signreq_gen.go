@@ -24,37 +24,37 @@ func (z *SignReq) DecodeMsg(dc *msgp.Reader) (err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
-		case "id":
+		case "ID":
 			z.ID, err = dc.ReadUint64()
 			if err != nil {
 				err = msgp.WrapError(err, "ID")
 				return
 			}
-		case "payload":
+		case "Payload":
 			z.Payload, err = dc.ReadBytes(z.Payload)
 			if err != nil {
 				err = msgp.WrapError(err, "Payload")
 				return
 			}
-		case "dwallet_id":
+		case "DWalletID":
 			z.DWalletID, err = dc.ReadString()
 			if err != nil {
 				err = msgp.WrapError(err, "DWalletID")
 				return
 			}
-		case "user_sig":
+		case "UserSig":
 			z.UserSig, err = dc.ReadString()
 			if err != nil {
 				err = msgp.WrapError(err, "UserSig")
 				return
 			}
-		case "final_sig":
+		case "FinalSig":
 			z.FinalSig, err = dc.ReadBytes(z.FinalSig)
 			if err != nil {
 				err = msgp.WrapError(err, "FinalSig")
 				return
 			}
-		case "time":
+		case "Timestamp":
 			z.Timestamp, err = dc.ReadInt64()
 			if err != nil {
 				err = msgp.WrapError(err, "Timestamp")
@@ -74,8 +74,8 @@ func (z *SignReq) DecodeMsg(dc *msgp.Reader) (err error) {
 // EncodeMsg implements msgp.Encodable
 func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 	// map header, size 6
-	// write "id"
-	err = en.Append(0x86, 0xa2, 0x69, 0x64)
+	// write "ID"
+	err = en.Append(0x86, 0xa2, 0x49, 0x44)
 	if err != nil {
 		return
 	}
@@ -84,8 +84,8 @@ func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "ID")
 		return
 	}
-	// write "payload"
-	err = en.Append(0xa7, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64)
+	// write "Payload"
+	err = en.Append(0xa7, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64)
 	if err != nil {
 		return
 	}
@@ -94,8 +94,8 @@ func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "Payload")
 		return
 	}
-	// write "dwallet_id"
-	err = en.Append(0xaa, 0x64, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x69, 0x64)
+	// write "DWalletID"
+	err = en.Append(0xa9, 0x44, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x49, 0x44)
 	if err != nil {
 		return
 	}
@@ -104,8 +104,8 @@ func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "DWalletID")
 		return
 	}
-	// write "user_sig"
-	err = en.Append(0xa8, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x73, 0x69, 0x67)
+	// write "UserSig"
+	err = en.Append(0xa7, 0x55, 0x73, 0x65, 0x72, 0x53, 0x69, 0x67)
 	if err != nil {
 		return
 	}
@@ -114,8 +114,8 @@ func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "UserSig")
 		return
 	}
-	// write "final_sig"
-	err = en.Append(0xa9, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x5f, 0x73, 0x69, 0x67)
+	// write "FinalSig"
+	err = en.Append(0xa8, 0x46, 0x69, 0x6e, 0x61, 0x6c, 0x53, 0x69, 0x67)
 	if err != nil {
 		return
 	}
@@ -124,8 +124,8 @@ func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "FinalSig")
 		return
 	}
-	// write "time"
-	err = en.Append(0xa4, 0x74, 0x69, 0x6d, 0x65)
+	// write "Timestamp"
+	err = en.Append(0xa9, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
 	if err != nil {
 		return
 	}
@@ -141,23 +141,23 @@ func (z *SignReq) EncodeMsg(en *msgp.Writer) (err error) {
 func (z *SignReq) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 6
-	// string "id"
-	o = append(o, 0x86, 0xa2, 0x69, 0x64)
+	// string "ID"
+	o = append(o, 0x86, 0xa2, 0x49, 0x44)
 	o = msgp.AppendUint64(o, z.ID)
-	// string "payload"
-	o = append(o, 0xa7, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64)
+	// string "Payload"
+	o = append(o, 0xa7, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64)
 	o = msgp.AppendBytes(o, z.Payload)
-	// string "dwallet_id"
-	o = append(o, 0xaa, 0x64, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x69, 0x64)
+	// string "DWalletID"
+	o = append(o, 0xa9, 0x44, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x49, 0x44)
 	o = msgp.AppendString(o, z.DWalletID)
-	// string "user_sig"
-	o = append(o, 0xa8, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x73, 0x69, 0x67)
+	// string "UserSig"
+	o = append(o, 0xa7, 0x55, 0x73, 0x65, 0x72, 0x53, 0x69, 0x67)
 	o = msgp.AppendString(o, z.UserSig)
-	// string "final_sig"
-	o = append(o, 0xa9, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x5f, 0x73, 0x69, 0x67)
+	// string "FinalSig"
+	o = append(o, 0xa8, 0x46, 0x69, 0x6e, 0x61, 0x6c, 0x53, 0x69, 0x67)
 	o = msgp.AppendBytes(o, z.FinalSig)
-	// string "time"
-	o = append(o, 0xa4, 0x74, 0x69, 0x6d, 0x65)
+	// string "Timestamp"
+	o = append(o, 0xa9, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
 	o = msgp.AppendInt64(o, z.Timestamp)
 	return
 }
@@ -180,37 +180,37 @@ func (z *SignReq) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
-		case "id":
+		case "ID":
 			z.ID, bts, err = msgp.ReadUint64Bytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "ID")
 				return
 			}
-		case "payload":
+		case "Payload":
 			z.Payload, bts, err = msgp.ReadBytesBytes(bts, z.Payload)
 			if err != nil {
 				err = msgp.WrapError(err, "Payload")
 				return
 			}
-		case "dwallet_id":
+		case "DWalletID":
 			z.DWalletID, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "DWalletID")
 				return
 			}
-		case "user_sig":
+		case "UserSig":
 			z.UserSig, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "UserSig")
 				return
 			}
-		case "final_sig":
+		case "FinalSig":
 			z.FinalSig, bts, err = msgp.ReadBytesBytes(bts, z.FinalSig)
 			if err != nil {
 				err = msgp.WrapError(err, "FinalSig")
 				return
 			}
-		case "time":
+		case "Timestamp":
 			z.Timestamp, bts, err = msgp.ReadInt64Bytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "Timestamp")
@@ -230,7 +230,7 @@ func (z *SignReq) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *SignReq) Msgsize() (s int) {
-	s = 1 + 3 + msgp.Uint64Size + 8 + msgp.BytesPrefixSize + len(z.Payload) + 11 + msgp.StringPrefixSize + len(z.DWalletID) + 9 + msgp.StringPrefixSize + len(z.UserSig) + 10 + msgp.BytesPrefixSize + len(z.FinalSig) + 5 + msgp.Int64Size
+	s = 1 + 3 + msgp.Uint64Size + 8 + msgp.BytesPrefixSize + len(z.Payload) + 10 + msgp.StringPrefixSize + len(z.DWalletID) + 8 + msgp.StringPrefixSize + len(z.UserSig) + 9 + msgp.BytesPrefixSize + len(z.FinalSig) + 10 + msgp.Int64Size
 	return
 }
 
