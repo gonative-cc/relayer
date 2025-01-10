@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -79,8 +78,8 @@ var startCmd = &cobra.Command{
 				Host:         config.BtcRPCHost,
 				User:         config.BtcRPCUser,
 				Pass:         config.BtcRPCPass,
-				HTTPPostMode: true,
-				DisableTLS:   false,
+				HTTPPostMode: config.HTTPPostMode,
+				DisableTLS:   config.DisableTLS,
 			},
 			config.BtcConfirmationThreshold,
 			db,
@@ -122,9 +121,9 @@ var startCmd = &cobra.Command{
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 		<-c
-		fmt.Println("Stopping the relayer...")
+		log.Info().Msg("Stopping the relayer...")
 		relayerInstance.Stop()
 		relayerWg.Wait()
-		fmt.Println("Relayer stopped.")
+		log.Info().Msg("Relayer stopped.")
 	},
 }

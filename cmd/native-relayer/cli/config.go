@@ -18,6 +18,8 @@ type Config struct {
 	BtcRPCUser               string        `mapstructure:"btc_rpc_user"`
 	BtcRPCPass               string        `mapstructure:"btc_rpc_pass"`
 	BtcConfirmationThreshold uint8         `mapstructure:"btc_confirmation_threshold"`
+	HTTPPostMode             bool          `mapstructure:"http_post_mode"`
+	DisableTLS               bool          `mapstructure:"disable_tls"`
 	ProcessTxsInterval       time.Duration `mapstructure:"process_txs_interval"`
 	ConfirmTxsInterval       time.Duration `mapstructure:"confirm_txs_interval"`
 	DBFile                   string        `mapstructure:"db_file"`
