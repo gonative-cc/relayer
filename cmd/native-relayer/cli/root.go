@@ -1,11 +1,11 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"sync"
 
 	"github.com/gonative-cc/relayer/nbtc"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var (
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Msg("CLI execution failed")
 		os.Exit(1)
 	}
 }

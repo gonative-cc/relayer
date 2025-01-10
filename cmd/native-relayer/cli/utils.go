@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -32,8 +33,8 @@ func loadConfig() (*Config, error) {
 		return nil, fmt.Errorf("error unmarshalling config: %w", err)
 	}
 
-	fmt.Println("Loaded Configuration:")
-	fmt.Println(config)
+	log.Info().Msg("Loaded Configuration:")
+	log.Info().Interface("config", config).Msg("")
 
 	return &config, nil
 }

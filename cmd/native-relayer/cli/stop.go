@@ -1,8 +1,7 @@
 package cli
 
 import (
-	"fmt"
-
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -11,13 +10,14 @@ var stopCmd = &cobra.Command{
 	Short: "Stops the relayer",
 	Run: func(cmd *cobra.Command, args []string) {
 		if relayerInstance == nil {
-			fmt.Println("Relayer is not running.")
+			log.Info().Msg("Relayer is not running.")
 			return
 		}
-		fmt.Println("Stopping the relayer...")
+		log.Info().Msg("Stopping the relayer...")
 		relayerInstance.Stop()
 		relayerWg.Wait()
 		relayerInstance = nil
-		fmt.Println("Relayer stopped.")
+		log.Info().Msg("Relayer stopped.")
+
 	},
 }

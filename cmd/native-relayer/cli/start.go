@@ -55,7 +55,7 @@ var startCmd = &cobra.Command{
 
 		ikaClient, err := ika.NewClient(
 			suiClient,
-			signer,
+			ikaSigner,
 			ika.SuiCtrCall{
 				Package:  config.IkaNativeLcPackage,
 				Module:   config.IkaNativeLcModule,
@@ -102,7 +102,7 @@ var startCmd = &cobra.Command{
 			db,
 			nativeProcessor,
 			btcProcessor,
-	)
+		)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating relayer")
 			os.Exit(1)

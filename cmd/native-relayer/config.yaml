@@ -16,10 +16,11 @@ ika:
   ika_gas_budget: ""                         
 
 # Bitcoin
-btc_rpc_host: "your-bitcoin-rpc.com"           
-btc_rpc_user: "your-bitcoin-rpc-user"          
-btc_rpc_pass: "your-bitcoin-rpc-password"      
-btc_confirmation_threshold: 6                  
+bitcoin:
+  btc_rpc_host: "your-bitcoin-rpc.com"           
+  btc_rpc_user: "your-bitcoin-rpc-user"          
+  btc_rpc_pass: "your-bitcoin-rpc-password"      
+  btc_confirmation_threshold: 6                  
 
 # Relayer intervals in seconds
 process_txs_interval: 5s                      
@@ -27,4 +28,3 @@ confirm_txs_interval: 7s
 
 # Database
 db_file: "relayer.db"     
-                    
