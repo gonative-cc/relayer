@@ -24,4 +24,5 @@ process_txs_interval: 5s
 confirm_txs_interval: 7s                   
 
 # Database
-db_file: "relayer.db"                         
+db_file: "relayer.db"     
+                    
