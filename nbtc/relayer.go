@@ -9,6 +9,7 @@ import (
 	"github.com/gonative-cc/relayer/dal"
 	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika2btc"
+	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
@@ -27,7 +28,7 @@ type Relayer struct {
 	confirmTxsTicker *time.Ticker
 	// native Sign Request
 	signReqTicker     *time.Ticker
-	signReqFetcher    native2ika.SignReqFetcher
+	signReqFetcher    native.SignReqFetcher
 	signReqStart      int
 	signReqFetchLimit int
 }
@@ -48,7 +49,7 @@ func NewRelayer(
 	db *dal.DB,
 	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
-	fetcher native2ika.SignReqFetcher,
+	fetcher native.SignReqFetcher,
 ) (*Relayer, error) {
 
 	if db == nil {
@@ -192,7 +193,7 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 }
 
 // storeSignRequest stores a single SignReq from the Native chain.
-func (r *Relayer) storeSignRequest(signRequest native2ika.SignReq) error {
+func (r *Relayer) storeSignRequest(signRequest native.SignReq) error {
 	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(signRequest))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)

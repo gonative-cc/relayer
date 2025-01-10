@@ -1,4 +1,4 @@
-package native2ika
+package native
 
 import (
 	"fmt"

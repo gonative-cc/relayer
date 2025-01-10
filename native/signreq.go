@@ -1,4 +1,4 @@
-package native2ika
+package native
 
 //go:generate msgp
 
@@ -13,8 +13,3 @@ type SignReq struct {
 }
 
 type SignReqs []SignReq
-
-// SignRequestFetcher is an interface for getting sign requests from the Native network.
-type SignReqFetcher interface {
-	GetBtcSignRequests(from int, limit int) ([]SignReq, error)
-}

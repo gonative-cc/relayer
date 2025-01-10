@@ -1,4 +1,4 @@
-package native2ika
+package native
 
 import (
 	"fmt"
@@ -7,6 +7,11 @@ import (
 	"net/url"
 	"strconv"
 )
+
+// SignRequestFetcher is an interface for getting sign requests from the Native network.
+type SignReqFetcher interface {
+	GetBtcSignRequests(from int, limit int) ([]SignReq, error)
+}
 
 // APISignRequestFetcher SignRequestFetcher implementation: fetches sign requests from an API.
 type APISignRequestFetcher struct {
