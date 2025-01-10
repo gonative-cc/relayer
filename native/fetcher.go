@@ -2,10 +2,11 @@ package native
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/tinylib/msgp/msgp"
 )
 
 // SignRequestFetcher is an interface for getting sign requests from the Native network.
@@ -38,17 +39,9 @@ func (f *APISignRequestFetcher) GetBtcSignRequests(from, limit int) ([]SignReq, 
 		return nil, fmt.Errorf("API request failed with status code: %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	// The body contains marshaled SignReqs ([]SignReq)
 	var requests SignReqs
-	_, err = requests.UnmarshalMsg(body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SignReqs: %w", err)
+	if err = requests.DecodeMsg(msgp.NewReader(resp.Body)); err != nil {
+		return nil, fmt.Errorf("failed to decode SignReqs: %w", err)
 	}
-
 	return requests, nil
 }
