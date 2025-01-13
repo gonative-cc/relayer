@@ -15,13 +15,17 @@ const (
 )
 
 // InitLogger setups zerolog global logger
-func InitLogger() error {
-	lvl, err := getLogLevel()
-	if err != nil {
-		return err
+func InitLogger(lvl *zerolog.Level) error {
+	var err error
+	var loglevel zerolog.Level
+	if lvl == nil {
+		loglevel, err = getLogLevel()
+		if err != nil {
+			return err
+		}
 	}
 
-	zerolog.SetGlobalLevel(lvl)
+	zerolog.SetGlobalLevel(loglevel)
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	return nil
