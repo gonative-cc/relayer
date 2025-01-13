@@ -1,18 +1,13 @@
 package cli
 
 import (
-	"flag"
 	"fmt"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
-func loadConfig() (*Config, error) {
-	var configFile string
-	flag.StringVar(&configFile, "config", "", "Path to the config file")
-	flag.Parse()
-
+func loadConfig(configFile string) (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")

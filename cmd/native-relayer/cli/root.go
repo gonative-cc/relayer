@@ -2,23 +2,19 @@ package cli
 
 import (
 	"os"
-	"sync"
 
-	"github.com/gonative-cc/relayer/nbtc"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var (
-	verbose bool // Flag for verbose mode
+	configFile string
+	logLevel   string
 
 	rootCmd = &cobra.Command{
 		Use:   "relayer-cli",
 		Short: "CLI tool for managing the relayer",
 	}
-
-	relayerInstance *nbtc.Relayer
-	relayerWg       sync.WaitGroup
 )
 
 func Execute() {
@@ -29,7 +25,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Path to the config file")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "", "Set the log level (trace, debug, info, warn, error, fatal, panic)")
 	rootCmd.AddCommand(startCmd)
-	rootCmd.AddCommand(stopCmd)
 }
