@@ -22,5 +22,8 @@ type Config struct {
 	DisableTLS               bool          `mapstructure:"disable_tls"`
 	ProcessTxsInterval       time.Duration `mapstructure:"process_txs_interval"`
 	ConfirmTxsInterval       time.Duration `mapstructure:"confirm_txs_interval"`
+	SignReqFetchInterval     time.Duration `mapstructure:"sign_req_fetch_interval"`
+	SignReqFetchFrom         int           `mapstructure:"sign_req_fetch_from"`
+	SignReqFetchLimit        int           `mapstructure:"sign_req_fetch_limit"`
 	DBFile                   string        `mapstructure:"db_file"`
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
+	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/gonative-cc/relayer/nbtc"
 	"github.com/rs/zerolog/log"
@@ -92,15 +93,26 @@ var startCmd = &cobra.Command{
 
 		nativeProcessor := native2ika.NewProcessor(ikaClient, db)
 
+		// TODO: replace with the real think once available
+		fetcher, err := native.NewMockAPISignRequestFetcher()
+		if err != nil {
+			log.Error().Err(err).Msg("Error creating SignReq fetcher ")
+			os.Exit(1)
+		}
+
 		relayer, err := nbtc.NewRelayer(
 			nbtc.RelayerConfig{
 				ProcessTxsInterval:    config.ProcessTxsInterval,
 				ConfirmTxsInterval:    config.ConfirmTxsInterval,
 				ConfirmationThreshold: config.BtcConfirmationThreshold,
+				SignReqFetchInterval:  config.SignReqFetchInterval,
+				SignReqFetchFrom:      config.SignReqFetchFrom,
+				SignReqFetchLimit:     config.SignReqFetchLimit,
 			},
 			db,
 			nativeProcessor,
 			btcProcessor,
+			fetcher,
 		)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating relayer")
