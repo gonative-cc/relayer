@@ -36,10 +36,9 @@ type Relayer struct {
 
 // RelayerConfig holds the configuration parameters for the Relayer.
 type RelayerConfig struct {
-	ProcessTxsInterval    time.Duration `json:"processTxsInterval"`
-	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
-	SignReqFetchInterval  time.Duration `json:"signReqFetchInterval"`
-	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
+	ProcessTxsInterval   time.Duration `json:"processTxsInterval"`
+	ConfirmTxsInterval   time.Duration `json:"confirmTxsInterval"`
+	SignReqFetchInterval time.Duration `json:"signReqFetchInterval"`
 	// ID of the first sign req that we want to fetch in
 	SignReqFetchFrom  int `json:"signReqFetchFrom"`
 	SignReqFetchLimit int `json:"signReqFetchLimit"`
@@ -80,10 +79,6 @@ func NewRelayer(
 
 	if relayerConfig.SignReqFetchInterval == 0 {
 		relayerConfig.SignReqFetchInterval = time.Second * 10
-	}
-
-	if relayerConfig.ConfirmationThreshold == 0 {
-		relayerConfig.ConfirmationThreshold = 6
 	}
 
 	return &Relayer{
