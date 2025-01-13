@@ -13,3 +13,6 @@ var ErrNoNativeProcessor = errors.New("nativeProcessor cannot be nil")
 
 // ErrNoNativeProcessor is returned when the btcProcessor is nil.
 var ErrNoBtcProcessor = errors.New("btcProcessor cannot be nil")
+
+// ErrNoFetcher is returned when the fetcher is nil.
+var ErrNoFetcher = errors.New("sign requests fetcher cannot be nil")
