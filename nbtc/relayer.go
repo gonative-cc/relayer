@@ -27,9 +27,10 @@ type Relayer struct {
 	processTxsTicker *time.Ticker
 	confirmTxsTicker *time.Ticker
 	// native Sign Request
-	signReqTicker     *time.Ticker
-	signReqFetcher    native.SignReqFetcher
-	signReqStart      int
+	signReqTicker  *time.Ticker
+	signReqFetcher native.SignReqFetcher
+	// ID of the first sign req that we want to fetch in the next round
+	signReqFetchFrom  int
 	signReqFetchLimit int
 }
 
@@ -37,10 +38,11 @@ type Relayer struct {
 type RelayerConfig struct {
 	ProcessTxsInterval    time.Duration `json:"processTxsInterval"`
 	ConfirmTxsInterval    time.Duration `json:"confirmTxsInterval"`
-	FetchSignReqInterval  time.Duration `json:"fetchSignReqInterval"`
+	SignReqFetchInterval  time.Duration `json:"signReqFetchInterval"`
 	ConfirmationThreshold uint8         `json:"confirmationThreshold"`
-	FetchFrom             int           `json:"fetchFrom"`
-	FetchLimit            int           `json:"fetchLimit"`
+	// ID of the first sign req that we want to fetch in
+	SignReqFetchFrom  int `json:"signReqFetchFrom"`
+	SignReqFetchLimit int `json:"signReqFetchLimit"`
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
@@ -53,25 +55,19 @@ func NewRelayer(
 ) (*Relayer, error) {
 
 	if db == nil {
-		err := err.ErrNoDB
-		log.Err(err).Msg("")
-		return nil, err
+		return nil, err.ErrNoDB
 	}
 
 	if nativeProcessor == nil {
-		err := err.ErrNoNativeProcessor
-		log.Err(err).Msg("")
-		return nil, err
+		return nil, err.ErrNoNativeProcessor
 	}
 
 	if btcProcessor == nil {
-		err := err.ErrNoBtcProcessor
-		log.Err(err).Msg("")
-		return nil, err
+		return nil, err.ErrNoBtcProcessor
 	}
 
 	if fetcher == nil {
-		return err.ErrNoFetcher
+		return nil, err.ErrNoFetcher
 	}
 
 	if relayerConfig.ProcessTxsInterval == 0 {
@@ -82,8 +78,8 @@ func NewRelayer(
 		relayerConfig.ConfirmTxsInterval = time.Second * 7
 	}
 
-	if relayerConfig.FetchSignReqInterval == 0 {
-		relayerConfig.FetchSignReqInterval = time.Second * 10
+	if relayerConfig.SignReqFetchInterval == 0 {
+		relayerConfig.SignReqFetchInterval = time.Second * 10
 	}
 
 	if relayerConfig.ConfirmationThreshold == 0 {
@@ -97,10 +93,10 @@ func NewRelayer(
 		shutdownChan:      make(chan struct{}),
 		processTxsTicker:  time.NewTicker(relayerConfig.ProcessTxsInterval),
 		confirmTxsTicker:  time.NewTicker(relayerConfig.ConfirmTxsInterval),
-		signReqTicker:     time.NewTicker(relayerConfig.FetchSignReqInterval),
+		signReqTicker:     time.NewTicker(relayerConfig.SignReqFetchInterval),
 		signReqFetcher:    fetcher,
-		signReqStart:      relayerConfig.FetchFrom,
-		signReqFetchLimit: relayerConfig.FetchLimit,
+		signReqFetchFrom:  relayerConfig.SignReqFetchFrom,
+		signReqFetchLimit: relayerConfig.SignReqFetchLimit,
 	}, nil
 }
 
@@ -174,7 +170,7 @@ func (r *Relayer) processSignedTxs() error {
 
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
 func (r *Relayer) fetchAndStoreNativeSignRequests() error {
-	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqStart, r.signReqFetchLimit)
+	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqFetchFrom, r.signReqFetchLimit)
 	if err != nil {
 		log.Err(err).Msg("Error fetching sign requests from native, continuing")
 	}
@@ -186,7 +182,7 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 		}
 	}
 
-	r.signReqStart += 5
+	r.signReqFetchFrom += 5
 	return nil
 }
 

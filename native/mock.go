@@ -19,8 +19,8 @@ var rawTxBytes = []byte{
 	0x00, 0x00,
 }
 
-// Mock JSON API handler
-func mockJSONAPI(w http.ResponseWriter, r *http.Request) {
+// Mock API
+func mockSelectSignReq(w http.ResponseWriter, r *http.Request) {
 	// Get the 'from' and 'limit' query parameters
 	from := 0
 	limit := 5 // Default limit
@@ -73,7 +73,7 @@ func generateMockSignRequests(from, limit int) SignReqs {
 // NewMockAPISignRequestFetcher creates a new APISignRequestFetcher with a mock API URL.
 func NewMockAPISignRequestFetcher() (*APISignRequestFetcher, error) {
 	// Create a mock HTTP server
-	ts := httptest.NewServer(http.HandlerFunc(mockJSONAPI))
+	ts := httptest.NewServer(http.HandlerFunc(mockSelectSignReq))
 	fetcher := &APISignRequestFetcher{
 		APIURL: ts.URL,
 	}

@@ -20,10 +20,10 @@ import (
 // testSuite holds the common dependencies
 type testSuite struct {
 	db              *dal.DB
-	mockIkaClient   *ika.MockClient
+	ikaClient       *ika.MockClient
 	btcProcessor    *ika2btc.Processor
 	nativeProcessor *native2ika.Processor
-	mockFetcher     *native.APISignRequestFetcher
+	signReqFetcher  *native.APISignRequestFetcher
 }
 
 var btcClientConfig = rpcclient.ConnConfig{
@@ -38,28 +38,26 @@ var relayerConfig = RelayerConfig{
 	ProcessTxsInterval:    time.Second * 5,
 	ConfirmTxsInterval:    time.Second * 7,
 	ConfirmationThreshold: 6,
-	FetchFrom:             0,
-	FetchLimit:            5,
+	SignReqFetchFrom:      0,
+	SignReqFetchLimit:     5,
 }
 
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
 	db := initTestDB(t)
-	mockIkaClient := ika.NewMockClient()
+	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
-	nativeProcessor := native2ika.NewProcessor(mockIkaClient, db)
-	mockFetcher, err := native.NewMockAPISignRequestFetcher()
-	if err != nil {
-		t.Fatal(err)
-	}
+	nativeProcessor := native2ika.NewProcessor(ikaClient, db)
+	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
+	assert.NilError(t, err)
 
 	return &testSuite{
 		db:              db,
-		mockIkaClient:   mockIkaClient,
+		ikaClient:       ikaClient,
 		btcProcessor:    btcProcessor,
 		nativeProcessor: nativeProcessor,
-		mockFetcher:     mockFetcher,
+		signReqFetcher:  signReqFetcher,
 	}
 }
 
@@ -67,7 +65,7 @@ func Test_Start(t *testing.T) {
 	ts := setupTestSuite(t)
 	daltest.PopulateDB(t, ts.db)
 
-	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.mockFetcher)
+	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.signReqFetcher)
 	assert.NilError(t, err)
 
 	ctx := context.Background()
@@ -110,7 +108,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    ts.btcProcessor,
 			expectedError:   err.ErrNoDB,
-			fetcher:         ts.mockFetcher,
+			fetcher:         ts.signReqFetcher,
 		},
 		{
 			name:            "NativeProcessorError",
@@ -118,7 +116,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			nativeProcessor: nil,
 			btcProcessor:    ts.btcProcessor,
 			expectedError:   err.ErrNoNativeProcessor,
-			fetcher:         ts.mockFetcher,
+			fetcher:         ts.signReqFetcher,
 		},
 		{
 			name:            "BtcProcessorError",
@@ -126,7 +124,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    nil,
 			expectedError:   err.ErrNoBtcProcessor,
-			fetcher:         ts.mockFetcher,
+			fetcher:         ts.signReqFetcher,
 		},
 		{
 			name:            "BlockchainError",
@@ -149,12 +147,12 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 
 func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	ts := setupTestSuite(t)
-	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.mockFetcher)
+	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.signReqFetcher)
 	assert.NilError(t, err)
 
 	err = relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
-	assert.Equal(t, relayer.signReqStart, 5) // Should be 5 after fetching 5 sign requests
+	assert.Equal(t, relayer.signReqFetchFrom, 5) // Should be 5 after fetching 5 sign requests
 
 	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
@@ -163,7 +161,7 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 
 func TestRelayer_storeSignRequest(t *testing.T) {
 	ts := setupTestSuite(t)
-	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.mockFetcher)
+	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.signReqFetcher)
 	assert.NilError(t, err)
 
 	sr := native.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
