@@ -26,6 +26,10 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Path to the config file")
-	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "", "Set the log level (trace, debug, info, warn, error, fatal, panic)")
+	rootCmd.PersistentFlags().StringVar(
+		&logLevel, "log-level",
+		"",
+		"Set the log level (trace, debug, info, warn, error, fatal, panic)",
+	)
 	rootCmd.AddCommand(startCmd)
 }

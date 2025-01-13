@@ -33,6 +33,7 @@ type BitcoinCfg struct {
 	ConfirmationThreshold uint8  `mapstructure:"btc_confirmation_threshold"`
 	HTTPPostMode          bool   `mapstructure:"http_post_mode"`
 	DisableTLS            bool   `mapstructure:"disable_tls"`
+	Network               string `mapstructure:"network"`
 }
 
 type RelayerCfg struct {

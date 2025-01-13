@@ -62,14 +62,14 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error creating Sui client")
 			os.Exit(1)
 		}
-		ikaSigner, err := signer.NewSignertWithMnemonic(config.Ika.SignerMnemonic)
+		signer, err := signer.NewSignertWithMnemonic(config.Ika.SignerMnemonic)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating signer with mnemonic")
 			os.Exit(1)
 		}
 		ikaClient, err := ika.NewClient(
 			suiClient,
-			ikaSigner,
+			signer,
 			ika.SuiCtrCall{
 				Package:  config.Ika.NativeLcPackage,
 				Module:   config.Ika.NativeLcModule,
@@ -94,6 +94,7 @@ var startCmd = &cobra.Command{
 				Pass:         config.Btc.RPCPass,
 				HTTPPostMode: config.Btc.HTTPPostMode,
 				DisableTLS:   config.Btc.DisableTLS,
+				Params:       config.Btc.Network,
 			},
 			config.Btc.ConfirmationThreshold,
 			db,

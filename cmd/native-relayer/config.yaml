@@ -19,7 +19,8 @@ bitcoin:
   btc_rpc_pass: "your-bitcoin-rpc-password"      
   btc_confirmation_threshold: 6  
   http_post_mode: true
-  disable_tls: false           
+  disable_tls: false   
+  network: "testnet"        
 
 relayer:
   process_txs_interval: 5s                      
