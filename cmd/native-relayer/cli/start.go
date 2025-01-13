@@ -10,7 +10,6 @@ import (
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/env"
 	"github.com/gonative-cc/relayer/ika"
@@ -37,10 +36,7 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error parsing log level")
 			os.Exit(1)
 		}
-		if err := env.InitLogger(&logLvl); err != nil {
-			log.Error().Err(err).Msg("Error initializing logger")
-			os.Exit(1)
-		}
+		env.InitLogger(logLvl)
 		configFile, err := cmd.Root().PersistentFlags().GetString("config")
 		if err != nil {
 			log.Error().Err(err).Msg("Error getting config file path")
@@ -106,9 +102,8 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error creating Bitcoin processor")
 			os.Exit(1)
 		}
-		btcProcessor.BtcClient = &bitcoin.MockClient{}
 		nativeProcessor := native2ika.NewProcessor(ikaClient, db)
-		// TODO: replace with the real think once available
+		// TODO: replace with the the real endpoint  once available
 		fetcher, err := native.NewMockAPISignRequestFetcher()
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating SignReq fetcher ")
