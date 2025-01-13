@@ -38,8 +38,6 @@ func mockJSONAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mockRequests := generateMockSignRequests(from, limit)
-
-	// Marshal the entire slice
 	encodedRequests, err := mockRequests.MarshalMsg(nil)
 	if err != nil {
 		http.Error(w, "Failed to encode MessagePack", http.StatusInternalServerError)
@@ -63,8 +61,8 @@ func generateMockSignRequests(from, limit int) SignReqs {
 			//nolint: gosec // This is a mock function, and overflow is unlikely.
 			ID:        uint64(i + 1),
 			Payload:   rawTxBytes,
-			DWalletID: fmt.Sprintf("dwallet%d", i+1),
-			UserSig:   fmt.Sprintf("user_sig%d", i+1),
+			DWalletID: fmt.Sprintf("dwallet-%d", i+1),
+			UserSig:   fmt.Sprintf("user_sig-%d", i+1),
 			Timestamp: time.Now().Unix(),
 		}
 		requests = append(requests, req)

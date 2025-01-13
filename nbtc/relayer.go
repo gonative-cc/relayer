@@ -71,9 +71,7 @@ func NewRelayer(
 	}
 
 	if fetcher == nil {
-		err := err.ErrNoFetcher
-		log.Err(err).Msg("")
-		return nil, err
+		return err.ErrNoFetcher
 	}
 
 	if relayerConfig.ProcessTxsInterval == 0 {

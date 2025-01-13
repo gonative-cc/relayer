@@ -154,7 +154,6 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 
 	err = relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
-
 	assert.Equal(t, relayer.signReqStart, 5) // Should be 5 after fetching 5 sign requests
 
 	requests, err := ts.db.GetPendingIkaSignRequests()
