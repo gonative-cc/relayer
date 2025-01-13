@@ -1,29 +1,32 @@
 # Relayer Configuration
 
-# Native
-native_rpc: "127.0.0.1:26657"  
-native_grpc: "127.0.0.1:9090"       
+native:
+  native_rpc: "127.0.0.1:26657"  
+  native_grpc: "127.0.0.1:9090"       
 
-# IKA
-ika_rpc: "127.0.0.1:0001"          
-ika_signer_mnemonic: "" 
-ika_native_lc_package: ""                
-ika_native_lc_module: ""               
-ika_native_lc_function: ""  
-ika_gas_acc: ""                            
-ika_gas_budget: ""                         
+ika:
+  ika_rpc: "127.0.0.1:0001"          
+  ika_signer_mnemonic: "" 
+  ika_native_lc_package: ""                
+  ika_native_lc_module: ""               
+  ika_native_lc_function: ""  
+  ika_gas_acc: ""                            
+  ika_gas_budget: ""                         
 
-# Bitcoin
-btc_rpc_host: "your-bitcoin-rpc.com"           
-btc_rpc_user: "your-bitcoin-rpc-user"          
-btc_rpc_pass: "your-bitcoin-rpc-password"      
-btc_confirmation_threshold: 6  
-http_post_mode: true
-disable_tls: false           
+bitcoin:
+  btc_rpc_host: "your-bitcoin-rpc.com"           
+  btc_rpc_user: "your-bitcoin-rpc-user"          
+  btc_rpc_pass: "your-bitcoin-rpc-password"      
+  btc_confirmation_threshold: 6  
+  http_post_mode: true
+  disable_tls: false           
 
-# Relayer intervals in seconds
-process_txs_interval: 5s                      
-confirm_txs_interval: 7s                   
+relayer:
+  process_txs_interval: 5s                      
+  confirm_txs_interval: 7s                   
+  sign_req_fetch_interval: 5s
+  sign_req_fetch_from: 0                      
+  sign_req_fetch_limit: 5                    
 
-# Database
-db_file: "relayer.db"     
+db:
+  db_file: "relayer.db"     
