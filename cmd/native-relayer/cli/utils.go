@@ -3,7 +3,10 @@ package cli
 import (
 	"fmt"
 
+	"github.com/gonative-cc/relayer/env"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -29,4 +32,26 @@ func loadConfig(configFile string) (*Config, error) {
 	log.Info().Interface("config", config).Msg("")
 
 	return &config, nil
+}
+
+func prepareEnv(cmd *cobra.Command) (*Config, error) {
+	flags := cmd.Root().PersistentFlags()
+	lvl, err := flags.GetString("log-level")
+	if err != nil {
+		return nil, fmt.Errorf("error getting log level: %w", err)
+	}
+	logLvl, err := zerolog.ParseLevel(lvl)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing log level: %w", err)
+	}
+	env.InitLogger(logLvl)
+	configFile, err := flags.GetString("config")
+	if err != nil {
+		return nil, fmt.Errorf("error getting config file path: %w", err)
+	}
+	config, err := loadConfig(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("error loading config: %w", err)
+	}
+	return config, nil
 }

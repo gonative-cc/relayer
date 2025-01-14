@@ -11,13 +11,11 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gonative-cc/relayer/dal"
-	"github.com/gonative-cc/relayer/env"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/gonative-cc/relayer/nbtc"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -26,27 +24,9 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the relayer",
 	Run: func(cmd *cobra.Command, args []string) {
-		flags := cmd.Root().PersistentFlags()
-		lvl, err := flags.GetString("log-level")
+		config, err := prepareEnv(cmd)
 		if err != nil {
-			log.Error().Err(err).Msg("Error getting log level")
-			os.Exit(1)
-		}
-		logLvl, err := zerolog.ParseLevel(lvl)
-		if err != nil {
-			log.Error().Err(err).Msg("Error parsing log level")
-			os.Exit(1)
-		}
-		env.InitLogger(logLvl)
-		configFile, err := flags.GetString("config")
-		if err != nil {
-			log.Error().Err(err).Msg("Error getting config file path")
-			os.Exit(1)
-		}
-
-		config, err := loadConfig(configFile)
-		if err != nil {
-			log.Error().Err(err).Msg("Error loading config")
+			log.Error().Err(err).Msg("Error preparing env")
 			os.Exit(1)
 		}
 		db, err := dal.NewDB(config.DB.File)
