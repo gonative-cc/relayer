@@ -36,12 +36,12 @@ type Relayer struct {
 
 // RelayerConfig holds the configuration parameters for the Relayer.
 type RelayerConfig struct {
-	ProcessTxsInterval   time.Duration `json:"processTxsInterval"`
-	ConfirmTxsInterval   time.Duration `json:"confirmTxsInterval"`
-	SignReqFetchInterval time.Duration `json:"signReqFetchInterval"`
+	ProcessTxsInterval   time.Duration
+	ConfirmTxsInterval   time.Duration
+	SignReqFetchInterval time.Duration
 	// ID of the first sign req that we want to fetch in
-	SignReqFetchFrom  int `json:"signReqFetchFrom"`
-	SignReqFetchLimit int `json:"signReqFetchLimit"`
+	SignReqFetchFrom  int
+	SignReqFetchLimit int
 }
 
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
