@@ -26,7 +26,8 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the relayer",
 	Run: func(cmd *cobra.Command, args []string) {
-		lvl, err := cmd.Root().PersistentFlags().GetString("log-level")
+		flags := cmd.Root().PersistentFlags()
+		lvl, err := flags.GetString("log-level")
 		if err != nil {
 			log.Error().Err(err).Msg("Error getting log level")
 			os.Exit(1)
@@ -37,7 +38,7 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		env.InitLogger(logLvl)
-		configFile, err := cmd.Root().PersistentFlags().GetString("config")
+		configFile, err := flags.GetString("config")
 		if err != nil {
 			log.Error().Err(err).Msg("Error getting config file path")
 			os.Exit(1)
