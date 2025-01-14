@@ -28,7 +28,7 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := prepareEnv(cmd)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to prepare enviroment")
+			log.Error().Err(err).Msg("Failed to prepare environment")
 			os.Exit(1)
 		}
 		db, err := initDatabase(config.DB)
