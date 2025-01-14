@@ -112,7 +112,7 @@ var startCmd = &cobra.Command{
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := relayer.Start(context.Background()); err != nil {
+			if err := relayer.Start(cmd.Context()); err != nil {
 				log.Error().Err(err).Msg("Relayer encountered an error")
 			}
 		}()
