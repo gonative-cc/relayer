@@ -165,7 +165,13 @@ func createSignReqFetcher() (*native.APISignRequestFetcher, error) {
 	return native.NewMockAPISignRequestFetcher()
 }
 
-func createRelayer(relayerCfg RelayerCfg, db *dal.DB, nativeProcessor *native2ika.Processor, btcProcessor *ika2btc.Processor, fetcher *native.APISignRequestFetcher) (*nbtc.Relayer, error) {
+func createRelayer(
+	relayerCfg RelayerCfg,
+	db *dal.DB,
+	nativeProcessor *native2ika.Processor,
+	btcProcessor *ika2btc.Processor,
+	fetcher *native.APISignRequestFetcher,
+) (*nbtc.Relayer, error) {
 	relayer, err := nbtc.NewRelayer(
 		nbtc.RelayerConfig(relayerCfg),
 		db,
