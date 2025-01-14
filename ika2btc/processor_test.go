@@ -7,7 +7,6 @@ import (
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
-	"github.com/gonative-cc/relayer/errors"
 	"gotest.tools/v3/assert"
 )
 
@@ -43,14 +42,14 @@ func TestCheckConfirmations(t *testing.T) {
 func TestNewProcessor(t *testing.T) {
 	// missing db
 	processor, err := NewProcessor(btcClientConfig, 6, nil)
-	assert.ErrorIs(t, err, errors.ErrNoDB)
+	assert.ErrorIs(t, err, dal.ErrNoDB)
 	assert.Assert(t, processor == nil)
 
 	// missing BTC config
 	db := daltest.InitTestDB(t)
 	btcClientConfig.Host = ""
 	processor, err = NewProcessor(btcClientConfig, 6, db)
-	assert.ErrorIs(t, err, errors.ErrNoBtcConfig)
+	assert.ErrorIs(t, err, bitcoin.ErrNoBtcConfig)
 	assert.Assert(t, processor == nil)
 }
 
