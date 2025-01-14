@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
-	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
@@ -54,19 +54,19 @@ func NewRelayer(
 ) (*Relayer, error) {
 
 	if db == nil {
-		return nil, err.ErrNoDB
+		return nil, dal.ErrNoDB
 	}
 
 	if nativeProcessor == nil {
-		return nil, err.ErrNoNativeProcessor
+		return nil, native.ErrNoNativeProcessor
 	}
 
 	if btcProcessor == nil {
-		return nil, err.ErrNoBtcProcessor
+		return nil, bitcoin.ErrNoBtcProcessor
 	}
 
 	if fetcher == nil {
-		return nil, err.ErrNoFetcher
+		return nil, native.ErrNoFetcher
 	}
 
 	if relayerConfig.ProcessTxsInterval == 0 {
