@@ -12,25 +12,25 @@ type Config struct {
 }
 
 type NativeCfg struct {
-	RPC  string `mapstructure:"native_rpc"`
-	GRPC string `mapstructure:"native_grpc"`
+	RPC  string `mapstructure:"rpc"`
+	GRPC string `mapstructure:"grpc"`
 }
 
 type IkaCfg struct {
-	RPC              string `mapstructure:"ika_rpc"`
-	SignerMnemonic   string `mapstructure:"ika_signer_mnemonic"`
-	NativeLcPackage  string `mapstructure:"ika_native_lc_package"`
-	NativeLcModule   string `mapstructure:"ika_native_lc_module"`
-	NativeLcFunction string `mapstructure:"ika_native_lc_function"`
-	GasAcc           string `mapstructure:"ika_gas_acc"`
-	GasBudget        string `mapstructure:"ika_gas_budget"`
+	RPC              string `mapstructure:"rpc"`
+	SignerMnemonic   string `mapstructure:"signer_mnemonic"`
+	NativeLcPackage  string `mapstructure:"native_lc_package"`
+	NativeLcModule   string `mapstructure:"native_lc_module"`
+	NativeLcFunction string `mapstructure:"native_lc_function"`
+	GasAcc           string `mapstructure:"gas_acc"`
+	GasBudget        string `mapstructure:"gas_budget"`
 }
 
 type BitcoinCfg struct {
-	RPCHost               string `mapstructure:"btc_rpc_host"`
-	RPCUser               string `mapstructure:"btc_rpc_user"`
-	RPCPass               string `mapstructure:"btc_rpc_pass"`
-	ConfirmationThreshold uint8  `mapstructure:"btc_confirmation_threshold"`
+	RPCHost               string `mapstructure:"rpc_host"`
+	RPCUser               string `mapstructure:"rpc_user"`
+	RPCPass               string `mapstructure:"rpc_pass"`
+	ConfirmationThreshold uint8  `mapstructure:"confirmation_threshold"`
 	HTTPPostMode          bool   `mapstructure:"http_post_mode"`
 	DisableTLS            bool   `mapstructure:"disable_tls"`
 	Network               string `mapstructure:"network"`
@@ -45,5 +45,5 @@ type RelayerCfg struct {
 }
 
 type DBCfg struct {
-	File string `mapstructure:"db_file"`
+	File string `mapstructure:"file"`
 }
