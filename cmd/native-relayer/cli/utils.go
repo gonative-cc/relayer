@@ -11,12 +11,13 @@ func loadConfig(configFile string) (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME/.native-relayer")
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
 	}
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return nil, fmt.Errorf("config file not found: %w", err)
+		} else {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 	}

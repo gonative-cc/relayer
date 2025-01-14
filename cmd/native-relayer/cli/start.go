@@ -62,6 +62,7 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Failed to create relayer")
 			os.Exit(1)
 		}
+		// We need it to ensure the relayer actually stops before displaying `realyer stopped` and exiting.
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
