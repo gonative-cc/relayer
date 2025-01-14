@@ -9,7 +9,6 @@ import (
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
-	err "github.com/gonative-cc/relayer/errors"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
@@ -107,7 +106,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			db:              nil,
 			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    ts.btcProcessor,
-			expectedError:   err.ErrNoDB,
+			expectedError:   dal.ErrNoDB,
 			fetcher:         ts.signReqFetcher,
 		},
 		{
@@ -115,7 +114,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			db:              ts.db,
 			nativeProcessor: nil,
 			btcProcessor:    ts.btcProcessor,
-			expectedError:   err.ErrNoNativeProcessor,
+			expectedError:   native.ErrNoNativeProcessor,
 			fetcher:         ts.signReqFetcher,
 		},
 		{
@@ -123,7 +122,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			db:              ts.db,
 			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    nil,
-			expectedError:   err.ErrNoBtcProcessor,
+			expectedError:   bitcoin.ErrNoBtcProcessor,
 			fetcher:         ts.signReqFetcher,
 		},
 		{
@@ -131,7 +130,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			db:              ts.db,
 			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    ts.btcProcessor,
-			expectedError:   err.ErrNoFetcher,
+			expectedError:   native.ErrNoFetcher,
 			fetcher:         nil,
 		},
 	}
