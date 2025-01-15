@@ -9,5 +9,10 @@ func Init() error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
-	return InitLogger()
+	lvl, err := getLogLevelOrdefault()
+	if err != nil {
+		return err
+	}
+	InitLogger(lvl)
+	return nil
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
-	"github.com/gonative-cc/relayer/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,11 +28,11 @@ func NewProcessor(
 ) (*Processor, error) {
 
 	if db == nil {
-		return nil, errors.ErrNoDB
+		return nil, dal.ErrNoDB
 	}
 
 	if btcClientConfig.Host == "" || btcClientConfig.User == "" || btcClientConfig.Pass == "" {
-		return nil, errors.ErrNoBtcConfig
+		return nil, bitcoin.ErrNoBtcConfig
 	}
 
 	client, err := rpcclient.New(&btcClientConfig, nil)

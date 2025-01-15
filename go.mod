@@ -10,13 +10,16 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
+	github.com/tinylib/msgp v1.2.5
 	golang.org/x/sync v0.10.0
-	google.golang.org/grpc v1.69.2
+	google.golang.org/grpc v1.69.4
 
 // cosmossdk.io/api v0.7.5
 // github.com/cometbft/cometbft v1.0.0-rc1.0.20240908111210-ab0be101882f
 // github.com/cosmos/cosmos-sdk v0.52.0-beta.1
 )
+
+require github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
 
 require (
 	cosmossdk.io/api v0.7.6 // indirect
