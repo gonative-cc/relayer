@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # spin up bitcoind node
 echo "Starting bitcoind node and bitcoin-lightclient..."
 make bitcoind-init
