@@ -34,11 +34,10 @@ var btcClientConfig = rpcclient.ConnConfig{
 }
 
 var relayerConfig = RelayerConfig{
-	ProcessTxsInterval:    time.Second * 5,
-	ConfirmTxsInterval:    time.Second * 7,
-	ConfirmationThreshold: 6,
-	SignReqFetchFrom:      0,
-	SignReqFetchLimit:     5,
+	ProcessTxsInterval: time.Second * 5,
+	ConfirmTxsInterval: time.Second * 7,
+	SignReqFetchFrom:   0,
+	SignReqFetchLimit:  5,
 }
 
 // setupTestProcessor initializes the common dependencies
