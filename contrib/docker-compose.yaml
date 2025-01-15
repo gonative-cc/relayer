@@ -54,7 +54,7 @@ services:
   bitcoin-lightclient:
     container_name: bitcoin-lightclient
     hostname: bitcoin-lightclient
-    build: https://github.com/gonative-cc/bitcoin-lightclient.git#udit/dockerize
+    build: https://github.com/gonative-cc/bitcoin-lightclient.git#master
     ports:
       - 9797:9797
 

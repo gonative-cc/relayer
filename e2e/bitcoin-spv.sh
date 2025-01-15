@@ -11,7 +11,7 @@ echo "Started bitcoind node and bitcoin-lightclient"
 # spin up bitcoin-spv relayer
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
-./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml
+./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml &
 
 # make sure bitcoind node is up and running
 docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo
