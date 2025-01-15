@@ -40,10 +40,8 @@ echo "Before Height: $chaintip_height_before"
 echo "After Hash: $chaintip_hash_after"
 echo "After Height: $chaintip_height_after"
 
-if (( chaintip_height_after - chaintip_height_before == 1 )); then
-  echo "The values have a difference of 1."
-else
-  echo "The values do not have a difference of 1."
+if (( chaintip_height_after - chaintip_height_before != 1 )); then
+  echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
 fi
 
 # check if the spv proof has been submitted and is accepted
