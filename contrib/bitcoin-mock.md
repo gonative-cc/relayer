@@ -66,17 +66,17 @@ More information in [developer.bitcoin.org -> testing](https://developer.bitcoin
 
 ### Create BTC fork for testing
 
-In a few cases, we must create a BTC fork for testing. The create-fork.sh script helps you to do this. We support two functions:
+In a few cases, we must create a BTC fork for testing. The create-fork.sh script helps you do this. We provide two functions:
 
 #### Create fork
 
-Create a new fork start at the latest block in the snapshot data.
+Creates a new fork starting at the latest block in the snapshot data.
 
 ```sh
 ./create-fork.sh create <fork-name> <number-block>
 ```
 
-### Extract fork
+#### Extract fork
 
 We can extract any block between a specific range. This command below returns the list of block headers in this range.
 
