@@ -44,5 +44,3 @@ if (( chaintip_height_after - chaintip_height_before != 1 )); then
   echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
 fi
 
-# check if the spv proof has been submitted and is accepted
-
