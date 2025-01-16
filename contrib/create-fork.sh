@@ -2,7 +2,7 @@
 
 
 function createFork() {
-    forkName=$1
+    forkName="./fork-"$1
     forkLength=$2
     echo $forkName
     cp -rf ./bitcoind-snapshot/ $forkName
@@ -12,10 +12,11 @@ function createFork() {
 }
 
 function extractFork() {
-    forkName=$1
+    forkName="./fork-"$1
     start=$2
     end=$3
-    
+
+    echo $forkName
     BITCOIND_DATA=$forkName docker-compose up -d
     docker exec -it bitcoind-node bitcoin-cli -generate $forkLength
 
