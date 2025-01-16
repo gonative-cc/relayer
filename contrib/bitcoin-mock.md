@@ -53,13 +53,13 @@ docker exec -it bitcoind-node /bin/bash
 Then you can generate a block:
 
 ```sh
-bitcoin-cli -regtest generate <number-block>
+bitcoin-cli -regtest -generate <number-block>
 ```
 
 If RPC params are required, you can provide them:
 
 ```sh
-bitcoin-cli -regtest -rpcuser=user -rpcpassword=password generate
+bitcoin-cli -regtest -rpcuser=user -rpcpassword=password -generate <number-block>
 ```
 
 More information in [developer.bitcoin.org -> testing](https://developer.bitcoin.org/examples/testing.html).
