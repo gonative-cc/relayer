@@ -11,7 +11,11 @@ echo "Started bitcoind node and bitcoin-lightclient"
 # spin up bitcoin-spv relayer
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
-./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml &
+./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml 2>stderr.log &
+echo "Started bitcoin-spv relayer"
+
+echo "Waiting for bitcoin-spv relayer to bootstrap..."
+sleep 10
 
 # make sure bitcoind node is up and running
 docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo
@@ -44,3 +48,11 @@ if (( chaintip_height_after - chaintip_height_before != 1 )); then
   echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
 fi
 
+# read the log file of relayer
+if [ ! -s "stderr.log" ]; then
+  echo "ERROR $(cat stderr.log)"
+else
+  echo "SUCCESS: bitcoin block relayed successfully"
+fi
+
+rm -f stderr.log
