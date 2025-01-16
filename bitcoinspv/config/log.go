@@ -46,7 +46,7 @@ func NewRootLogger(format string, logLevel string) (*zap.Logger, error) {
 	}
 	return zap.New(zapcore.NewCore(
 		enc,
-		os.Stderr,
+		os.Stdout,
 		level,
 	)), nil
 }
