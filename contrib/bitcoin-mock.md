@@ -64,6 +64,22 @@ bitcoin-cli -regtest -rpcuser=user -rpcpassword=password -generate <number-block
 
 More information in [developer.bitcoin.org -> testing](https://developer.bitcoin.org/examples/testing.html).
 
+### Create BTC fork for testing 
+
+In a few cases, we must create a BTC fork for testing. The create-fork.sh script helps you to do this. We support two functions: 
+
+#### Create fork
+Create a new fork start at the latest block in the snapshot data. 
+```sh
+./create-fork.sh create <fork-name> <number-block>
+```
+### Extract fork 
+We can extract any block between a specific range. This command below returns the list of block headers in this range.
+
+```sh
+./create-fork.sh extract <fork-name> <start> <end>
+```
+
 ### Reference
 
 - [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface/)

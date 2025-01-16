@@ -1,22 +1,22 @@
 #!/bin/bash
 
-
+# Create fork
 function createFork() {
     forkName="./fork-"$1
     forkLength=$2
-    echo $forkName
+
     cp -rf ./bitcoind-snapshot/ $forkName
     BITCOIND_DATA=$forkName docker-compose up -d
     docker exec -it bitcoind-node bitcoin-cli -generate $forkLength
     docker-compose down
 }
 
+# Extract block between range 
 function extractFork() {
     forkName="./fork-"$1
     start=$2
     end=$3
 
-    echo $forkName
     BITCOIND_DATA=$forkName docker-compose up -d
     docker exec -it bitcoind-node bitcoin-cli -generate $forkLength
 
