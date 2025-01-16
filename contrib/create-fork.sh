@@ -8,21 +8,22 @@ function createFork() {
     cp -rf ./bitcoind-snapshot/ $forkName
     BITCOIND_DATA=$forkName docker-compose up -d
     docker exec -it bitcoind-node bitcoin-cli -generate $forkLength
+    docker-compose down
 }
 
 function extractFork() {
-    start=$1
-    end=$2
+    forkName=$1
+    start=$2
+    end=$3
+    
+    BITCOIND_DATA=$forkName docker-compose up -d
+    docker exec -it bitcoind-node bitcoin-cli -generate $forkLength
+
     for ((i=$start; i<=$end; i++)); do
-	myhash=$(docker exec -it bitcoind-node bitcoin-cli getblockhash $i)
-	echo $myhash
-	ver='0'
-	tmp=$(echo $myhash)
-	echo $tmp
-	echo "$myhash $ver"
-	echo $h
-	# docker exec -it bitcoind-node bitcoin-cli getblockheader $h false
+	hash=$(docker exec -it bitcoind-node bitcoin-cli getblockhash $i | tr -d "\r\n")
+	docker exec -it bitcoind-node bitcoin-cli getblockheader $hash false
     done
+    docker-compose down
 }
 
 
@@ -31,7 +32,7 @@ case "$1" in
       createFork $2 $3
     ;;
   extract)
-      extractFork $2 $3
+      extractFork $2 $3 $4
     ;;
   *)
     echo "Invalid option."
