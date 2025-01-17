@@ -87,7 +87,9 @@ We can extract any block between a specific range. This command below returns th
 ### Reference
 
 - [Running Bitcoind with ZMQ](https://bitcoindev.network/accessing-bitcoins-zeromq-interface/)
-- [Bitlights Labs dev env](https://blog.bitlightlabs.com/posts/setup-local-development-env-regtest)
+
+<!-- Dead link -->
+<!-- - [Bitlights Labs dev env](https://blog.bitlightlabs.com/posts/setup-local-development-env-regtest) -->
 
 ## Btcd
 
