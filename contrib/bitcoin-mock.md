@@ -53,16 +53,36 @@ docker exec -it bitcoind-node /bin/bash
 Then you can generate a block:
 
 ```sh
-bitcoin-cli -regtest generate <number-block>
+bitcoin-cli -regtest -generate <number-block>
 ```
 
 If RPC params are required, you can provide them:
 
 ```sh
-bitcoin-cli -regtest -rpcuser=user -rpcpassword=password generate
+bitcoin-cli -regtest -rpcuser=user -rpcpassword=password -generate <number-block>
 ```
 
 More information in [developer.bitcoin.org -> testing](https://developer.bitcoin.org/examples/testing.html).
+
+### Create BTC fork for testing
+
+In a few cases, we must create a BTC fork for testing. The `create-fork.sh` script helps you do this. We provide two functions:
+
+#### Create fork
+
+Creates a new fork starting at the latest block in the snapshot data.
+
+```sh
+./create-fork.sh create <fork-name> <number-block>
+```
+
+#### Extract fork
+
+Extracts any block between a specified range. This command below returns the list of block headers in this range.
+
+```sh
+./create-fork.sh extract <fork-name> <start> <end>
+```
 
 ### Reference
 
