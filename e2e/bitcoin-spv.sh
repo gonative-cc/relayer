@@ -38,14 +38,12 @@ chaintip_hash_after=$(echo "$chaintip_response_after" | jq -r '.result.Hash')
 chaintip_height_after=$(($(echo "$chaintip_response_after" | jq -r '.result.Height')))
 
 # assert that the lightclient block has increased by 1
-echo "Before Hash: $chaintip_hash_before"
-echo "Before Height: $chaintip_height_before"
-
-echo "After Hash: $chaintip_hash_after"
-echo "After Height: $chaintip_height_after"
-
 if (( chaintip_height_after - chaintip_height_before != 1 )); then
   echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
+  echo "Before Hash: $chaintip_hash_before"
+  echo "Before Height: $chaintip_height_before"
+  echo "After Hash: $chaintip_hash_after"
+  echo "After Height: $chaintip_height_after"
 fi
 
 # read the log file of relayer
