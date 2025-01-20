@@ -35,7 +35,7 @@ type Client struct {
 	retrySleepTime    time.Duration
 	maxRetrySleepTime time.Duration
 
-	// channel for notifying new BTC blocks to reporter
+	// channel for notifying new BTC blocks to relayer
 	blockEventChan chan *types.BlockEvent
 }
 

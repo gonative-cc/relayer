@@ -16,7 +16,7 @@ func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
 
 // getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
 // should be submitted to Native light client from a given set of indexed blocks
-func (r *Reporter) getHeaderMsgsToSubmit(
+func (r *Relayer) getHeaderMsgsToSubmit(
 	ibs []*types.IndexedBlock,
 ) ([][]*wire.BlockHeader, error) {
 	var (
@@ -67,7 +67,7 @@ func (r *Reporter) getHeaderMsgsToSubmit(
 }
 
 // NOTE: modified
-func (r *Reporter) submitHeaderMsgs(msg []*wire.BlockHeader) error {
+func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 	// submit the headers
 	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
 		err := r.nativeClient.InsertHeaders(msg)
@@ -99,7 +99,7 @@ func (r *Reporter) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 // NOTE: modified
 // ProcessHeaders extracts and reports headers from a list of blocks
 // It returns the number of headers that need to be reported (after deduplication)
-func (r *Reporter) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
+func (r *Relayer) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
 	// get a list of MsgInsertHeader msgs with headers to be submitted
 	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(ibs)
 	if err != nil {
@@ -124,7 +124,7 @@ func (r *Reporter) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
 }
 
 // NOTE: modified
-func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, error) {
+func (r *Relayer) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, error) {
 	numSubmittedTxs := 0
 
 	for txIdx, tx := range ib.Txs {
@@ -174,7 +174,7 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 // NOTE: not copied
 // ProcessTransactions tries to extract valid transactions from a list of blocks
 // It returns the number of valid transactions segments, and the number of valid transactions
-func (r *Reporter) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {
+func (r *Relayer) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {
 	var numTxs int
 
 	// extract transactions from the blocks

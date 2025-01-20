@@ -11,8 +11,8 @@ import (
 )
 
 // NOTE: modified
-type Reporter struct {
-	Cfg    *config.ReporterConfig
+type Relayer struct {
+	Cfg    *config.RelayerConfig
 	logger *zap.SugaredLogger
 
 	btcClient    BTCClient
@@ -26,7 +26,7 @@ type Reporter struct {
 	// CheckpointCache *types.CheckpointCache
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
-	metrics              *ReporterMetrics
+	metrics              *RelayerMetrics
 	wg                   sync.WaitGroup
 	started              bool
 	quit                 chan struct{}
@@ -34,20 +34,20 @@ type Reporter struct {
 }
 
 func New(
-	cfg *config.ReporterConfig,
+	cfg *config.RelayerConfig,
 	parentLogger *zap.Logger,
 	btcClient BTCClient,
 	nativeClient *lcclient.Client,
 	retrySleepTime,
 	maxRetrySleepTime time.Duration,
-	metrics *ReporterMetrics,
-) (*Reporter, error) {
+	metrics *RelayerMetrics,
+) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
 	k := int64(1)
 	logger.Infof("BTCCheckpoint parameters: k = %d", k)
 
-	return &Reporter{
+	return &Relayer{
 		Cfg:               cfg,
 		logger:            logger,
 		retrySleepTime:    retrySleepTime,
@@ -62,7 +62,7 @@ func New(
 }
 
 // Start starts the goroutines necessary to manage a vigilante.
-func (r *Reporter) Start() {
+func (r *Relayer) Start() {
 	r.quitMu.Lock()
 	select {
 	case <-r.quit:
@@ -91,7 +91,7 @@ func (r *Reporter) Start() {
 }
 
 // quitChan atomically reads the quit channel.
-func (r *Reporter) quitChan() <-chan struct{} {
+func (r *Relayer) quitChan() <-chan struct{} {
 	r.quitMu.Lock()
 	c := r.quit
 	r.quitMu.Unlock()
@@ -99,7 +99,7 @@ func (r *Reporter) quitChan() <-chan struct{} {
 }
 
 // Stop signals all vigilante goroutines to shutdown.
-func (r *Reporter) Stop() {
+func (r *Relayer) Stop() {
 	r.quitMu.Lock()
 	quit := r.quit
 	r.quitMu.Unlock()
@@ -114,7 +114,7 @@ func (r *Reporter) Stop() {
 }
 
 // ShuttingDown returns whether the vigilante is currently in the process of shutting down or not.
-func (r *Reporter) ShuttingDown() bool {
+func (r *Relayer) ShuttingDown() bool {
 	select {
 	case <-r.quitChan():
 		return true
@@ -124,7 +124,7 @@ func (r *Reporter) ShuttingDown() bool {
 }
 
 // WaitForShutdown blocks until all vigilante goroutines have finished executing.
-func (r *Reporter) WaitForShutdown() {
+func (r *Relayer) WaitForShutdown() {
 	// TODO: let Native client WaitForShutDown
 	r.wg.Wait()
 }

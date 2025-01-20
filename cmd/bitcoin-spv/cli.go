@@ -41,7 +41,7 @@ func CmdStart() *cobra.Command {
 				cfg          config.Config
 				btcClient    *btcclient.Client
 				nativeClient *lcclient.Client
-				spvRelayer   *bitcoinspv.Reporter
+				spvRelayer   *bitcoinspv.Relayer
 				nativeCloser jsonrpc.ClientCloser
 				// server           *rpcserver.Server
 			)
@@ -86,11 +86,11 @@ func CmdStart() *cobra.Command {
 			}
 
 			// register relayer metrics
-			relayerMetrics := bitcoinspv.NewReporterMetrics()
+			relayerMetrics := bitcoinspv.NewRelayerMetrics()
 
 			// create relayer
 			spvRelayer, err = bitcoinspv.New(
-				&cfg.Reporter,
+				&cfg.Relayer,
 				rootLogger,
 				btcClient,
 				nativeClient,

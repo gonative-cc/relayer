@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	defaultConfigFilename = "vigilante.yml"
+	defaultConfigFilename = "bitcoin-spv.yml"
 )
 
 var (
 	defaultBtcCAFile       = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
 	defaultBtcWalletCAFile = filepath.Join(btcutil.AppDataDir("btcwallet", false), "rpc.cert")
-	defaultAppDataDir      = btcutil.AppDataDir("babylon-vigilante", false)
+	defaultAppDataDir      = btcutil.AppDataDir("native-bitcoin-spv", false)
 	defaultConfigFile      = filepath.Join(defaultAppDataDir, defaultConfigFilename)
 )
 
@@ -28,13 +28,8 @@ type Config struct {
 	Common CommonConfig `mapstructure:"common"`
 	BTC    BTCConfig    `mapstructure:"btc"`
 	// Babylon BabylonConfig `mapstructure:"babylon"` // TODO: replace with native:
-	// GRPC    GRPCConfig    `mapstructure:"grpc"`
-	// GRPCWeb GRPCWebConfig `mapstructure:"grpc-web"`
 	// Metrics MetricsConfig `mapstructure:"metrics"`
-	// Submitter         SubmitterConfig         `mapstructure:"submitter"`
-	Reporter ReporterConfig `mapstructure:"reporter"`
-	// Monitor           MonitorConfig           `mapstructure:"monitor"`
-	// BTCStakingTracker BTCStakingTrackerConfig `mapstructure:"btcstaking-tracker"`
+	Relayer RelayerConfig `mapstructure:"relayer"`
 }
 
 func (cfg *Config) Validate() error {
@@ -50,33 +45,13 @@ func (cfg *Config) Validate() error {
 	// 	return fmt.Errorf("invalid config in babylon: %w", err)
 	// }
 
-	// if err := cfg.GRPC.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in grpc: %w", err)
-	// }
-
-	// if err := cfg.GRPCWeb.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in grpc-web: %w", err)
-	// }
-
 	// if err := cfg.Metrics.Validate(); err != nil {
 	// 	return fmt.Errorf("invalid config in metrics: %w", err)
 	// }
 
-	// if err := cfg.Submitter.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in submitter: %w", err)
-	// }
-
-	if err := cfg.Reporter.Validate(); err != nil {
-		return fmt.Errorf("invalid config in reporter: %w", err)
+	if err := cfg.Relayer.Validate(); err != nil {
+		return fmt.Errorf("invalid config in relayer: %w", err)
 	}
-
-	// if err := cfg.Monitor.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in monitor: %w", err)
-	// }
-
-	// if err := cfg.BTCStakingTracker.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in BTC staking tracker: %w", err)
-	// }
 
 	return nil
 }
@@ -95,13 +70,8 @@ func DefaultConfig() *Config {
 		Common: DefaultCommonConfig(),
 		BTC:    DefaultBTCConfig(),
 		// Babylon: DefaultBabylonConfig(), // TODO: replace with native:
-		// GRPC:    DefaultGRPCConfig(),
-		// GRPCWeb: DefaultGRPCWebConfig(),
 		// Metrics: DefaultMetricsConfig(),
-		// Submitter:         DefaultSubmitterConfig(),
-		Reporter: DefaultReporterConfig(),
-		// Monitor:           DefaultMonitorConfig(),
-		// BTCStakingTracker: DefaultBTCStakingTrackerConfig(),
+		Relayer: DefaultRelayerConfig(),
 	}
 }
 
@@ -135,7 +105,7 @@ func WriteSample() error {
 		return err
 	}
 	// write to file
-	err = os.WriteFile("./sample-vigilante.yml", d, 0600)
+	err = os.WriteFile("./sample-bitcoin-spv.yml", d, 0600)
 	if err != nil {
 		return err
 	}

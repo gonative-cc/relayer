@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type ReporterMetrics struct {
+type RelayerMetrics struct {
 	Registry                        *prometheus.Registry
 	SuccessfulHeadersCounter        prometheus.Counter
 	SuccessfulCheckpointsCounter    prometheus.Counter
@@ -19,11 +19,11 @@ type ReporterMetrics struct {
 	NewReportedCheckpointGaugeVec   *prometheus.GaugeVec
 }
 
-func NewReporterMetrics() *ReporterMetrics {
+func NewRelayerMetrics() *RelayerMetrics {
 	registry := prometheus.NewRegistry()
 	registerer := promauto.With(registry)
 
-	metrics := &ReporterMetrics{
+	metrics := &RelayerMetrics{
 		Registry: registry,
 		SuccessfulHeadersCounter: registerer.NewCounter(prometheus.CounterOpts{
 			Name: "vigilante_reporter_reported_headers",
@@ -79,7 +79,7 @@ func NewReporterMetrics() *ReporterMetrics {
 	return metrics
 }
 
-func (sm *ReporterMetrics) RecordMetrics() {
+func (sm *RelayerMetrics) RecordMetrics() {
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
 		for range ticker.C {

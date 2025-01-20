@@ -25,34 +25,12 @@ btc:
   zmq-seq-endpoint: tcp://127.0.0.1:28331  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
   zmq-block-endpoint: tcp://127.0.0.1:28332
   zmq-tx-endpoint: tcp://127.0.0.1:28333
-babylon:
-  key: node0
-  chain-id: chain-test
-  rpc-addr: http://localhost:26657
-  grpc-addr: https://localhost:9090
-  account-prefix: bbn
-  keyring-backend: test
-  gas-adjustment: 1.2
-  gas-prices: 2ubbn
-  key-directory: $TESTNET_PATH/node0/babylond
-  debug: true
-  timeout: 20s
-  block-timeout: ~
-  output-format: json
-  submitter-address: bbn1v6k7k9s8md3k29cu9runasstq5zaa0lpznk27w
-  sign-mode: direct
-grpc:
-  onetime-tls-key: true
-  rpc-key: ""
-  rpc-cert: $TESTNET_PATH/vigilante/rpc.cert
-  endpoints:
-    - localhost:8080
-grpcweb:
-  placeholder: grpcwebconfig
+native:
+  rpc-endpoint: localhost:9797
 metrics:
   host: 0.0.0.0
   server-port: 2112
-reporter:
+relayer:
   netparams: simnet
   btc_cache_size: 1000
   max_headers_in_msg: 100

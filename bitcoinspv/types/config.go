@@ -54,7 +54,7 @@ func GetValidBtcBackends() map[SupportedBtcBackend]bool {
 	return validBtcBackends
 }
 
-// RelayerConfig defines configuration for the reporter.
+// RelayerConfig defines configuration for the relayer.
 type RelayerConfig struct {
 	NetParams       string `mapstructure:"netparams"`          // should be mainnet|testnet|simnet|signet
 	BTCCacheSize    uint64 `mapstructure:"btc_cache_size"`     // size of the BTC cache

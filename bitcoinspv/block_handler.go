@@ -7,7 +7,7 @@ import (
 )
 
 // blockEventHandler handles connected and disconnected blocks from the BTC client.
-func (r *Reporter) blockEventHandler() {
+func (r *Relayer) blockEventHandler() {
 	defer r.wg.Done()
 	quit := r.quitChan()
 
@@ -42,9 +42,9 @@ func (r *Reporter) blockEventHandler() {
 }
 
 // handleConnectedBlocks handles connected blocks from the BTC client.
-func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
+func (r *Relayer) handleConnectedBlocks(event *types.BlockEvent) error {
 	// if the header is too early, ignore it
-	// NOTE: this might happen when bootstrapping is triggered after the reporter
+	// NOTE: this might happen when bootstrapping is triggered after the relayer
 	// has subscribed to the BTC blocks
 	firstCacheBlock := r.btcCache.First()
 	if firstCacheBlock == nil {
@@ -62,7 +62,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	// if the received header is within the cache's region, then this means the events have
 	// an overlap with the cache. Then, perform a consistency check. If the block is duplicated,
 	// then ignore the block, otherwise there is an inconsistency and redo bootstrap
-	// NOTE: this might happen when bootstrapping is triggered after the reporter
+	// NOTE: this might happen when bootstrapping is triggered after the relayer
 	// has subscribed to the BTC blocks
 	if b := r.btcCache.FindBlock(event.Height); b != nil {
 		if b.BlockHash() == event.Header.BlockHash() {
@@ -133,7 +133,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 }
 
 // handleDisconnectedBlocks handles disconnected blocks from the BTC client.
-func (r *Reporter) handleDisconnectedBlocks(event *types.BlockEvent) error {
+func (r *Relayer) handleDisconnectedBlocks(event *types.BlockEvent) error {
 	// get cache tip
 	cacheTip := r.btcCache.Tip()
 	if cacheTip == nil {

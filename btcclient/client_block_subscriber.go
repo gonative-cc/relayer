@@ -16,8 +16,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-// NewWithBlockSubscriber creates a new BTC client that subscribes to newly connected/disconnected blocks
-// used by vigilant reporter
+// NewWithBlockSubscriber creates a new BTC client that subscribes
+// to newly connected/disconnected blocks used by spv relayer
 func NewWithBlockSubscriber(
 	cfg *config.BTCConfig,
 	retrySleepTime,

@@ -18,7 +18,7 @@ var (
 	bootstrapErrReportType = retry.LastErrorOnly(true)
 )
 
-func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
+func (r *Relayer) bootstrap(skipBlockSubscription bool) error {
 	var (
 		ibs []*types.IndexedBlock
 		err error
@@ -77,7 +77,7 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	return nil
 }
 
-func (r *Reporter) reporterQuitCtx() (context.Context, func()) {
+func (r *Relayer) relayerQuitCtx() (context.Context, func()) {
 	quit := r.quitChan()
 	ctx, cancel := context.WithCancel(context.Background())
 	r.wg.Add(1)
@@ -95,9 +95,9 @@ func (r *Reporter) reporterQuitCtx() (context.Context, func()) {
 	return ctx, cancel
 }
 
-func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
+func (r *Relayer) bootstrapWithRetries(skipBlockSubscription bool) {
 	// if we are exiting, we need to cancel this process
-	ctx, cancel := r.reporterQuitCtx()
+	ctx, cancel := r.relayerQuitCtx()
 	defer cancel()
 	if err := retry.Do(func() error {
 		return r.bootstrap(skipBlockSubscription)
@@ -125,7 +125,7 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 
 // initBTCCache fetches the blocks since T-k-w in the BTC canonical chain
 // where T is the height of the latest block in Native light client
-func (r *Reporter) initBTCCache() error {
+func (r *Relayer) initBTCCache() error {
 	var (
 		err                  error
 		bbnLatestBlockHeight int64
@@ -164,7 +164,7 @@ func (r *Reporter) initBTCCache() error {
 
 // waitUntilBTCSync waits for BTC to synchronize until BTC is no shorter than Babylon's BTC light client.
 // It returns BTC last block hash, BTC last block height, and Babylon's base height.
-func (r *Reporter) waitUntilBTCSync() error {
+func (r *Relayer) waitUntilBTCSync() error {
 	var (
 		btcLatestBlockHash   *chainhash.Hash
 		btcLatestBlockHeight int64
