@@ -9,7 +9,7 @@ echo "Started bitcoind node and bitcoin-lightclient"
 
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
-./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml 2>stderr.log &
+./bitcoin-spv --config ./sample-bitcoin-relayer.yml 2>stderr.log &
 RELAYER_PID=$! # gets pid of last background process
 echo "Started bitcoin-spv relayer with PID $RELAYER_PID"
 
@@ -18,7 +18,7 @@ sleep 10
 
 # make sure bitcoind node is up and running
 if ! docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo; then
-  echo "ERROR: failed start bitcoind node"
+  echo "ERROR: failed to start bitcoind node"
   exit 1
 fi
 
