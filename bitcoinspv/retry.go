@@ -10,25 +10,28 @@ import (
 	"cosmossdk.io/log"
 )
 
+var ErrInvalidHeader = errors.New("invalid header")
+
+var ErrDuplicatedSubmission = errors.New("duplicated header submitted")
+
 // TODO add log formatters
 var logger = log.NewLogger(os.Stdout)
 
 // unrecoverableErrors is a list of errors which are unsafe and should not be retried.
 var unrecoverableErrors = []error{
+	ErrInvalidHeader,
+	// populate list of errors
 	// btclctypes.ErrHeaderParentDoesNotExist,
 	// btclctypes.ErrChainWithNotEnoughWork,
-	// btclctypes.ErrInvalidHeader,
 	// btcctypes.ErrProvidedHeaderDoesNotHaveAncestor,
-	// btcctypes.ErrInvalidHeader,
 	// btcctypes.ErrNoCheckpointsForPreviousEpoch,
 	// btcctypes.ErrInvalidCheckpointProof,
-	// checkpointingtypes.ErrBlsPrivKeyDoesNotExist,
 	// TODO Add more errors here
 }
 
 // expectedErrors is a list of errors which can safely be ignored and should not be retried.
 var expectedErrors = []error{
-	// btcctypes.ErrDuplicatedSubmission,
+	ErrDuplicatedSubmission,
 	// btcctypes.ErrInvalidHeader,
 	// TODO Add more errors here
 }
