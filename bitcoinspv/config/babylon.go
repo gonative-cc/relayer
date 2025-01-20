@@ -80,7 +80,7 @@ func DefaultBabylonConfig() BabylonConfig {
 		Timeout:          20 * time.Second,
 		OutputFormat:     "json",
 		SignModeStr:      "direct",
-		SubmitterAddress: "bbn1v6k7k9s8md3k29cu9runasstq5zaa0lpznk27w", // this is currently a placeholder, will not recognized by Babylon
+		SubmitterAddress: "bbn1v6k7k9s8md3k29cu9runasstq5zaa0lpznk27w", // placeholder, will not recognized by Babylon
 	}
 }
 

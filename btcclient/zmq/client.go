@@ -44,7 +44,12 @@ type Client struct {
 }
 
 // New returns an initiated client, or an error.
-func New(parentLogger *zap.Logger, zmqEndpoint string, blockEventChan chan *types.BlockEvent, rpcClient *rpcclient.Client) (*Client, error) {
+func New(
+	parentLogger *zap.Logger,
+	zmqEndpoint string,
+	blockEventChan chan *types.BlockEvent,
+	rpcClient *rpcclient.Client,
+) (*Client, error) {
 	var (
 		zctx  *zmq4.Context
 		zsub  *zmq4.Socket

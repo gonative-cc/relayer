@@ -107,7 +107,8 @@ func DefaultConfig() *Config {
 
 // New returns a fully parsed Config object from a given file directory
 func New(configFile string) (Config, error) {
-	if _, err := os.Stat(configFile); err == nil { // the given file exists, parse it
+	_, err := os.Stat(configFile)
+	if err == nil { // the given file exists, parse it
 		viper.SetConfigFile(configFile)
 		if err := viper.ReadInConfig(); err != nil {
 			return Config{}, err
@@ -122,9 +123,9 @@ func New(configFile string) (Config, error) {
 		return cfg, err
 	} else if errors.Is(err, os.ErrNotExist) { // the given config file does not exist, return error
 		return Config{}, fmt.Errorf("no config file found at %s", configFile)
-	} else { // other errors
-		return Config{}, err
 	}
+	// other errors
+	return Config{}, err
 }
 
 func WriteSample() error {

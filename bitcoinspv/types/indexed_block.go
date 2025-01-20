@@ -12,7 +12,8 @@ import (
 // IndexedBlock is a BTC block with some extra information compared to wire.MsgBlock, including:
 // - block height
 // - txHash, txHashWitness, txIndex for each Tx
-// These are necessary for generating Merkle proof (and thus the `MsgInsertBTCSpvProof` message in babylon) of a certain tx
+// These are necessary for generating Merkle proof
+// (and thus the `MsgInsertBTCSpvProof` message in babylon) of a certain tx
 type IndexedBlock struct {
 	Height int32
 	Header *wire.BlockHeader
@@ -58,7 +59,7 @@ func (ib *IndexedBlock) GenSPVProof(txIdx int) (*BTCSpvProof, error) {
 
 	headerBytes := NewBTCHeaderBytesFromBlockHeader(ib.Header)
 
-	var txsBytes [][]byte
+	txsBytes := make([][]byte, 0, len(ib.Txs))
 	for _, tx := range ib.Txs {
 		var txBuf bytes.Buffer
 		if err := tx.MsgTx().Serialize(&txBuf); err != nil {

@@ -74,7 +74,8 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 			return nil
 		}
 		return fmt.Errorf(
-			"the connecting block (height: %d, hash: %s) is different from the header (height: %d, hash: %s) at the same height in cache",
+			"the connecting block (height: %d, hash: %s) is different from the "+
+				"header (height: %d, hash: %s) at the same height in cache",
 			event.Height,
 			event.Header.BlockHash().String(),
 			b.Height,

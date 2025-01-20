@@ -25,12 +25,12 @@ type Client struct {
 }
 
 // NOTE: not copied
-func New(rpcUrl string) (*Client, jsonrpc.ClientCloser, error) {
+func New(rpcURL string) (*Client, jsonrpc.ClientCloser, error) {
 	ctx := context.Background()
 	clientHandler := Client{}
 
 	closeHandler, err := jsonrpc.NewClient(
-		ctx, rpcUrl, "RPCServerHandler", &clientHandler, nil,
+		ctx, rpcURL, "RPCServerHandler", &clientHandler, nil,
 	)
 	return &clientHandler, closeHandler, err
 }

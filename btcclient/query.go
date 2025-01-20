@@ -201,7 +201,10 @@ func (c *Client) FindTailBlocksByHeight(baseHeight uint64) ([]*types.IndexedBloc
 	}
 
 	if baseHeight > uint64(tipIb.Height) {
-		return nil, fmt.Errorf("invalid base height %d, should not be higher than tip block %d", baseHeight, tipIb.Height)
+		return nil, fmt.Errorf(
+			"invalid base height %d, should not be higher than tip block %d",
+			baseHeight, tipIb.Height,
+		)
 	}
 
 	return c.getChainBlocks(baseHeight, tipIb)

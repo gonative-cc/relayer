@@ -44,9 +44,9 @@ func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhas
 
 	var index = idx
 
-	// i represents starting index of given level. 0 level i.e leafs always start
-	// at index 0
-	var i uint = 0
+	// i represents starting index of given level. 0 level
+	// i.e leafs always start at index 0
+	var i uint // 0
 
 	for size > 1 {
 
@@ -87,7 +87,7 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 		return nil, errors.New("provided index should be smaller that length of transaction list")
 	}
 
-	var txs []*btcutil.Tx
+	txs := make([]*btcutil.Tx, 0, len(transactions))
 	for _, b := range transactions {
 		tx, e := btcutil.NewTxFromBytes(b)
 

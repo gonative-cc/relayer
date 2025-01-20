@@ -12,19 +12,27 @@ import (
 
 // BTCConfig defines configuration for the Bitcoin client
 type BTCConfig struct {
-	DisableClientTLS  bool                      `mapstructure:"no-client-tls"`
-	CAFile            string                    `mapstructure:"ca-file"`
-	Endpoint          string                    `mapstructure:"endpoint"`
-	WalletEndpoint    string                    `mapstructure:"wallet-endpoint"`
-	WalletPassword    string                    `mapstructure:"wallet-password"`
-	WalletName        string                    `mapstructure:"wallet-name"`
-	WalletCAFile      string                    `mapstructure:"wallet-ca-file"`
-	WalletLockTime    int64                     `mapstructure:"wallet-lock-time"` // time duration in which the wallet remains unlocked, in seconds
-	TxFeeMin          chainfee.SatPerKVByte     `mapstructure:"tx-fee-min"`       // minimum tx fee, sat/kvb
-	TxFeeMax          chainfee.SatPerKVByte     `mapstructure:"tx-fee-max"`       // maximum tx fee, sat/kvb
-	DefaultFee        chainfee.SatPerKVByte     `mapstructure:"default-fee"`      // default BTC tx fee in case estimation fails, sat/kvb
-	EstimateMode      string                    `mapstructure:"estimate-mode"`    // the BTC tx fee estimate mode, which is only used by bitcoind, must be either ECONOMICAL or CONSERVATIVE
-	TargetBlockNum    int64                     `mapstructure:"target-block-num"` // this implies how soon the tx is estimated to be included in a block, e.g., 1 means the tx is estimated to be included in the next block
+	DisableClientTLS bool   `mapstructure:"no-client-tls"`
+	CAFile           string `mapstructure:"ca-file"`
+	Endpoint         string `mapstructure:"endpoint"`
+	WalletEndpoint   string `mapstructure:"wallet-endpoint"`
+	WalletPassword   string `mapstructure:"wallet-password"`
+	WalletName       string `mapstructure:"wallet-name"`
+	WalletCAFile     string `mapstructure:"wallet-ca-file"`
+	// time duration in which the wallet remains unlocked, in seconds
+	WalletLockTime int64 `mapstructure:"wallet-lock-time"`
+	// minimum tx fee, sat/kvb
+	TxFeeMin chainfee.SatPerKVByte `mapstructure:"tx-fee-min"`
+	// maximum tx fee, sat/kvb
+	TxFeeMax chainfee.SatPerKVByte `mapstructure:"tx-fee-max"`
+	// default BTC tx fee in case estimation fails, sat/kvb
+	DefaultFee chainfee.SatPerKVByte `mapstructure:"default-fee"`
+	// the BTC tx fee estimate mode, which is only used by bitcoind,
+	// must be either ECONOMICAL or CONSERVATIVE
+	EstimateMode string `mapstructure:"estimate-mode"`
+	// this implies how soon the tx is estimated to be included in a block,
+	// e.g., 1 means the tx is estimated to be included in the next block
+	TargetBlockNum    int64                     `mapstructure:"target-block-num"`
 	NetParams         string                    `mapstructure:"net-params"`
 	Username          string                    `mapstructure:"username"`
 	Password          string                    `mapstructure:"password"`
@@ -97,9 +105,9 @@ func (cfg *BTCConfig) Validate() error {
 const (
 	// Config for polling jittner in bitcoind client, with polling enabled
 	DefaultTxPollingJitter     = 0.5
-	DefaultRpcBtcNodeHost      = "127.0.01:18556"
-	DefaultBtcNodeRpcUser      = "rpcuser"
-	DefaultBtcNodeRpcPass      = "rpcpass"
+	DefaultRPCBtcNodeHost      = "127.0.01:18556"
+	DefaultBtcNodeRPCUser      = "rpcuser"
+	DefaultBtcNodeRPCPass      = "rpcpass"
 	DefaultBtcNodeEstimateMode = "CONSERVATIVE"
 	DefaultBtcblockCacheSize   = 20 * 1024 * 1024 // 20 MB
 	DefaultZmqSeqEndpoint      = "tcp://127.0.0.1:29000"
@@ -111,7 +119,7 @@ func DefaultBTCConfig() BTCConfig {
 	return BTCConfig{
 		DisableClientTLS:  false,
 		CAFile:            defaultBtcCAFile,
-		Endpoint:          DefaultRpcBtcNodeHost,
+		Endpoint:          DefaultRPCBtcNodeHost,
 		WalletEndpoint:    "localhost:18554",
 		WalletPassword:    "walletpass",
 		WalletName:        "default",
@@ -124,8 +132,8 @@ func DefaultBTCConfig() BTCConfig {
 		EstimateMode:      DefaultBtcNodeEstimateMode,
 		TargetBlockNum:    1,
 		NetParams:         types.BtcSimnet.String(),
-		Username:          DefaultBtcNodeRpcUser,
-		Password:          DefaultBtcNodeRpcPass,
+		Username:          DefaultBtcNodeRPCUser,
+		Password:          DefaultBtcNodeRPCPass,
 		ReconnectAttempts: 3,
 		ZmqSeqEndpoint:    DefaultZmqSeqEndpoint,
 		ZmqBlockEndpoint:  DefaultZmqBlockEndpoint,

@@ -37,7 +37,7 @@ type BTCSpvProof struct {
 }
 
 // NOTE: not copied
-func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string, txHash *chainhash.Hash) SPVProof {
+func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txID string, txHash *chainhash.Hash) SPVProof {
 	merklePath := make([]chainhash.Hash, (len(btcSpvProof.MerkleNodes)/32)+1)
 	for i := 0; i < len(btcSpvProof.MerkleNodes)/32; i++ {
 		copy(merklePath[i][:], btcSpvProof.MerkleNodes[i*32:(i+1)*32])
@@ -47,7 +47,7 @@ func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txId string, txHash *chainhash.Has
 
 	return SPVProof{
 		BlockHash:  btcSpvProof.ConfirmingBtcBlockHash,
-		TxId:       txId,
+		TxID:       txID,
 		TxIndex:    btcSpvProof.BtcTransactionIndex,
 		MerklePath: merklePath,
 	}
@@ -62,7 +62,7 @@ type MsgInsertBTCSpvProof struct {
 // NOTE: not copied
 type SPVProof struct {
 	BlockHash  chainhash.Hash
-	TxId       string // 32bytes hash value in string hex format
+	TxID       string // 32bytes hash value in string hex format
 	TxIndex    uint32 // index of transaction in block
 	MerklePath []chainhash.Hash
 }

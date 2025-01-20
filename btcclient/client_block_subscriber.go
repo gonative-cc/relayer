@@ -72,11 +72,17 @@ func NewWithBlockSubscriber(
 	case types.Btcd:
 		notificationHandlers := rpcclient.NotificationHandlers{
 			OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
-				client.logger.Debugf("Block %v at height %d has been connected at time %v", header.BlockHash(), height, header.Timestamp)
+				client.logger.Debugf(
+					"Block %v at height %d has been connected at time %v",
+					header.BlockHash(), height, header.Timestamp,
+				)
 				client.blockEventChan <- types.NewBlockEvent(types.BlockConnected, height, header)
 			},
 			OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
-				client.logger.Debugf("Block %v at height %d has been disconnected at time %v", header.BlockHash(), height, header.Timestamp)
+				client.logger.Debugf(
+					"Block %v at height %d has been disconnected at time %v",
+					header.BlockHash(), height, header.Timestamp,
+				)
 				client.blockEventChan <- types.NewBlockEvent(types.BlockDisconnected, height, header)
 			},
 		}

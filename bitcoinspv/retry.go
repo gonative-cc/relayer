@@ -72,7 +72,7 @@ func RetryDo(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func
 		if err != nil {
 			return err
 		}
-		sleep = sleep + jitter/2
+		sleep += jitter / 2
 
 		if sleep > maxSleepTime {
 			logger.Info("retry timed out")

@@ -45,9 +45,9 @@ type Bitcoind struct {
 
 func DefaultBitcoindConfig() Bitcoind {
 	return Bitcoind{
-		RPCHost:              config.DefaultRpcBtcNodeHost,
-		RPCUser:              config.DefaultBtcNodeRpcUser,
-		RPCPass:              config.DefaultBtcNodeRpcPass,
+		RPCHost:              config.DefaultRPCBtcNodeHost,
+		RPCUser:              config.DefaultBtcNodeRPCUser,
+		RPCPass:              config.DefaultBtcNodeRPCPass,
 		RPCPolling:           false,
 		BlockPollingInterval: 30 * time.Second,
 		TxPollingInterval:    30 * time.Second,

@@ -2,8 +2,8 @@ package bitcoinspv
 
 import (
 	"net/http"
-	_ "net/http/pprof"
 	"regexp"
+	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,5 +37,13 @@ func start(addr string, reg *prometheus.Registry) {
 	}
 	log := metricsLogger.With(zap.String("module", "metrics")).Sugar()
 	log.Infof("Successfully started Prometheus metrics server at %s", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+
+	server := &http.Server{
+		Addr:              addr,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+	err = server.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }
