@@ -76,14 +76,14 @@ func NewWithBlockSubscriber(
 					"Block %v at height %d has been connected at time %v",
 					header.BlockHash(), height, header.Timestamp,
 				)
-				client.blockEventChan <- types.NewBlockEvent(types.BlockConnected, height, header)
+				client.blockEventChan <- types.NewBlockEvent(types.BlockConnected, int64(height), header)
 			},
 			OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
 				client.logger.Debugf(
 					"Block %v at height %d has been disconnected at time %v",
 					header.BlockHash(), height, header.Timestamp,
 				)
-				client.blockEventChan <- types.NewBlockEvent(types.BlockDisconnected, height, header)
+				client.blockEventChan <- types.NewBlockEvent(types.BlockDisconnected, int64(height), header)
 			},
 		}
 

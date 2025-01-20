@@ -15,7 +15,7 @@ import (
 // GetBestBlock provides similar functionality with the btcd.rpcclient.GetBestBlock function
 // We implement this, because this function is only provided by btcd.
 // TODO: replace two rpc calls with only one c.GetBlockCount
-func (c *Client) GetBestBlock() (*chainhash.Hash, uint64, error) {
+func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
 	btcLatestBlockHash, err := c.getBestBlockHashWithRetry()
 	if err != nil {
 		return nil, 0, err
@@ -24,7 +24,7 @@ func (c *Client) GetBestBlock() (*chainhash.Hash, uint64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	btcLatestBlockHeight := uint64(btcLatestBlock.Height)
+	btcLatestBlockHeight := btcLatestBlock.Height
 	return btcLatestBlockHash, btcLatestBlockHeight, nil
 }
 
@@ -40,11 +40,11 @@ func (c *Client) GetBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock,
 	}
 
 	btcTxs := types.GetWrappedTxs(mBlock)
-	return types.NewIndexedBlock(int32(blockInfo.Height), &mBlock.Header, btcTxs), mBlock, nil
+	return types.NewIndexedBlock(blockInfo.Height, &mBlock.Header, btcTxs), mBlock, nil
 }
 
 // GetBlockByHeight returns a block with the given height
-func (c *Client) GetBlockByHeight(height uint64) (*types.IndexedBlock, *wire.MsgBlock, error) {
+func (c *Client) GetBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error) {
 	blockHash, err := c.getBlockHashWithRetry(height)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get block by height %d: %w", height, err)
@@ -57,7 +57,7 @@ func (c *Client) GetBlockByHeight(height uint64) (*types.IndexedBlock, *wire.Msg
 
 	btcTxs := types.GetWrappedTxs(mBlock)
 
-	return types.NewIndexedBlock(int32(height), &mBlock.Header, btcTxs), mBlock, nil
+	return types.NewIndexedBlock(height, &mBlock.Header, btcTxs), mBlock, nil
 }
 
 func (c *Client) getBestBlockHashWithRetry() (*chainhash.Hash, error) {
@@ -80,14 +80,14 @@ func (c *Client) getBestBlockHashWithRetry() (*chainhash.Hash, error) {
 	return blockHash, nil
 }
 
-func (c *Client) getBlockHashWithRetry(height uint64) (*chainhash.Hash, error) {
+func (c *Client) getBlockHashWithRetry(height int64) (*chainhash.Hash, error) {
 	var (
 		blockHash *chainhash.Hash
 		err       error
 	)
 
 	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
-		blockHash, err = c.GetBlockHash(int64(height))
+		blockHash, err = c.GetBlockHash(height)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (c *Client) getBlockHashWithRetry(height uint64) (*chainhash.Hash, error) {
 	}); err != nil {
 		c.logger.Debug(
 			"failed to query the block hash",
-			zap.Uint64("height", height), zap.Error(err),
+			zap.Int64("height", height), zap.Error(err),
 		)
 		return nil, err
 	}
@@ -151,8 +151,8 @@ func (c *Client) getBlockVerboseWithRetry(hash *chainhash.Hash) (*btcjson.GetBlo
 
 // getChainBlocks returns a chain of indexed blocks from the block at baseHeight to the tipBlock
 // note: the caller needs to ensure that tipBlock is on the blockchain
-func (c *Client) getChainBlocks(baseHeight uint64, tipBlock *types.IndexedBlock) ([]*types.IndexedBlock, error) {
-	tipHeight := uint64(tipBlock.Height)
+func (c *Client) getChainBlocks(baseHeight int64, tipBlock *types.IndexedBlock) ([]*types.IndexedBlock, error) {
+	tipHeight := tipBlock.Height
 	if tipHeight < baseHeight {
 		return nil, fmt.Errorf("the tip block height %v is less than the base height %v", tipHeight, baseHeight)
 	}
@@ -194,13 +194,13 @@ func (c *Client) getBestIndexedBlock() (*types.IndexedBlock, error) {
 }
 
 // FindTailBlocksByHeight returns the chain of blocks from the block at baseHeight to the tip
-func (c *Client) FindTailBlocksByHeight(baseHeight uint64) ([]*types.IndexedBlock, error) {
+func (c *Client) FindTailBlocksByHeight(baseHeight int64) ([]*types.IndexedBlock, error) {
 	tipIb, err := c.getBestIndexedBlock()
 	if err != nil {
 		return nil, err
 	}
 
-	if baseHeight > uint64(tipIb.Height) {
+	if baseHeight > tipIb.Height {
 		return nil, fmt.Errorf(
 			"invalid base height %d, should not be higher than tip block %d",
 			baseHeight, tipIb.Height,

@@ -134,7 +134,8 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 		}
 
 		// construct spv proof from tx
-		proof, err := ib.GenSPVProof(txIdx)
+		//nolint:gosec
+		proof, err := ib.GenSPVProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
 		if err != nil {
 			r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
 			return numSubmittedTxs, err

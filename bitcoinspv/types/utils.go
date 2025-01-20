@@ -78,7 +78,7 @@ func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhas
 }
 
 // quite inefficiet method of calculating merkle proofs, created for testing purposes
-func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, error) {
+func CreateProofForIdx(transactions [][]byte, idx uint32) ([]*chainhash.Hash, error) {
 	if len(transactions) == 0 {
 		return nil, errors.New("can't calculate proof for empty transaction list")
 	}
@@ -110,7 +110,7 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 		}
 	}
 
-	branch := createBranch(storeNoNil, uint(len(transactions)), idx)
+	branch := createBranch(storeNoNil, uint(len(transactions)), uint(idx))
 
 	return branch, nil
 }
@@ -119,7 +119,7 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 func SpvProofFromHeaderAndTransactions(
 	headerBytes *BTCHeaderBytes,
 	transactions [][]byte,
-	transactionIdx uint,
+	transactionIdx uint32,
 ) (*BTCSpvProof, error) {
 	proof, e := CreateProofForIdx(transactions, transactionIdx)
 
@@ -136,7 +136,7 @@ func SpvProofFromHeaderAndTransactions(
 	spvProof := BTCSpvProof{
 		ConfirmingBtcBlockHash: headerBytes.ToBlockHeader().BlockHash(),
 		BtcTransaction:         transactions[transactionIdx],
-		BtcTransactionIndex:    uint32(transactionIdx),
+		BtcTransactionIndex:    transactionIdx,
 		MerkleNodes:            flatProof,
 	}
 

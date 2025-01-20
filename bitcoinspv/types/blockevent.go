@@ -16,11 +16,11 @@ const (
 
 type BlockEvent struct {
 	EventType EventType
-	Height    int32
+	Height    int64
 	Header    *wire.BlockHeader
 }
 
-func NewBlockEvent(eventType EventType, height int32, header *wire.BlockHeader) *BlockEvent {
+func NewBlockEvent(eventType EventType, height int64, header *wire.BlockHeader) *BlockEvent {
 	return &BlockEvent{
 		EventType: eventType,
 		Height:    height,

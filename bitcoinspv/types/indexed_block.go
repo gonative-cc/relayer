@@ -15,16 +15,16 @@ import (
 // These are necessary for generating Merkle proof
 // (and thus the `MsgInsertBTCSpvProof` message in babylon) of a certain tx
 type IndexedBlock struct {
-	Height int32
+	Height int64
 	Header *wire.BlockHeader
 	Txs    []*btcutil.Tx
 }
 
-func NewIndexedBlock(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) *IndexedBlock {
+func NewIndexedBlock(height int64, header *wire.BlockHeader, txs []*btcutil.Tx) *IndexedBlock {
 	return &IndexedBlock{height, header, txs}
 }
 
-func NewIndexedBlockFromMsgBlock(height int32, block *wire.MsgBlock) *IndexedBlock {
+func NewIndexedBlockFromMsgBlock(height int64, block *wire.MsgBlock) *IndexedBlock {
 	return &IndexedBlock{
 		height,
 		&block.Header,
@@ -49,11 +49,11 @@ func (ib *IndexedBlock) BlockHash() chainhash.Hash {
 }
 
 // GenSPVProof generates a Merkle proof of a certain tx with index txIdx
-func (ib *IndexedBlock) GenSPVProof(txIdx int) (*BTCSpvProof, error) {
-	if txIdx < 0 {
-		return nil, fmt.Errorf("transaction index should not be negative")
-	}
-	if txIdx >= len(ib.Txs) {
+func (ib *IndexedBlock) GenSPVProof(txIdx uint32) (*BTCSpvProof, error) {
+	// if txIdx < 0 {
+	// 	return nil, fmt.Errorf("transaction index should not be negative")
+	// }
+	if int(txIdx) >= len(ib.Txs) {
 		return nil, fmt.Errorf("transaction index is out of scope: idx=%d, len(Txs)=%d", txIdx, len(ib.Txs))
 	}
 
@@ -69,5 +69,5 @@ func (ib *IndexedBlock) GenSPVProof(txIdx int) (*BTCSpvProof, error) {
 		txsBytes = append(txsBytes, txBytes)
 	}
 
-	return SpvProofFromHeaderAndTransactions(&headerBytes, txsBytes, uint(txIdx))
+	return SpvProofFromHeaderAndTransactions(&headerBytes, txsBytes, txIdx)
 }

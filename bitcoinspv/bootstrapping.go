@@ -128,8 +128,8 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 func (r *Reporter) initBTCCache() error {
 	var (
 		err                  error
-		bbnLatestBlockHeight uint64
-		baseHeight           uint64
+		bbnLatestBlockHeight int64
+		baseHeight           int64
 		ibs                  []*types.IndexedBlock
 	)
 
@@ -144,7 +144,7 @@ func (r *Reporter) initBTCCache() error {
 		return err
 	}
 	// TODO: add height return to LC RPC
-	bbnLatestBlockHeight = uint64(chainBlock.Height)
+	bbnLatestBlockHeight = chainBlock.Height
 
 	// Fetch block since `baseHeight = T - k` from BTC, where
 	// - T is total block count in Native light client
@@ -167,9 +167,9 @@ func (r *Reporter) initBTCCache() error {
 func (r *Reporter) waitUntilBTCSync() error {
 	var (
 		btcLatestBlockHash   *chainhash.Hash
-		btcLatestBlockHeight uint64
+		btcLatestBlockHeight int64
 		bbnLatestBlockHash   *chainhash.Hash
-		bbnLatestBlockHeight uint64
+		bbnLatestBlockHeight int64
 		err                  error
 	)
 
@@ -199,7 +199,7 @@ func (r *Reporter) waitUntilBTCSync() error {
 	bbnLatestBlockHash = chainBlock.Hash
 	// TODO: add height return to LC RPC
 	// bbnLatestBlockHeight = tipRes.Header.Height
-	bbnLatestBlockHeight = uint64(chainBlock.Height)
+	bbnLatestBlockHeight = chainBlock.Height
 	r.logger.Infof(
 		"Light client header chain latest block hash and height: (%v, %d)",
 		bbnLatestBlockHash, bbnLatestBlockHeight,
@@ -226,7 +226,7 @@ func (r *Reporter) waitUntilBTCSync() error {
 			}
 			// TODO: add height return to LC RPC
 			// bbnLatestBlockHeight = tipRes.Header.Height
-			bbnLatestBlockHeight = uint64(chainBlock.Height)
+			bbnLatestBlockHeight = chainBlock.Height
 			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= bbnLatestBlockHeight {
 				r.logger.Infof(
 					"BTC chain (length %d) now catches up with light client header chain (length %d), continue bootstrapping",

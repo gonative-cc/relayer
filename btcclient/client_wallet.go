@@ -133,6 +133,6 @@ func (c *Client) GetHighUTXOAndSum() (*btcjson.ListUnspentResult, float64, error
 }
 
 // CalculateTxFee calculates tx fee based on the given fee rate (BTC/kB) and the tx size
-func CalculateTxFee(feeRateAmount btcutil.Amount, size uint64) (uint64, error) {
-	return uint64(feeRateAmount.MulF64(float64(size) / 1024)), nil
+func CalculateTxFee(feeRateAmount btcutil.Amount, size uint64) (int64, error) {
+	return int64(feeRateAmount.MulF64(float64(size) / 1024)), nil
 }

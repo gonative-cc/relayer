@@ -64,7 +64,7 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	// then ignore the block, otherwise there is an inconsistency and redo bootstrap
 	// NOTE: this might happen when bootstrapping is triggered after the reporter
 	// has subscribed to the BTC blocks
-	if b := r.btcCache.FindBlock(uint64(event.Height)); b != nil {
+	if b := r.btcCache.FindBlock(event.Height); b != nil {
 		if b.BlockHash() == event.Header.BlockHash() {
 			r.logger.Debugf(
 				"the connecting block (height: %d, hash: %s) is known to cache, skipping the block",

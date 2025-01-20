@@ -25,7 +25,7 @@ type Reporter struct {
 	// Internal states of the relayer
 	// CheckpointCache *types.CheckpointCache
 	btcCache             *types.BTCCache
-	btcConfirmationDepth uint64
+	btcConfirmationDepth int64
 	metrics              *ReporterMetrics
 	wg                   sync.WaitGroup
 	started              bool
@@ -44,7 +44,7 @@ func New(
 ) (*Reporter, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
-	k := uint64(1)
+	k := int64(1)
 	logger.Infof("BTCCheckpoint parameters: k = %d", k)
 
 	return &Reporter{
