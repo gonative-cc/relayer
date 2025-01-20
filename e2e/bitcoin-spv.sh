@@ -17,7 +17,10 @@ echo "Waiting for bitcoin-spv relayer to bootstrap..."
 sleep 10
 
 # make sure bitcoind node is up and running
-docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo
+if ! docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo; then
+  echo "ERROR: failed start bitcoind node"
+  exit 1
+fi
 
 # query the lightclient for the latest block
 chaintip_response_before=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
