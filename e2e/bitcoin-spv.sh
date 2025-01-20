@@ -25,7 +25,7 @@ chaintip_response_before=$(curl --user user:password --data-binary '{"jsonrpc":"
 
 # parse the JSON to extract values using jq
 chaintip_hash_before=$(echo "$chaintip_response_before" | jq -r '.result.Hash')
-chaintip_height_before=$(($(echo "$chaintip_response_before" | jq -r '.result.Height')))
+chaintip_height_before=$(echo "$chaintip_response_before" | jq -r '.result.Height')
 
 # produce a block
 docker exec -it bitcoind-node bitcoin-cli -generate 1
@@ -35,10 +35,10 @@ chaintip_response_after=$(curl --user user:password --data-binary '{"jsonrpc":"1
 
 # parse the JSON to extract values using jq
 chaintip_hash_after=$(echo "$chaintip_response_after" | jq -r '.result.Hash')
-chaintip_height_after=$(($(echo "$chaintip_response_after" | jq -r '.result.Height')))
+chaintip_height_after=$(echo "$chaintip_response_after" | jq -r '.result.Height')
 
 # assert that the lightclient block has increased by 1
-if (( chaintip_height_after - chaintip_height_before != 1 )); then
+if [[ $((chaintip_height_after-chaintip_height_before)) != 1 ]]; then
   echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
   echo "Before Hash: $chaintip_hash_before"
   echo "Before Height: $chaintip_height_before"
