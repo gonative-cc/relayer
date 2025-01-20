@@ -62,7 +62,7 @@ func (m BTCHeaderBytes) Marshal() ([]byte, error) {
 func (m BTCHeaderBytes) MustMarshal() []byte {
 	bz, err := m.Marshal()
 	if err != nil {
-		panic("Marshalling failed")
+		panic("Marshaling failed")
 	}
 	return bz
 }

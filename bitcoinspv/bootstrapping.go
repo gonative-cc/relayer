@@ -35,7 +35,7 @@ func (r *Reporter) bootstrap(skipBlockSubscription bool) error {
 	}
 	r.logger.Debugf("BTC cache size: %d", r.btcCache.Size())
 
-	// Subscribe new blocks right after initialising BTC cache,
+	// Subscribe new blocks right after initializing BTC cache,
 	// in order to ensure subscribed blocks and cached blocks do not have overlap.
 	// Otherwise, if we subscribe too early, then they will have overlap,
 	// leading to duplicated header submissions.
@@ -114,7 +114,7 @@ func (r *Reporter) bootstrapWithRetries(skipBlockSubscription bool) {
 		})); err != nil {
 
 		if errors.Is(err, context.Canceled) {
-			// context was cancelled we do not need to anything more, app is quiting
+			// context was canceled we do not need to anything more, app is quiting
 			return
 		}
 

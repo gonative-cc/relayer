@@ -79,7 +79,7 @@ func (c *Client) zmqHandler() {
 	poller.Add(c.zback, zmq.POLLIN)
 OUTER:
 	for {
-		// Wait forever until a message can be received or the context was cancelled.
+		// Wait forever until a message can be received or the context was canceled.
 		polled, err := poller.Poll(-1)
 		if err != nil {
 			break OUTER
@@ -93,8 +93,7 @@ OUTER:
 					break OUTER
 				}
 				c.subs.latestEvent = time.Now()
-				switch msg[0] {
-				case "sequence":
+				if msg[0] == "sequence" {
 					var sequenceMsg SequenceMsg
 					copy(sequenceMsg.Hash[:], msg[1])
 					switch msg[1][32] {
@@ -147,7 +146,7 @@ OUTER:
 }
 
 func (c *Client) sendBlockEvent(hash []byte, event types.EventType) {
-	blockHashStr := hex.EncodeToString(hash[:])
+	blockHashStr := hex.EncodeToString(hash)
 	blockHash, err := chainhash.NewHashFromStr(blockHashStr)
 	if err != nil {
 		c.logger.Errorf("Failed to parse block hash %v: %v", blockHashStr, err)

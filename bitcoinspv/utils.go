@@ -162,7 +162,7 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 		r.logger.Infof("Successfully submitted MsgInsertBTCSpvProof with response %d", res)
 		numSubmittedTxs += 1
 
-		// metrics sent to prometheous instance
+		// metrics sent to prometheus instance
 		r.metrics.SuccessfulCheckpointsCounter.Inc()
 		r.metrics.SecondsSinceLastCheckpointGauge.Set(0)
 		// tx1Block := ckpt.Segments[0].AssocBlock
