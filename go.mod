@@ -17,6 +17,7 @@ require (
 	golang.org/x/sync v0.10.0
 	google.golang.org/grpc v1.69.4
 	gopkg.in/yaml.v2 v2.4.0
+	github.com/jackc/pgx/v4 v4.18.2
 
 // cosmossdk.io/api v0.7.5
 // github.com/cometbft/cometbft v1.0.0-rc1.0.20240908111210-ab0be101882f
@@ -53,7 +54,6 @@ require (
 	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgtype v1.14.0 // indirect
-	github.com/jackc/pgx/v4 v4.18.1 // indirect
 	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/jrick/logrotate v1.0.0 // indirect
