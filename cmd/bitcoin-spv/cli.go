@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/gonative-cc/relayer/bitcoinspv"
@@ -11,14 +10,6 @@ import (
 	"github.com/gonative-cc/relayer/lcclient"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-)
-
-// ENV variables
-const (
-	EnvChainRPC            = "NATIVE_RPC"
-	EnvChainGRPC           = "NATIVE_GRPC"
-	FlagMinimumBlockHeight = "block"
-	defaultPort            = "7272"
 )
 
 var (
@@ -34,7 +25,6 @@ func init() {
 
 // CmdExecute executes the root command.
 func CmdExecute() error {
-	printEnv()
 	return rootCmd.Execute()
 }
 
@@ -43,8 +33,8 @@ func CmdStart() *cobra.Command {
 	var cfgFile = ""
 
 	cmd := &cobra.Command{
-		Use:   "bitcoin-spv",
-		Short: "An relayer for Bitcoin blocks -> Native",
+		Use:   "start",
+		Short: "Runs the bitcoin-spv relayer",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
 				err          error
@@ -112,17 +102,8 @@ func CmdStart() *cobra.Command {
 				panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))
 			}
 
-			// // create RPC server
-			// server, err = rpcserver.New(&cfg.GRPC, rootLogger, nil, spvRelayer, nil, nil)
-			// if err != nil {
-			// 	panic(fmt.Errorf("failed to create bitcoin-spv relayer's RPC server: %w", err))
-			// }
-
 			// start normal-case execution
 			spvRelayer.Start()
-
-			// // start RPC server
-			// server.Start()
 
 			// // start Prometheus metrics server
 			// addr := fmt.Sprintf("%s:%d", cfg.Metrics.Host, cfg.Metrics.ServerPort)
@@ -130,23 +111,17 @@ func CmdStart() *cobra.Command {
 
 			// TODO: uncomment before pushing
 			// SIGINT handling stuff
-			// addInterruptHandler(func() {
-			// 	// TODO: Does this need to wait for the grpc server to finish up any requests?
-			// 	rootLogger.Info("Stopping RPC server...")
-			// 	server.Stop()
-			// 	rootLogger.Info("RPC server shutdown")
-			// })
-			// addInterruptHandler(func() {
-			// 	rootLogger.Info("Stopping relayer...")
-			// 	spvRelayer.Stop()
-			// 	rootLogger.Info("Relayer shutdown")
-			// })
-			// addInterruptHandler(func() {
-			// 	rootLogger.Info("Stopping BTC client...")
-			// 	btcClient.Stop()
-			// 	btcClient.WaitForShutdown()
-			// 	rootLogger.Info("BTC client shutdown")
-			// })
+			addInterruptHandler(func() {
+				rootLogger.Info("Stopping relayer...")
+				spvRelayer.Stop()
+				rootLogger.Info("Relayer shutdown")
+			})
+			addInterruptHandler(func() {
+				rootLogger.Info("Stopping BTC client...")
+				btcClient.Stop()
+				btcClient.WaitForShutdown()
+				rootLogger.Info("BTC client shutdown")
+			})
 			addInterruptHandler(func() {
 				rootLogger.Info("Stopping Native client...")
 				nativeCloser()
@@ -159,13 +134,4 @@ func CmdStart() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultConfigFile(), "config file")
 	return cmd
-}
-
-// just prints the env file.
-func printEnv() {
-	fmt.Printf(
-		"__ENVS used__\n%s = %s\n%s = %s\n-----------------\n",
-		EnvChainRPC, os.Getenv(EnvChainRPC),
-		EnvChainGRPC, os.Getenv(EnvChainGRPC),
-	)
 }
