@@ -53,7 +53,6 @@ func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txID string, txHash *chainhash.Has
 	}
 }
 
-// from https://github.com/babylonchain/babylon/proto/babylon/btccheckpoint/v1/tx.proto#L17
 type MsgInsertBTCSpvProof struct {
 	// Submitter string
 	Proofs []*BTCSpvProof

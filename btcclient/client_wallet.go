@@ -16,7 +16,6 @@ import (
 )
 
 // NewWallet creates a new BTC wallet
-// used by vigilant submitter
 // a wallet is essentially a BTC client
 // that connects to the btcWallet daemon
 func NewWallet(cfg *config.BTCConfig, parentLogger *zap.Logger) (*Client, error) {

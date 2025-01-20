@@ -25,7 +25,7 @@ func (r *Relayer) getHeaderMsgsToSubmit(
 		err         error
 	)
 
-	// find the first header that is not contained in BBN header chain,
+	// find the first header that is not contained in Native header chain,
 	// then submit since this header
 	for i, header := range ibs {
 		// r.logger.Debug(header.Height)

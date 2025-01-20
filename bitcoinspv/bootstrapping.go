@@ -24,7 +24,7 @@ func (r *Relayer) bootstrap(skipBlockSubscription bool) error {
 		err error
 	)
 
-	// ensure BTC has caught up with BBN header chain
+	// ensure BTC has caught up with Native header chain
 	if err := r.waitUntilBTCSync(); err != nil {
 		return err
 	}
@@ -47,23 +47,23 @@ func (r *Relayer) bootstrap(skipBlockSubscription bool) error {
 
 	// r.logger.Infof(
 	// 	"BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.",
-	// 	btcLatestBlockHeight, consistencyInfo.bbnLatestBlockHeight, consistencyInfo.startSyncHeight,
+	// 	btcLatestBlockHeight, consistencyInfo.nativeLatestBlockHeight, consistencyInfo.startSyncHeight,
 	// )
 
 	// extracts and submits headers for each block in ibs
 	// Note: As we are retrieving blocks from btc cache from block just after confirmed block which
 	// we already checked for consistency, we can be sure that
-	// even if rest of the block headers is different than in Babylon
-	// due to reorg, our fork will be better than the one in Babylon.
+	// even if rest of the block headers is different than in native lightclient
+	// due to reorg, our fork will be better than the one in native lightclient.
 	_, err = r.ProcessHeaders(ibs)
 	if err != nil {
-		// this can happen when there are two contentious vigilantes or if our btc node is behind.
+		// this can happen when there are two contentious spv relayers or if our btc node is behind.
 		r.logger.Errorf("Failed to submit headers: %v", err)
 		// returning error as it is up to the caller to decide what do next
 		return err
 	}
 
-	// trim cache to the latest k blocks on BTC (which are same as in BBN)
+	// trim cache to the latest k blocks on BTC (which are same as in Native)
 	maxEntries := r.btcConfirmationDepth
 	if err = r.btcCache.Resize(maxEntries); err != nil {
 		r.logger.Errorf("Failed to resize BTC cache: %v", err)
@@ -127,10 +127,10 @@ func (r *Relayer) bootstrapWithRetries(skipBlockSubscription bool) {
 // where T is the height of the latest block in Native light client
 func (r *Relayer) initBTCCache() error {
 	var (
-		err                  error
-		bbnLatestBlockHeight int64
-		baseHeight           int64
-		ibs                  []*types.IndexedBlock
+		err                     error
+		nativeLatestBlockHeight int64
+		baseHeight              int64
+		ibs                     []*types.IndexedBlock
 	)
 
 	r.btcCache, err = types.NewBTCCache(r.Cfg.BTCCacheSize) // TODO: give an option to be unsized
@@ -144,12 +144,12 @@ func (r *Relayer) initBTCCache() error {
 		return err
 	}
 	// TODO: add height return to LC RPC
-	bbnLatestBlockHeight = chainBlock.Height
+	nativeLatestBlockHeight = chainBlock.Height
 
 	// Fetch block since `baseHeight = T - k` from BTC, where
 	// - T is total block count in Native light client
-	// - k is btcConfirmationDepth of BBN
-	baseHeight = bbnLatestBlockHeight - r.btcConfirmationDepth + 1
+	// - k is btcConfirmationDepth of Native
+	baseHeight = nativeLatestBlockHeight - r.btcConfirmationDepth + 1
 
 	ibs, err = r.btcClient.FindTailBlocksByHeight(baseHeight)
 	if err != nil {
@@ -162,15 +162,15 @@ func (r *Relayer) initBTCCache() error {
 	return nil
 }
 
-// waitUntilBTCSync waits for BTC to synchronize until BTC is no shorter than Babylon's BTC light client.
-// It returns BTC last block hash, BTC last block height, and Babylon's base height.
+// waitUntilBTCSync waits for BTC to synchronize until BTC is no shorter than Native's BTC light client.
+// It returns BTC last block hash, BTC last block height, and Native's base height.
 func (r *Relayer) waitUntilBTCSync() error {
 	var (
-		btcLatestBlockHash   *chainhash.Hash
-		btcLatestBlockHeight int64
-		bbnLatestBlockHash   *chainhash.Hash
-		bbnLatestBlockHeight int64
-		err                  error
+		btcLatestBlockHash      *chainhash.Hash
+		btcLatestBlockHeight    int64
+		nativeLatestBlockHash   *chainhash.Hash
+		nativeLatestBlockHeight int64
+		err                     error
 	)
 
 	// Retrieve hash/height of the latest block in BTC
@@ -183,9 +183,9 @@ func (r *Relayer) waitUntilBTCSync() error {
 	)
 
 	// TODO: if BTC falls behind BTCLightclient's base header,
-	// then the vigilante is incorrectly configured and should panic
+	// then the spv relayer is incorrectly configured and should panic
 
-	// Retrieve hash/height of the latest block in BBN header chain
+	// Retrieve hash/height of the latest block in Native header chain
 	chainBlock, err := r.nativeClient.GetBTCHeaderChainTip()
 	if err != nil {
 		return err
@@ -196,23 +196,23 @@ func (r *Relayer) waitUntilBTCSync() error {
 	// 	return err
 	// }
 
-	bbnLatestBlockHash = chainBlock.Hash
+	nativeLatestBlockHash = chainBlock.Hash
 	// TODO: add height return to LC RPC
-	// bbnLatestBlockHeight = tipRes.Header.Height
-	bbnLatestBlockHeight = chainBlock.Height
+	// nativeLatestBlockHeight = tipRes.Header.Height
+	nativeLatestBlockHeight = chainBlock.Height
 	r.logger.Infof(
 		"Light client header chain latest block hash and height: (%v, %d)",
-		bbnLatestBlockHash, bbnLatestBlockHeight,
+		nativeLatestBlockHash, nativeLatestBlockHeight,
 	)
 
-	// If BTC chain is shorter than BBN header chain, pause until BTC catches up
-	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < bbnLatestBlockHeight {
+	// If BTC chain is shorter than Native header chain, pause until BTC catches up
+	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < nativeLatestBlockHeight {
 		r.logger.Infof(
 			"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
-			btcLatestBlockHeight, bbnLatestBlockHeight,
+			btcLatestBlockHeight, nativeLatestBlockHeight,
 		)
 
-		// periodically check if BTC catches up with BBN.
+		// periodically check if BTC catches up with Native.
 		// When BTC catches up, break and continue the bootstrapping process
 		ticker := time.NewTicker(5 * time.Second) // TODO: parameterise the polling interval
 		for range ticker.C {
@@ -225,18 +225,18 @@ func (r *Relayer) waitUntilBTCSync() error {
 				return err
 			}
 			// TODO: add height return to LC RPC
-			// bbnLatestBlockHeight = tipRes.Header.Height
-			bbnLatestBlockHeight = chainBlock.Height
-			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= bbnLatestBlockHeight {
+			// nativeLatestBlockHeight = tipRes.Header.Height
+			nativeLatestBlockHeight = chainBlock.Height
+			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= nativeLatestBlockHeight {
 				r.logger.Infof(
 					"BTC chain (length %d) now catches up with light client header chain (length %d), continue bootstrapping",
-					btcLatestBlockHeight, bbnLatestBlockHeight,
+					btcLatestBlockHeight, nativeLatestBlockHeight,
 				)
 				break
 			}
 			r.logger.Infof(
 				"BTC chain (length %d) still falls behind light client header chain (length %d), keep waiting",
-				btcLatestBlockHeight, bbnLatestBlockHeight,
+				btcLatestBlockHeight, nativeLatestBlockHeight,
 			)
 		}
 	}

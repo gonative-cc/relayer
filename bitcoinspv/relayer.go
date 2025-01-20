@@ -61,16 +61,16 @@ func New(
 	}, nil
 }
 
-// Start starts the goroutines necessary to manage a vigilante.
+// Start starts the goroutines necessary to manage a spv relayer.
 func (r *Relayer) Start() {
 	r.quitMu.Lock()
 	select {
 	case <-r.quit:
-		// Restart the vigilante goroutines after shutdown finishes.
+		// Restart the spv relayer goroutines after shutdown finishes.
 		r.WaitForShutdown()
 		r.quit = make(chan struct{})
 	default:
-		// Ignore when the vigilante is still running.
+		// Ignore when the spv relayer is still running.
 		if r.started {
 			r.quitMu.Unlock()
 			return
@@ -98,7 +98,7 @@ func (r *Relayer) quitChan() <-chan struct{} {
 	return c
 }
 
-// Stop signals all vigilante goroutines to shutdown.
+// Stop signals all spv relayer goroutines to shutdown.
 func (r *Relayer) Stop() {
 	r.quitMu.Lock()
 	quit := r.quit
@@ -113,7 +113,7 @@ func (r *Relayer) Stop() {
 	}
 }
 
-// ShuttingDown returns whether the vigilante is currently in the process of shutting down or not.
+// ShuttingDown returns whether the spv relayer is currently in the process of shutting down or not.
 func (r *Relayer) ShuttingDown() bool {
 	select {
 	case <-r.quitChan():
@@ -123,7 +123,7 @@ func (r *Relayer) ShuttingDown() bool {
 	}
 }
 
-// WaitForShutdown blocks until all vigilante goroutines have finished executing.
+// WaitForShutdown blocks until all spv relayer goroutines have finished executing.
 func (r *Relayer) WaitForShutdown() {
 	// TODO: let Native client WaitForShutDown
 	r.wg.Wait()

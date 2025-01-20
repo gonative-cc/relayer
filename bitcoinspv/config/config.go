@@ -27,7 +27,7 @@ var (
 type Config struct {
 	Common CommonConfig `mapstructure:"common"`
 	BTC    BTCConfig    `mapstructure:"btc"`
-	// Babylon BabylonConfig `mapstructure:"babylon"` // TODO: replace with native:
+	Native NativeConfig `mapstructure:"native"`
 	// Metrics MetricsConfig `mapstructure:"metrics"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
 }
@@ -41,9 +41,9 @@ func (cfg *Config) Validate() error {
 		return fmt.Errorf("invalid config in btc: %w", err)
 	}
 
-	// if err := cfg.Babylon.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in babylon: %w", err)
-	// }
+	if err := cfg.Native.Validate(); err != nil {
+		return fmt.Errorf("invalid config in native: %w", err)
+	}
 
 	// if err := cfg.Metrics.Validate(); err != nil {
 	// 	return fmt.Errorf("invalid config in metrics: %w", err)
@@ -69,7 +69,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		Common: DefaultCommonConfig(),
 		BTC:    DefaultBTCConfig(),
-		// Babylon: DefaultBabylonConfig(), // TODO: replace with native:
+		Native: DefaultNativeConfig(),
 		// Metrics: DefaultMetricsConfig(),
 		Relayer: DefaultRelayerConfig(),
 	}
