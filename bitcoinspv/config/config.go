@@ -25,9 +25,9 @@ var (
 
 // Config defines the server's top level configuration
 type Config struct {
-	Common  CommonConfig  `mapstructure:"common"`
-	BTC     BTCConfig     `mapstructure:"btc"`
-	Babylon BabylonConfig `mapstructure:"babylon"`
+	Common CommonConfig `mapstructure:"common"`
+	BTC    BTCConfig    `mapstructure:"btc"`
+	// Babylon BabylonConfig `mapstructure:"babylon"` // TODO: replace with native:
 	// GRPC    GRPCConfig    `mapstructure:"grpc"`
 	// GRPCWeb GRPCWebConfig `mapstructure:"grpc-web"`
 	// Metrics MetricsConfig `mapstructure:"metrics"`
@@ -46,9 +46,9 @@ func (cfg *Config) Validate() error {
 		return fmt.Errorf("invalid config in btc: %w", err)
 	}
 
-	if err := cfg.Babylon.Validate(); err != nil {
-		return fmt.Errorf("invalid config in babylon: %w", err)
-	}
+	// if err := cfg.Babylon.Validate(); err != nil {
+	// 	return fmt.Errorf("invalid config in babylon: %w", err)
+	// }
 
 	// if err := cfg.GRPC.Validate(); err != nil {
 	// 	return fmt.Errorf("invalid config in grpc: %w", err)
@@ -92,9 +92,9 @@ func DefaultConfigFile() string {
 // DefaultConfig returns server's default configuration.
 func DefaultConfig() *Config {
 	return &Config{
-		Common:  DefaultCommonConfig(),
-		BTC:     DefaultBTCConfig(),
-		Babylon: DefaultBabylonConfig(),
+		Common: DefaultCommonConfig(),
+		BTC:    DefaultBTCConfig(),
+		// Babylon: DefaultBabylonConfig(), // TODO: replace with native:
 		// GRPC:    DefaultGRPCConfig(),
 		// GRPCWeb: DefaultGRPCWebConfig(),
 		// Metrics: DefaultMetricsConfig(),
