@@ -8,7 +8,6 @@ docker compose up -d
 cd ../
 echo "Started bitcoind node and bitcoin-lightclient"
 
-# spin up bitcoin-spv relayer
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
 ./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml 2>stderr.log &
