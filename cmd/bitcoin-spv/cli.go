@@ -80,7 +80,7 @@ func CmdStart() *cobra.Command {
 				zap.Int64("time", tipBlock.Time))
 
 			// create Native client. Note that requests from Native client are ad hoc
-			nativeClient, nativeCloser, err = lcclient.New("http://localhost:9797")
+			nativeClient, nativeCloser, err = lcclient.New(cfg.Native.RPCEndpoint)
 			if err != nil {
 				panic(fmt.Errorf("failed to open Native client: %w", err))
 			}
