@@ -137,26 +137,18 @@ func (r *Reporter) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, er
 		proof, err := ib.GenSPVProof(txIdx)
 		if err != nil {
 			r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
-			continue
+			return numSubmittedTxs, err
 		}
-
-		r.logger.Infof(
-			"Successfully constructed spv proof %v", proof,
-		)
 
 		// wrap to MsgSpvProof
 		msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID(), tx.Hash())
-
-		r.logger.Infof(
-			"Successfully constructed MsgSpvProof %v", msgSpvProof,
-		)
 
 		// submit the checkpoint to light client
 		res, err := r.nativeClient.VerifySPV(&msgSpvProof)
 		if err != nil {
 			r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
 			r.metrics.FailedCheckpointsCounter.Inc()
-			continue
+			return numSubmittedTxs, err
 		}
 
 		r.logger.Infof("Successfully submitted MsgInsertBTCSpvProof with response %d", res)
@@ -188,6 +180,9 @@ func (r *Reporter) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {
 	for _, ib := range ibs {
 		numBlockTxs, err := r.extractAndSubmitTransactions(ib)
 		if err != nil {
+			if numTxs > 0 {
+				r.logger.Infof("Submitted %d transactions", numTxs)
+			}
 			return numTxs, fmt.Errorf(
 				"failed to extract transactions from block %v: %w", ib.BlockHash(), err,
 			)

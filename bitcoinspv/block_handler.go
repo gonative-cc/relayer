@@ -122,10 +122,10 @@ func (r *Reporter) handleConnectedBlocks(event *types.BlockEvent) error {
 	}
 
 	// NOTE: not copied
-	// extracts and submits checkpoints for each blocks in ibs
+	// extracts and submits transactions for each blocks in ibs
 	_, err = r.ProcessTransactions(headersToProcess)
 	if err != nil {
-		r.logger.Warnf("Failed to submit checkpoint: %v", err)
+		r.logger.Warnf("Failed to submit transactions: %v", err)
 	}
 
 	return nil

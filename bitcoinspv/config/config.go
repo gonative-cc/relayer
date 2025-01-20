@@ -21,8 +21,6 @@ var (
 	defaultBtcWalletCAFile = filepath.Join(btcutil.AppDataDir("btcwallet", false), "rpc.cert")
 	defaultAppDataDir      = btcutil.AppDataDir("babylon-vigilante", false)
 	defaultConfigFile      = filepath.Join(defaultAppDataDir, defaultConfigFilename)
-	defaultRPCKeyFile      = filepath.Join(defaultAppDataDir, "rpc.key")
-	defaultRPCCertFile     = filepath.Join(defaultAppDataDir, "rpc.cert")
 )
 
 // Config defines the server's top level configuration
@@ -136,7 +134,7 @@ func WriteSample() error {
 		return err
 	}
 	// write to file
-	err = os.WriteFile("./sample-vigilante.yml", d, 0644)
+	err = os.WriteFile("./sample-vigilante.yml", d, 0600)
 	if err != nil {
 		return err
 	}

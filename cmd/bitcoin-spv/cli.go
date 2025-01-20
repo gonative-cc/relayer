@@ -82,12 +82,12 @@ func CmdStart() *cobra.Command {
 			tipBlock, err := btcClient.GetTipBlockVerbose()
 			if err != nil {
 				panic(fmt.Errorf("failed to get chain tip block: %w", err))
-			} else {
-				rootLogger.Info("got tip block",
-					zap.String("hash", tipBlock.Hash),
-					zap.Int64("height", tipBlock.Height),
-					zap.Int64("time", tipBlock.Time))
 			}
+
+			rootLogger.Info("got tip block",
+				zap.String("hash", tipBlock.Hash),
+				zap.Int64("height", tipBlock.Height),
+				zap.Int64("time", tipBlock.Time))
 
 			// create Native client. Note that requests from Native client are ad hoc
 			nativeClient, nativeCloser, err = lcclient.New("http://localhost:9797")

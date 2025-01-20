@@ -8,7 +8,13 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-func NewTestClientWithWsSubscriber(rpcClient *rpcclient.Client, cfg *config.BTCConfig, retrySleepTime time.Duration, maxRetrySleepTime time.Duration, blockEventChan chan *types.BlockEvent) (*Client, error) {
+func NewTestClientWithWsSubscriber(
+	rpcClient *rpcclient.Client,
+	cfg *config.BTCConfig,
+	retrySleepTime time.Duration,
+	maxRetrySleepTime time.Duration,
+	blockEventChan chan *types.BlockEvent,
+) (*Client, error) {
 	net, err := GetBTCParams(cfg.NetParams)
 	if err != nil {
 		return nil, err
