@@ -10,7 +10,8 @@ echo "Started bitcoind node and bitcoin-lightclient"
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
 ./bitcoin-spv bitcoin-spv --config ./sample-bitcoin-relayer.yml 2>stderr.log &
-echo "Started bitcoin-spv relayer"
+RELAYER_PID=$! # gets pid of last background process
+echo "Started bitcoin-spv relayer with PID $RELAYER_PID"
 
 echo "Waiting for bitcoin-spv relayer to bootstrap..."
 sleep 10
@@ -52,3 +53,5 @@ else
 fi
 
 rm -f stderr.log
+
+kill $RELAYER_PID
