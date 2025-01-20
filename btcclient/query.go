@@ -14,7 +14,6 @@ import (
 
 // GetBestBlock provides similar functionality with the btcd.rpcclient.GetBestBlock function
 // We implement this, because this function is only provided by btcd.
-// TODO: replace two rpc calls with only one c.GetBlockCount
 func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
 	btcLatestBlockHash, err := c.getBestBlockHashWithRetry()
 	if err != nil {

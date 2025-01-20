@@ -28,11 +28,9 @@ func (r *Relayer) getHeaderMsgsToSubmit(
 	// find the first header that is not contained in Native header chain,
 	// then submit since this header
 	for i, header := range ibs {
-		// r.logger.Debug(header.Height)
 		blockHash := header.BlockHash()
 		var res bool
 		err = RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
-			// TODO: placeholder true is used here for now
 			res, err = r.nativeClient.ContainsBTCBlock(&blockHash)
 			return err
 		})

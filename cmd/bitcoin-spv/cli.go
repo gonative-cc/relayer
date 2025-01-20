@@ -109,7 +109,6 @@ func CmdStart() *cobra.Command {
 			// addr := fmt.Sprintf("%s:%d", cfg.Metrics.Host, cfg.Metrics.ServerPort)
 			// spvRelayer.MetricsStart(addr, relayerMetrics.Registry)
 
-			// TODO: uncomment before pushing
 			// SIGINT handling stuff
 			addInterruptHandler(func() {
 				rootLogger.Info("Stopping relayer...")

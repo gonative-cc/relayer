@@ -57,7 +57,6 @@ func (cfg *BTCConfig) Validate() error {
 	}
 
 	if cfg.BtcBackend == types.Bitcoind {
-		// TODO: implement regex validation for zmq endpoint
 		if cfg.ZmqBlockEndpoint == "" {
 			return errors.New("zmq block endpoint cannot be empty")
 		}

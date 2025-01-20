@@ -57,7 +57,6 @@ func isExpectedErr(err error) bool {
 }
 
 // Do executes a func with retry
-// TODO: check if this is needed, because is not being used.
 func RetryDo(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
 	if err := retryableFunc(); err != nil {
 		if isUnrecoverableErr(err) {

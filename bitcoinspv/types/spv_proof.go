@@ -20,11 +20,9 @@ import "github.com/btcsuite/btcd/chaincfg/chainhash"
 // By looking at 010 we would know that H4 is a right sibling,
 // H12 is left, H5555 is right again.
 type BTCSpvProof struct {
-	// TODO: (update comment) Valid btc header which confirms btc_transaction.
 	// Should have exactly 80 bytes
 	ConfirmingBtcBlockHash chainhash.Hash
-	// TODO: (update comment) Valid bitcoin transaction containing OP_RETURN opcode.
-	BtcTransaction []byte
+	BtcTransaction         []byte
 	// Index of transaction within the block. Index is needed to determine if
 	// currently hashed node is left or right.
 	BtcTransactionIndex uint32

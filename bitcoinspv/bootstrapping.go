@@ -143,7 +143,6 @@ func (r *Relayer) initBTCCache() error {
 	if err != nil {
 		return err
 	}
-	// TODO: add height return to LC RPC
 	nativeLatestBlockHeight = chainBlock.Height
 
 	// Fetch block since `baseHeight = T - k` from BTC, where
@@ -197,8 +196,6 @@ func (r *Relayer) waitUntilBTCSync() error {
 	// }
 
 	nativeLatestBlockHash = chainBlock.Hash
-	// TODO: add height return to LC RPC
-	// nativeLatestBlockHeight = tipRes.Header.Height
 	nativeLatestBlockHeight = chainBlock.Height
 	r.logger.Infof(
 		"Light client header chain latest block hash and height: (%v, %d)",
@@ -224,8 +221,6 @@ func (r *Relayer) waitUntilBTCSync() error {
 			if err != nil {
 				return err
 			}
-			// TODO: add height return to LC RPC
-			// nativeLatestBlockHeight = tipRes.Header.Height
 			nativeLatestBlockHeight = chainBlock.Height
 			if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= nativeLatestBlockHeight {
 				r.logger.Infof(
