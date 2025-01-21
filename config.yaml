@@ -5,29 +5,29 @@ native:
   native_grpc: "127.0.0.1:9090"       
 
 ika:
-  ika_rpc: "127.0.0.1:0001"          
-  ika_signer_mnemonic: "" 
-  ika_native_lc_package: ""                
-  ika_native_lc_module: ""               
-  ika_native_lc_function: ""  
-  ika_gas_acc: ""                            
-  ika_gas_budget: ""                         
+  rpc: "http://127.0.0.1:9000"          
+  signer_mnemonic: "pioneer walk bright bachelor hair evoke evidence lock salute heart shine fetch" 
+  native_lc_package: "0x3"                
+  native_lc_module: "dwallet"      
+  native_lc_function: "dwallet_2pc_mpc_ecdsa_k1"  
+  gas_acc: ""                            
+  gas_budget: 4000                        
 
 bitcoin:
-  btc_rpc_host: "your-bitcoin-rpc.com"           
-  btc_rpc_user: "your-bitcoin-rpc-user"          
-  btc_rpc_pass: "your-bitcoin-rpc-password"      
-  btc_confirmation_threshold: 6  
+  rpc_host: "127.0.0.1:18443"           
+  rpc_user: "testuser"          
+  rpc_pass: "testpassword"      
+  confirmation_threshold: 6  
   http_post_mode: true
   disable_tls: false   
-  network: "testnet"        
+  network: "regtest"        
 
 relayer:
   process_txs_interval: 5s                      
   confirm_txs_interval: 7s                   
   sign_req_fetch_interval: 5s
   sign_req_fetch_from: 0                      
-  sign_req_fetch_limit: 5                    
+  sign_req_fetch_limit: 1                    
 
 db:
   db_file: "relayer.db"     

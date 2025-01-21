@@ -9,6 +9,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // Client defines the methods required for interacting with the Ika network.
@@ -118,21 +119,25 @@ func (p *client) ApproveAndSign(
 		Function:        "approve_messages",
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
-			dwalletCapID,
+			"0x2",
 			messages,
 		},
 		GasBudget: p.GasBudget,
 	}
-	messageApprovals, err := p.c.MoveCall(ctx, req)
+	log.Debug().Msg(fmt.Sprintf("signer %s", p.Signer.Address))
+	_, err := p.c.MoveCall(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error calling approve_messages function: %w", err)
+	}
+	objectIDs := []string{
+		"0xa5b4007bd478fbb155ade6a94501788ab13300904590fc33dbd777a1770cf483",
 	}
 
 	req.Function = "sign"
 	req.TypeArguments = []interface{}{}
 	req.Arguments = []interface{}{
-		signMessagesID,
-		messageApprovals,
+		"0xa5b4007bd478fbb155ade6a94501788ab13300904590fc33dbd777a1770cf483",
+		objectIDs,
 	}
 	resp, err := p.c.MoveCall(ctx, req)
 	if err != nil {
