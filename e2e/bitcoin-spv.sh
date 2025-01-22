@@ -25,7 +25,6 @@ fi
 # query the lightclient for the latest block
 chaintip_response_before=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
 
-# parse the JSON to extract values using jq
 chaintip_hash_before=$(echo "$chaintip_response_before" | jq -r '.result.Hash')
 chaintip_height_before=$(echo "$chaintip_response_before" | jq -r '.result.Height')
 
