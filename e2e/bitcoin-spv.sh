@@ -5,7 +5,6 @@ make bitcoind-init
 cd contrib/
 docker compose up -d
 cd ../
-echo "Started bitcoind node and bitcoin-lightclient"
 
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
