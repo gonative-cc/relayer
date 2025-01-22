@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -e # Exit immediately when the script failed
 echo "Starting bitcoind node and bitcoin-lightclient..."
 make bitcoind-init
 cd contrib/
