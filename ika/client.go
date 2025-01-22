@@ -3,6 +3,7 @@ package ika
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/signer"
@@ -124,21 +125,15 @@ func (p *client) ApproveAndSign(
 		},
 		GasBudget: p.GasBudget,
 	}
-	log.Debug().Msg(fmt.Sprintf("signer %s", p.Signer.Address))
-	_, err := p.c.MoveCall(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("error calling approve_messages function: %w", err)
-	}
-	objectIDs := []string{
-		"0xa5b4007bd478fbb155ade6a94501788ab13300904590fc33dbd777a1770cf483",
-	}
-
-	req.Function = "sign"
+	req.Function = "my_sign"
 	req.TypeArguments = []interface{}{}
 	req.Arguments = []interface{}{
-		"0xa5b4007bd478fbb155ade6a94501788ab13300904590fc33dbd777a1770cf483",
-		objectIDs,
+		dwalletCapID,
 	}
+
+	log.Info().Msg("\x1b[33mIKA signing the sign request...\x1b[0m")
+
+	// original implementation of sign expects 2 ards, object id and array of object ids
 	resp, err := p.c.MoveCall(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error calling sign function: %w", err)
@@ -185,6 +180,11 @@ func extractSignatures(data interface{}) [][]byte {
 			byteArrays = append(byteArrays, byteArray)
 		}
 	}
+	log.Info().Msgf("\x1b[32mSUCCESS\x1b[0m IKA signed the sign request")
+	time.Sleep(1 * time.Second)
+
+	// log.Debug().Msg(fmt.Sprintf("Signature returned from approveAndSign function: %s", byteArrays[0]))
 
 	return byteArrays
+
 }

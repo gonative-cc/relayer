@@ -11,7 +11,7 @@ ika:
   native_lc_module: "dwallet"      
   native_lc_function: "dwallet_2pc_mpc_ecdsa_k1"  
   gas_acc: ""                            
-  gas_budget: 4000                        
+  gas_budget: 4000000                        
 
 bitcoin:
   rpc_host: "127.0.0.1:18443"           
@@ -19,7 +19,7 @@ bitcoin:
   rpc_pass: "testpassword"      
   confirmation_threshold: 6  
   http_post_mode: true
-  disable_tls: false   
+  disable_tls: true   
   network: "regtest"        
 
 relayer:

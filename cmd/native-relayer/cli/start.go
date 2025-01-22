@@ -75,10 +75,10 @@ var startCmd = &cobra.Command{
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 		<-c
-		log.Info().Msg("Stopping the relayer...")
+		log.Info().Msg("\x1b[36mStopping the relayer...\x1b[0m")
 		relayer.Stop()
 		wg.Wait()
-		log.Info().Msg("Relayer stopped.")
+		log.Info().Msg("Relayer stopped")
 	},
 }
 

@@ -25,8 +25,9 @@ func loadConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("error unmarshalling config: %w", err)
 	}
 
-	log.Info().Msg("Loaded Configuration:")
-	log.Info().Interface("config", config).Msg("")
+	log.Debug().Msg("Loaded Configuration:")
+	log.Debug().Interface("config", config).Msg("")
+	log.Info().Msg("\x1b[36mStarting the relayer...\x1b[0m")
 
 	return &config, nil
 }
