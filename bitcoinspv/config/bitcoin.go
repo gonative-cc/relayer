@@ -19,8 +19,6 @@ type BTCConfig struct {
 	WalletPassword   string `mapstructure:"wallet-password"`
 	WalletName       string `mapstructure:"wallet-name"`
 	WalletCAFile     string `mapstructure:"wallet-ca-file"`
-	// time duration in which the wallet remains unlocked, in seconds
-	WalletLockTime int64 `mapstructure:"wallet-lock-time"`
 	// minimum tx fee, sat/kvb
 	TxFeeMin chainfee.SatPerKVByte `mapstructure:"tx-fee-min"`
 	// maximum tx fee, sat/kvb
@@ -123,7 +121,6 @@ func DefaultBTCConfig() BTCConfig {
 		WalletPassword:    "walletpass",
 		WalletName:        "default",
 		WalletCAFile:      defaultBtcWalletCAFile,
-		WalletLockTime:    10,
 		BtcBackend:        types.Btcd,
 		TxFeeMax:          chainfee.SatPerKVByte(20 * 1000), // 20,000sat/kvb = 20sat/vbyte
 		TxFeeMin:          chainfee.SatPerKVByte(1 * 1000),  // 1,000sat/kvb = 1sat/vbyte
