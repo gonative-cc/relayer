@@ -22,7 +22,7 @@ This script sets up a Bitcoin regtest environment, creates wallets, funds them, 
     - Starts `bitcoind` in regtest mode.
 2. Creates wallets:
     - Creates a `wallets` directory if it doesn't exist.
-    - Creates 5 new wallets 
+    - Creates 5 new wallets
     - Backs up each wallet  in the `wallets` directory.
 3. Funds wallets and generates transactions:
     - Restores each wallet from its backup.
@@ -30,4 +30,3 @@ This script sets up a Bitcoin regtest environment, creates wallets, funds them, 
     - Creates a raw transaction sending 0.025 BTC to a new address in the same wallet.
     - Signs the raw transaction.
     - utputs the raw and signed transactions for each wallet.
-    
