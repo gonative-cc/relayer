@@ -146,8 +146,8 @@ func generateMockSignRequests(from, limit int) SignReqs {
 			//nolint: gosec // This is a mock function, and overflow is unlikely.
 			ID:        uint64(i + 1),
 			Payload:   rawTxBytes,
-			DWalletID: fmt.Sprintf("%d", i),
-			UserSig:   fmt.Sprintf("user_sig-%d", i),
+			DWalletID: fmt.Sprintf("dwallet-%d", i+1),
+			UserSig:   fmt.Sprintf("user_sig-%d", i+1),
 			Timestamp: time.Now().Unix(),
 		}
 		requests = append(requests, req)
