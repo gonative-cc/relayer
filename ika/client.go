@@ -3,14 +3,12 @@ package ika
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // Client defines the methods required for interacting with the Ika network.
@@ -120,25 +118,25 @@ func (p *client) ApproveAndSign(
 		Function:        "approve_messages",
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
-			"0x2",
+			dwalletCapID,
 			messages,
 		},
 		GasBudget: p.GasBudget,
 	}
-	req.Function = "my_sign"
+	messageApprovals, err := p.c.MoveCall(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("error calling approve_messages function: %w", err)
+	}
+	req.Function = "sign"
 	req.TypeArguments = []interface{}{}
 	req.Arguments = []interface{}{
-		dwalletCapID,
+		signMessagesID,
+		messageApprovals,
 	}
-
-	log.Info().Msg("\x1b[33mIKA signing the sign request...\x1b[0m")
-
-	// original implementation of sign expects 2 ards, object id and array of object ids
 	resp, err := p.c.MoveCall(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error calling sign function: %w", err)
 	}
-
 	response, err := p.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
 		PriKey:      p.Signer.PriKey,
@@ -180,11 +178,5 @@ func extractSignatures(data interface{}) [][]byte {
 			byteArrays = append(byteArrays, byteArray)
 		}
 	}
-	log.Info().Msgf("\x1b[32mSUCCESS\x1b[0m IKA signed the sign request")
-	time.Sleep(1 * time.Second)
-
-	// log.Debug().Msg(fmt.Sprintf("Signature returned from approveAndSign function: %s", byteArrays[0]))
-
 	return byteArrays
-
 }

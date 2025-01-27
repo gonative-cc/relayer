@@ -24,10 +24,8 @@ func loadConfig(configFile string) (*Config, error) {
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("error unmarshalling config: %w", err)
 	}
-
 	log.Debug().Msg("Loaded Configuration:")
 	log.Debug().Interface("config", config).Msg("")
-	log.Info().Msg("\x1b[36mStarting the relayer...\x1b[0m")
 
 	return &config, nil
 }
