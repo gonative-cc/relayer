@@ -6,7 +6,7 @@ native:
 
 ika:
   rpc: "http://127.0.0.1:9000"          
-  signer_mnemonic: "pioneer walk bright bachelor hair evoke evidence lock salute heart shine fetch" 
+  signer_mnemonic: "your mnemonic" 
   native_lc_package: "0x3"                
   native_lc_module: "dwallet"      
   native_lc_function: "dwallet_2pc_mpc_ecdsa_k1"  
@@ -15,8 +15,8 @@ ika:
 
 bitcoin:
   rpc_host: "127.0.0.1:18443"           
-  rpc_user: "testuser"          
-  rpc_pass: "testpassword"      
+  rpc_user: "your-bitcoin-rpc-user"          
+  rpc_pass: "your-bitcoin-rpc-password"      
   confirmation_threshold: 6  
   http_post_mode: true
   disable_tls: true   

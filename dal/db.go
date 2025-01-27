@@ -6,7 +6,6 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
-	"github.com/rs/zerolog/log"
 )
 
 // IkaSignRequest represents a row in the `ika_sign_requests` table.
@@ -168,7 +167,6 @@ func (db *DB) InsertBtcTx(tx BitcoinTx) error {
 		INSERT INTO bitcoin_txs (sr_id, status, btc_sr_id, timestamp, note) 
 		VALUES (?, ?, ?, ?, ?)`
 	_, err := db.conn.Exec(insertBtcTxSQL, tx.SrID, tx.Status, tx.BtcTxID, tx.Timestamp, tx.Note)
-	log.Debug().Msg(fmt.Sprintf("insertedTransactoin: %+v", tx))
 	return err
 }
 
