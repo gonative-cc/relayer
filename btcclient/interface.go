@@ -29,7 +29,6 @@ type BTCClient interface {
 type BTCWallet interface {
 	Stop()
 	GetWalletPass() string
-	GetWalletLockTime() int64
 	GetNetParams() *chaincfg.Params
 	GetBTCConfig() *config.BTCConfig
 	ListUnspent() ([]btcjson.ListUnspentResult, error)

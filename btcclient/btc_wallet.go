@@ -73,10 +73,6 @@ func (c *Client) GetWalletPass() string {
 	return c.Cfg.WalletPassword
 }
 
-func (c *Client) GetWalletLockTime() int64 {
-	return c.Cfg.WalletLockTime
-}
-
 func (c *Client) GetNetParams() *chaincfg.Params {
 	net, err := GetBTCParams(c.Cfg.NetParams)
 	if err != nil {
