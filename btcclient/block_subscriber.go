@@ -58,7 +58,8 @@ func NewWithBlockSubscriber(
 		// ensure we are using bitcoind as Bitcoin node, as zmq is only supported by bitcoind
 		backend := rpcclient.BitcoindPost25 // TODO: backend version hardcoded cause of reading version bug
 		if backend != rpcclient.BitcoindPre19 && backend != rpcclient.BitcoindPre22 &&
-			backend != rpcclient.BitcoindPre24 && backend != rpcclient.BitcoindPre25 && backend != rpcclient.BitcoindPost25 {
+			backend != rpcclient.BitcoindPre24 && backend != rpcclient.BitcoindPre25 &&
+			backend != rpcclient.BitcoindPost25 {
 			return nil, fmt.Errorf("zmq is only supported by bitcoind, but got %v", backend)
 		}
 
@@ -76,14 +77,18 @@ func NewWithBlockSubscriber(
 					"Block %v at height %d has been connected at time %v",
 					header.BlockHash(), height, header.Timestamp,
 				)
-				client.blockEventChan <- types.NewBlockEvent(types.BlockConnected, int64(height), header)
+				client.blockEventChan <- types.NewBlockEvent(
+					types.BlockConnected, int64(height), header,
+				)
 			},
 			OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
 				client.logger.Debugf(
 					"Block %v at height %d has been disconnected at time %v",
 					header.BlockHash(), height, header.Timestamp,
 				)
-				client.blockEventChan <- types.NewBlockEvent(types.BlockDisconnected, int64(height), header)
+				client.blockEventChan <- types.NewBlockEvent(
+					types.BlockDisconnected, int64(height), header,
+				)
 			},
 		}
 
@@ -103,7 +108,8 @@ func NewWithBlockSubscriber(
 			return nil, err
 		}
 
-		// ensure we are using btcd as Bitcoin node, since Websocket-based subscriber is only available in btcd
+		// ensure we are using btcd as Bitcoin node,
+		// since Websocket-based subscriber is only available in btcd
 		backend, err := rpcClient.BackendVersion()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get BTC backend: %v", err)
@@ -120,17 +126,13 @@ func NewWithBlockSubscriber(
 	return client, nil
 }
 
-func (c *Client) subscribeBlocksByWebSocket() error {
-	if err := c.NotifyBlocks(); err != nil {
-		return err
-	}
-	c.logger.Info("Successfully subscribed to newly connected/disconnected blocks via WebSocket")
-	return nil
-}
-
 func (c *Client) mustSubscribeBlocksByWebSocket() {
 	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
-		return c.subscribeBlocksByWebSocket()
+		if err := c.NotifyBlocks(); err != nil {
+			return err
+		}
+		c.logger.Info("Successfully subscribed to newly connected/disconnected blocks via WebSocket")
+		return nil
 	}); err != nil {
 		panic(err)
 	}

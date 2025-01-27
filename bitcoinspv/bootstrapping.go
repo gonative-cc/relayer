@@ -150,7 +150,7 @@ func (r *Relayer) initBTCCache() error {
 	// - k is btcConfirmationDepth of Native
 	baseHeight = nativeLatestBlockHeight - r.btcConfirmationDepth + 1
 
-	ibs, err = r.btcClient.FindTailBlocksByHeight(baseHeight)
+	ibs, err = r.btcClient.GetTailBlocksByHeight(baseHeight)
 	if err != nil {
 		panic(err)
 	}

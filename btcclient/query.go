@@ -30,7 +30,10 @@ func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
 func (c *Client) GetBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error) {
 	blockInfo, err := c.getBlockVerboseWithRetry(blockHash)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get block verbose by hash %s: %w", blockHash.String(), err)
+		return nil, nil, fmt.Errorf(
+			"failed to get block verbose by hash %s: %w",
+			blockHash.String(), err,
+		)
 	}
 
 	mBlock, err := c.getBlockWithRetry(blockHash)
@@ -150,10 +153,16 @@ func (c *Client) getBlockVerboseWithRetry(hash *chainhash.Hash) (*btcjson.GetBlo
 
 // getChainBlocks returns a chain of indexed blocks from the block at baseHeight to the tipBlock
 // note: the caller needs to ensure that tipBlock is on the blockchain
-func (c *Client) getChainBlocks(baseHeight int64, tipBlock *types.IndexedBlock) ([]*types.IndexedBlock, error) {
+func (c *Client) getChainBlocks(
+	baseHeight int64,
+	tipBlock *types.IndexedBlock,
+) ([]*types.IndexedBlock, error) {
 	tipHeight := tipBlock.Height
 	if tipHeight < baseHeight {
-		return nil, fmt.Errorf("the tip block height %v is less than the base height %v", tipHeight, baseHeight)
+		return nil, fmt.Errorf(
+			"the tip block height %v is less than the base height %v",
+			tipHeight, baseHeight,
+		)
 	}
 
 	// the returned blocks include the block at the base height and the tip block
@@ -192,8 +201,8 @@ func (c *Client) getBestIndexedBlock() (*types.IndexedBlock, error) {
 	return tipIb, nil
 }
 
-// FindTailBlocksByHeight returns the chain of blocks from the block at baseHeight to the tip
-func (c *Client) FindTailBlocksByHeight(baseHeight int64) ([]*types.IndexedBlock, error) {
+// GetTailBlocksByHeight returns the chain of blocks from the block at baseHeight to the tip
+func (c *Client) GetTailBlocksByHeight(baseHeight int64) ([]*types.IndexedBlock, error) {
 	tipIb, err := c.getBestIndexedBlock()
 	if err != nil {
 		return nil, err

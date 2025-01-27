@@ -56,7 +56,10 @@ func NewWallet(cfg *config.BTCConfig, parentLogger *zap.Logger) (*Client, error)
 
 	rpcClient, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create rpc client to BTC for %s backend: %w", cfg.BtcBackend, err)
+		return nil, fmt.Errorf(
+			"failed to create rpc client to BTC for %s backend: %w",
+			cfg.BtcBackend, err,
+		)
 	}
 
 	wallet.logger.Infof("Successfully connected to %s backend", cfg.BtcBackend)

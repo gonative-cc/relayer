@@ -9,30 +9,6 @@ const (
 	maxHeadersInMsg = 100 // maximum number of headers in a MsgInsertHeaders message
 )
 
-type (
-	SupportedBtcNetwork string
-	SupportedBtcBackend string
-)
-
-const (
-	BtcMainnet SupportedBtcNetwork = "mainnet"
-	BtcTestnet SupportedBtcNetwork = "testnet"
-	BtcSimnet  SupportedBtcNetwork = "simnet"
-	BtcRegtest SupportedBtcNetwork = "regtest"
-	BtcSignet  SupportedBtcNetwork = "signet"
-
-	Btcd     SupportedBtcBackend = "btcd"
-	Bitcoind SupportedBtcBackend = "bitcoind"
-)
-
-func (c SupportedBtcNetwork) String() string {
-	return string(c)
-}
-
-func (c SupportedBtcBackend) String() string {
-	return string(c)
-}
-
 func GetValidNetParams() map[string]bool {
 	params := map[string]bool{
 		BtcMainnet.String(): true,

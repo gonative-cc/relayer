@@ -18,7 +18,7 @@ import (
 	"github.com/lightningnetwork/lnd/chainntnfs/btcdnotify"
 )
 
-type Btcd struct {
+type BtcdConfig struct {
 	RPCHost        string
 	RPCUser        string
 	RPCPass        string
@@ -28,7 +28,7 @@ type Btcd struct {
 	BlockCacheSize uint64
 }
 
-type Bitcoind struct {
+type BitcoindConfig struct {
 	RPCHost              string
 	RPCUser              string
 	RPCPass              string
@@ -43,8 +43,8 @@ type Bitcoind struct {
 	BlockCacheSize       uint64
 }
 
-func DefaultBitcoindConfig() Bitcoind {
-	return Bitcoind{
+func DefaultBitcoindConfig() BitcoindConfig {
+	return BitcoindConfig{
 		RPCHost:              config.DefaultRPCBtcNodeHost,
 		RPCUser:              config.DefaultBtcNodeRPCUser,
 		RPCPass:              config.DefaultBtcNodeRPCPass,
@@ -60,8 +60,8 @@ func DefaultBitcoindConfig() Bitcoind {
 }
 
 type BtcNodeBackendConfig struct {
-	Btcd              *Btcd
-	Bitcoind          *Bitcoind
+	Btcd              *BtcdConfig
+	Bitcoind          *BitcoindConfig
 	ActiveNodeBackend types.SupportedBtcBackend
 }
 
@@ -85,7 +85,7 @@ func CfgToBtcNodeBackendConfig(cfg config.BTCConfig, rawCert string) *BtcNodeBac
 	case types.Btcd:
 		return &BtcNodeBackendConfig{
 			ActiveNodeBackend: types.Btcd,
-			Btcd: &Btcd{
+			Btcd: &BtcdConfig{
 				RPCHost:    cfg.Endpoint,
 				RPCUser:    cfg.Username,
 				RPCPass:    cfg.Password,
