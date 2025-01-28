@@ -53,7 +53,7 @@ SELECT COUNT(*) FROM ika_sign_requests`)
 	assert.Equal(t, int64(123+workers*batch), sr.Timestamp)
 
 }
-func insertManySignReq(t *testing.T, done chan<- bool, db *DB, idFrom, idTo uint64) {
+func insertManySignReq(t *testing.T, done chan<- bool, db DB, idFrom, idTo uint64) {
 	for i := idFrom; i < idTo; i++ {
 		sr := IkaSignRequest{
 			ID:        i,
@@ -71,7 +71,7 @@ func insertManySignReq(t *testing.T, done chan<- bool, db *DB, idFrom, idTo uint
 	done <- true
 }
 
-func loopIncrementIkaSRTimestamp(t *testing.T, done chan<- bool, db *DB, n int, srID uint64) {
+func loopIncrementIkaSRTimestamp(t *testing.T, done chan<- bool, db DB, n int, srID uint64) {
 	for i := 0; i < n; i++ {
 		db.incrementIkaSRTimestamp(t, srID)
 	}
