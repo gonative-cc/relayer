@@ -82,7 +82,7 @@ func NewDB(dbPath string) (*DB, error) {
 	var err error
 	db.conn, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("dal: %w", err)
+		return nil, fmt.Errorf("dal: can't open sqlite3: %w", err)
 	}
 	return db, err
 }
