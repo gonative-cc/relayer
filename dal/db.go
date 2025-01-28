@@ -82,7 +82,7 @@ func NewDB(dbPath string) (*DB, error) {
 	var err error
 	db.conn, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("dal: %w", err)
 	}
 	return db, err
 }
@@ -121,17 +121,16 @@ func (db *DB) InitDB() error {
 		)`
 	_, err := db.conn.Exec(createIkaSignRequestsTableSQL)
 	if err != nil {
-		return fmt.Errorf("creating ika_sign_requests table: %w", err)
+		return fmt.Errorf("dal: creating ika_sign_requests table: %w", err)
 	}
 	_, err = db.conn.Exec(createIkaTxsTableSQL)
 	if err != nil {
-		return fmt.Errorf("creating ika_txs table: %w", err)
+		return fmt.Errorf("dal: creating ika_txs table: %w", err)
 	}
 	_, err = db.conn.Exec(createBitcoinTxsTableSQL)
 	if err != nil {
-		return fmt.Errorf("creating bitcoin_txs table: %w", err)
+		return fmt.Errorf("dal: creating bitcoin_txs table: %w", err)
 	}
-
 	return nil
 }
 
@@ -149,7 +148,10 @@ func (db *DB) InsertIkaSignRequest(signReq IkaSignRequest) error {
 		signReq.FinalSig,
 		signReq.Timestamp,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("dal: inserting ika_sign_request: %w", err)
+	}
+	return nil
 }
 
 // InsertIkaTx inserts a new Ika transaction into the database.
@@ -158,7 +160,10 @@ func (db *DB) InsertIkaTx(tx IkaTx) error {
 		INSERT INTO ika_txs (sr_id, status, ika_sr_id, timestamp, note) 
 		VALUES (?, ?, ?, ?, ?)`
 	_, err := db.conn.Exec(insertIkaTxSQL, tx.SrID, tx.Status, tx.IkaTxID, tx.Timestamp, tx.Note)
-	return err
+	if err != nil {
+		return fmt.Errorf("dal: inserting ika_tx: %w", err)
+	}
+	return nil
 }
 
 // InsertBtcTx inserts a new Bitcoin transaction into the database.
@@ -167,7 +172,10 @@ func (db *DB) InsertBtcTx(tx BitcoinTx) error {
 		INSERT INTO bitcoin_txs (sr_id, status, btc_sr_id, timestamp, note) 
 		VALUES (?, ?, ?, ?, ?)`
 	_, err := db.conn.Exec(insertBtcTxSQL, tx.SrID, tx.Status, tx.BtcTxID, tx.Timestamp, tx.Note)
-	return err
+	if err != nil {
+		return fmt.Errorf("dal: inserting bitcoin_tx: %w", err)
+	}
+	return nil
 }
 
 // GetIkaSignRequestByID retrives a signature request by its id
@@ -190,9 +198,8 @@ func (db DB) GetIkaSignRequestByID(id uint64) (*IkaSignRequest, error) {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("dal: getting ika_sign_request by id: %w", err)
 	}
-
 	return &signReq, nil
 }
 
@@ -207,11 +214,10 @@ func (db *DB) GetIkaTx(signRequestID uint64, ikaTxID string) (*IkaTx, error) {
 	err := row.Scan(&ikaTx.SrID, &ikaTx.Status, &ikaTx.IkaTxID, &ikaTx.Timestamp, &ikaTx.Note)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // no rows
+			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to scan row: %w", err)
+		return nil, fmt.Errorf("dal: getting ika_tx: %w", err)
 	}
-
 	return &ikaTx, nil
 }
 
@@ -226,11 +232,10 @@ func (db *DB) GetBitcoinTx(signRequestID uint64, btcTxID []byte) (*BitcoinTx, er
 	err := row.Scan(&bitcoinTx.SrID, &bitcoinTx.Status, &bitcoinTx.BtcTxID, &bitcoinTx.Timestamp, &bitcoinTx.Note)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // no rows
+			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to scan row: %w", err)
+		return nil, fmt.Errorf("dal: getting bitcoin_tx: %w", err)
 	}
-
 	return &bitcoinTx, nil
 }
 
@@ -259,9 +264,8 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 		if err == sql.ErrNoRows {
 			return nil, 0, nil
 		}
-		return nil, 0, fmt.Errorf("failed to query IkaSignRequest & IkaTxStatus: %w", err)
+		return nil, 0, fmt.Errorf("dal: getting ika_sign_request with status: %w", err)
 	}
-
 	return &request, status, nil
 }
 
@@ -285,7 +289,7 @@ func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
         HAVING COUNT(CASE WHEN bt.status = ? THEN 1 ELSE NULL END) = COUNT(bt.sr_id)`
 	rows, err := db.conn.Query(getSignedIkaSignRequestsSQL, Pending)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query database: %w", err)
+		return nil, fmt.Errorf("dal: querying bitcoin_txs to broadcast: %w", err)
 	}
 	defer rows.Close()
 	var requests []IkaSignRequest
@@ -300,11 +304,10 @@ func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
 			&request.Timestamp,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			return nil, fmt.Errorf("dal: scanning row for bitcoin_txs to broadcast: %w", err)
 		}
 		requests = append(requests, request)
 	}
-
 	return requests, nil
 }
 
@@ -322,7 +325,7 @@ func (db *DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
         )`
 	rows, err := db.conn.Query(getBroadcastedBitcoinTxsInfoSQL, Broadcasted, Confirmed)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query database: %w", err)
+		return nil, fmt.Errorf("dal: querying broadcasted bitcoin_txs info: %w", err)
 	}
 	defer rows.Close()
 
@@ -331,11 +334,10 @@ func (db *DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
 		var tx BitcoinTxInfo
 		err := rows.Scan(&tx.TxID, &tx.BtcTxID, &tx.Status)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			return nil, fmt.Errorf("dal: scanning row for broadcasted bitcoin_txs info: %w", err)
 		}
 		txs = append(txs, tx)
 	}
-
 	return txs, nil
 }
 
@@ -347,7 +349,7 @@ func (db *DB) GetPendingIkaSignRequests() ([]IkaSignRequest, error) {
         WHERE final_sig IS NULL`
 	rows, err := db.conn.Query(getPendingIkaSignRequestsSQL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query database: %w", err)
+		return nil, fmt.Errorf("dal: querying pending ika_sign_requests: %w", err)
 	}
 	defer rows.Close()
 	var requests []IkaSignRequest
@@ -362,11 +364,10 @@ func (db *DB) GetPendingIkaSignRequests() ([]IkaSignRequest, error) {
 			&request.Timestamp,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			return nil, fmt.Errorf("dal: scanning row for pending ika_sign_requests: %w", err)
 		}
 		requests = append(requests, request)
 	}
-
 	return requests, nil
 }
 
@@ -379,9 +380,8 @@ func (db *DB) UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature) error 
 	_, err := db.conn.Exec(updateIkaSignRequestFinalSigSQL, finalSig, id)
 
 	if err != nil {
-		return fmt.Errorf("failed to update the final signature: %w", err)
+		return fmt.Errorf("dal: updating ika_sign_request final sig: %w", err)
 	}
-
 	return nil
 }
 
@@ -395,9 +395,8 @@ func (db *DB) UpdateBitcoinTxToConfirmed(id uint64, txID []byte) error {
 	_, err := db.conn.Exec(updateBitcoinTxToConfirmedSQL, Confirmed, timestamp, id, txID)
 
 	if err != nil {
-		return fmt.Errorf("failed to update the status : %w", err)
+		return fmt.Errorf("dal: updating bitcoin_tx to confirmed: %w", err)
 	}
-
 	return nil
 }
 
