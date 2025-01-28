@@ -40,21 +40,16 @@ func TestCheckConfirmations(t *testing.T) {
 }
 
 func TestNewProcessor(t *testing.T) {
-	// missing db
-	processor, err := NewProcessor(btcClientConfig, 6, nil)
-	assert.ErrorIs(t, err, dal.ErrNoDB)
-	assert.Assert(t, processor == nil)
-
 	// missing BTC config
 	db := daltest.InitTestDB(t)
 	btcClientConfig.Host = ""
-	processor, err = NewProcessor(btcClientConfig, 6, db)
+	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.ErrorIs(t, err, bitcoin.ErrNoBtcConfig)
 	assert.Assert(t, processor == nil)
 }
 
 // initProcessor initializes processor with a mock Bitcoin client and a populated database.
-func initProcessor(t *testing.T) (*Processor, *dal.DB) {
+func initProcessor(t *testing.T) (*Processor, dal.DB) {
 	t.Helper()
 
 	db := daltest.InitTestDB(t)

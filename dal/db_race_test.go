@@ -78,7 +78,7 @@ func loopIncrementIkaSRTimestamp(t *testing.T, done chan<- bool, db DB, n int, s
 	done <- true
 }
 
-func (db *DB) incrementIkaSRTimestamp(t *testing.T, srID uint64) {
+func (db DB) incrementIkaSRTimestamp(t *testing.T, srID uint64) {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
