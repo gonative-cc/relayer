@@ -4,7 +4,7 @@ This script sets up a Bitcoin regtest environment, creates wallets, funds them, 
 
 ## Prerequisites
 
-- `bitciond`
+- [bitcoin](https://github.com/bitcoin/bitcoin)
 - `jq`
 
 ## How to Run
