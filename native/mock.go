@@ -137,9 +137,6 @@ func mockSelectSignReq(w http.ResponseWriter, r *http.Request) {
 // generateMockSignRequests generates mock SignRequest data dynamically.
 func generateMockSignRequests(from, limit int) SignReqs {
 	var requests []SignReq
-	if from+limit > 10 {
-		return requests
-	}
 	for i := from; i < from+limit; i++ {
 		rawTxBytes := rawTxMap[i]
 		req := SignReq{
