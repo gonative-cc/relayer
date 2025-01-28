@@ -28,9 +28,11 @@ const (
 
 // chainRPC defines the structure to get information about the chain.
 type chainRPC struct {
-	mu      sync.Mutex
-	conn    *Conn
-	chainID string
+	mu         sync.Mutex
+	conn       *Conn
+	chainID    string
+	nextRPCID  int
+	rpcIDMutex sync.Mutex
 
 	encCfg testutil.TestEncodingConfig
 }
@@ -53,6 +55,14 @@ func New(rpc, grpc string) (native.Blockchain, error) {
 		chainID: "",
 		encCfg:  testutil.MakeTestEncodingConfig(bank.AppModuleBasic{}),
 	}, nil
+}
+
+func (b *chainRPC) NextRPCID() int {
+	b.rpcIDMutex.Lock()
+	id := b.nextRPCID
+	b.nextRPCID++
+	b.rpcIDMutex.Unlock()
+	return id
 }
 
 // SubscribeNewBlock subscribe to every new block.
@@ -105,7 +115,7 @@ func (b *chainRPC) DecodeTx(tx tmtypes.Tx) (sdk.Tx, error) {
 
 // ChainHeader queries the chain by the last block height.
 func (b *chainRPC) ChainHeader() (string, uint64, error) {
-	idSent := types.JSONRPCIntID(b.JSONRPCID())
+	idSent := types.JSONRPCIntID(b.NextRPCID())
 	req := types.NewRPCRequest(idSent, "block", nil)
 
 	var respRPC RPCRespChainID
