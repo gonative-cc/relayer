@@ -20,7 +20,7 @@ import (
 // - nativeProcessor: To send transactions from Native to IKA for signing.
 // - btcProcessor: To broadcast signed transactions to Bitcoin and monitor confirmations.
 type Relayer struct {
-	db               *dal.DB
+	db               dal.DB
 	nativeProcessor  *native2ika.Processor
 	btcProcessor     *ika2btc.Processor
 	shutdownChan     chan struct{}
@@ -54,16 +54,11 @@ const (
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
 func NewRelayer(
 	relayerConfig RelayerConfig,
-	db *dal.DB,
+	db dal.DB,
 	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
 	fetcher native.SignReqFetcher,
 ) (*Relayer, error) {
-
-	if db == nil {
-		return nil, fmt.Errorf("relayer: %w", dal.ErrNoDB)
-	}
-
 	if nativeProcessor == nil {
 		return nil, fmt.Errorf("relayer: %w", native.ErrNoNativeProcessor)
 	}
