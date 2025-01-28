@@ -18,7 +18,7 @@ import (
 
 // testSuite holds the common dependencies
 type testSuite struct {
-	db              *dal.DB
+	db              dal.DB
 	ikaClient       *ika.MockClient
 	btcProcessor    *ika2btc.Processor
 	nativeProcessor *native2ika.Processor
@@ -94,20 +94,12 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 	ts := setupTestSuite(t)
 	testCases := []struct {
 		name            string
-		db              *dal.DB
+		db              dal.DB
 		nativeProcessor *native2ika.Processor
 		btcProcessor    *ika2btc.Processor
 		expectedError   error
 		fetcher         native.SignReqFetcher
 	}{
-		{
-			name:            "DatabaseError",
-			db:              nil,
-			nativeProcessor: ts.nativeProcessor,
-			btcProcessor:    ts.btcProcessor,
-			expectedError:   dal.ErrNoDB,
-			fetcher:         ts.signReqFetcher,
-		},
 		{
 			name:            "NativeProcessorError",
 			db:              ts.db,
@@ -115,16 +107,14 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			btcProcessor:    ts.btcProcessor,
 			expectedError:   native.ErrNoNativeProcessor,
 			fetcher:         ts.signReqFetcher,
-		},
-		{
+		}, {
 			name:            "BtcProcessorError",
 			db:              ts.db,
 			nativeProcessor: ts.nativeProcessor,
 			btcProcessor:    nil,
 			expectedError:   bitcoin.ErrNoBtcProcessor,
 			fetcher:         ts.signReqFetcher,
-		},
-		{
+		}, {
 			name:            "BlockchainError",
 			db:              ts.db,
 			nativeProcessor: ts.nativeProcessor,
@@ -173,7 +163,7 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	assert.Equal(t, len(requests), 1)
 }
 
-func initTestDB(t *testing.T) *dal.DB {
+func initTestDB(t *testing.T) dal.DB {
 	t.Helper()
 
 	db, err := dal.NewDB(":memory:")

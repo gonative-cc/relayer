@@ -3,6 +3,7 @@ package dal
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
@@ -74,23 +75,24 @@ type Signature = []byte
 
 // DB holds the database connection and provides methods for interacting with it.
 type DB struct {
-	conn *sql.DB
+	conn  *sql.DB
+	mutex *sync.RWMutex
 }
 
 // NewDB creates a new DB instance
-func NewDB(dbPath string) (*DB, error) {
-	db := &DB{}
-
-	var err error
-	db.conn, err = sql.Open("sqlite3", dbPath)
+func NewDB(dbPath string) (DB, error) {
+	conn, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("dal: can't open sqlite3: %w", err)
+		return DB{}, fmt.Errorf("dal: can't open sqlite3: %w", err)
 	}
-	return db, err
+	return DB{conn: conn, mutex: &sync.RWMutex{}}, err
 }
 
 // InitDB initializes the database and creates the tables.
-func (db *DB) InitDB() error {
+func (db DB) InitDB() error {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	const createIkaSignRequestsTableSQL = `
 		CREATE TABLE IF NOT EXISTS ika_sign_requests (
 			id INTEGER PRIMARY KEY,
@@ -137,7 +139,10 @@ func (db *DB) InitDB() error {
 }
 
 // InsertIkaSignRequest inserts a new transaction into the database
-func (db *DB) InsertIkaSignRequest(signReq IkaSignRequest) error {
+func (db DB) InsertIkaSignRequest(signReq IkaSignRequest) error {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	const insertIkaSignRequestSQL = `
 		INSERT INTO ika_sign_requests (id, payload, dwallet_id, user_sig, final_sig, timestamp) 
 		VALUES (?, ?, ?, ?, ?, ?)`
@@ -157,7 +162,10 @@ func (db *DB) InsertIkaSignRequest(signReq IkaSignRequest) error {
 }
 
 // InsertIkaTx inserts a new Ika transaction into the database.
-func (db *DB) InsertIkaTx(tx IkaTx) error {
+func (db DB) InsertIkaTx(tx IkaTx) error {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	const insertIkaTxSQL = `
 		INSERT INTO ika_txs (sr_id, status, ika_tx_id, timestamp, note)
 		VALUES (?, ?, ?, ?, ?)`
@@ -169,7 +177,10 @@ func (db *DB) InsertIkaTx(tx IkaTx) error {
 }
 
 // InsertBtcTx inserts a new Bitcoin transaction into the database.
-func (db *DB) InsertBtcTx(tx BitcoinTx) error {
+func (db DB) InsertBtcTx(tx BitcoinTx) error {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	const insertBtcTxSQL = `
 		INSERT INTO bitcoin_txs (sr_id, status, btc_tx_id, timestamp, note)
 		VALUES (?, ?, ?, ?, ?)`
@@ -182,6 +193,9 @@ func (db *DB) InsertBtcTx(tx BitcoinTx) error {
 
 // GetIkaSignRequestByID retrives a signature request by its id
 func (db DB) GetIkaSignRequestByID(id uint64) (*IkaSignRequest, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getIkaSignRequestByIDSQL = `
 		SELECT id, payload, dwallet_id, user_sig, final_sig, timestamp
 		FROM ika_sign_requests
@@ -206,7 +220,10 @@ func (db DB) GetIkaSignRequestByID(id uint64) (*IkaSignRequest, error) {
 }
 
 // GetIkaTx retrieves an Ika transaction by its primary key (sr_id and ika_tx_id).
-func (db *DB) GetIkaTx(signRequestID uint64, ikaTxID string) (*IkaTx, error) {
+func (db DB) GetIkaTx(signRequestID uint64, ikaTxID string) (*IkaTx, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getIkaTxByTxIDAndIkaTxIDSQL = `
         SELECT sr_id, status, ika_tx_id, timestamp, note
         FROM ika_txs
@@ -224,7 +241,10 @@ func (db *DB) GetIkaTx(signRequestID uint64, ikaTxID string) (*IkaTx, error) {
 }
 
 // GetBitcoinTx retrieves a Bitcoin transaction by its primary key (sr_id and btc_tx_id).
-func (db *DB) GetBitcoinTx(signRequestID uint64, btcTxID []byte) (*BitcoinTx, error) {
+func (db DB) GetBitcoinTx(signRequestID uint64, btcTxID []byte) (*BitcoinTx, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getBitcoinTxByTxIDAndBtcTxIDSQL = `
         SELECT sr_id, status, btc_tx_id, timestamp, note
         FROM bitcoin_txs
@@ -242,7 +262,10 @@ func (db *DB) GetBitcoinTx(signRequestID uint64, btcTxID []byte) (*BitcoinTx, er
 }
 
 // GetIkaSignRequestWithStatus retrieves an IkaSignRequest with its associated IkaTx status.
-func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStatus, error) {
+func (db DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStatus, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getIkaSignRequestWithStatusSQL = `
         SELECT sr.id, sr.payload, sr.dwallet_id, sr.user_sig, sr.final_sig, sr.timestamp, it.status
         FROM ika_sign_requests sr
@@ -281,7 +304,10 @@ func (db *DB) GetIkaSignRequestWithStatus(id uint64) (*IkaSignRequest, IkaTxStat
 //
 // The reason for checking these conditions is that we cannot have a Bitcoin transaction hash (btc_tx_id)
 // before the first broadcast attempt.
-func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
+func (db DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getSignedIkaSignRequestsSQL = `
         SELECT sr.id, sr.payload, sr.dwallet_id, sr.user_sig, sr.final_sig, sr.timestamp
         FROM ika_sign_requests sr
@@ -315,7 +341,10 @@ func (db *DB) GetBitcoinTxsToBroadcast() ([]IkaSignRequest, error) {
 
 // GetBroadcastedBitcoinTxsInfo queries Bitcoin transactions that has been braodcasted but not confirmed.
 // that do not have a "Confirmed" status.
-func (db *DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
+func (db DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getBroadcastedBitcoinTxsInfoSQL = `
         SELECT bt.sr_id, bt.btc_tx_id, bt.status
         FROM bitcoin_txs bt
@@ -344,7 +373,10 @@ func (db *DB) GetBroadcastedBitcoinTxsInfo() ([]BitcoinTxInfo, error) {
 }
 
 // GetPendingIkaSignRequests retrieves IkaSignRequests that need to be signed.
-func (db *DB) GetPendingIkaSignRequests() ([]IkaSignRequest, error) {
+func (db DB) GetPendingIkaSignRequests() ([]IkaSignRequest, error) {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
 	const getPendingIkaSignRequestsSQL = `
         SELECT id, payload, dwallet_id, user_sig, final_sig, timestamp
         FROM ika_sign_requests
@@ -374,7 +406,10 @@ func (db *DB) GetPendingIkaSignRequests() ([]IkaSignRequest, error) {
 }
 
 // UpdateIkaSignRequestFinalSig updates the final signature of an IkaSignRequest in the database.
-func (db *DB) UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature) error {
+func (db DB) UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature) error {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	const updateIkaSignRequestFinalSigSQL = `
         UPDATE ika_sign_requests 
         SET final_sig = ?
@@ -388,7 +423,10 @@ func (db *DB) UpdateIkaSignRequestFinalSig(id uint64, finalSig Signature) error 
 }
 
 // UpdateBitcoinTxToConfirmed updates the bitcoin transaction to `Confirmed`.
-func (db *DB) UpdateBitcoinTxToConfirmed(id uint64, txID []byte) error {
+func (db DB) UpdateBitcoinTxToConfirmed(id uint64, txID []byte) error {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	const updateBitcoinTxToConfirmedSQL = `
         UPDATE bitcoin_txs 
         SET status = ?, timestamp = ?
@@ -404,5 +442,9 @@ func (db *DB) UpdateBitcoinTxToConfirmed(id uint64, txID []byte) error {
 
 // Close closes the db connection
 func (db DB) Close() error {
+	// make sure other read / writes are done
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
 	return db.conn.Close()
 }

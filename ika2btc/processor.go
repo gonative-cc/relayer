@@ -16,7 +16,7 @@ import (
 // Processor handles processing transactions from IKA to Bitcoin.
 type Processor struct {
 	BtcClient               bitcoin.Client
-	db                      *dal.DB
+	db                      dal.DB
 	txConfirmationThreshold uint8
 }
 
@@ -24,13 +24,8 @@ type Processor struct {
 func NewProcessor(
 	btcClientConfig rpcclient.ConnConfig,
 	confirmationThreshold uint8,
-	db *dal.DB,
+	db dal.DB,
 ) (*Processor, error) {
-
-	if db == nil {
-		return nil, dal.ErrNoDB
-	}
-
 	if btcClientConfig.Host == "" || btcClientConfig.User == "" || btcClientConfig.Pass == "" {
 		return nil, bitcoin.ErrNoBtcConfig
 	}

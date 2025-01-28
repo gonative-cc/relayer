@@ -12,11 +12,11 @@ import (
 // Processor handles processing transactions from the Native chain to IKA for signing.
 type Processor struct {
 	ikaClient ika.Client
-	db        *dal.DB
+	db        dal.DB
 }
 
 // NewProcessor creates a new Processor instance.
-func NewProcessor(ikaClient ika.Client, db *dal.DB) *Processor {
+func NewProcessor(ikaClient ika.Client, db dal.DB) *Processor {
 	return &Processor{
 		ikaClient: ikaClient,
 		db:        db,
