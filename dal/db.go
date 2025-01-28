@@ -10,6 +10,7 @@ import (
 
 // IkaSignRequest represents a row in the `ika_sign_requests` table.
 type IkaSignRequest struct {
+	// ID is a sign request reported and managed by Native
 	ID        uint64    `json:"id"`
 	Payload   Payload   `json:"payload"`
 	DWalletID string    `json:"dwallet_id"`
@@ -20,28 +21,29 @@ type IkaSignRequest struct {
 
 // IkaTx represents a row in the `ika_txs` table.
 type IkaTx struct {
-	// SrId is a ika sign request ID
+	// SrID is the IkaSignRequest.ID
 	SrID      uint64      `json:"sr_id"`
 	Status    IkaTxStatus `json:"status"`
-	IkaTxID   string      `json:"ika_sr_id"`
-	Timestamp int64       `json:"time"`
+	IkaTxID   string      `json:"ika_tx_id"`
+	Timestamp int64       `json:"timestamp"`
 	Note      string      `json:"note"`
 }
 
 // BitcoinTx represents a row in the `bitcoin_txs` table.
 type BitcoinTx struct {
-	// SrId is a ika sign request ID
+	// SrID is the IkaSignRequest.ID
 	SrID      uint64          `json:"sr_id"`
 	Status    BitcoinTxStatus `json:"status"`
-	BtcTxID   []byte          `json:"btc_sr_id"`
-	Timestamp int64           `json:"time"`
+	BtcTxID   []byte          `json:"btc_tx_id"`
+	Timestamp int64           `json:"timestamp"`
 	Note      string          `json:"note"`
 }
 
 // BitcoinTxInfo holds the relevant information for a Bitcoin transaction.
 type BitcoinTxInfo struct {
-	TxID    uint64          `json:"sr_id"`
-	BtcTxID []byte          `json:"btc_sr_id"`
+	// TxID reported by Bitcoin
+	TxID    uint64          `json:"tx_id"`
+	BtcTxID []byte          `json:"btc_tx_id"`
 	Status  BitcoinTxStatus `json:"status"`
 }
 
