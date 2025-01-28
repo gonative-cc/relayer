@@ -28,10 +28,9 @@ const (
 
 // chainRPC defines the structure to get information about the chain.
 type chainRPC struct {
-	mu        sync.Mutex
-	conn      *Conn
-	rpcRespID uint32
-	chainID   string
+	mu      sync.Mutex
+	conn    *Conn
+	chainID string
 
 	encCfg testutil.TestEncodingConfig
 }
@@ -50,10 +49,9 @@ func New(rpc, grpc string) (native.Blockchain, error) {
 	}
 
 	return &chainRPC{
-		conn:      conn,
-		rpcRespID: 0,
-		chainID:   "",
-		encCfg:    testutil.MakeTestEncodingConfig(bank.AppModuleBasic{}),
+		conn:    conn,
+		chainID: "",
+		encCfg:  testutil.MakeTestEncodingConfig(bank.AppModuleBasic{}),
 	}, nil
 }
 
@@ -82,15 +80,6 @@ func (b *chainRPC) SubscribeNewBlock(ctx context.Context) (cNewBlock <-chan *tmt
 	}()
 
 	return channelNewBlock, nil
-}
-
-// JSONRPCID returns a value for the JSON RPC ID.
-// Used to control responses from the rpc query.
-func (b *chainRPC) JSONRPCID() uint32 {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.rpcRespID++
-	return b.rpcRespID
 }
 
 // ChainID returns the chainID. If it doesn't have it stored
