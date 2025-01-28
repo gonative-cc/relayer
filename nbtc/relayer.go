@@ -44,6 +44,13 @@ type RelayerConfig struct {
 	SignReqFetchLimit int
 }
 
+// These values are used if the corresponding intervals are not provided.
+const (
+	defaultProcessTxsInterval   = 5 * time.Second
+	defaultConfirmTxsInterval   = 7 * time.Second
+	defaultSignReqFetchInterval = 10 * time.Second
+)
+
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
 func NewRelayer(
 	relayerConfig RelayerConfig,
@@ -54,31 +61,31 @@ func NewRelayer(
 ) (*Relayer, error) {
 
 	if db == nil {
-		return nil, dal.ErrNoDB
+		return nil, fmt.Errorf("relayer: %w", dal.ErrNoDB)
 	}
 
 	if nativeProcessor == nil {
-		return nil, native.ErrNoNativeProcessor
+		return nil, fmt.Errorf("relayer: %w", native.ErrNoNativeProcessor)
 	}
 
 	if btcProcessor == nil {
-		return nil, bitcoin.ErrNoBtcProcessor
+		return nil, fmt.Errorf("relayer: %w", bitcoin.ErrNoBtcProcessor)
 	}
 
 	if fetcher == nil {
-		return nil, native.ErrNoFetcher
+		return nil, fmt.Errorf("relayer: %w", native.ErrNoFetcher)
 	}
 
 	if relayerConfig.ProcessTxsInterval == 0 {
-		relayerConfig.ProcessTxsInterval = time.Second * 5
+		relayerConfig.ProcessTxsInterval = defaultProcessTxsInterval
 	}
 
 	if relayerConfig.ConfirmTxsInterval == 0 {
-		relayerConfig.ConfirmTxsInterval = time.Second * 7
+		relayerConfig.ConfirmTxsInterval = defaultConfirmTxsInterval
 	}
 
 	if relayerConfig.SignReqFetchInterval == 0 {
-		relayerConfig.SignReqFetchInterval = time.Second * 10
+		relayerConfig.SignReqFetchInterval = defaultSignReqFetchInterval
 	}
 
 	return &Relayer{
@@ -103,64 +110,46 @@ func (r *Relayer) Start(ctx context.Context) error {
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			_ = r.processSignRequests(ctx)
-			_ = r.processSignedTxs()
+			if err := r.processSignRequests(ctx); err != nil {
+				r.handleError(err, "processSignRequests")
+			}
+			if err := r.processSignedTxs(); err != nil {
+				r.handleError(err, "processSignedTxs")
+			}
 		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
 		// so probably we should wrap the db in a mutex
 		case <-r.confirmTxsTicker.C:
 			if err := r.btcProcessor.CheckConfirmations(); err != nil {
-				var sqliteErr *sqlite3.Error
-				if errors.As(err, &sqliteErr) {
-					log.Err(err).Msg("Critical error updating transaction status, shutting down")
-					close(r.shutdownChan)
-				} else {
-					log.Err(err).Msg("Error processing transactions, continuing")
-				}
+				r.handleError(err, "CheckConfirmations")
 			}
 		case <-r.signReqTicker.C:
 			if err := r.fetchAndStoreNativeSignRequests(); err != nil {
-				var sqliteErr *sqlite3.Error
-				if errors.As(err, &sqliteErr) {
-					log.Err(err).Msg("Critical error saving signing request, shutting down")
-					close(r.shutdownChan)
-				} else {
-					log.Err(err).Msg("Error processing blocks, continuing")
-				}
+				r.handleError(err, "fetchAndStoreNativeSignRequests")
 			}
 		}
+	}
+}
+
+// handleError handles errors and logs them, potentially shutting down the relayer.
+func (r *Relayer) handleError(err error, operation string) {
+	var sqliteErr *sqlite3.Error
+	//TODO: decide on which exact errors to continue and on which to stop the relayer
+	if errors.As(err, &sqliteErr) {
+		log.Error().Err(err).Str("operation", operation).Msg("Critical database error, shutting down")
+		close(r.shutdownChan)
+	} else {
+		log.Error().Err(err).Str("operation", operation).Msg("Error in operation , continuing")
 	}
 }
 
 // processSignRequests processes signd requests from the Native chain.
 func (r *Relayer) processSignRequests(ctx context.Context) error {
-	if err := r.nativeProcessor.Run(ctx); err != nil {
-		var sqliteErr *sqlite3.Error
-		//TODO: decide on which exact errors to continue and on which to stop the relayer
-		if errors.As(err, &sqliteErr) {
-			log.Err(err).Msg("Critical error with the database, shutting down")
-			close(r.shutdownChan)
-		} else {
-			log.Err(err).Msg("Error processing native transactions, continuing")
-		}
-		return err
-	}
-	return nil
+	return r.nativeProcessor.Run(ctx)
 }
 
 // processSignedTxs processes signed transactions and broadcasts them to Bitcoin.
 func (r *Relayer) processSignedTxs() error {
-	if err := r.btcProcessor.Run(); err != nil {
-		var sqliteErr *sqlite3.Error
-		//TODO: decide on which exact errors to continue and on which to stop the relayer
-		if errors.As(err, &sqliteErr) {
-			log.Err(err).Msg("Critical error updating transaction status, shutting down")
-			close(r.shutdownChan)
-		} else {
-			log.Err(err).Msg("Error processing bitcoin transactions, continuing")
-		}
-		return err
-	}
-	return nil
+	return r.btcProcessor.Run()
 }
 
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
@@ -169,14 +158,13 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 
 	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqFetchFrom, r.signReqFetchLimit)
 	if err != nil {
-		log.Err(err).Msg("Error fetching sign requests from native, continuing")
+		return fmt.Errorf("fetchAndStore: %w", err)
 	}
 	log.Info().Msgf("SUCCESS: Fetched %d sign requests from Native.", len(signRequests))
-
 	for _, sr := range signRequests {
 		err = r.storeSignRequest(sr)
 		if err != nil {
-			return err
+			return fmt.Errorf("fetchAndStore: %w", err)
 		}
 	}
 	r.signReqFetchFrom += r.signReqFetchLimit
