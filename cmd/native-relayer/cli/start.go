@@ -25,7 +25,7 @@ import (
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the relayer",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		config, err := prepareEnv(cmd)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to prepare environment")
