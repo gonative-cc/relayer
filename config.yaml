@@ -1,33 +1,33 @@
 # Relayer Configuration
 
 native:
-  native_rpc: "127.0.0.1:26657"  
+  native_rpc: "127.0.0.1:26657"
   native_grpc: "127.0.0.1:9090"       
 
 ika:
-  rpc: "http://127.0.0.1:9000"          
-  signer_mnemonic: "your mnemonic" 
-  native_lc_package: "0x3"                
-  native_lc_module: "dwallet"      
-  native_lc_function: "dwallet_2pc_mpc_ecdsa_k1"  
+  rpc: "127.0.0.1:0001"
+  signer_mnemonic: ""
+  native_lc_package: ""
+  native_lc_module: ""
+  native_lc_function: ""
   gas_acc: ""                            
-  gas_budget: 4000000                        
+  gas_budget:
 
 bitcoin:
-  rpc_host: "127.0.0.1:18443"           
-  rpc_user: "your-bitcoin-rpc-user"          
-  rpc_pass: "your-bitcoin-rpc-password"      
-  confirmation_threshold: 6  
+  rpc_host: "your-bitcoin-rpc.com"
+  rpc_user: "your-bitcoin-rpc-user"
+  rpc_pass: "your-bitcoin-rpc-password"
+  confirmation_threshold: 6
   http_post_mode: true
-  disable_tls: true   
-  network: "regtest"        
+  disable_tls: false
+  network: "testnet"
 
 relayer:
-  process_txs_interval: 5s                      
-  confirm_txs_interval: 7s                   
+  process_txs_interval: 5s
+  confirm_txs_interval: 7s
   sign_req_fetch_interval: 5s
-  sign_req_fetch_from: 0                      
-  sign_req_fetch_limit: 1                    
+  sign_req_fetch_from: 0
+  sign_req_fetch_limit: 5
 
 db:
-  db_file: "relayer.db"     
+  db_file: "relayer.db"
