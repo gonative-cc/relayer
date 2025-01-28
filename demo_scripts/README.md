@@ -29,4 +29,4 @@ This script sets up a Bitcoin regtest environment, creates wallets, funds them, 
     - Generates 101 blocks to fund each wallet.
     - Creates a raw transaction sending 0.025 BTC to a new address in the same wallet.
     - Signs the raw transaction.
-    - utputs the raw and signed transactions for each wallet.
+    - Outputs the raw and signed transactions for each wallet.
