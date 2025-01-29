@@ -2,6 +2,7 @@ package ika
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/models"
@@ -163,7 +164,7 @@ func (p *client) ApproveAndSign(
 		Digest: txDigest,
 	})
 	if err != nil {
-		return nil, txDigest, fmt.Errorf("ika: %w", ErrEventParsing)
+		return nil, txDigest, fmt.Errorf("ika: %w", errors.Join(err, ErrEventParsing))
 	}
 
 	return extractSignatures(events[0].ParsedJson["signatures"]), txDigest, nil
