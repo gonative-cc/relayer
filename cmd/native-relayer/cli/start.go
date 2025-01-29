@@ -67,6 +67,7 @@ var startCmd = &cobra.Command{
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			log.Info().Msg("Starting the relayer...")
 			if err := relayer.Start(cmd.Context()); err != nil {
 				log.Error().Err(err).Msg("Relayer encountered an error")
 			}
@@ -78,7 +79,7 @@ var startCmd = &cobra.Command{
 		log.Info().Msg("Stopping the relayer...")
 		relayer.Stop()
 		wg.Wait()
-		log.Info().Msg("Relayer stopped.")
+		log.Info().Msg("Relayer stopped")
 	},
 }
 

@@ -48,7 +48,7 @@ func (p *Processor) Run() error {
 	if err != nil {
 		return err
 	}
-
+	log.Info().Msg("Broadcasting transaction to Bitcoin network...")
 	for _, tx := range signedTxs {
 		rawTx := make([]byte, 0, len(tx.Payload)+len(tx.FinalSig))
 		rawTx = append(rawTx, tx.Payload...)
@@ -62,6 +62,7 @@ func (p *Processor) Run() error {
 		if err != nil {
 			return fmt.Errorf("error broadcasting transaction: %w", err)
 		}
+		log.Info().Msgf("SUCCESS: Broadcasted transaction to Bitcoin: txHash = %s", txHash.String())
 		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
 		err = p.db.InsertBtcTx(dal.BitcoinTx{
@@ -74,8 +75,6 @@ func (p *Processor) Run() error {
 		if err != nil {
 			return fmt.Errorf("DB: can't update tx status: {tx: %d, err: %w}", tx.ID, err)
 		}
-
-		log.Info().Str("txHash", txHash.String()).Msg("Broadcasted transaction: ")
 	}
 	return nil
 }

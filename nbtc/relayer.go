@@ -149,17 +149,19 @@ func (r *Relayer) processSignedTxs() error {
 
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
 func (r *Relayer) fetchAndStoreNativeSignRequests() error {
+	log.Info().Msg("Fetching sign requests from Native...")
+
 	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqFetchFrom, r.signReqFetchLimit)
 	if err != nil {
 		return fmt.Errorf("fetchAndStore: %w", err)
 	}
+	log.Info().Msgf("SUCCESS: Fetched %d sign requests from Native.", len(signRequests))
 	for _, sr := range signRequests {
 		err = r.storeSignRequest(sr)
 		if err != nil {
 			return fmt.Errorf("fetchAndStore: %w", err)
 		}
 	}
-
 	r.signReqFetchFrom += r.signReqFetchLimit
 	return nil
 }

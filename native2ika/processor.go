@@ -37,11 +37,12 @@ func (p *Processor) Run(ctx context.Context) error {
 
 	for _, sr := range ikaSignRequests {
 		payloads := [][]byte{sr.Payload} // TODO: this wont be needed in the future when we support singing in batches
+		log.Info().Msg("\x1b[33mIKA signing the sign request...\x1b[0m")
 		signatures, err := p.ikaClient.ApproveAndSign(ctx, sr.DWalletID, sr.UserSig, payloads)
 		if err != nil {
 			return fmt.Errorf("error calling ApproveAndSign: %w", err)
 		}
-
+		log.Info().Msgf("SUCCESS: IKA signed the sign request")
 		err = p.db.UpdateIkaSignRequestFinalSig(sr.ID, signatures[0])
 		if err != nil {
 			return fmt.Errorf("error storing signature in database: %w", err)
