@@ -24,8 +24,8 @@ func Test_DbRace(t *testing.T) {
 	for i := uint64(0); i < workers; i++ {
 		wg1.Add(1)
 		go func(i uint64) {
-			defer wg1.Done()
 			insertManySignReq(t, db, i*batch, (i+1)*batch)
+			wg1.Done()
 		}(i)
 	}
 	wg1.Wait()
