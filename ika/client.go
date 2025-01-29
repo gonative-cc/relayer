@@ -2,6 +2,7 @@ package ika
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/models"
@@ -11,6 +12,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type TransactionDigest = string
+
 // Client defines the methods required for interacting with the Ika network.
 type Client interface {
 	UpdateLC(
@@ -18,7 +21,12 @@ type Client interface {
 		lb *tmtypes.LightBlock,
 		logger zerolog.Logger,
 	) (models.SuiTransactionBlockResponse, error)
-	ApproveAndSign(ctx context.Context, dwalletCapID, signMessagesID string, messages [][]byte) ([][]byte, error)
+	ApproveAndSign(
+		ctx context.Context,
+		dwalletCapID string,
+		signMessagesID string,
+		messages [][]byte,
+	) ([][]byte, TransactionDigest, error)
 }
 
 // client is a wrapper around the Sui client that provides functionality
@@ -101,13 +109,14 @@ func (p *client) UpdateLC(
 	})
 }
 
-// ApproveAndSign approves and signs a set of messages using the IKA network. Returns its signatures
+// ApproveAndSign approves and signs a set of messages using the IKA network.
+// Returns its signatures and the IKA transaction digest (tx_id).
 func (p *client) ApproveAndSign(
 	ctx context.Context,
 	dwalletCapID string,
 	signMessagesID string,
 	messages [][]byte,
-) ([][]byte, error) {
+) ([][]byte, TransactionDigest, error) {
 
 	// TODO: This function was only tested against dummy implementation of the dwallet module deployed locally.
 	// Once it is ready, test it again
@@ -125,7 +134,7 @@ func (p *client) ApproveAndSign(
 	}
 	messageApprovals, err := p.c.MoveCall(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("error calling approve_messages function: %w", err)
+		return nil, "", fmt.Errorf("error calling approve_messages function: %w", err)
 	}
 	req.Function = "sign"
 	req.TypeArguments = []interface{}{}
@@ -135,7 +144,7 @@ func (p *client) ApproveAndSign(
 	}
 	resp, err := p.c.MoveCall(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("error calling sign function: %w", err)
+		return nil, "", fmt.Errorf("error calling sign function: %w", err)
 	}
 	response, err := p.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
@@ -148,17 +157,17 @@ func (p *client) ApproveAndSign(
 		RequestType: "WaitForLocalExecution",
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error executing transaction block: %w", err)
+		return nil, "", fmt.Errorf("error executing transaction block: %w", err)
 	}
-
+	txDigest := response.Effects.TransactionDigest
 	events, err := p.c.SuiGetEvents(ctx, models.SuiGetEventsRequest{
-		Digest: response.Effects.TransactionDigest,
+		Digest: txDigest,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error getting events: %w", err)
+		return nil, txDigest, fmt.Errorf("ika: %w", errors.Join(err, ErrEventParsing))
 	}
 
-	return extractSignatures(events[0].ParsedJson["signatures"]), nil
+	return extractSignatures(events[0].ParsedJson["signatures"]), txDigest, nil
 }
 
 // extractSignatures extracts bytes from the `ParsedJson` structure
