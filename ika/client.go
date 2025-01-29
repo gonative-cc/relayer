@@ -20,7 +20,12 @@ type Client interface {
 		lb *tmtypes.LightBlock,
 		logger zerolog.Logger,
 	) (models.SuiTransactionBlockResponse, error)
-	ApproveAndSign(ctx context.Context, dwalletCapID, signMessagesID string, messages [][]byte) ([][]byte, TransactionDigest, error)
+	ApproveAndSign(
+		ctx context.Context,
+		dwalletCapID string,
+		signMessagesID string,
+		messages [][]byte,
+	) ([][]byte, TransactionDigest, error)
 }
 
 // client is a wrapper around the Sui client that provides functionality
