@@ -108,7 +108,8 @@ func (p *client) UpdateLC(
 	})
 }
 
-// ApproveAndSign approves and signs a set of messages using the IKA network. Returns its signatures
+// ApproveAndSign approves and signs a set of messages using the IKA network.
+// Returns its signatures and the IKA transaction digest (tx_id).
 func (p *client) ApproveAndSign(
 	ctx context.Context,
 	dwalletCapID string,
