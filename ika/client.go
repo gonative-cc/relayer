@@ -129,7 +129,6 @@ func (p *client) ApproveAndSign(
 	if err != nil {
 		return nil, "", fmt.Errorf("error calling approve_messages function: %w", err)
 	}
-
 	req.Function = "sign"
 	req.TypeArguments = []interface{}{}
 	req.Arguments = []interface{}{
@@ -140,7 +139,6 @@ func (p *client) ApproveAndSign(
 	if err != nil {
 		return nil, "", fmt.Errorf("error calling sign function: %w", err)
 	}
-
 	response, err := p.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
 		PriKey:      p.Signer.PriKey,
@@ -182,6 +180,5 @@ func extractSignatures(data interface{}) [][]byte {
 			byteArrays = append(byteArrays, byteArray)
 		}
 	}
-
 	return byteArrays
 }

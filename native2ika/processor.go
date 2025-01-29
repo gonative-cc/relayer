@@ -57,7 +57,7 @@ func (p *Processor) Run(ctx context.Context) error {
 			}
 			return fmt.Errorf("error calling ApproveAndSign: %w", err)
 		}
-
+		log.Info().Msgf("SUCCESS: IKA signed the sign request")
 		err = p.db.UpdateIkaSignRequestFinalSig(sr.ID, signatures[0])
 		if err != nil {
 			return fmt.Errorf("error storing signature in database: %w", err)
