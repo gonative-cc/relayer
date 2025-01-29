@@ -1,9 +1,16 @@
 package dal
 
 import (
+	"sync"
 	"testing"
 
 	"gotest.tools/v3/assert"
+)
+
+const (
+	batch               = 1000
+	workers             = 5
+	testTimestamp int64 = 123
 )
 
 func Test_DbRace(t *testing.T) {
@@ -12,48 +19,41 @@ func Test_DbRace(t *testing.T) {
 	err = db.InitDB()
 	assert.NilError(t, err)
 
-	const batch = 1000
-	const workers = 5
-	done := make(chan bool, workers)
-
+	// Test 1: Parallel inserts
+	var wg sync.WaitGroup
 	for i := uint64(0); i < workers; i++ {
-		// TODO: use WorkGroup
-		go insertManySignReq(t, done, db, i*batch, (i+1)*batch)
+		wg.Add(1)
+		go insertManySignReq(t, &wg, db, i*batch, (i+1)*batch)
 	}
-	for i := 0; i < workers; i++ {
-		<-done
-	}
+	wg.Wait()
 
 	var srID uint64 = 1
 	sr, err := db.GetIkaSignRequestByID(srID)
 	assert.NilError(t, err)
 	assert.Assert(t, sr != nil)
-	assert.Equal(t, int64(123), sr.Timestamp)
+	assert.Equal(t, testTimestamp, sr.Timestamp)
 
-	row := db.conn.QueryRow(`
-SELECT COUNT(*) FROM ika_sign_requests`)
+	row := db.conn.QueryRow(`SELECT COUNT(*) FROM ika_sign_requests`)
 	var count int
 	err = row.Scan(&count)
 	assert.NilError(t, err)
 	assert.Equal(t, batch*workers, count)
 
-	// test 2
-	// try parallel update
-
+	// Test 2: Parallel updates
 	for i := uint64(0); i < workers; i++ {
-		go loopIncrementIkaSRTimestamp(t, done, db, batch, srID)
+		wg.Add(1)
+		go loopIncrementIkaSRTimestamp(t, &wg, db, batch, srID)
 	}
-	for i := 0; i < workers; i++ {
-		<-done
-	}
+	wg.Wait()
 
 	sr, err = db.GetIkaSignRequestByID(srID)
 	assert.NilError(t, err)
 	assert.Assert(t, sr != nil)
-	assert.Equal(t, int64(123+workers*batch), sr.Timestamp)
+	assert.Equal(t, int64(testTimestamp+workers*batch), sr.Timestamp)
 
 }
-func insertManySignReq(t *testing.T, done chan<- bool, db DB, idFrom, idTo uint64) {
+
+func insertManySignReq(t *testing.T, wg *sync.WaitGroup, db DB, idFrom, idTo uint64) {
 	for i := idFrom; i < idTo; i++ {
 		sr := IkaSignRequest{
 			ID:        i,
@@ -61,35 +61,32 @@ func insertManySignReq(t *testing.T, done chan<- bool, db DB, idFrom, idTo uint6
 			DWalletID: "",
 			UserSig:   "",
 			FinalSig:  nil,
-			Timestamp: 123,
+			Timestamp: testTimestamp,
 		}
 		err := db.InsertIkaSignRequest(sr)
 		assert.NilError(t, err)
+		t.Logf("Worker %d finished inserting %d sign requests (from ID %d to %d)", i, idTo-idFrom, idFrom, idTo)
 	}
-
-	t.Logf("finished from %d, to: %d", idFrom, idTo)
-	done <- true
+	wg.Done()
 }
 
-func loopIncrementIkaSRTimestamp(t *testing.T, done chan<- bool, db DB, n int, srID uint64) {
+func loopIncrementIkaSRTimestamp(t *testing.T, wg *sync.WaitGroup, db DB, n int, srID uint64) {
 	for i := 0; i < n; i++ {
-		db.incrementIkaSRTimestamp(t, srID)
+		assert.NilError(t, db.incrementIkaSRTimestamp(srID))
 	}
-	done <- true
+	wg.Done()
 }
 
-func (db DB) incrementIkaSRTimestamp(t *testing.T, srID uint64) {
+func (db DB) incrementIkaSRTimestamp(srID uint64) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	row := db.conn.QueryRow(`
-SELECT timestamp FROM ika_sign_requests WHERE id = ?`, srID)
+	row := db.conn.QueryRow(`SELECT timestamp FROM ika_sign_requests WHERE id =?`, srID)
 	var tm int64
-	assert.NilError(t, row.Scan(&tm))
+	if err := row.Scan(&tm); err != nil {
+		return err
+	}
 
-	_, err := db.conn.Exec(`
-UPDATE ika_sign_requests
-SET timestamp = ?
-WHERE id = ?`, tm+1, srID)
-	assert.NilError(t, err)
+	_, err := db.conn.Exec(`UPDATE ika_sign_requests SET timestamp =? WHERE id =?`, tm+1, srID)
+	return err
 }
