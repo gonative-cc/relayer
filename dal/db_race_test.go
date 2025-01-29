@@ -47,8 +47,8 @@ func Test_DbRace(t *testing.T) {
 	for i := uint64(0); i < workers; i++ {
 		wg2.Add(1)
 		go func(i uint64) {
-			defer wg2.Done()
 			loopIncrementIkaSRTimestamp(t, db, batch, srID)
+			wg2.Done()
 		}(i)
 	}
 	wg2.Wait()
