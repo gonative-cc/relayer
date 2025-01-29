@@ -26,6 +26,6 @@ func (p *MockClient) UpdateLC(
 }
 
 // ApproveAndSign is a mock implementation that returns a predefined signature.
-func (p *MockClient) ApproveAndSign(_ context.Context, _, _ string, _ [][]byte) ([][]byte, error) {
-	return [][]byte{{0x01, 0x02, 0x03}}, nil
+func (p *MockClient) ApproveAndSign(_ context.Context, _, _ string, _ [][]byte) ([][]byte, string, error) {
+	return [][]byte{{0x01, 0x02, 0x03}}, "txDigest", nil
 }

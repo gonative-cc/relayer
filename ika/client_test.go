@@ -46,7 +46,7 @@ func TestClient_ApproveAndSign(t *testing.T) {
 	)
 	assert.Nil(t, err)
 
-	signature, err := client.ApproveAndSign(
+	signature, txDigest, err := client.ApproveAndSign(
 		context.Background(),
 		"0x62e79d33bb331d8f93973252b4d2eda5a491d9b87044808530b25c60fc98b276",
 		"0x62e79d33bb331d8f93973252b4d2eda5a491d9b87044808530b25c60fc98b276",
@@ -56,4 +56,5 @@ func TestClient_ApproveAndSign(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, len(signature), 1)
 	assert.Equal(t, signature[0], []byte("mock_signature"))
+	assert.Equal(t, txDigest, "txDigest")
 }
