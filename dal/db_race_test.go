@@ -20,15 +20,12 @@ func Test_DbRace(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Test 1: Parallel inserts
-	var wg1 sync.WaitGroup
+	var wg sync.WaitGroup
 	for i := uint64(0); i < workers; i++ {
-		wg1.Add(1)
-		go func(i uint64) {
-			insertManySignReq(t, db, i*batch, (i+1)*batch)
-			wg1.Done()
-		}(i)
+		wg.Add(1)
+		go insertManySignReq(t, &wg, db, i*batch, (i+1)*batch)
 	}
-	wg1.Wait()
+	wg.Wait()
 
 	var srID uint64 = 1
 	sr, err := db.GetIkaSignRequestByID(srID)
@@ -43,15 +40,11 @@ func Test_DbRace(t *testing.T) {
 	assert.Equal(t, batch*workers, count)
 
 	// Test 2: Parallel updates
-	var wg2 sync.WaitGroup
 	for i := uint64(0); i < workers; i++ {
-		wg2.Add(1)
-		go func(i uint64) {
-			loopIncrementIkaSRTimestamp(t, db, batch, srID)
-			wg2.Done()
-		}(i)
+		wg.Add(1)
+		go loopIncrementIkaSRTimestamp(t, &wg, db, batch, srID)
 	}
-	wg2.Wait()
+	wg.Wait()
 
 	sr, err = db.GetIkaSignRequestByID(srID)
 	assert.NilError(t, err)
@@ -60,7 +53,7 @@ func Test_DbRace(t *testing.T) {
 
 }
 
-func insertManySignReq(t *testing.T, db DB, idFrom, idTo uint64) {
+func insertManySignReq(t *testing.T, wg *sync.WaitGroup, db DB, idFrom, idTo uint64) {
 	for i := idFrom; i < idTo; i++ {
 		sr := IkaSignRequest{
 			ID:        i,
@@ -74,12 +67,14 @@ func insertManySignReq(t *testing.T, db DB, idFrom, idTo uint64) {
 		assert.NilError(t, err)
 		t.Logf("Worker %d finished inserting %d sign requests (from ID %d to %d)", i, idTo-idFrom, idFrom, idTo)
 	}
+	wg.Done()
 }
 
-func loopIncrementIkaSRTimestamp(t *testing.T, db DB, n int, srID uint64) {
+func loopIncrementIkaSRTimestamp(t *testing.T, wg *sync.WaitGroup, db DB, n int, srID uint64) {
 	for i := 0; i < n; i++ {
 		assert.NilError(t, db.incrementIkaSRTimestamp(srID))
 	}
+	wg.Done()
 }
 
 func (db DB) incrementIkaSRTimestamp(srID uint64) error {
