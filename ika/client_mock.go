@@ -39,7 +39,7 @@ func (m *MockClient) ApproveAndSign(
 	signMessagesID string,
 	messages [][]byte,
 ) ([][]byte, string, error) {
-	args := m.Called(ctx, dwalletCapID, signMessagesID, messages)
+	returns := m.Called(ctx, dwalletCapID, signMessagesID, messages)
 	var signatures [][]byte
 	if args.Get(0) == nil {
 		// When passing nil as the first arguemnt testify complains about nil not being of type [][]byte,
