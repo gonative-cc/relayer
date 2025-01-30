@@ -22,7 +22,7 @@ type IkaSignRequest struct {
 
 // IkaTx represents a row in the `ika_txs` table.
 type IkaTx struct {
-	// SrID is the IkaSignRequest.ID
+	// SrID is the IkaSignRequest.ID (from Natvie)
 	SrID      uint64      `json:"sr_id"`
 	Status    IkaTxStatus `json:"status"`
 	IkaTxID   string      `json:"ika_tx_id"`
@@ -32,7 +32,7 @@ type IkaTx struct {
 
 // BitcoinTx represents a row in the `bitcoin_txs` table.
 type BitcoinTx struct {
-	// SrID is the IkaSignRequest.ID
+	// SrID is the IkaSignRequest.ID (from Natvie)
 	SrID      uint64          `json:"sr_id"`
 	Status    BitcoinTxStatus `json:"status"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
