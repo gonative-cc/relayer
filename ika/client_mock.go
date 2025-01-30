@@ -41,12 +41,12 @@ func (m *MockClient) ApproveAndSign(
 ) ([][]byte, string, error) {
 	returns := m.Called(ctx, dwalletCapID, signMessagesID, messages)
 	var signatures [][]byte
-	if args.Get(0) == nil {
+	if returns.Get(0) == nil {
 		// When passing nil as the first arguemnt testify complains about nil not being of type [][]byte,
 		// thats where make([][]byte, 0) come from.
 		signatures = make([][]byte, 0)
 	} else {
-		signatures = args.Get(0).([][]byte)
+		signatures = returns.Get(0).([][]byte)
 	}
-	return signatures, args.String(1), args.Error(2)
+	return signatures, returns.String(1), returns.Error(2)
 }
