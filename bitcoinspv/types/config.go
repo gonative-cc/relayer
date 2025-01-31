@@ -40,13 +40,16 @@ type RelayerConfig struct {
 
 // Validate checks if the RelayerConfig values are valid
 func (cfg *RelayerConfig) Validate() error {
-	if err := cfg.validateNetParams(); err != nil {
-		return err
+	for _, validate := range []func() error{
+		cfg.validateNetParams,
+		cfg.validateCacheSize,
+		cfg.validateHeadersLimit,
+	} {
+		if err := validate(); err != nil {
+			return err
+		}
 	}
-	if err := cfg.validateCacheSize(); err != nil {
-		return err
-	}
-	return cfg.validateHeadersLimit()
+	return nil
 }
 
 func (cfg *RelayerConfig) validateNetParams() error {

@@ -6,12 +6,11 @@ type MsgInsertHeaders struct {
 	Headers []BTCHeaderBytes
 }
 
-func NewMsgInsertHeaders(
-	headers []*IndexedBlock,
-) []*wire.BlockHeader {
+// NewMsgInsertHeaders converts a slice of IndexedBlock to wire.BlockHeader
+func NewMsgInsertHeaders(headers []*IndexedBlock) []*wire.BlockHeader {
 	headerBytes := make([]*wire.BlockHeader, len(headers))
-	for i, h := range headers {
-		headerBytes[i] = h.Header
+	for i, header := range headers {
+		headerBytes[i] = header.Header
 	}
 
 	return headerBytes

@@ -2,6 +2,7 @@ package types
 
 import "github.com/btcsuite/btcd/chaincfg/chainhash"
 
+// BTCSpvProof represents a Bitcoin SPV proof for verifying transaction inclusion
 // Consider we have a Merkle tree with following structure:
 //
 //	          ROOT
@@ -20,28 +21,42 @@ import "github.com/btcsuite/btcd/chaincfg/chainhash"
 // By looking at 010 we would know that H4 is a right sibling,
 // H12 is left, H5555 is right again.
 type BTCSpvProof struct {
+	// ConfirmingBtcBlockHash is the hash of the block containing the transaction
 	// Should have exactly 80 bytes
 	ConfirmingBtcBlockHash chainhash.Hash
-	BtcTransaction         []byte
-	// Index of transaction within the block. Index is needed to determine if
-	// currently hashed node is left or right.
+
+	// BtcTransaction contains the raw transaction bytes
+	BtcTransaction []byte
+
+	// BtcTransactionIndex is the index of transaction within the block
+	// Index is needed to determine if currently hashed node is left or right
 	BtcTransactionIndex uint32
-	// List of concatenated intermediate merkle tree nodes, without root node and
-	// leaf node against which we calculate the proof. Each node has 32 byte
-	// length. Example proof can look like: 32_bytes_of_node1 || 32_bytes_of_node2
-	// ||  32_bytes_of_node3 so the length of the proof will always be divisible
-	// by 32.
+
+	// MerkleNodes contains concatenated intermediate merkle tree nodes
+	// Does not include root node and leaf node against which we calculate the proof
+	// Each node has 32 byte length
+	// Example proof: 32_bytes_of_node1 || 32_bytes_of_node2 || 32_bytes_of_node3
+	// Length will always be divisible by 32
 	MerkleNodes []byte
 }
 
 // NOTE: not copied
+// ToMsgSpvProof converts a BTCSpvProof to an SPVProof message
 func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txID string, txHash *chainhash.Hash) SPVProof {
-	merklePath := make([]chainhash.Hash, (len(btcSpvProof.MerkleNodes)/32)+1)
-	for i := 0; i < len(btcSpvProof.MerkleNodes)/32; i++ {
-		copy(merklePath[i][:], btcSpvProof.MerkleNodes[i*32:(i+1)*32])
+	// Calculate number of merkle nodes including txHash
+	numNodes := (len(btcSpvProof.MerkleNodes) / 32) + 1
+	merklePath := make([]chainhash.Hash, numNodes)
+
+	// Copy merkle nodes
+	for i := 0; i < numNodes-1; i++ {
+		start := i * 32
+		end := (i + 1) * 32
+		copy(merklePath[i][:], btcSpvProof.MerkleNodes[start:end])
 	}
-	// copy txHash to end of merklePath
-	copy(merklePath[len(merklePath)-1][:], txHash[:])
+
+	// Copy txHash as last node
+	lastIndex := numNodes - 1
+	copy(merklePath[lastIndex][:], txHash[:])
 
 	return SPVProof{
 		BlockHash:  btcSpvProof.ConfirmingBtcBlockHash,
@@ -51,12 +66,14 @@ func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txID string, txHash *chainhash.Has
 	}
 }
 
+// MsgInsertBTCSpvProof represents a message containing BTC SPV proofs
 type MsgInsertBTCSpvProof struct {
 	// Submitter string
 	Proofs []*BTCSpvProof
 }
 
 // NOTE: not copied
+// SPVProof represents a simplified payment verification proof
 type SPVProof struct {
 	BlockHash  chainhash.Hash
 	TxID       string // 32bytes hash value in string hex format

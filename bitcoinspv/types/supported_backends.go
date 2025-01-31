@@ -11,15 +11,17 @@ const (
 	BtcSimnet  SupportedBtcNetwork = "simnet"
 	BtcRegtest SupportedBtcNetwork = "regtest"
 	BtcSignet  SupportedBtcNetwork = "signet"
+)
 
+const (
 	Btcd     SupportedBtcBackend = "btcd"
 	Bitcoind SupportedBtcBackend = "bitcoind"
 )
 
-func (c SupportedBtcNetwork) String() string {
-	return string(c)
+func (n SupportedBtcNetwork) String() string {
+	return string(n)
 }
 
-func (c SupportedBtcBackend) String() string {
-	return string(c)
+func (b SupportedBtcBackend) String() string {
+	return string(b)
 }

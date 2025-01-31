@@ -10,10 +10,10 @@ import (
 )
 
 func GetWrappedTxs(msg *wire.MsgBlock) []*btcutil.Tx {
-	btcTxs := []*btcutil.Tx{}
+	btcTxs := make([]*btcutil.Tx, 0, len(msg.Transactions))
 
-	for i := range msg.Transactions {
-		newTx := btcutil.NewTx(msg.Transactions[i])
+	for i, tx := range msg.Transactions {
+		newTx := btcutil.NewTx(tx)
 		newTx.SetIndex(i)
 
 		btcTxs = append(btcTxs, newTx)
@@ -22,63 +22,38 @@ func GetWrappedTxs(msg *wire.MsgBlock) []*btcutil.Tx {
 	return btcTxs
 }
 
-// createBranch takes as input flatenned representation of merkle tree i.e
-// for tree:
+// createBranch generates a merkle proof branch for a given leaf index
+// Parameters:
 //
-//	      r
-//	    /  \
-//	  d1    d2
-//	 /  \   / \
-//	l1  l2 l3 l4
+//	nodes: flattened merkle tree array [leaves..intermediates..root]
+//	numLeafs: number of leaf nodes in the tree
+//	idx: index of leaf to generate proof for
 //
-// slice should look like [l1, l2, l3, l4, d1, d2, r]
-// also it takes number of leafs i.e nodes at lowest level of the tree and index
-// of the leaf which supposed to be proven
-// it returns list of hashes required to prove given index
-func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhash.Hash {
-	var branch []*chainhash.Hash
-
-	// size represents number of merkle nodes at given level. At 0 level, number of
-	// nodes is equal to number of leafs
-	var size = numfLeafs
-
-	var index = idx
-
-	// i represents starting index of given level. 0 level
-	// i.e leafs always start at index 0
-	var i uint // 0
+// Returns: array of hashes needed to prove the leaf at idx
+func createBranch(nodes []*chainhash.Hash, numLeafs uint, idx uint) []*chainhash.Hash {
+	branch := make([]*chainhash.Hash, 0)
+	size := numLeafs
+	index := idx
+	level := uint(0)
 
 	for size > 1 {
+		// Get sibling node hash
+		siblingIdx := min(index^1, size-1)
+		branch = append(branch, nodes[level+siblingIdx])
 
-		// index^1 means we want to get sibling of the node we are proving
-		// ie. for index=2, index^1 = 3 and for index=3 index^1=2
-		// so xoring last bit by 1, select node opposite to the node we want the proof
-		// for.
-		// case with `size-1` is needed when the number of leafs is not power of 2
-		// and xor^1 could point outside of the tree
-		j := min(index^1, size-1)
-
-		branch = append(branch, nodes[i+j])
-
-		// divide index by 2 as there are two times less nodes on second level
+		// Move to parent level
 		index >>= 1
-
-		// after getting node at this level we move to next one by advancing i by
-		// the size of the current level
-		i += size
-
-		// update the size to the next level size i.e (current level size / 2)
-		// + 1 is needed to correctly account for cases that the last node of the level
-		// is not paired.
-		// example If the level is of the size 3, then next level should have size 2, not 1
+		level += size
 		size = (size + 1) >> 1
 	}
 
 	return branch
 }
 
-// quite inefficiet method of calculating merkle proofs, created for testing purposes
+// CreateProofForIdx generates a Merkle proof for a transaction at the given index
+// Returns the proof as a slice of hashes and any error encountered
 func CreateProofForIdx(transactions [][]byte, idx uint32) ([]*chainhash.Hash, error) {
+	// Validate inputs
 	if len(transactions) == 0 {
 		return nil, errors.New("can't calculate proof for empty transaction list")
 	}
@@ -87,58 +62,66 @@ func CreateProofForIdx(transactions [][]byte, idx uint32) ([]*chainhash.Hash, er
 		return nil, errors.New("provided index should be smaller that length of transaction list")
 	}
 
+	// Convert transaction bytes to btcutil.Tx objects
 	txs := make([]*btcutil.Tx, 0, len(transactions))
-	for _, b := range transactions {
-		tx, e := btcutil.NewTxFromBytes(b)
-
-		if e != nil {
-			return nil, e
+	for _, txBytes := range transactions {
+		tx, err := btcutil.NewTxFromBytes(txBytes)
+		if err != nil {
+			return nil, err
 		}
 
 		txs = append(txs, tx)
 	}
 
-	store := blockchain.BuildMerkleTreeStore(txs, false)
+	// Build Merkle tree
+	merkleTree := blockchain.BuildMerkleTreeStore(txs, false)
 
-	var storeNoNil []*chainhash.Hash
-
-	// to correctly calculate indexes we need to filter out all nil hashes which
-	// represents nodes which are empty
-	for _, h := range store {
-		if h != nil {
-			storeNoNil = append(storeNoNil, h)
+	// Filter out nil nodes
+	var validNodes []*chainhash.Hash
+	for _, node := range merkleTree {
+		if node != nil {
+			validNodes = append(validNodes, node)
 		}
 	}
 
-	branch := createBranch(storeNoNil, uint(len(transactions)), uint(idx))
+	// Generate proof branch
+	proof := createBranch(validNodes, uint(len(transactions)), uint(idx))
 
-	return branch, nil
+	return proof, nil
 }
 
 // NOTE: modified
+// SpvProofFromHeaderAndTransactions creates a simplified payment verification proof
+// for a transaction at the given index using the block header and transaction list
 func SpvProofFromHeaderAndTransactions(
 	headerBytes *BTCHeaderBytes,
 	transactions [][]byte,
 	transactionIdx uint32,
 ) (*BTCSpvProof, error) {
-	proof, e := CreateProofForIdx(transactions, transactionIdx)
-
-	if e != nil {
-		return nil, e
+	// Get merkle proof nodes for the transaction
+	merkleProof, err := CreateProofForIdx(transactions, transactionIdx)
+	if err != nil {
+		return nil, err
 	}
 
-	var flatProof []byte
+	// Flatten the merkle proof nodes into a single byte slice
+	flattenedProof := flattenMerkleProof(merkleProof)
 
-	for _, h := range proof {
-		flatProof = append(flatProof, h.CloneBytes()...)
-	}
-
-	spvProof := BTCSpvProof{
+	// Create and return the SPV proof
+	return &BTCSpvProof{
 		ConfirmingBtcBlockHash: headerBytes.ToBlockHeader().BlockHash(),
 		BtcTransaction:         transactions[transactionIdx],
 		BtcTransactionIndex:    transactionIdx,
-		MerkleNodes:            flatProof,
-	}
+		MerkleNodes:            flattenedProof,
+	}, nil
+}
 
-	return &spvProof, nil
+// NOTE: not copied
+// flattenMerkleProof converts merkle proof node hashes into a single byte slice
+func flattenMerkleProof(proof []*chainhash.Hash) []byte {
+	var flatProof []byte
+	for _, h := range proof {
+		flatProof = append(flatProof, h.CloneBytes()...)
+	}
+	return flatProof
 }

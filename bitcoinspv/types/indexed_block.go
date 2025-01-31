@@ -33,6 +33,7 @@ func NewIndexedBlockFromMsgBlock(height int64, block *wire.MsgBlock) *IndexedBlo
 	}
 }
 
+// MsgBlock converts the IndexedBlock back to a wire.MsgBlock
 func (ib *IndexedBlock) MsgBlock() *wire.MsgBlock {
 	msgTxs := make([]*wire.MsgTx, 0, len(ib.Txs))
 	for _, tx := range ib.Txs {
@@ -51,11 +52,8 @@ func (ib *IndexedBlock) BlockHash() chainhash.Hash {
 
 // GenSPVProof generates a Merkle proof for the transaction at the given index
 func (ib *IndexedBlock) GenSPVProof(txIdx uint32) (*BTCSpvProof, error) {
-	if int(txIdx) >= len(ib.Txs) {
-		return nil, fmt.Errorf(
-			"transaction index is out of scope: idx=%d, len(Txs)=%d",
-			txIdx, len(ib.Txs),
-		)
+	if err := ib.validateTxIndex(txIdx); err != nil {
+		return nil, err
 	}
 
 	headerBytes := NewBTCHeaderBytesFromBlockHeader(ib.Header)
@@ -65,6 +63,16 @@ func (ib *IndexedBlock) GenSPVProof(txIdx uint32) (*BTCSpvProof, error) {
 	}
 
 	return SpvProofFromHeaderAndTransactions(&headerBytes, txsBytes, txIdx)
+}
+
+func (ib *IndexedBlock) validateTxIndex(txIdx uint32) error {
+	if int(txIdx) >= len(ib.Txs) {
+		return fmt.Errorf(
+			"transaction index is out of scope: idx=%d, len(Txs)=%d",
+			txIdx, len(ib.Txs),
+		)
+	}
+	return nil
 }
 
 // serializeTransactions converts all transactions to byte slices
