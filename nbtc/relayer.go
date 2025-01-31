@@ -105,22 +105,28 @@ func (r *Relayer) Start(ctx context.Context) error {
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			if err := r.processSignRequests(ctx); err != nil {
-				r.handleError(err, "processSignRequests")
-			}
-			if err := r.processSignedTxs(); err != nil {
-				r.handleError(err, "processSignedTxs")
-			}
-		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
-		// so probably we should wrap the db in a mutex
+			go func() {
+				if err := r.processSignRequests(ctx); err != nil {
+					r.handleError(err, "processSignRequests")
+				}
+			}()
+			go func() {
+				if err := r.processSignedTxs(); err != nil {
+					r.handleError(err, "processSignedTxs")
+				}
+			}()
 		case <-r.confirmTxsTicker.C:
-			if err := r.btcProcessor.CheckConfirmations(); err != nil {
-				r.handleError(err, "CheckConfirmations")
-			}
+			go func() {
+				if err := r.btcProcessor.CheckConfirmations(); err != nil {
+					r.handleError(err, "CheckConfirmations")
+				}
+			}()
 		case <-r.signReqTicker.C:
-			if err := r.fetchAndStoreNativeSignRequests(); err != nil {
-				r.handleError(err, "fetchAndStoreNativeSignRequests")
-			}
+			go func() {
+				if err := r.fetchAndStoreNativeSignRequests(); err != nil {
+					r.handleError(err, "fetchAndStoreNativeSignRequests")
+				}
+			}()
 		}
 	}
 }
