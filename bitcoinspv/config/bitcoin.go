@@ -12,36 +12,38 @@ import (
 
 // BTCConfig defines configuration for the Bitcoin client
 type BTCConfig struct {
+	// TLS configuration
 	DisableClientTLS bool   `mapstructure:"no-client-tls"`
 	CAFile           string `mapstructure:"ca-file"`
-	Endpoint         string `mapstructure:"endpoint"`
-	WalletEndpoint   string `mapstructure:"wallet-endpoint"`
-	WalletPassword   string `mapstructure:"wallet-password"`
-	WalletName       string `mapstructure:"wallet-name"`
-	WalletCAFile     string `mapstructure:"wallet-ca-file"`
-	// minimum tx fee, sat/kvb
-	TxFeeMin chainfee.SatPerKVByte `mapstructure:"tx-fee-min"`
-	// maximum tx fee, sat/kvb
-	TxFeeMax chainfee.SatPerKVByte `mapstructure:"tx-fee-max"`
-	// default BTC tx fee in case estimation fails, sat/kvb
-	DefaultFee chainfee.SatPerKVByte `mapstructure:"default-fee"`
-	// the BTC tx fee estimate mode, which is only used by bitcoind,
-	// must be either ECONOMICAL or CONSERVATIVE
-	EstimateMode string `mapstructure:"estimate-mode"`
-	// this implies how soon the tx is estimated to be included in a block,
-	// e.g., 1 means the tx is estimated to be included in the next block
-	TargetBlockNum    int64                     `mapstructure:"target-block-num"`
-	NetParams         string                    `mapstructure:"net-params"`
+
+	// Node configuration
+	Endpoint          string                    `mapstructure:"endpoint"`
 	Username          string                    `mapstructure:"username"`
 	Password          string                    `mapstructure:"password"`
 	ReconnectAttempts int                       `mapstructure:"reconnect-attempts"`
+	NetParams         string                    `mapstructure:"net-params"`
 	BtcBackend        types.SupportedBtcBackend `mapstructure:"btc-backend"`
-	ZmqSeqEndpoint    string                    `mapstructure:"zmq-seq-endpoint"`
-	ZmqBlockEndpoint  string                    `mapstructure:"zmq-block-endpoint"`
-	ZmqTxEndpoint     string                    `mapstructure:"zmq-tx-endpoint"`
+
+	// Wallet configuration
+	WalletEndpoint string `mapstructure:"wallet-endpoint"`
+	WalletPassword string `mapstructure:"wallet-password"`
+	WalletName     string `mapstructure:"wallet-name"`
+	WalletCAFile   string `mapstructure:"wallet-ca-file"`
+
+	// Fee configuration
+	TxFeeMin       chainfee.SatPerKVByte `mapstructure:"tx-fee-min"`
+	TxFeeMax       chainfee.SatPerKVByte `mapstructure:"tx-fee-max"`
+	DefaultFee     chainfee.SatPerKVByte `mapstructure:"default-fee"`
+	EstimateMode   string                `mapstructure:"estimate-mode"`
+	TargetBlockNum int64                 `mapstructure:"target-block-num"`
+
+	// ZMQ configuration
+	ZmqSeqEndpoint   string `mapstructure:"zmq-seq-endpoint"`
+	ZmqBlockEndpoint string `mapstructure:"zmq-block-endpoint"`
+	ZmqTxEndpoint    string `mapstructure:"zmq-tx-endpoint"`
 }
 
-func (cfg *BTCConfig) Validate() error {
+func (cfg *BTCConfig) validateBasicConfig() error {
 	if cfg.ReconnectAttempts < 0 {
 		return errors.New("reconnect-attempts must be non-negative")
 	}
@@ -54,24 +56,34 @@ func (cfg *BTCConfig) Validate() error {
 		return errors.New("invalid btc backend")
 	}
 
-	if cfg.BtcBackend == types.Bitcoind {
-		if cfg.ZmqBlockEndpoint == "" {
-			return errors.New("zmq block endpoint cannot be empty")
-		}
+	return nil
+}
 
-		if cfg.ZmqTxEndpoint == "" {
-			return errors.New("zmq tx endpoint cannot be empty")
-		}
-
-		if cfg.ZmqSeqEndpoint == "" {
-			return errors.New("zmq seq endpoint cannot be empty")
-		}
-
-		if cfg.EstimateMode != "ECONOMICAL" && cfg.EstimateMode != "CONSERVATIVE" {
-			return errors.New("estimate-mode must be either ECONOMICAL or CONSERVATIVE when the backend is bitcoind")
-		}
+func (cfg *BTCConfig) validateBitcoindConfig() error {
+	if cfg.BtcBackend != types.Bitcoind {
+		return nil
 	}
 
+	if cfg.ZmqBlockEndpoint == "" {
+		return errors.New("zmq block endpoint cannot be empty")
+	}
+
+	if cfg.ZmqTxEndpoint == "" {
+		return errors.New("zmq tx endpoint cannot be empty")
+	}
+
+	if cfg.ZmqSeqEndpoint == "" {
+		return errors.New("zmq seq endpoint cannot be empty")
+	}
+
+	if cfg.EstimateMode != "ECONOMICAL" && cfg.EstimateMode != "CONSERVATIVE" {
+		return errors.New("estimate-mode must be either ECONOMICAL or CONSERVATIVE when the backend is bitcoind")
+	}
+
+	return nil
+}
+
+func (cfg *BTCConfig) validateFeeConfig() error {
 	if cfg.TargetBlockNum <= 0 {
 		return errors.New("target-block-num should be positive")
 	}
@@ -99,8 +111,23 @@ func (cfg *BTCConfig) Validate() error {
 	return nil
 }
 
+func (cfg *BTCConfig) Validate() error {
+	if err := cfg.validateBasicConfig(); err != nil {
+		return err
+	}
+
+	if err := cfg.validateBitcoindConfig(); err != nil {
+		return err
+	}
+
+	if err := cfg.validateFeeConfig(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 const (
-	// Config for polling jittner in bitcoind client, with polling enabled
 	DefaultTxPollingJitter     = 0.5
 	DefaultRPCBtcNodeHost      = "127.0.01:18556"
 	DefaultBtcNodeRPCUser      = "rpcuser"
@@ -142,11 +169,8 @@ func (cfg *BTCConfig) ReadCAFile() []byte {
 		return nil
 	}
 
-	// Read certificate file if TLS is not disabled.
 	certs, err := os.ReadFile(cfg.CAFile)
 	if err != nil {
-		// If there's an error reading the CA file, continue
-		// with nil certs and without the client connection.
 		return nil
 	}
 
@@ -155,15 +179,11 @@ func (cfg *BTCConfig) ReadCAFile() []byte {
 
 func (cfg *BTCConfig) ReadWalletCAFile() []byte {
 	if cfg.DisableClientTLS {
-		// Chain server RPC TLS is disabled
 		return nil
 	}
 
-	// Read certificate file if TLS is not disabled.
 	certs, err := os.ReadFile(cfg.WalletCAFile)
 	if err != nil {
-		// If there's an error reading the CA file, continue
-		// with nil certs and without the client connection.
 		return nil
 	}
 	return certs

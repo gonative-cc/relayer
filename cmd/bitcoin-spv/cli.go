@@ -60,8 +60,8 @@ func CmdStart() *cobra.Command {
 			// Note that bitcoin-spv relayer needs to subscribe to new BTC blocks
 			btcClient, err = btcclient.NewWithBlockSubscriber(
 				&cfg.BTC,
-				cfg.Common.RetrySleepTime,
-				cfg.Common.MaxRetrySleepTime,
+				cfg.Common.SleepTime,
+				cfg.Common.MaxSleepTime,
 				rootLogger,
 			)
 			if err != nil {
@@ -94,8 +94,8 @@ func CmdStart() *cobra.Command {
 				rootLogger,
 				btcClient,
 				nativeClient,
-				cfg.Common.RetrySleepTime,
-				cfg.Common.MaxRetrySleepTime,
+				cfg.Common.SleepTime,
+				cfg.Common.MaxSleepTime,
 				relayerMetrics,
 			)
 			if err != nil {

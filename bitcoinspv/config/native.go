@@ -6,16 +6,17 @@ import (
 
 const (
 	DefaultNativeRPCEndpoint = "localhost:9797"
+	errEmptyRPCEndpoint      = "native RPC endpoint cannot be empty"
 )
 
-// CommonConfig defines the server's basic configuration
+// NativeConfig defines the native RPC server configuration
 type NativeConfig struct {
 	RPCEndpoint string `mapstructure:"rpc-endpoint"`
 }
 
 func (cfg *NativeConfig) Validate() error {
 	if cfg.RPCEndpoint == "" {
-		return errors.New("native RPC endpoint cannot be empty")
+		return errors.New(errEmptyRPCEndpoint)
 	}
 
 	return nil

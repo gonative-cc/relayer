@@ -19,12 +19,33 @@ type RelayerConfig struct {
 }
 
 func (cfg *RelayerConfig) Validate() error {
+	if err := cfg.validateNetParams(); err != nil {
+		return err
+	}
+	if err := cfg.validateBTCCacheSize(); err != nil {
+		return err
+	}
+	if err := cfg.validateMaxHeadersInMsg(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cfg *RelayerConfig) validateNetParams() error {
 	if _, ok := types.GetValidNetParams()[cfg.NetParams]; !ok {
 		return fmt.Errorf("invalid net params")
 	}
+	return nil
+}
+
+func (cfg *RelayerConfig) validateBTCCacheSize() error {
 	if cfg.BTCCacheSize < minBTCCacheSize {
 		return fmt.Errorf("BTC cache size has to be at least %d", minBTCCacheSize)
 	}
+	return nil
+}
+
+func (cfg *RelayerConfig) validateMaxHeadersInMsg() error {
 	if cfg.MaxHeadersInMsg < maxHeadersInMsg {
 		return fmt.Errorf("max_headers_in_msg has to be at least %d", maxHeadersInMsg)
 	}

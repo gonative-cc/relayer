@@ -12,17 +12,26 @@ const (
 	defaultMaxRetrySleepTime = 5 * time.Minute
 )
 
+// LogConfig contains logging related configuration
+type LogConfig struct {
+	// Format is the format of the log (json|auto|console|logfmt)
+	Format string `mapstructure:"log-format"`
+	// Level is the log level (debug|warn|error|panic|fatal)
+	Level string `mapstructure:"log-level"`
+}
+
+// RetryConfig contains retry related configuration
+type RetryConfig struct {
+	// SleepTime is the backoff interval for the first retry
+	SleepTime time.Duration `mapstructure:"retry-sleep-time"`
+	// MaxSleepTime is the maximum backoff interval between retries
+	MaxSleepTime time.Duration `mapstructure:"max-retry-sleep-time"`
+}
+
 // CommonConfig defines the server's basic configuration
 type CommonConfig struct {
-	// LogFormat is the format of the log (json|auto|console|logfmt)
-	LogFormat string `mapstructure:"log-format"`
-	// LogLevel is the log level (debug|warn|error|panic|fatal)
-	LogLevel string `mapstructure:"log-level"`
-	// Backoff interval for the first retry.
-	RetrySleepTime time.Duration `mapstructure:"retry-sleep-time"`
-	// Maximum backoff interval between retries. Exponential backoff leads to interval increase.
-	// This value is the cap of the interval, when exceeded the retries stop.
-	MaxRetrySleepTime time.Duration `mapstructure:"max-retry-sleep-time"`
+	LogConfig
+	RetryConfig
 }
 
 func isOneOf(v string, list []string) bool {
@@ -35,30 +44,34 @@ func isOneOf(v string, list []string) bool {
 }
 
 func (cfg *CommonConfig) Validate() error {
-	if !isOneOf(cfg.LogFormat, []string{"json", "auto", "console", "logfmt"}) {
+	if !isOneOf(cfg.Format, []string{"json", "auto", "console", "logfmt"}) {
 		return errors.New("log-format is not one of json|auto|console|logfmt")
 	}
-	if !isOneOf(cfg.LogLevel, []string{"debug", "warn", "error", "panic", "fatal"}) {
+	if !isOneOf(cfg.Level, []string{"debug", "warn", "error", "panic", "fatal"}) {
 		return errors.New("log-level is not one of debug|warn|error|panic|fatal")
 	}
-	if cfg.RetrySleepTime < 0 {
+	if cfg.SleepTime < 0 {
 		return errors.New("retry-sleep-time can't be negative")
 	}
-	if cfg.MaxRetrySleepTime < 0 {
+	if cfg.MaxSleepTime < 0 {
 		return errors.New("max-retry-sleep-time can't be negative")
 	}
 	return nil
 }
 
 func (cfg *CommonConfig) CreateLogger() (*zap.Logger, error) {
-	return NewRootLogger(cfg.LogFormat, cfg.LogLevel)
+	return NewRootLogger(cfg.Format, cfg.Level)
 }
 
 func DefaultCommonConfig() CommonConfig {
 	return CommonConfig{
-		LogFormat:         "auto",
-		LogLevel:          "debug",
-		RetrySleepTime:    defaultRetrySleepTime,
-		MaxRetrySleepTime: defaultMaxRetrySleepTime,
+		LogConfig: LogConfig{
+			Format: "auto",
+			Level:  "debug",
+		},
+		RetryConfig: RetryConfig{
+			SleepTime:    defaultRetrySleepTime,
+			MaxSleepTime: defaultMaxRetrySleepTime,
+		},
 	}
 }
