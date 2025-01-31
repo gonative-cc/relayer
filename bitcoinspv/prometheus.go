@@ -20,7 +20,9 @@ func start(addr string, reg *prometheus.Registry) {
 	// Add Go module build info.
 	reg.MustRegister(collectors.NewBuildInfoCollector())
 	reg.MustRegister(collectors.NewGoCollector(
-		collectors.WithGoCollectorRuntimeMetrics(collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile("/.*")})),
+		collectors.WithGoCollectorRuntimeMetrics(
+			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile("/.*")},
+		)),
 	)
 
 	// Expose the registered metrics via HTTP.
