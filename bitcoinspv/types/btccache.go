@@ -25,7 +25,8 @@ func NewBTCCache(maxEntries int64) (*BTCCache, error) {
 	}, nil
 }
 
-// Init initializes the cache with the given blocks. Input blocks should be sorted by height. Thread-safe.
+// Init initializes the cache with the given blocks.
+// Input blocks should be sorted by height. Thread-safe.
 func (b *BTCCache) Init(ibs []*IndexedBlock) error {
 	b.Lock()
 	defer b.Unlock()

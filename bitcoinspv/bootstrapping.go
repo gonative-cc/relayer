@@ -45,11 +45,6 @@ func (r *Relayer) bootstrap(skipBlockSubscription bool) error {
 
 	ibs = r.btcCache.GetAllBlocks()
 
-	// r.logger.Infof(
-	// 	"BTC height: %d. BTCLightclient height: %d. Start syncing from height %d.",
-	// 	btcLatestBlockHeight, consistencyInfo.nativeLatestBlockHeight, consistencyInfo.startSyncHeight,
-	// )
-
 	// extracts and submits headers for each block in ibs
 	// Note: As we are retrieving blocks from btc cache from block just after confirmed block which
 	// we already checked for consistency, we can be sure that
@@ -189,11 +184,6 @@ func (r *Relayer) waitUntilBTCSync() error {
 	if err != nil {
 		return err
 	}
-
-	// hash, err := types.NewBTCHeaderHashBytesFromHex(tipRes.Header.HashHex)
-	// if err != nil {
-	// 	return err
-	// }
 
 	nativeLatestBlockHash = chainBlock.Hash
 	nativeLatestBlockHeight = chainBlock.Height

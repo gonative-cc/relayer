@@ -7,8 +7,7 @@ func NewMsgInsertHeaders(
 ) []*wire.BlockHeader {
 	headerBytes := make([]*wire.BlockHeader, len(headers))
 	for i, h := range headers {
-		header := h
-		headerBytes[i] = header.Header
+		headerBytes[i] = h.Header
 	}
 
 	return headerBytes
