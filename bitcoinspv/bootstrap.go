@@ -17,9 +17,9 @@ var (
 	bootstrapErrReportType = retry.LastErrorOnly(true)
 )
 
-func (r *Relayer) bootstrap(skipBlockSubscription bool) error {
+func (r *Relayer) bootstrapRelayer(skipBlockSubscription bool) error {
 	// ensure BTC has caught up with Native header chain
-	if err := r.waitUntilBTCSync(); err != nil {
+	if err := r.waitForBTCToSyncWithNative(); err != nil {
 		return err
 	}
 
@@ -62,7 +62,7 @@ func (r *Relayer) resizeAndTrimCache() error {
 	return nil
 }
 
-func (r *Relayer) relayerQuitCtx() (context.Context, func()) {
+func (r *Relayer) createRelayerContext() (context.Context, func()) {
 	quit := r.quitChan()
 	ctx, cancel := context.WithCancel(context.Background())
 	r.wg.Add(1)
@@ -84,7 +84,7 @@ func (r *Relayer) relayerQuitCtx() (context.Context, func()) {
 }
 
 func (r *Relayer) multitryBootstrap(skipBlockSubscription bool) {
-	ctx, cancel := r.relayerQuitCtx()
+	ctx, cancel := r.createRelayerContext()
 	defer cancel()
 
 	retryOpts := []retry.Option{
@@ -103,7 +103,7 @@ func (r *Relayer) multitryBootstrap(skipBlockSubscription bool) {
 
 	if err := retry.Do(
 		func() error {
-			return r.bootstrap(skipBlockSubscription)
+			return r.bootstrapRelayer(skipBlockSubscription)
 		},
 		retryOpts...,
 	); err != nil {
@@ -147,9 +147,9 @@ func (r *Relayer) initBTCCache() error {
 	return nil
 }
 
-// waitUntilBTCSync waits for BTC to synchronize until BTC is no shorter than Native's BTC light client.
+// waitForBTCToSyncWithNative waits for BTC to synchronize until BTC is no shorter than Native's BTC light client.
 // It returns BTC last block hash, BTC last block height, and Native's base height.
-func (r *Relayer) waitUntilBTCSync() error {
+func (r *Relayer) waitForBTCToSyncWithNative() error {
 	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 	if err != nil {
 		return err

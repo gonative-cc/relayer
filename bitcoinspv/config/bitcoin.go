@@ -165,24 +165,19 @@ func DefaultBTCConfig() BTCConfig {
 }
 
 func (cfg *BTCConfig) ReadCAFile() []byte {
-	if cfg.DisableClientTLS {
-		return nil
-	}
-
-	certs, err := os.ReadFile(cfg.CAFile)
-	if err != nil {
-		return nil
-	}
-
-	return certs
+	return cfg.ReadCertificateFile(cfg.CAFile)
 }
 
 func (cfg *BTCConfig) ReadWalletCAFile() []byte {
+	return cfg.ReadCertificateFile(cfg.WalletCAFile)
+}
+
+func (cfg *BTCConfig) ReadCertificateFile(filePath string) []byte {
 	if cfg.DisableClientTLS {
 		return nil
 	}
 
-	certs, err := os.ReadFile(cfg.WalletCAFile)
+	certs, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil
 	}
