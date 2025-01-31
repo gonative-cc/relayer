@@ -24,9 +24,8 @@ func loadConfig(configFile string) (*Config, error) {
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("error unmarshalling config: %w", err)
 	}
-
-	log.Info().Msg("Loaded Configuration:")
-	log.Info().Interface("config", config).Msg("")
+	log.Debug().Msg("Loaded Configuration:")
+	log.Debug().Interface("config", config).Msg("")
 
 	return &config, nil
 }

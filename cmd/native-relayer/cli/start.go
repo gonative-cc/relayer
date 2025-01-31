@@ -25,7 +25,7 @@ import (
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the relayer",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		config, err := prepareEnv(cmd)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to prepare environment")
@@ -67,6 +67,7 @@ var startCmd = &cobra.Command{
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			log.Info().Msg("Starting the relayer...")
 			if err := relayer.Start(cmd.Context()); err != nil {
 				log.Error().Err(err).Msg("Relayer encountered an error")
 			}
@@ -78,7 +79,7 @@ var startCmd = &cobra.Command{
 		log.Info().Msg("Stopping the relayer...")
 		relayer.Stop()
 		wg.Wait()
-		log.Info().Msg("Relayer stopped.")
+		log.Info().Msg("Relayer stopped")
 	},
 }
 
@@ -104,18 +105,18 @@ func prepareEnv(cmd *cobra.Command) (*Config, error) {
 	return config, nil
 }
 
-func initDatabase(cfg DBCfg) (*dal.DB, error) {
+func initDatabase(cfg DBCfg) (dal.DB, error) {
 	db, err := dal.NewDB(cfg.File)
 	if err != nil {
-		return nil, fmt.Errorf("error creating database: %w", err)
+		return db, fmt.Errorf("error creating database: %w", err)
 	}
 	if err := db.InitDB(); err != nil {
-		return nil, fmt.Errorf("error initializing database: %w", err)
+		return db, fmt.Errorf("error initializing database: %w", err)
 	}
 	return db, nil
 }
 
-func createNativeProcessor(cfg IkaCfg, db *dal.DB) (*native2ika.Processor, error) {
+func createNativeProcessor(cfg IkaCfg, db dal.DB) (*native2ika.Processor, error) {
 	suiClient := sui.NewSuiClient(cfg.RPC).(*sui.Client)
 	if suiClient == nil {
 		return nil, fmt.Errorf("error creating Sui client")
@@ -146,15 +147,16 @@ func createNativeProcessor(cfg IkaCfg, db *dal.DB) (*native2ika.Processor, error
 	nativeProcessor := native2ika.NewProcessor(client, db)
 	return nativeProcessor, nil
 }
-func createBTCProcessor(btcCfg BitcoinCfg, db *dal.DB) (*ika2btc.Processor, error) {
-	btcProcessor, err := ika2btc.NewProcessor(rpcclient.ConnConfig{
+func createBTCProcessor(btcCfg BitcoinCfg, db dal.DB) (*ika2btc.Processor, error) {
+	cfg := rpcclient.ConnConfig{
 		Host:         btcCfg.RPCHost,
 		User:         btcCfg.RPCUser,
 		Pass:         btcCfg.RPCPass,
 		HTTPPostMode: btcCfg.HTTPPostMode,
 		DisableTLS:   btcCfg.DisableTLS,
 		Params:       btcCfg.Network,
-	}, btcCfg.ConfirmationThreshold, db)
+	}
+	btcProcessor, err := ika2btc.NewProcessor(cfg, btcCfg.ConfirmationThreshold, db)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Bitcoin processor: %w", err)
 	}
@@ -168,7 +170,7 @@ func createSignReqFetcher() (*native.APISignRequestFetcher, error) {
 
 func createRelayer(
 	relayerCfg RelayerCfg,
-	db *dal.DB,
+	db dal.DB,
 	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
 	fetcher *native.APISignRequestFetcher,

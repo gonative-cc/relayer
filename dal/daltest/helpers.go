@@ -10,7 +10,7 @@ import (
 )
 
 // InitTestDB initializes an in-memory database for testing purposes.
-func InitTestDB(t *testing.T) *dal.DB {
+func InitTestDB(t *testing.T) dal.DB {
 	t.Helper()
 
 	db, err := dal.NewDB(":memory:")
@@ -30,7 +30,7 @@ func GetHashBytes(t *testing.T, hashString string) []byte {
 }
 
 // PopulateSignRequests inserts a set of predefined IkaSignRequest into the database.
-func PopulateSignRequests(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
+func PopulateSignRequests(t *testing.T, db dal.DB) []dal.IkaSignRequest {
 	t.Helper()
 
 	var rawTxBytes = []byte{
@@ -65,7 +65,7 @@ func PopulateSignRequests(t *testing.T, db *dal.DB) []dal.IkaSignRequest {
 }
 
 // PopulateIkaTxs inserts a set of predefined IkaTxs into the database.
-func PopulateIkaTxs(t *testing.T, db *dal.DB) []dal.IkaTx {
+func PopulateIkaTxs(t *testing.T, db dal.DB) []dal.IkaTx {
 	t.Helper()
 
 	ikaTxs := []dal.IkaTx{
@@ -83,7 +83,7 @@ func PopulateIkaTxs(t *testing.T, db *dal.DB) []dal.IkaTx {
 }
 
 // PopulateBitcoinTxs inserts a set of predefined BitcoinTxs into the database.
-func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
+func PopulateBitcoinTxs(t *testing.T, db dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
@@ -101,7 +101,7 @@ func PopulateBitcoinTxs(t *testing.T, db *dal.DB) []dal.BitcoinTx {
 }
 
 // PopulateDB inserts a set of predefined data to all the tables.
-func PopulateDB(t *testing.T, db *dal.DB) {
+func PopulateDB(t *testing.T, db dal.DB) {
 	t.Helper()
 	PopulateBitcoinTxs(t, db)
 	PopulateIkaTxs(t, db)
