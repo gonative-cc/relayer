@@ -11,7 +11,6 @@ import (
 )
 
 var ErrInvalidHeader = errors.New("invalid header")
-
 var ErrDuplicatedSubmission = errors.New("duplicated header submitted")
 
 // TODO add log formatters
