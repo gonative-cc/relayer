@@ -55,43 +55,45 @@ func isExpectedErr(err error) bool {
 	return false
 }
 
-// Do executes a func with retry
+// RetryDo executes a func with retry
 func RetryDo(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
-	if err := retryableFunc(); err != nil {
-		if isUnrecoverableErr(err) {
-			logger.Error("Skip retry, error unrecoverable", "err", err)
-			return err
-		}
-
-		if isExpectedErr(err) {
-			logger.Error("Skip retry, error expected", "err", err)
-			return nil
-		}
-
-		// Add some randomness to prevent thrashing
-		jitter, err := randDuration(int64(sleep))
-		if err != nil {
-			return err
-		}
-		sleep += jitter / 2
-
-		if sleep > maxSleepTime {
-			logger.Info("retry timed out")
-			return err
-		}
-
-		logger.Info("starting exponential backoff", "sleep", sleep, "err", err)
-		time.Sleep(sleep)
-
-		return RetryDo(2*sleep, maxSleepTime, retryableFunc)
+	err := retryableFunc()
+	if err == nil {
+		return nil
 	}
-	return nil
+
+	if isUnrecoverableErr(err) {
+		logger.Error("skip retry, error unrecoverable", "err", err)
+		return err
+	}
+
+	if isExpectedErr(err) {
+		logger.Error("skip retry, error expected", "err", err)
+		return nil
+	}
+
+	// Add some randomness to prevent thrashing
+	jitter, err := randDuration(int64(sleep))
+	if err != nil {
+		return err
+	}
+	sleep += jitter / 2
+
+	if sleep > maxSleepTime {
+		logger.Info("retry timed out")
+		return err
+	}
+
+	logger.Info("starting exponential backoff", "sleep", sleep, "err", err)
+	time.Sleep(sleep)
+
+	return RetryDo(2*sleep, maxSleepTime, retryableFunc)
 }
 
-func randDuration(maxNumber int64) (dur time.Duration, err error) {
+func randDuration(maxNumber int64) (time.Duration, error) {
 	randNumber, err := rand.Int(rand.Reader, big.NewInt(maxNumber))
 	if err != nil {
-		return dur, err
+		return 0, err
 	}
 	return time.Duration(randNumber.Int64()), nil
 }
