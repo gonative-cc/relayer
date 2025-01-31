@@ -11,26 +11,30 @@ import (
 )
 
 // NOTE: modified
+// Relayer manages the Bitcoin SPV relayer functionality
 type Relayer struct {
+	// Configuration
 	Cfg    *config.RelayerConfig
 	logger *zap.SugaredLogger
 
+	// Clients
 	btcClient    BTCClient
 	nativeClient *lcclient.Client
 
-	// retry attributes
+	// Retry settings
 	retrySleepTime    time.Duration
 	maxRetrySleepTime time.Duration
 
-	// Internal states of the relayer
-	// CheckpointCache *types.CheckpointCache
+	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
 	metrics              *RelayerMetrics
-	wg                   sync.WaitGroup
-	started              bool
-	quit                 chan struct{}
-	quitMu               sync.Mutex
+
+	// Control
+	wg      sync.WaitGroup
+	started bool
+	quit    chan struct{}
+	quitMu  sync.Mutex
 }
 
 func New(
@@ -44,41 +48,60 @@ func New(
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
-	k := int64(1)
-	logger.Infof("BTCCheckpoint parameters: k = %d", k)
+	const defaultConfirmationDepth = int64(1)
+	logger.Infof("BTCCheckpoint parameters: k = %d", defaultConfirmationDepth)
 
-	return &Relayer{
-		Cfg:               cfg,
-		logger:            logger,
-		retrySleepTime:    retrySleepTime,
-		maxRetrySleepTime: maxRetrySleepTime,
-		btcClient:         btcClient,
-		nativeClient:      nativeClient,
-		// CheckpointCache:   ckptCache,
-		btcConfirmationDepth: k,
+	relayer := &Relayer{
+		Cfg:                  cfg,
+		logger:               logger,
+		retrySleepTime:       retrySleepTime,
+		maxRetrySleepTime:    maxRetrySleepTime,
+		btcClient:            btcClient,
+		nativeClient:         nativeClient,
+		btcConfirmationDepth: defaultConfirmationDepth,
 		metrics:              metrics,
 		quit:                 make(chan struct{}),
-	}, nil
+	}
+
+	return relayer, nil
 }
 
 // Start starts the goroutines necessary to manage a spv relayer.
 func (r *Relayer) Start() {
 	r.quitMu.Lock()
+	defer r.quitMu.Unlock()
+
+	if r.isRunning() {
+		return
+	}
+
+	if r.isShutdown() {
+		r.restartAfterShutdown()
+	}
+
+	r.started = true
+	r.initializeRelayer()
+}
+
+func (r *Relayer) isRunning() bool {
+	return r.started
+}
+
+func (r *Relayer) isShutdown() bool {
 	select {
 	case <-r.quit:
-		// Restart the spv relayer goroutines after shutdown finishes.
-		r.WaitForShutdown()
-		r.quit = make(chan struct{})
+		return true
 	default:
-		// Ignore when the spv relayer is still running.
-		if r.started {
-			r.quitMu.Unlock()
-			return
-		}
-		r.started = true
+		return false
 	}
-	r.quitMu.Unlock()
+}
 
+func (r *Relayer) restartAfterShutdown() {
+	r.WaitForShutdown()
+	r.quit = make(chan struct{})
+}
+
+func (r *Relayer) initializeRelayer() {
 	r.bootstrapWithRetries(false)
 
 	r.wg.Add(1)
@@ -87,7 +110,7 @@ func (r *Relayer) Start() {
 	// start record time-related metrics
 	r.metrics.RecordMetrics()
 
-	r.logger.Infof("Successfully started the spv relayer")
+	r.logger.Infof("successfully started the spv relayer")
 }
 
 // quitChan atomically reads the quit channel.
@@ -99,17 +122,19 @@ func (r *Relayer) quitChan() <-chan struct{} {
 }
 
 // Stop signals all spv relayer goroutines to shutdown.
+// if already stopped, this is a no-op.
 func (r *Relayer) Stop() {
 	r.quitMu.Lock()
-	quit := r.quit
-	r.quitMu.Unlock()
+	defer r.quitMu.Unlock()
 
 	select {
-	case <-quit:
+	case <-r.quit:
+		// already stopped
+		return
 	default:
 		// closing the `quit` channel will trigger all select case `<-quit`,
 		// and thus making all handler routines to break the for loop.
-		close(quit)
+		close(r.quit)
 	}
 }
 
