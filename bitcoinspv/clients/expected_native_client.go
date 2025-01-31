@@ -1,4 +1,4 @@
-package bitcoinspv
+package clients
 
 import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

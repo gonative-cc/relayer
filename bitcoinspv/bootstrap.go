@@ -83,7 +83,7 @@ func (r *Relayer) relayerQuitCtx() (context.Context, func()) {
 	return ctx, cancel
 }
 
-func (r *Relayer) bootstrapWithRetries(skipBlockSubscription bool) {
+func (r *Relayer) multitryBootstrap(skipBlockSubscription bool) {
 	ctx, cancel := r.relayerQuitCtx()
 	defer cancel()
 

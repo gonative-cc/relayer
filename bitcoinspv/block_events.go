@@ -7,8 +7,8 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-// blockEventHandler handles connected and disconnected blocks from the BTC client.
-func (r *Relayer) blockEventHandler() {
+// onBlockEvent handles connected and disconnected blocks from the BTC client.
+func (r *Relayer) onBlockEvent() {
 	defer r.wg.Done()
 	quit := r.quitChan()
 
@@ -22,10 +22,10 @@ func (r *Relayer) blockEventHandler() {
 
 			if err := r.handleBlockEvent(event); err != nil {
 				r.logger.Warnf(
-					"cue to error in event processing: %v, bootstrap process need to be restarted",
+					"due to error in event processing: %v, bootstrap process need to be restarted",
 					err,
 				)
-				r.bootstrapWithRetries(true)
+				r.multitryBootstrap(true)
 			}
 
 		case <-quit:
@@ -38,16 +38,16 @@ func (r *Relayer) blockEventHandler() {
 func (r *Relayer) handleBlockEvent(event *types.BlockEvent) error {
 	switch event.EventType {
 	case types.BlockConnected:
-		return r.handleConnectedBlocks(event)
+		return r.onConnectedBlocks(event)
 	case types.BlockDisconnected:
-		return r.handleDisconnectedBlocks(event)
+		return r.onDisconnectedBlocks(event)
 	default:
 		return fmt.Errorf("unknown block event type: %v", event.EventType)
 	}
 }
 
-// handleConnectedBlocks handles connected blocks from the BTC client.
-func (r *Relayer) handleConnectedBlocks(event *types.BlockEvent) error {
+// onConnectedBlocks handles connected blocks from the BTC client.
+func (r *Relayer) onConnectedBlocks(event *types.BlockEvent) error {
 	if err := r.validateBlockHeight(event); err != nil {
 		return err
 	}
@@ -157,8 +157,8 @@ func (r *Relayer) processBlock(ib *types.IndexedBlock) error {
 	return nil
 }
 
-// handleDisconnectedBlocks handles disconnected blocks from the BTC client.
-func (r *Relayer) handleDisconnectedBlocks(event *types.BlockEvent) error {
+// onDisconnectedBlocks handles disconnected blocks from the BTC client.
+func (r *Relayer) onDisconnectedBlocks(event *types.BlockEvent) error {
 	cacheTip := r.btcCache.Tip()
 	if cacheTip == nil {
 		return fmt.Errorf("cache is empty, restart bootstrap process")

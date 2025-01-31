@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/gonative-cc/relayer/lcclient"
@@ -18,7 +19,7 @@ type Relayer struct {
 	logger *zap.SugaredLogger
 
 	// Clients
-	btcClient    BTCClient
+	btcClient    clients.BTCClient
 	nativeClient *lcclient.Client
 
 	// Retry settings
@@ -40,7 +41,7 @@ type Relayer struct {
 func New(
 	cfg *config.RelayerConfig,
 	parentLogger *zap.Logger,
-	btcClient BTCClient,
+	btcClient clients.BTCClient,
 	nativeClient *lcclient.Client,
 	retrySleepTime,
 	maxRetrySleepTime time.Duration,
@@ -102,10 +103,10 @@ func (r *Relayer) restartAfterShutdown() {
 }
 
 func (r *Relayer) initializeRelayer() {
-	r.bootstrapWithRetries(false)
+	r.multitryBootstrap(false)
 
 	r.wg.Add(1)
-	go r.blockEventHandler()
+	go r.onBlockEvent()
 
 	// start record time-related metrics
 	r.metrics.RecordMetrics()
