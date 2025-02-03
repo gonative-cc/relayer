@@ -19,7 +19,10 @@ require (
 // github.com/cosmos/cosmos-sdk v0.52.0-beta.1
 )
 
-require github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
+require (
+	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+)
 
 require (
 	cosmossdk.io/api v0.7.6 // indirect

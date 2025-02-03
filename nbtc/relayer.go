@@ -111,8 +111,7 @@ func (r *Relayer) Start(ctx context.Context) error {
 			if err := r.processSignedTxs(); err != nil {
 				r.handleError(err, "processSignedTxs")
 			}
-		//TODO: do we need a subroutine for it? Also i think there  might be a race condition on the database
-		// so probably we should wrap the db in a mutex
+		//TODO: do we need a subroutine for it?
 		case <-r.confirmTxsTicker.C:
 			if err := r.btcProcessor.CheckConfirmations(); err != nil {
 				r.handleError(err, "CheckConfirmations")
