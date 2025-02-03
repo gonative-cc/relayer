@@ -25,15 +25,16 @@ func NewProcessor(ikaClient ika.Client, db dal.DB) *Processor {
 	}
 }
 
-// Run queries sign requests from Native and handles them.
+// Run processes pending IKA sign requests by sending them to the IKA client for signing.
+// It updates the database with the results of the signing operation.
 func (p *Processor) Run(ctx context.Context) error {
 	ikaSignRequests, err := p.db.GetPendingIkaSignRequests()
 	if err != nil {
-		return fmt.Errorf("error getting pending ika sign requests from db: %w", err)
+		return fmt.Errorf("failed to fetch pending ika sign requests from db: %w", err)
 	}
 
 	if len(ikaSignRequests) == 0 {
-		log.Debug().Msg("No pendning ika sign requests.")
+		// no pending sr, early return
 		return nil
 	}
 
@@ -52,15 +53,15 @@ func (p *Processor) Run(ctx context.Context) error {
 
 				insertErr := p.db.InsertIkaTx(ikaTx)
 				if insertErr != nil {
-					return fmt.Errorf("error inserting IkaTx: %w", insertErr)
+					return fmt.Errorf("failed inserting IkaTx: %w", insertErr)
 				}
 			}
-			return fmt.Errorf("error calling ApproveAndSign: %w", err)
+			return fmt.Errorf("failed calling ApproveAndSign for srID %d: %w", sr.ID, err)
 		}
 		log.Info().Msgf("SUCCESS: IKA signed the sign request")
 		err = p.db.UpdateIkaSignRequestFinalSig(sr.ID, signatures[0])
 		if err != nil {
-			return fmt.Errorf("error storing signature in database: %w", err)
+			return fmt.Errorf("failed to update the signature in db: %w", err)
 		}
 
 		ikaTx := dal.IkaTx{
@@ -73,7 +74,7 @@ func (p *Processor) Run(ctx context.Context) error {
 
 		err = p.db.InsertIkaTx(ikaTx)
 		if err != nil {
-			return fmt.Errorf("error inserting IkaTx: %w", err)
+			return fmt.Errorf("failed to insert IkaTx: %w", err)
 		}
 	}
 

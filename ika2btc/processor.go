@@ -46,7 +46,7 @@ func NewProcessor(
 func (p *Processor) Run() error {
 	signedTxs, err := p.db.GetBitcoinTxsToBroadcast()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to fetch signed txs from db: %w", err)
 	}
 	log.Info().Msg("Broadcasting transaction to Bitcoin network...")
 	for _, tx := range signedTxs {
@@ -55,15 +55,14 @@ func (p *Processor) Run() error {
 		rawTx = append(rawTx, tx.FinalSig...)
 		var msgTx wire.MsgTx
 		if err := msgTx.Deserialize(bytes.NewReader(rawTx)); err != nil {
-			return err
+			return fmt.Errorf("failed to deserialize tx: %w", err)
 		}
 
 		txHash, err := p.BtcClient.SendRawTransaction(&msgTx, false)
 		if err != nil {
-			return fmt.Errorf("error broadcasting transaction: %w", err)
+			return fmt.Errorf("failed to broadcast tx: %w", err)
 		}
 		log.Info().Msgf("SUCCESS: Broadcasted transaction to Bitcoin: txHash = %s", txHash.String())
-		// TODO: add failed broadcasting to the bitcoinTx table with notes about the error
 
 		err = p.db.InsertBtcTx(dal.BitcoinTx{
 			SrID:      tx.ID,
@@ -73,7 +72,7 @@ func (p *Processor) Run() error {
 			Note:      "",
 		})
 		if err != nil {
-			return fmt.Errorf("DB: can't update tx status: {tx: %d, err: %w}", tx.ID, err)
+			return fmt.Errorf("failed to update tx status: {tx: %d, err: %w}", tx.ID, err)
 		}
 	}
 	return nil
@@ -94,14 +93,13 @@ func (p *Processor) CheckConfirmations() error {
 		}
 		txDetails, err := p.BtcClient.GetTransaction(hash)
 		if err != nil {
-			return fmt.Errorf("error getting transaction details: %w", err)
+			return fmt.Errorf("failed to fetch tx details: %w", err)
 		}
 
-		// TODO: decide what threshold to use. Read that 6 is used on most of the cex'es etc.
 		if txDetails.Confirmations >= int64(p.txConfirmationThreshold) {
 			err = p.db.UpdateBitcoinTxToConfirmed(tx.TxID, tx.BtcTxID)
 			if err != nil {
-				return fmt.Errorf("DB: can't update tx status: %w", err)
+				return fmt.Errorf("failed to update tx status: %w}", err)
 			}
 			log.Info().Msgf("Transaction confirmed: %s", tx.BtcTxID)
 		}
