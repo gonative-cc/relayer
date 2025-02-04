@@ -6,6 +6,10 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
+//TODO: this are the methods implemented in sui lc
+// we need to provide implementations for it so it calls the sui smart contract method
+// we can use the already implemented ika/sui client
+
 // NOTE: not copied
 type NativeClient interface {
 	// txn to insert bitcoin block headers to native light client
