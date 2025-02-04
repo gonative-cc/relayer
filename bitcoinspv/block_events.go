@@ -92,7 +92,7 @@ func (r *Relayer) validateBlockConsistency(event *types.BlockEvent) error {
 	if b := r.btcCache.FindBlock(event.Height); b != nil {
 		if b.BlockHash() == event.Header.BlockHash() {
 			r.logger.Debugf(
-				"the connecting block (height: %d, hash: %s) is known to cache, skipping the block",
+				"The connecting block (height: %d, hash: %s) is known to cache, skipping the block",
 				b.Height,
 				b.BlockHash().String(),
 			)
