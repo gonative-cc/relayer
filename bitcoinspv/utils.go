@@ -161,7 +161,7 @@ func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcut
 	msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID(), tx.Hash())
 
 	// submit the checkpoint to light client
-	res, err := r.nativeClient.VerifySPV(&msgSpvProof)
+	res, err := r.nativeClient.VerifySPV(msgSpvProof)
 	if err != nil {
 		r.logger.Errorf("failed to submit MsgInsertBTCSpvProof with error %v", err)
 		r.metrics.FailedCheckpointsCounter.Inc()
