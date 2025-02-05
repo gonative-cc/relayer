@@ -16,8 +16,8 @@ type BTCClient interface {
 	WaitForShutdown()
 
 	// Block subscription methods
-	MustSubscribeBlocks()
-	BlockEventChan() <-chan *relayertypes.BlockEvent
+	SubscribeNewBlocks()
+	BlockEventChannel() <-chan *relayertypes.BlockEvent
 
 	// Block query methods
 	GetBestBlock() (*chainhash.Hash, int64, error)

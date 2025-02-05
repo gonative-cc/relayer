@@ -31,7 +31,7 @@ func (r *Relayer) bootstrapRelayer(skipBlockSubscription bool) error {
 
 	// Subscribe new blocks after cache init to avoid duplicates
 	if !skipBlockSubscription {
-		r.btcClient.MustSubscribeBlocks()
+		r.btcClient.SubscribeNewBlocks()
 	}
 
 	// process headers from cache blocks

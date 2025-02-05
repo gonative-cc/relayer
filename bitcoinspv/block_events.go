@@ -14,7 +14,7 @@ func (r *Relayer) onBlockEvent() {
 
 	for {
 		select {
-		case event, open := <-r.btcClient.BlockEventChan():
+		case event, open := <-r.btcClient.BlockEventChannel():
 			if !open {
 				r.logger.Errorf("block event channel is closed")
 				return
