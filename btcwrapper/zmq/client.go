@@ -100,7 +100,7 @@ func (c *ZMQClient) initZMQ() error {
 		return err
 	}
 
-	c.subscriptions.exited = make(chan struct{})
+	c.subscriptions.exitedChannel = make(chan struct{})
 	c.subscriptions.zfront = zfront
 
 	return nil
@@ -128,7 +128,7 @@ func (c *ZMQClient) closeZmqContext() error {
 	defer c.subscriptions.Unlock()
 
 	select {
-	case <-c.subscriptions.exited:
+	case <-c.subscriptions.exitedChannel:
 	default:
 		_, err := c.subscriptions.zfront.SendMessage("term")
 		if err != nil {
@@ -136,6 +136,6 @@ func (c *ZMQClient) closeZmqContext() error {
 		}
 	}
 
-	<-c.subscriptions.exited
+	<-c.subscriptions.exitedChannel
 	return c.zcontext.Term()
 }

@@ -60,8 +60,8 @@ func CmdStart() *cobra.Command {
 			// Note that bitcoin-spv relayer needs to subscribe to new BTC blocks
 			btcClient, err = btcwrapper.NewWithBlockSubscriber(
 				&cfg.BTC,
-				cfg.Common.SleepTime,
-				cfg.Common.MaxSleepTime,
+				cfg.Common.SleepDuration,
+				cfg.Common.MaxSleepDuration,
 				rootLogger,
 			)
 			if err != nil {
@@ -69,7 +69,7 @@ func CmdStart() *cobra.Command {
 			}
 
 			// get tip block info
-			tipBlock, err := btcClient.GetTipBlockVerbose()
+			tipBlock, err := btcClient.GetTipBlock()
 			if err != nil {
 				panic(fmt.Errorf("failed to get chain tip block: %w", err))
 			}
@@ -94,8 +94,8 @@ func CmdStart() *cobra.Command {
 				rootLogger,
 				btcClient,
 				nativeClient,
-				cfg.Common.SleepTime,
-				cfg.Common.MaxSleepTime,
+				cfg.Common.SleepDuration,
+				cfg.Common.MaxSleepDuration,
 				relayerMetrics,
 			)
 			if err != nil {

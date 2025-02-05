@@ -8,7 +8,6 @@ package btcwrapper
 import (
 	"time"
 
-	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"go.uber.org/zap"
@@ -24,7 +23,7 @@ var _ BTCClient = &Client{}
 // information about the current state of the best block chain.
 type Client struct {
 	*rpcclient.Client
-	zmqClient *zeromq.ZMQClient
+	zeromqClient *zeromq.ZMQClient
 
 	// Chain configuration
 	chainParams *chaincfg.Params
@@ -34,34 +33,19 @@ type Client struct {
 	logger *zap.SugaredLogger
 
 	// Retry configuration
-	retrySleepTime    time.Duration
-	maxRetrySleepTime time.Duration
+	retrySleepDuration    time.Duration
+	maxRetrySleepDuration time.Duration
 
 	// Channel for notifying new BTC blocks to relayer
 	blockEventsChannel chan *realyertypes.BlockEvent
 }
 
-// GetTipBlockVerbose retrieves the most recent block in the chain with verbose details
-func (c *Client) GetTipBlockVerbose() (*btcjson.GetBlockVerboseResult, error) {
-	tipBTCBlockHash, err := c.GetBestBlockHash()
-	if err != nil {
-		return nil, err
-	}
-
-	tipBTCBlock, err := c.GetBlockVerbose(tipBTCBlockHash)
-	if err != nil {
-		return nil, err
-	}
-
-	return tipBTCBlock, nil
-}
-
 // Stop gracefully shuts down the client and closes channels
-func (c *Client) Stop() {
-	if c != nil {
-		c.Shutdown()
-		if c.blockEventsChannel != nil {
-			close(c.blockEventsChannel)
+func (client *Client) Stop() {
+	if client != nil {
+		client.Shutdown()
+		if client.blockEventsChannel != nil {
+			close(client.blockEventsChannel)
 		}
 	}
 }

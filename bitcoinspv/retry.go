@@ -56,7 +56,7 @@ func isExpectedErr(err error) bool {
 }
 
 // RetryDo executes a func with retry
-func RetryDo(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
+func RetryDo(sleep time.Duration, maxSleepDuration time.Duration, retryableFunc func() error) error {
 	err := retryableFunc()
 	if err == nil {
 		return nil
@@ -79,7 +79,7 @@ func RetryDo(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func
 	}
 	sleep += jitter / 2
 
-	if sleep > maxSleepTime {
+	if sleep > maxSleepDuration {
 		logger.Info("retry timed out")
 		return err
 	}
@@ -87,7 +87,7 @@ func RetryDo(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func
 	logger.Info("starting exponential backoff", "sleep", sleep, "err", err)
 	time.Sleep(sleep)
 
-	return RetryDo(2*sleep, maxSleepTime, retryableFunc)
+	return RetryDo(2*sleep, maxSleepDuration, retryableFunc)
 }
 
 func randDuration(maxNumber int64) (time.Duration, error) {

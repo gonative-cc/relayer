@@ -22,8 +22,8 @@ type Relayer struct {
 	nativeClient *lcclient.Client
 
 	// Retry settings
-	retrySleepTime    time.Duration
-	maxRetrySleepTime time.Duration
+	retrySleepDuration    time.Duration
+	maxRetrySleepDuration time.Duration
 
 	// Cache and state
 	btcCache             *types.BTCCache
@@ -42,8 +42,8 @@ func New(
 	parentLogger *zap.Logger,
 	btcClient clients.BTCClient,
 	nativeClient *lcclient.Client,
-	retrySleepTime,
-	maxRetrySleepTime time.Duration,
+	retrySleepDuration,
+	maxRetrySleepDuration time.Duration,
 	metrics *RelayerMetrics,
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
@@ -54,15 +54,15 @@ func New(
 	logger.Infof("BTCCheckpoint parameters: k = %d", defaultConfirmationDepth)
 
 	relayer := &Relayer{
-		Cfg:                  cfg,
-		logger:               logger,
-		retrySleepTime:       retrySleepTime,
-		maxRetrySleepTime:    maxRetrySleepTime,
-		btcClient:            btcClient,
-		nativeClient:         nativeClient,
-		btcConfirmationDepth: defaultConfirmationDepth,
-		metrics:              metrics,
-		quit:                 make(chan struct{}),
+		Cfg:                   cfg,
+		logger:                logger,
+		retrySleepDuration:    retrySleepDuration,
+		maxRetrySleepDuration: maxRetrySleepDuration,
+		btcClient:             btcClient,
+		nativeClient:          nativeClient,
+		btcConfirmationDepth:  defaultConfirmationDepth,
+		metrics:               metrics,
+		quit:                  make(chan struct{}),
 	}
 
 	return relayer, nil

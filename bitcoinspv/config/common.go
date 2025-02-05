@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	defaultRetrySleepTime    = 5 * time.Second
-	defaultMaxRetrySleepTime = 5 * time.Minute
+	defaultRetrySleepDuration    = 5 * time.Second
+	defaultMaxRetrySleepDuration = 5 * time.Minute
 )
 
 // LogConfig contains logging related configuration
@@ -22,10 +22,10 @@ type LogConfig struct {
 
 // RetryConfig contains retry related configuration
 type RetryConfig struct {
-	// SleepTime is the backoff interval for the first retry
-	SleepTime time.Duration `mapstructure:"retry-sleep-time"`
-	// MaxSleepTime is the maximum backoff interval between retries
-	MaxSleepTime time.Duration `mapstructure:"max-retry-sleep-time"`
+	// SleepDuration is the backoff interval for the first retry
+	SleepDuration time.Duration `mapstructure:"retry-sleep-duration"`
+	// MaxSleepDuration is the maximum backoff interval between retries
+	MaxSleepDuration time.Duration `mapstructure:"max-retry-sleep-duration"`
 }
 
 // CommonConfig defines the server's basic configuration
@@ -50,10 +50,10 @@ func (cfg *CommonConfig) Validate() error {
 	if !isOneOf(cfg.Level, []string{"debug", "warn", "error", "panic", "fatal"}) {
 		return errors.New("log-level is not one of debug|warn|error|panic|fatal")
 	}
-	if cfg.SleepTime < 0 {
+	if cfg.SleepDuration < 0 {
 		return errors.New("retry-sleep-time can't be negative")
 	}
-	if cfg.MaxSleepTime < 0 {
+	if cfg.MaxSleepDuration < 0 {
 		return errors.New("max-retry-sleep-time can't be negative")
 	}
 	return nil
@@ -70,8 +70,8 @@ func DefaultCommonConfig() CommonConfig {
 			Level:  "debug",
 		},
 		RetryConfig: RetryConfig{
-			SleepTime:    defaultRetrySleepTime,
-			MaxSleepTime: defaultMaxRetrySleepTime,
+			SleepDuration:    defaultRetrySleepDuration,
+			MaxSleepDuration: defaultMaxRetrySleepDuration,
 		},
 	}
 }

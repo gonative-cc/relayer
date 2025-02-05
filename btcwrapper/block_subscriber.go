@@ -20,8 +20,8 @@ import (
 // to newly connected/disconnected blocks used by spv relayer
 func NewWithBlockSubscriber(
 	cfg *config.BTCConfig,
-	retrySleepTime,
-	maxRetrySleepTime time.Duration,
+	retrySleepDuration,
+	maxRetrySleepDuration time.Duration,
 	parentLogger *zap.Logger,
 ) (*Client, error) {
 	client := &Client{}
@@ -35,8 +35,8 @@ func NewWithBlockSubscriber(
 	logger := parentLogger.With(zap.String("module", "btcwrapper"))
 	client.logger = logger.Sugar()
 
-	client.retrySleepTime = retrySleepTime
-	client.maxRetrySleepTime = maxRetrySleepTime
+	client.retrySleepDuration = retrySleepDuration
+	client.maxRetrySleepDuration = maxRetrySleepDuration
 
 	switch cfg.BtcBackend {
 	case types.Bitcoind:
@@ -63,12 +63,12 @@ func NewWithBlockSubscriber(
 			return nil, fmt.Errorf("zmq is only supported by bitcoind, but got %v", backend)
 		}
 
-		zmqClient, err := zmq.New(logger, cfg.ZmqSeqEndpoint, client.blockEventsChannel, rpcClient)
+		zeromqClient, err := zmq.New(logger, cfg.ZmqSeqEndpoint, client.blockEventsChannel, rpcClient)
 		if err != nil {
 			return nil, err
 		}
 
-		client.zmqClient = zmqClient
+		client.zeromqClient = zeromqClient
 		client.Client = rpcClient
 	case types.Btcd:
 		notificationHandlers := rpcclient.NotificationHandlers{
@@ -127,7 +127,7 @@ func NewWithBlockSubscriber(
 }
 
 func (c *Client) mustSubscribeBlocksByWebSocket() {
-	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		if err := c.NotifyBlocks(); err != nil {
 			return err
 		}
@@ -139,7 +139,7 @@ func (c *Client) mustSubscribeBlocksByWebSocket() {
 }
 
 func (c *Client) mustSubscribeBlocksByZmq() {
-	if err := c.zmqClient.SubscribeSequence(); err != nil {
+	if err := c.zeromqClient.SubscribeSequence(); err != nil {
 		panic(err)
 	}
 }

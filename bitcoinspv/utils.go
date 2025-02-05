@@ -44,7 +44,7 @@ func (r *Relayer) findFirstNewHeader(ibs []*types.IndexedBlock) (int, error) {
 		blockHash := header.BlockHash()
 		var res bool
 		var err error
-		err = RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
+		err = RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
 			res, err = r.nativeClient.ContainsBTCBlock(&blockHash)
 			return err
 		})
@@ -72,7 +72,7 @@ func (r *Relayer) createHeaderMessages(ibs []*types.IndexedBlock) [][]*wire.Bloc
 
 func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 	// submit the headers
-	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
+	err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
 		if err := r.nativeClient.InsertHeaders(msg); err != nil {
 			return err
 		}

@@ -12,6 +12,21 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
+// GetTipBlock retrieves the most recent block in the chain with verbose details
+func (c *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
+	tipBTCBlockHash, err := c.GetBestBlockHash()
+	if err != nil {
+		return nil, err
+	}
+
+	tipBTCBlock, err := c.GetBlockVerbose(tipBTCBlockHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return tipBTCBlock, nil
+}
+
 // GetBestBlock provides similar functionality with the btcd.rpcclient.GetBestBlock function
 // We implement this, because this function is only provided by btcd.
 func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
@@ -68,7 +83,7 @@ func (c *Client) getBestBlockHashWithRetry() (*chainhash.Hash, error) {
 		err       error
 	)
 
-	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		blockHash, err = c.GetBestBlockHash()
 		if err != nil {
 			return err
@@ -88,7 +103,7 @@ func (c *Client) getBlockHashWithRetry(height int64) (*chainhash.Hash, error) {
 		err       error
 	)
 
-	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		blockHash, err = c.GetBlockHash(height)
 		if err != nil {
 			return err
@@ -111,7 +126,7 @@ func (c *Client) getBlockWithRetry(hash *chainhash.Hash) (*wire.MsgBlock, error)
 		err   error
 	)
 
-	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		block, err = c.GetBlock(hash)
 		if err != nil {
 			return err
@@ -134,7 +149,7 @@ func (c *Client) getBlockVerboseWithRetry(hash *chainhash.Hash) (*btcjson.GetBlo
 		err          error
 	)
 
-	if err := bitcoinspv.RetryDo(c.retrySleepTime, c.maxRetrySleepTime, func() error {
+	if err := bitcoinspv.RetryDo(c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		blockVerbose, err = c.GetBlockVerbose(hash)
 		if err != nil {
 			return err
