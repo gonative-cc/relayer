@@ -27,9 +27,9 @@ func (c *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
 	return tipBTCBlock, nil
 }
 
-// GetBestBlock provides similar functionality with the btcd.rpcclient.GetBestBlock function
+// GetBTCTipBlock provides similar functionality with the btcd.rpcclient.GetBTCTipBlock function
 // We implement this, because this function is only provided by btcd.
-func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
+func (c *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
 	btcLatestBlockHash, err := c.getBestBlockHashWithRetry()
 	if err != nil {
 		return nil, 0, err
@@ -42,7 +42,7 @@ func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
 	return btcLatestBlockHash, btcLatestBlockHeight, nil
 }
 
-func (c *Client) GetBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error) {
+func (c *Client) GetBTCBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error) {
 	blockInfo, err := c.getBlockVerboseWithRetry(blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -60,8 +60,8 @@ func (c *Client) GetBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock,
 	return types.NewIndexedBlock(blockInfo.Height, &mBlock.Header, btcTxs), mBlock, nil
 }
 
-// GetBlockByHeight returns a block with the given height
-func (c *Client) GetBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error) {
+// GetBTCBlockByHeight returns a block with the given height
+func (c *Client) GetBTCBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error) {
 	blockHash, err := c.getBlockHashWithRetry(height)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get block by height %d: %w", height, err)
@@ -192,7 +192,7 @@ func (c *Client) getChainBlocks(
 	// minus 2 is because the tip block is already put in the last position of the slice,
 	// and it is ensured that the length of chainBlocks is more than 1
 	for i := len(chainBlocks) - 2; i >= 0; i-- {
-		ib, mb, err := c.GetBlockByHash(prevHash)
+		ib, mb, err := c.GetBTCBlockByHash(prevHash)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get block by hash %x: %w", prevHash, err)
 		}
@@ -208,7 +208,7 @@ func (c *Client) getBestIndexedBlock() (*types.IndexedBlock, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the best block: %w", err)
 	}
-	tipIb, _, err := c.GetBlockByHash(tipHash)
+	tipIb, _, err := c.GetBTCBlockByHash(tipHash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the block by hash %x: %w", tipHash, err)
 	}
@@ -216,8 +216,8 @@ func (c *Client) getBestIndexedBlock() (*types.IndexedBlock, error) {
 	return tipIb, nil
 }
 
-// GetTailBlocksByHeight returns the chain of blocks from the block at baseHeight to the tip
-func (c *Client) GetTailBlocksByHeight(baseHeight int64) ([]*types.IndexedBlock, error) {
+// GetBTCTailBlocksByHeight returns the chain of blocks from the block at baseHeight to the tip
+func (c *Client) GetBTCTailBlocksByHeight(baseHeight int64) ([]*types.IndexedBlock, error) {
 	tipIb, err := c.getBestIndexedBlock()
 	if err != nil {
 		return nil, err

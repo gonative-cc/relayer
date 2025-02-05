@@ -1,10 +1,8 @@
 package btcwrapper
 
 import (
-	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
+	btcwire "github.com/btcsuite/btcd/wire"
 
 	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
 )
@@ -20,13 +18,8 @@ type BTCClient interface {
 	BlockEventChannel() <-chan *relayertypes.BlockEvent
 
 	// Block query methods
-	GetBestBlock() (*chainhash.Hash, int64, error)
-	GetBlockByHash(blockHash *chainhash.Hash) (*relayertypes.IndexedBlock, *wire.MsgBlock, error)
-	GetTailBlocksByHeight(height int64) ([]*relayertypes.IndexedBlock, error)
-	GetBlockByHeight(height int64) (*relayertypes.IndexedBlock, *wire.MsgBlock, error)
-
-	// Transaction methods
-	GetTxOut(txHash *chainhash.Hash, index uint32, mempool bool) (*btcjson.GetTxOutResult, error)
-	GetTransaction(txHash *chainhash.Hash) (*btcjson.GetTransactionResult, error)
-	GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error)
+	GetBTCTipBlock() (*chainhash.Hash, int64, error)
+	GetBTCBlockByHash(blockHash *chainhash.Hash) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error)
+	GetBTCTailBlocksByHeight(Blockheight int64) ([]*relayertypes.IndexedBlock, error)
+	GetBTCBlockByHeight(Blockheight int64) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error)
 }

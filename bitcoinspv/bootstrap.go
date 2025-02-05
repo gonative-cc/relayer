@@ -135,7 +135,7 @@ func (r *Relayer) initBTCCache() error {
 	baseHeight := nativeBlockHeight - r.btcConfirmationDepth + 1
 
 	// Fetch blocks from BTC node
-	blocks, err := r.btcClient.GetTailBlocksByHeight(baseHeight)
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
 	if err != nil {
 		panic(err)
 	}
@@ -168,7 +168,7 @@ func (r *Relayer) waitForBTCToSyncWithNative() error {
 }
 
 func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
-	btcLatestBlockHash, btcLatestBlockHeight, err := r.btcClient.GetBestBlock()
+	btcLatestBlockHash, btcLatestBlockHeight, err := r.btcClient.GetBTCTipBlock()
 	if err != nil {
 		return 0, err
 	}

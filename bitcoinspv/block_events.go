@@ -113,7 +113,7 @@ func (r *Relayer) validateBlockConsistency(event *types.BlockEvent) error {
 
 func (r *Relayer) getAndValidateBlock(event *types.BlockEvent) (*types.IndexedBlock, *wire.MsgBlock, error) {
 	blockHash := event.Header.BlockHash()
-	ib, msgBlock, err := r.btcClient.GetBlockByHash(&blockHash)
+	ib, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"failed to get block %v with number %d, from BTC client: %w",

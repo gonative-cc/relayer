@@ -152,6 +152,6 @@ func (r *Relayer) ShuttingDown() bool {
 
 // WaitForShutdown blocks until all spv relayer goroutines have finished executing.
 func (r *Relayer) WaitForShutdown() {
-	// TODO: let Native client WaitForShutDown
+	// TODO: let Native client WaitForShutdown
 	r.wg.Wait()
 }
