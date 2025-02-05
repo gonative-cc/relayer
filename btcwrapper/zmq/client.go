@@ -20,7 +20,7 @@ var (
 // Client manages ZMQ subscriptions and communication with a Bitcoin node.
 // It handles ZMQ message routing and provides thread-safe access to subscriptions.
 // Must be created with New() and cleaned up with Close().
-type Client struct {
+type ZMQClient struct {
 	// RPC connection
 	rpcClient *rpcclient.Client
 	logger    *zap.SugaredLogger
@@ -31,41 +31,42 @@ type Client struct {
 	quitChan chan struct{}
 
 	// ZMQ configuration
-	zmqEndpoint    string
-	blockEventChan chan *relayertypes.BlockEvent
+	zeromqEndpoint     string
+	blockEventsChannel chan *relayertypes.BlockEvent
 
 	// ZMQ sockets and subscriptions
 	zcontext       *zmq4.Context
 	zsubscriber    *zmq4.Socket  // Subscriber socket
-	subs           subscriptions // Subscription management
+	subscriptions  Subscriptions // Subscription management
 	zbackendsocket *zmq4.Socket  // Backend socket for internal communication
 }
 
 func New(
 	parentLogger *zap.Logger,
-	zmqEndpoint string,
-	blockEventChan chan *relayertypes.BlockEvent,
+	zeromqEndpoint string,
+	blockEventsChannel chan *relayertypes.BlockEvent,
 	rpcClient *rpcclient.Client,
-) (*Client, error) {
-	c := &Client{
-		quitChan:       make(chan struct{}),
-		rpcClient:      rpcClient,
-		zmqEndpoint:    zmqEndpoint,
-		logger:         parentLogger.With(zap.String("module", "zmq")).Sugar(),
-		blockEventChan: blockEventChan,
+) (*ZMQClient, error) {
+	zmqClient := &ZMQClient{
+		quitChan:           make(chan struct{}),
+		rpcClient:          rpcClient,
+		zeromqEndpoint:     zeromqEndpoint,
+		logger:             parentLogger.With(zap.String("module", "zmq")).Sugar(),
+		blockEventsChannel: blockEventsChannel,
 	}
 
-	if err := c.initZMQ(); err != nil {
+	err := zmqClient.initZMQ()
+	if err != nil {
 		return nil, err
 	}
 
-	c.wg.Add(1)
-	go c.zmqHandler()
+	zmqClient.wg.Add(1)
+	go zmqClient.zmqHandler()
 
-	return c, nil
+	return zmqClient, nil
 }
 
-func (c *Client) initZMQ() error {
+func (c *ZMQClient) initZMQ() error {
 	var err error
 
 	// Initialize ZMQ context
@@ -77,7 +78,7 @@ func (c *Client) initZMQ() error {
 	if c.zsubscriber, err = c.zcontext.NewSocket(zmq4.SUB); err != nil {
 		return err
 	}
-	if err = c.zsubscriber.Connect(c.zmqEndpoint); err != nil {
+	if err = c.zsubscriber.Connect(c.zeromqEndpoint); err != nil {
 		return err
 	}
 
@@ -94,22 +95,24 @@ func (c *Client) initZMQ() error {
 	if err != nil {
 		return err
 	}
-	if err = zfront.Connect("inproc://channel"); err != nil {
+	err = zfront.Connect("inproc://channel")
+	if err != nil {
 		return err
 	}
 
-	c.subs.exited = make(chan struct{})
-	c.subs.zfront = zfront
+	c.subscriptions.exited = make(chan struct{})
+	c.subscriptions.zfront = zfront
 
 	return nil
 }
 
-func (c *Client) Close() error {
+func (c *ZMQClient) Close() error {
 	if !atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
 		return ErrClientClosed
 	}
 	if c.zcontext != nil {
-		if err := c.closeZmqContext(); err != nil {
+		err := c.closeZmqContext()
+		if err != nil {
 			return err
 		}
 	}
@@ -118,20 +121,21 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func (c *Client) closeZmqContext() error {
+func (c *ZMQClient) closeZmqContext() error {
 	c.zcontext.SetRetryAfterEINTR(false)
 
-	c.subs.Lock()
-	defer c.subs.Unlock()
+	c.subscriptions.Lock()
+	defer c.subscriptions.Unlock()
 
 	select {
-	case <-c.subs.exited:
+	case <-c.subscriptions.exited:
 	default:
-		if _, err := c.subs.zfront.SendMessage("term"); err != nil {
+		_, err := c.subscriptions.zfront.SendMessage("term")
+		if err != nil {
 			return err
 		}
 	}
 
-	<-c.subs.exited
+	<-c.subscriptions.exited
 	return c.zcontext.Term()
 }

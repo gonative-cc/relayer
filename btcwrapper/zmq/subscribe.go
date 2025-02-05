@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	zmq "github.com/pebbe/zmq4"
+	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
+	zeromq "github.com/pebbe/zmq4"
 )
 
 var (
@@ -21,73 +20,55 @@ var (
 // SequenceMsg is a subscription event coming from a "sequence" ZMQ message.
 type SequenceMsg struct {
 	Hash  [32]byte // use encoding/hex.EncodeToString() to get it into the RPC method string format.
-	Event types.EventType
+	Event relayertypes.EventType
 }
 
-type subscriptions struct {
+type Subscriptions struct {
 	sync.RWMutex
 
 	exited      chan struct{}
-	zfront      *zmq.Socket
+	zfront      *zeromq.Socket
 	latestEvent time.Time
-	active      bool
+	isActive    bool
 }
 
 // SubscribeSequence subscribes to the ZMQ "sequence" messages as SequenceMsg items pushed onto the channel.
 // Call cancel to cancel the subscription and let the client release the resources. The channel is closed
 // when the subscription is canceled or when the client is closed.
-func (c *Client) SubscribeSequence() (err error) {
+func (c *ZMQClient) SubscribeSequence() error {
 	if c.zsubscriber == nil {
-		err = ErrSubIsDisabled
-		return
+		return ErrSubIsDisabled
 	}
-	c.subs.Lock()
+	c.subscriptions.Lock()
+	defer c.subscriptions.Unlock()
 	select {
-	case <-c.subs.exited:
-		err = ErrSubHasExited
-		c.subs.Unlock()
-		return
+	case <-c.subscriptions.exited:
+		return ErrSubHasExited
 	default:
 	}
 
-	if c.subs.active {
-		err = ErrSubAlreadyActive
-		return
+	if c.subscriptions.isActive {
+		return ErrSubAlreadyActive
 	}
 
-	_, err = c.subs.zfront.SendMessage("subscribe", "sequence")
-	if err != nil {
-		c.subs.Unlock()
-		return
+	if _, err := c.subscriptions.zfront.SendMessage("subscribe", "sequence"); err != nil {
+		return err
 	}
-	c.subs.active = true
 
-	c.subs.Unlock()
-	return
+	c.subscriptions.isActive = true
+	return nil
 }
 
-func (c *Client) zmqHandler() {
-	defer c.wg.Done()
-	defer func(zsub *zmq.Socket) {
-		err := zsub.Close()
-		if err != nil {
-			c.logger.Errorf("Error closing ZMQ socket: %v", err)
-		}
-	}(c.zsubscriber)
-	defer func(zback *zmq.Socket) {
-		err := zback.Close()
-		if err != nil {
-			c.logger.Errorf("Error closing ZMQ socket: %v", err)
-		}
-	}(c.zbackendsocket)
+func (c *ZMQClient) zmqHandler() {
+	c.cleanup()
 
-	poller := zmq.NewPoller()
-	poller.Add(c.zsubscriber, zmq.POLLIN)
-	poller.Add(c.zbackendsocket, zmq.POLLIN)
+	zmqPoller := zeromq.NewPoller()
+	zmqPoller.Add(c.zsubscriber, zeromq.POLLIN)
+	zmqPoller.Add(c.zbackendsocket, zeromq.POLLIN)
 OUTER:
 	for {
 		// Wait forever until a message can be received or the context was canceled.
-		polled, err := poller.Poll(-1)
+		polled, err := zmqPoller.Poll(-1)
 		if err != nil {
 			break OUTER
 		}
@@ -95,94 +76,122 @@ OUTER:
 		for _, p := range polled {
 			switch p.Socket {
 			case c.zsubscriber:
-				msg, err := c.zsubscriber.RecvMessage(0)
-				if err != nil {
+				if err := handleSubscriberMessage(c); err != nil {
 					break OUTER
-				}
-				c.subs.latestEvent = time.Now()
-				if msg[0] == "sequence" {
-					var sequenceMsg SequenceMsg
-					copy(sequenceMsg.Hash[:], msg[1])
-					switch msg[1][32] {
-					case 'C':
-						sequenceMsg.Event = types.BlockConnected
-					case 'D':
-						sequenceMsg.Event = types.BlockDisconnected
-					default:
-						// not interested in other events
-						continue
-					}
-
-					c.sendBlockEvent(sequenceMsg.Hash[:], sequenceMsg.Event)
 				}
 
 			case c.zbackendsocket:
-				msg, err := c.zbackendsocket.RecvMessage(0)
-				if err != nil {
-					break OUTER
-				}
-				switch msg[0] {
-				case "subscribe":
-					if err := c.zsubscriber.SetSubscribe(msg[1]); err != nil {
-						break OUTER
-					}
-				case "term":
+				if err := handleBackendMessage(c); err != nil {
 					break OUTER
 				}
 			}
 		}
 	}
 
-	c.subs.Lock()
-	close(c.subs.exited)
-	err := c.subs.zfront.Close()
-	if err != nil {
+	c.subscriptions.Lock()
+	close(c.subscriptions.exited)
+	if err := c.subscriptions.zfront.Close(); err != nil {
 		c.logger.Errorf("Error closing zfront: %v", err)
 		return
 	}
 	// Close all subscriber channels.
-	if c.subs.active {
-		err = c.zsubscriber.SetUnsubscribe("sequence")
+	if c.subscriptions.isActive {
+		err := c.zsubscriber.SetUnsubscribe("sequence")
 		if err != nil {
 			c.logger.Errorf("Error unsubscribing from sequence: %v", err)
 			return
 		}
 	}
 
-	c.subs.Unlock()
+	c.subscriptions.Unlock()
 }
 
-func (c *Client) sendBlockEvent(hash []byte, event types.EventType) {
+// handleSubscriberMessage processes messages from the subscriber socket
+func handleSubscriberMessage(c *ZMQClient) error {
+	message, err := c.zsubscriber.RecvMessage(0)
+	if err != nil {
+		return err
+	}
+	c.subscriptions.latestEvent = time.Now()
+	if message[0] == "sequence" {
+		var sequenceMessage SequenceMsg
+		copy(sequenceMessage.Hash[:], message[1])
+		switch message[1][32] {
+		case 'C':
+			sequenceMessage.Event = relayertypes.BlockConnected
+		case 'D':
+			sequenceMessage.Event = relayertypes.BlockDisconnected
+		default:
+			return nil
+		}
+
+		c.sendBlockEvent(sequenceMessage.Hash[:], sequenceMessage.Event)
+	}
+	return nil
+}
+
+// handleBackendMessage processes messages from the backend socket
+func handleBackendMessage(c *ZMQClient) error {
+	message, err := c.zbackendsocket.RecvMessage(0)
+	if err != nil {
+		return err
+	}
+	switch message[0] {
+	case "subscribe":
+		if err := c.zsubscriber.SetSubscribe(message[1]); err != nil {
+			return err
+		}
+	case "term":
+		return errors.New("termination requested")
+	}
+	return nil
+}
+
+func (c *ZMQClient) cleanup() {
+	c.wg.Done()
+	if err := c.zsubscriber.Close(); err != nil {
+		c.logger.Errorf("Error closing ZMQ socket: %v", err)
+	}
+	if err := c.zbackendsocket.Close(); err != nil {
+		c.logger.Errorf("Error closing ZMQ socket: %v", err)
+	}
+}
+
+func (c *ZMQClient) sendBlockEvent(hash []byte, event relayertypes.EventType) {
 	blockHashStr := hex.EncodeToString(hash)
 	blockHash, err := chainhash.NewHashFromStr(blockHashStr)
 	if err != nil {
 		c.logger.Errorf("Failed to parse block hash %v: %v", blockHashStr, err)
-		panic(err)
+		return
 	}
 
 	c.logger.Infof("Received zmq sequence message for block %v", blockHashStr)
 
-	ib, _, err := c.getBlockByHash(blockHash)
+	indexedBlock, err := c.getBlockByHash(blockHash)
 	if err != nil {
 		c.logger.Errorf("Failed to get block %v from BTC client: %v", blockHash, err)
-		panic(err)
+		return
 	}
 
-	c.blockEventChan <- types.NewBlockEvent(event, ib.Height, ib.Header)
+	blockEvent := relayertypes.NewBlockEvent(event, indexedBlock.Height, indexedBlock.Header)
+	c.blockEventsChannel <- blockEvent
 }
 
-func (c *Client) getBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error) {
-	// TODO: ZMQ should not use BTC/RPC client, modify BlockEvent to include block hash
-	blockInfo, err := c.rpcClient.GetBlockVerbose(blockHash)
+func (c *ZMQClient) getBlockByHash(
+	blockHash *chainhash.Hash,
+) (*relayertypes.IndexedBlock, error) {
+	blockVerbose, err := c.rpcClient.GetBlockVerbose(blockHash)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	mBlock, err := c.rpcClient.GetBlock(blockHash)
+	block, err := c.rpcClient.GetBlock(blockHash)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	btcTxs := types.GetWrappedTxs(mBlock)
-	return types.NewIndexedBlock(blockInfo.Height, &mBlock.Header, btcTxs), mBlock, nil
+	btcTxs := relayertypes.GetWrappedTxs(block)
+	indexedBlock := relayertypes.NewIndexedBlock(blockVerbose.Height, &block.Header, btcTxs)
+
+	return indexedBlock, nil
 }
