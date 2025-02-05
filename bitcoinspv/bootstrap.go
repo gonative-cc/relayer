@@ -119,7 +119,7 @@ func (r *Relayer) multitryBootstrap(skipBlockSubscription bool) {
 // and k is the confirmation depth
 func (r *Relayer) initBTCCache() error {
 	// Initialize cache with configured size
-	cache, err := types.NewBTCCache(r.Cfg.BTCCacheSize) // TODO: give an option to be unsized
+	cache, err := types.NewBTCCache(r.Config.BTCCacheSize) // TODO: give an option to be unsized
 	if err != nil {
 		panic(err)
 	}
