@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// NOTE: modified
 // Relayer manages the Bitcoin SPV relayer functionality
 type Relayer struct {
 	// Configuration
@@ -49,6 +48,8 @@ func New(
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
+	// to configure how many blocks needs to be pushed on top
+	// to assume it is confirmed (no reorg)
 	const defaultConfirmationDepth = int64(1)
 	logger.Infof("BTCCheckpoint parameters: k = %d", defaultConfirmationDepth)
 

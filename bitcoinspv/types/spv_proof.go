@@ -40,7 +40,6 @@ type BTCSpvProof struct {
 	MerkleNodes []byte
 }
 
-// NOTE: not copied
 // ToMsgSpvProof converts a BTCSpvProof to an SPVProof message
 func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txID string, txHash *chainhash.Hash) SPVProof {
 	// Calculate number of merkle nodes including txHash
@@ -72,7 +71,6 @@ type MsgInsertBTCSpvProof struct {
 	Proofs []*BTCSpvProof
 }
 
-// NOTE: not copied
 // SPVProof represents a simplified payment verification proof
 type SPVProof struct {
 	BlockHash  chainhash.Hash

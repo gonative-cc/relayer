@@ -70,7 +70,6 @@ func (r *Relayer) createHeaderMessages(ibs []*types.IndexedBlock) [][]*wire.Bloc
 	return headerMsgs
 }
 
-// NOTE: modified
 func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 	// submit the headers
 	err := RetryDo(r.retrySleepTime, r.maxRetrySleepTime, func() error {
@@ -103,7 +102,6 @@ func (r *Relayer) updateHeaderMetrics(headers []*wire.BlockHeader) {
 	}
 }
 
-// NOTE: modified
 // ProcessHeaders extracts and reports headers from a list of blocks
 // It returns the number of headers that need to be reported (after deduplication)
 func (r *Relayer) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
@@ -129,7 +127,6 @@ func (r *Relayer) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
 	return numSubmitted, nil
 }
 
-// NOTE: modified
 func (r *Relayer) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, error) {
 	numSubmittedTxs := 0
 
@@ -185,7 +182,6 @@ func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcut
 	return nil
 }
 
-// NOTE: not copied
 // ProcessTransactions tries to extract valid transactions from a list of blocks
 // It returns the number of valid transactions segments, and the number of valid transactions
 func (r *Relayer) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {

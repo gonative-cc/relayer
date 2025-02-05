@@ -90,7 +90,6 @@ func CreateProofForIdx(transactions [][]byte, idx uint32) ([]*chainhash.Hash, er
 	return proof, nil
 }
 
-// NOTE: modified
 // SpvProofFromHeaderAndTransactions creates a simplified payment verification proof
 // for a transaction at the given index using the block header and transaction list
 func SpvProofFromHeaderAndTransactions(
@@ -116,7 +115,6 @@ func SpvProofFromHeaderAndTransactions(
 	}, nil
 }
 
-// NOTE: not copied
 // flattenMerkleProof converts merkle proof node hashes into a single byte slice
 func flattenMerkleProof(proof []*chainhash.Hash) []byte {
 	var flatProof []byte

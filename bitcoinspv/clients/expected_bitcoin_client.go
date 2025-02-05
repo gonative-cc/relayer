@@ -9,6 +9,8 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
+// BTCClient is an abstraction over bitcoin node implementations (bitcoind, btcd).
+// Refer to btcclient/ dir for implementation.
 type BTCClient interface {
 	Stop()
 	WaitForShutdown()

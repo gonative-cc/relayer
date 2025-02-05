@@ -6,7 +6,8 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-// NOTE: not copied
+// NativeClient is interface for interacting with bitcoin-lightclient.
+// Refer to github.com/gonative-cc/bitcoin-lightclient for implementation.
 type NativeClient interface {
 	// txn to insert bitcoin block headers to native light client
 	InsertHeaders(blockHeaders []*wire.BlockHeader) error
