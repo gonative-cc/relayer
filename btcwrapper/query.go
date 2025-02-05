@@ -1,4 +1,4 @@
-package btcclient
+package btcwrapper
 
 import (
 	"fmt"

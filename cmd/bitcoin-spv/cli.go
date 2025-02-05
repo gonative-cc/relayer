@@ -6,7 +6,7 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
-	"github.com/gonative-cc/relayer/btcclient"
+	"github.com/gonative-cc/relayer/btcwrapper"
 	"github.com/gonative-cc/relayer/lcclient"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -39,7 +39,7 @@ func CmdStart() *cobra.Command {
 			var (
 				err          error
 				cfg          config.Config
-				btcClient    *btcclient.Client
+				btcClient    *btcwrapper.Client
 				nativeClient *lcclient.Client
 				spvRelayer   *bitcoinspv.Relayer
 				nativeCloser jsonrpc.ClientCloser
@@ -58,7 +58,7 @@ func CmdStart() *cobra.Command {
 
 			// create BTC client and connect to BTC server
 			// Note that bitcoin-spv relayer needs to subscribe to new BTC blocks
-			btcClient, err = btcclient.NewWithBlockSubscriber(
+			btcClient, err = btcwrapper.NewWithBlockSubscriber(
 				&cfg.BTC,
 				cfg.Common.SleepTime,
 				cfg.Common.MaxSleepTime,

@@ -1,4 +1,4 @@
-package btcclient
+package btcwrapper
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-func GetBTCParams(net string) (*chaincfg.Params, error) {
+func GetBTCNodeParams(net string) (*chaincfg.Params, error) {
 	switch net {
 	case types.BtcMainnet.String():
 		return &chaincfg.MainNetParams, nil

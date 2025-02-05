@@ -2,6 +2,7 @@ package zmq
 
 import (
 	"encoding/hex"
+	"errors"
 	"sync"
 	"time"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	zmq "github.com/pebbe/zmq4"
+)
+
+var (
+	ErrSubIsDisabled    = errors.New("bitcoin node subscription disabled as zmq-endpoint not set")
+	ErrSubHasExited     = errors.New("bitcoin node subscription exited")
+	ErrSubAlreadyActive = errors.New("bitcoin node subscription already exists")
 )
 
 // SequenceMsg is a subscription event coming from a "sequence" ZMQ message.
@@ -30,21 +37,21 @@ type subscriptions struct {
 // Call cancel to cancel the subscription and let the client release the resources. The channel is closed
 // when the subscription is canceled or when the client is closed.
 func (c *Client) SubscribeSequence() (err error) {
-	if c.zsub == nil {
-		err = ErrSubscribeDisabled
+	if c.zsubscriber == nil {
+		err = ErrSubIsDisabled
 		return
 	}
 	c.subs.Lock()
 	select {
 	case <-c.subs.exited:
-		err = ErrSubscribeExited
+		err = ErrSubHasExited
 		c.subs.Unlock()
 		return
 	default:
 	}
 
 	if c.subs.active {
-		err = ErrSubscriptionAlreadyActive
+		err = ErrSubAlreadyActive
 		return
 	}
 
@@ -66,17 +73,17 @@ func (c *Client) zmqHandler() {
 		if err != nil {
 			c.logger.Errorf("Error closing ZMQ socket: %v", err)
 		}
-	}(c.zsub)
+	}(c.zsubscriber)
 	defer func(zback *zmq.Socket) {
 		err := zback.Close()
 		if err != nil {
 			c.logger.Errorf("Error closing ZMQ socket: %v", err)
 		}
-	}(c.zback)
+	}(c.zbackendsocket)
 
 	poller := zmq.NewPoller()
-	poller.Add(c.zsub, zmq.POLLIN)
-	poller.Add(c.zback, zmq.POLLIN)
+	poller.Add(c.zsubscriber, zmq.POLLIN)
+	poller.Add(c.zbackendsocket, zmq.POLLIN)
 OUTER:
 	for {
 		// Wait forever until a message can be received or the context was canceled.
@@ -87,8 +94,8 @@ OUTER:
 
 		for _, p := range polled {
 			switch p.Socket {
-			case c.zsub:
-				msg, err := c.zsub.RecvMessage(0)
+			case c.zsubscriber:
+				msg, err := c.zsubscriber.RecvMessage(0)
 				if err != nil {
 					break OUTER
 				}
@@ -109,14 +116,14 @@ OUTER:
 					c.sendBlockEvent(sequenceMsg.Hash[:], sequenceMsg.Event)
 				}
 
-			case c.zback:
-				msg, err := c.zback.RecvMessage(0)
+			case c.zbackendsocket:
+				msg, err := c.zbackendsocket.RecvMessage(0)
 				if err != nil {
 					break OUTER
 				}
 				switch msg[0] {
 				case "subscribe":
-					if err := c.zsub.SetSubscribe(msg[1]); err != nil {
+					if err := c.zsubscriber.SetSubscribe(msg[1]); err != nil {
 						break OUTER
 					}
 				case "term":
@@ -135,7 +142,7 @@ OUTER:
 	}
 	// Close all subscriber channels.
 	if c.subs.active {
-		err = c.zsub.SetUnsubscribe("sequence")
+		err = c.zsubscriber.SetUnsubscribe("sequence")
 		if err != nil {
 			c.logger.Errorf("Error unsubscribing from sequence: %v", err)
 			return

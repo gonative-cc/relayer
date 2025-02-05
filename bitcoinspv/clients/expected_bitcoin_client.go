@@ -10,7 +10,7 @@ import (
 )
 
 // BTCClient is an abstraction over bitcoin node implementations (bitcoind, btcd).
-// Refer to btcclient/ dir for implementation.
+// Refer to btcwrapper/ dir for implementation.
 type BTCClient interface {
 	Stop()
 	WaitForShutdown()
@@ -21,7 +21,6 @@ type BTCClient interface {
 	GetTailBlocksByHeight(height int64) ([]*types.IndexedBlock, error)
 	GetBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error)
 	GetTxOut(txHash *chainhash.Hash, index uint32, mempool bool) (*btcjson.GetTxOutResult, error)
-	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
 	GetTransaction(txHash *chainhash.Hash) (*btcjson.GetTransactionResult, error)
 	GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error)
 }

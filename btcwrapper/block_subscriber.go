@@ -1,4 +1,4 @@
-package btcclient
+package btcwrapper
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	"github.com/gonative-cc/relayer/btcclient/zmq"
+	"github.com/gonative-cc/relayer/btcwrapper/zmq"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
@@ -25,14 +25,14 @@ func NewWithBlockSubscriber(
 	parentLogger *zap.Logger,
 ) (*Client, error) {
 	client := &Client{}
-	params, err := GetBTCParams(cfg.NetParams)
+	params, err := GetBTCNodeParams(cfg.NetParams)
 	if err != nil {
 		return nil, err
 	}
-	client.blockEventChan = make(chan *types.BlockEvent, 10000) // TODO: parameterise buffer size
-	client.Cfg = cfg
-	client.Params = params
-	logger := parentLogger.With(zap.String("module", "btcclient"))
+	client.blockEventsChannel = make(chan *types.BlockEvent, 10000) // TODO: parameterise buffer size
+	client.config = cfg
+	client.chainParams = params
+	logger := parentLogger.With(zap.String("module", "btcwrapper"))
 	client.logger = logger.Sugar()
 
 	client.retrySleepTime = retrySleepTime
@@ -63,7 +63,7 @@ func NewWithBlockSubscriber(
 			return nil, fmt.Errorf("zmq is only supported by bitcoind, but got %v", backend)
 		}
 
-		zmqClient, err := zmq.New(logger, cfg.ZmqSeqEndpoint, client.blockEventChan, rpcClient)
+		zmqClient, err := zmq.New(logger, cfg.ZmqSeqEndpoint, client.blockEventsChannel, rpcClient)
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func NewWithBlockSubscriber(
 					"Block %v at height %d has been connected at time %v",
 					header.BlockHash(), height, header.Timestamp,
 				)
-				client.blockEventChan <- types.NewBlockEvent(
+				client.blockEventsChannel <- types.NewBlockEvent(
 					types.BlockConnected, int64(height), header,
 				)
 			},
@@ -86,7 +86,7 @@ func NewWithBlockSubscriber(
 					"Block %v at height %d has been disconnected at time %v",
 					header.BlockHash(), height, header.Timestamp,
 				)
-				client.blockEventChan <- types.NewBlockEvent(
+				client.blockEventsChannel <- types.NewBlockEvent(
 					types.BlockDisconnected, int64(height), header,
 				)
 			},
@@ -145,7 +145,7 @@ func (c *Client) mustSubscribeBlocksByZmq() {
 }
 
 func (c *Client) MustSubscribeBlocks() {
-	switch c.Cfg.BtcBackend {
+	switch c.config.BtcBackend {
 	case types.Btcd:
 		c.mustSubscribeBlocksByWebSocket()
 	case types.Bitcoind:
@@ -154,5 +154,5 @@ func (c *Client) MustSubscribeBlocks() {
 }
 
 func (c *Client) BlockEventChan() <-chan *types.BlockEvent {
-	return c.blockEventChan
+	return c.blockEventsChannel
 }
