@@ -17,8 +17,7 @@ var (
 	ErrSubAlreadyActive = errors.New("bitcoin node subscription already exists")
 )
 
-// SequenceMsg is a subscription event coming from a "sequence" ZMQ message.
-type SequenceMsg struct {
+type SequenceMessage struct {
 	Hash  [32]byte // use encoding/hex.EncodeToString() to get it into the RPC method string format.
 	Event relayertypes.EventType
 }
@@ -26,13 +25,13 @@ type SequenceMsg struct {
 type Subscriptions struct {
 	sync.RWMutex
 
-	exited      chan struct{}
-	zfront      *zeromq.Socket
-	latestEvent time.Time
-	isActive    bool
+	exitedChannel chan struct{}
+	zfront        *zeromq.Socket
+	latestEvent   time.Time
+	isActive      bool
 }
 
-// SubscribeSequence subscribes to the ZMQ "sequence" messages as SequenceMsg items pushed onto the channel.
+// SubscribeSequence subscribes to the ZMQ "sequence" messages as SequenceMessage items pushed onto the channel.
 // Call cancel to cancel the subscription and let the client release the resources. The channel is closed
 // when the subscription is canceled or when the client is closed.
 func (c *ZMQClient) SubscribeSequence() error {
@@ -42,7 +41,7 @@ func (c *ZMQClient) SubscribeSequence() error {
 	c.subscriptions.Lock()
 	defer c.subscriptions.Unlock()
 	select {
-	case <-c.subscriptions.exited:
+	case <-c.subscriptions.exitedChannel:
 		return ErrSubHasExited
 	default:
 	}
@@ -89,7 +88,7 @@ OUTER:
 	}
 
 	c.subscriptions.Lock()
-	close(c.subscriptions.exited)
+	close(c.subscriptions.exitedChannel)
 	if err := c.subscriptions.zfront.Close(); err != nil {
 		c.logger.Errorf("Error closing zfront: %v", err)
 		return
@@ -114,7 +113,7 @@ func handleSubscriberMessage(c *ZMQClient) error {
 	}
 	c.subscriptions.latestEvent = time.Now()
 	if message[0] == "sequence" {
-		var sequenceMessage SequenceMsg
+		var sequenceMessage SequenceMessage
 		copy(sequenceMessage.Hash[:], message[1])
 		switch message[1][32] {
 		case 'C':
@@ -125,7 +124,7 @@ func handleSubscriberMessage(c *ZMQClient) error {
 			return nil
 		}
 
-		c.sendBlockEvent(sequenceMessage.Hash[:], sequenceMessage.Event)
+		c.sendBlockEventToChannel(sequenceMessage.Hash[:], sequenceMessage.Event)
 	}
 	return nil
 }
@@ -157,8 +156,8 @@ func (c *ZMQClient) cleanup() {
 	}
 }
 
-func (c *ZMQClient) sendBlockEvent(hash []byte, event relayertypes.EventType) {
-	blockHashStr := hex.EncodeToString(hash)
+func (c *ZMQClient) sendBlockEventToChannel(hashBytes []byte, event relayertypes.EventType) {
+	blockHashStr := hex.EncodeToString(hashBytes)
 	blockHash, err := chainhash.NewHashFromStr(blockHashStr)
 	if err != nil {
 		c.logger.Errorf("Failed to parse block hash %v: %v", blockHashStr, err)
