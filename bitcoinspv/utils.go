@@ -8,19 +8,28 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
-	for chunkSize < len(items) {
-		items, chunks = items[chunkSize:], append(chunks, items[0:chunkSize:chunkSize])
+func chunkBy[T any](items []T, chunkSize int) [][]T {
+	if len(items) == 0 {
+		return nil
 	}
-	return append(chunks, items)
+
+	chunks := make([][]T, 0, (len(items)+chunkSize-1)/chunkSize)
+	for i := 0; i < len(items); i += chunkSize {
+		end := i + chunkSize
+		if end > len(items) {
+			end = len(items)
+		}
+		chunks = append(chunks, items[i:end])
+	}
+	return chunks
 }
 
 // getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
 // should be submitted to Native light client from a given set of indexed blocks
 func (r *Relayer) getHeaderMsgsToSubmit(
-	ibs []*types.IndexedBlock,
+	indexed_blocks []*types.IndexedBlock,
 ) ([][]*wire.BlockHeader, error) {
-	startPoint, err := r.findFirstNewHeader(ibs)
+	startPoint, err := r.findFirstNewHeader(indexed_blocks)
 	if err != nil {
 		return nil, err
 	}
@@ -32,15 +41,15 @@ func (r *Relayer) getHeaderMsgsToSubmit(
 	}
 
 	// Get subset of blocks starting from first new header
-	ibsToSubmit := ibs[startPoint:]
+	blocksToSubmit := indexed_blocks[startPoint:]
 
 	// Split into chunks and convert to header messages
-	return r.createHeaderMessages(ibsToSubmit), nil
+	return r.createHeaderMessages(blocksToSubmit), nil
 }
 
 // findFirstNewHeader finds the index of the first header not in the Native chain
-func (r *Relayer) findFirstNewHeader(ibs []*types.IndexedBlock) (int, error) {
-	for i, header := range ibs {
+func (r *Relayer) findFirstNewHeader(indexed_blocks []*types.IndexedBlock) (int, error) {
+	for i, header := range indexed_blocks {
 		blockHash := header.BlockHash()
 		var res bool
 		var err error
@@ -59,8 +68,8 @@ func (r *Relayer) findFirstNewHeader(ibs []*types.IndexedBlock) (int, error) {
 }
 
 // createHeaderMessages splits blocks into chunks and creates header messages
-func (r *Relayer) createHeaderMessages(ibs []*types.IndexedBlock) [][]*wire.BlockHeader {
-	blockChunks := chunkBy(ibs, int(r.Config.MaxHeadersInMsg))
+func (r *Relayer) createHeaderMessages(indexed_blocks []*types.IndexedBlock) [][]*wire.BlockHeader {
+	blockChunks := chunkBy(indexed_blocks, int(r.Config.MaxHeadersInMsg))
 	headerMsgs := make([][]*wire.BlockHeader, 0, len(blockChunks))
 
 	for _, chunk := range blockChunks {
@@ -82,38 +91,21 @@ func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 		return nil
 	})
 	if err != nil {
-		r.metrics.FailedHeadersCounter.Add(float64(len(msg)))
 		return fmt.Errorf("failed to submit headers: %w", err)
 	}
-
-	// update metrics
-	r.updateHeaderMetrics(msg)
 
 	return nil
 }
 
-func (r *Relayer) updateHeaderMetrics(headers []*wire.BlockHeader) {
-	r.metrics.SuccessfulHeadersCounter.Add(float64(len(headers)))
-	r.metrics.SecondsSinceLastHeaderGauge.Set(0)
-	for _, header := range headers {
-		r.metrics.NewReportedHeaderGaugeVec.WithLabelValues(
-			header.BlockHash().String(),
-		).SetToCurrentTime()
-	}
-}
-
 // ProcessHeaders extracts and reports headers from a list of blocks
 // It returns the number of headers that need to be reported (after deduplication)
-func (r *Relayer) ProcessHeaders(ibs []*types.IndexedBlock) (int, error) {
-	// get a list of MsgInsertHeader msgs with headers to be submitted
-	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(ibs)
+func (r *Relayer) ProcessHeaders(indexed_blocks []*types.IndexedBlock) (int, error) {
+	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(indexed_blocks)
 	if err != nil {
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
-	// skip if no header to submit
 	if len(headerMsgsToSubmit) == 0 {
 		r.logger.Info("no new headers to submit")
-		return 0, nil
 	}
 
 	numSubmitted := 0
@@ -161,34 +153,21 @@ func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcut
 	res, err := r.nativeClient.VerifySPV(&msgSpvProof)
 	if err != nil {
 		r.logger.Errorf("failed to submit MsgInsertBTCSpvProof with error %v", err)
-		r.metrics.FailedCheckpointsCounter.Inc()
 		return err
 	}
 
 	r.logger.Infof("successfully submitted MsgInsertBTCSpvProof with response %d", res)
-
-	// metrics sent to prometheus instance
-	r.metrics.SuccessfulCheckpointsCounter.Inc()
-	r.metrics.SecondsSinceLastCheckpointGauge.Set(0)
-	// tx1Block := ckpt.Segments[0].AssocBlock
-	// tx2Block := ckpt.Segments[1].AssocBlock
-	// r.metrics.NewReportedCheckpointGaugeVec.WithLabelValues(
-	// 	strconv.Itoa(int(ckpt.Epoch)),
-	// 	strconv.Itoa(int(tx1Block.Height)),
-	// 	tx1Block.Txs[ckpt.Segments[0].TxIdx].Hash().String(),
-	// 	tx2Block.Txs[ckpt.Segments[1].TxIdx].Hash().String(),
-	// ).SetToCurrentTime()
 
 	return nil
 }
 
 // ProcessTransactions tries to extract valid transactions from a list of blocks
 // It returns the number of valid transactions segments, and the number of valid transactions
-func (r *Relayer) ProcessTransactions(ibs []*types.IndexedBlock) (int, error) {
+func (r *Relayer) ProcessTransactions(indexed_blocks []*types.IndexedBlock) (int, error) {
 	var totalTxs int
 
 	// process transactions from each block
-	for _, block := range ibs {
+	for _, block := range indexed_blocks {
 		blockTxs, err := r.extractAndSubmitTransactions(block)
 		if err != nil {
 			if totalTxs > 0 {
