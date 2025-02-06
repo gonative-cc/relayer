@@ -6,64 +6,80 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/gonative-cc/relayer/bitcoinspv/types"
+	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
 var (
-	bootstrapAttempts      = uint(60)
-	bootstrapAttemptsAtt   = retry.Attempts(bootstrapAttempts)
+	bootstrapRetryAttempts = uint(60)
 	bootstrapRetryInterval = retry.Delay(30 * time.Second)
-	bootstrapDelayType     = retry.DelayType(retry.FixedDelay)
-	bootstrapErrReportType = retry.LastErrorOnly(true)
 )
 
-func (r *Relayer) bootstrapRelayer(skipBlockSubscription bool) error {
-	// ensure BTC has caught up with Native header chain
-	if err := r.waitForBTCToSyncWithNative(); err != nil {
+func (r *Relayer) bootstrapRelayer(skipSubscription bool) error {
+	if err := r.initializeAndSync(); err != nil {
 		return err
 	}
 
-	// initialize cache with the latest blocks
-	if err := r.initBTCCache(); err != nil {
+	if err := r.setupCache(skipSubscription); err != nil {
 		return err
 	}
-	r.logger.Debugf("BTC cache size: %d", r.btcCache.Size())
 
-	// Subscribe new blocks after cache init to avoid duplicates
-	if !skipBlockSubscription {
+	if err := r.processAndTrimCache(); err != nil {
+		return err
+	}
+
+	r.logger.Infof("Size of the BTC cache: %d", r.btcCache.Size())
+	r.logger.Info("Successfully finished bootstrapping")
+	return nil
+}
+
+func (r *Relayer) initializeAndSync() error {
+	return r.waitForBTCToSyncWithNative()
+}
+
+func (r *Relayer) setupCache(skipSubscription bool) error {
+	if err := r.initializeBTCCache(); err != nil {
+		return err
+	}
+
+	if !skipSubscription {
 		r.btcClient.SubscribeNewBlocks()
 	}
+	return nil
+}
 
-	// process headers from cache blocks
-	blocks := r.btcCache.GetAllBlocks()
-	if _, err := r.ProcessHeaders(blocks); err != nil {
-		// this can happen when there are two contentious spv relayers or if our btc node is behind.
-		r.logger.Errorf("failed to submit headers: %v", err)
+func (r *Relayer) processAndTrimCache() error {
+	if err := r.processHeaders(); err != nil {
 		return err
 	}
 
-	// resize and trim cache to latest k blocks on BTC
 	if err := r.resizeAndTrimCache(); err != nil {
 		return err
 	}
 
-	r.logger.Infof("size of the BTC cache: %d", r.btcCache.Size())
-	r.logger.Info("successfully finished bootstrapping")
+	return nil
+}
+
+func (r *Relayer) processHeaders() error {
+	blocks := r.btcCache.GetAllBlocks()
+	if _, err := r.ProcessHeaders(blocks); err != nil {
+		// this can happen when there are two contentious spv relayers
+		// or if our btc node is behind.
+		r.logger.Errorf("Failed to submit headers: %v", err)
+		return err
+	}
 	return nil
 }
 
 func (r *Relayer) resizeAndTrimCache() error {
-	maxEntries := r.btcConfirmationDepth
-	if err := r.btcCache.Resize(maxEntries); err != nil {
-		r.logger.Errorf("failed to resize BTC cache: %v", err)
-		panic(err)
+	if err := r.btcCache.Resize(r.btcConfirmationDepth); err != nil {
+		return err
 	}
 	r.btcCache.Trim()
 	return nil
 }
 
 func (r *Relayer) createRelayerContext() (context.Context, func()) {
-	quit := r.quitChan()
+	quitChan := r.quitChan()
 	ctx, cancel := context.WithCancel(context.Background())
 	r.wg.Add(1)
 
@@ -74,7 +90,7 @@ func (r *Relayer) createRelayerContext() (context.Context, func()) {
 		}()
 
 		select {
-		case <-quit:
+		case <-quitChan:
 
 		case <-ctx.Done():
 		}
@@ -83,45 +99,49 @@ func (r *Relayer) createRelayerContext() (context.Context, func()) {
 	return ctx, cancel
 }
 
-func (r *Relayer) multitryBootstrap(skipBlockSubscription bool) {
+func (r *Relayer) multitryBootstrap(skipSubscription bool) {
 	ctx, cancel := r.createRelayerContext()
 	defer cancel()
 
-	retryOpts := []retry.Option{
-		retry.Context(ctx),
-		bootstrapAttemptsAtt,
-		bootstrapRetryInterval,
-		bootstrapDelayType,
-		bootstrapErrReportType,
-		retry.OnRetry(func(n uint, err error) {
-			r.logger.Warnf(
-				"failed to bootstap relayer: %v. Attempt: %d, Max attempts: %d",
-				err, n+1, bootstrapAttempts,
-			)
-		}),
-	}
+	retryOpts := r.getBootstrapRetryOptions(ctx)
 
 	if err := retry.Do(
 		func() error {
-			return r.bootstrapRelayer(skipBlockSubscription)
+			return r.bootstrapRelayer(skipSubscription)
 		},
 		retryOpts...,
 	); err != nil {
 		if errors.Is(err, context.Canceled) {
 			return
 		}
-		r.logger.Fatalf("failed to bootstrap relayer: %v after %d attempts", err, bootstrapAttempts)
+		r.logger.Fatalf("Failed to bootstrap relayer: %v after %d attempts", err, bootstrapRetryAttempts)
 	}
 }
 
-// initBTCCache initializes the BTC cache with blocks from T-k to T
+func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
+	return []retry.Option{
+		retry.Context(ctx),
+		retry.Attempts(bootstrapRetryAttempts),
+		bootstrapRetryInterval,
+		retry.DelayType(retry.FixedDelay),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(n uint, err error) {
+			r.logger.Warnf(
+				"Failed to bootstap relayer: %v. Attempt: %d, Max attempts: %d",
+				err, n+1, bootstrapRetryAttempts,
+			)
+		}),
+	}
+}
+
+// initializeBTCCache initializes the BTC cache with blocks from T-k to T
 // where T is the height of the latest block in Native light client
 // and k is the confirmation depth
-func (r *Relayer) initBTCCache() error {
+func (r *Relayer) initializeBTCCache() error {
 	// Initialize cache with configured size
-	cache, err := types.NewBTCCache(r.Config.BTCCacheSize) // TODO: give an option to be unsized
+	cache, err := relayertypes.NewBTCCache(r.Config.BTCCacheSize)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	r.btcCache = cache
 
@@ -137,17 +157,18 @@ func (r *Relayer) initBTCCache() error {
 	// Fetch blocks from BTC node
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Initialize cache with fetched blocks
 	if err = r.btcCache.Init(blocks); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }
 
-// waitForBTCToSyncWithNative waits for BTC to synchronize until BTC is no shorter than Native's BTC light client.
+// waitForBTCToSyncWithNative waits for BTC to synchronize
+// until BTC is no shorter than Native's BTC light client.
 // It returns BTC last block hash, BTC last block height, and Native's base height.
 func (r *Relayer) waitForBTCToSyncWithNative() error {
 	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
@@ -168,13 +189,14 @@ func (r *Relayer) waitForBTCToSyncWithNative() error {
 }
 
 func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
-	btcLatestBlockHash, btcLatestBlockHeight, err := r.btcClient.GetBTCTipBlock()
+	_, btcLatestBlockHeight, err := r.btcClient.GetBTCTipBlock()
 	if err != nil {
 		return 0, err
 	}
 
 	r.logger.Infof(
-		"BTC latest block hash and height: (%v, %d)", btcLatestBlockHash, btcLatestBlockHeight,
+		"BTC latest block height: (%d)",
+		btcLatestBlockHeight,
 	)
 
 	return btcLatestBlockHeight, nil
@@ -187,21 +209,23 @@ func (r *Relayer) getNativeLatestBlockHeight() (int64, error) {
 	}
 
 	r.logger.Infof(
-		"Light client header chain latest block hash and height: (%v, %d)",
-		nativeBlock.Hash, nativeBlock.Height,
+		"Light client header chain latest block height: (%d)",
+		nativeBlock.Height,
 	)
 
 	return nativeBlock.Height, nil
 }
 
-func (r *Relayer) waitForBTCCatchup(btcHeight, nativeHeight int64) error {
+func (r *Relayer) waitForBTCCatchup(btcHeight int64, nativeHeight int64) error {
 	r.logger.Infof(
 		"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
 		btcHeight, nativeHeight,
 	)
 
-	ticker := time.NewTicker(5 * time.Second)
-	for range ticker.C {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
 		btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 		if err != nil {
 			return err
@@ -212,19 +236,23 @@ func (r *Relayer) waitForBTCCatchup(btcHeight, nativeHeight int64) error {
 			return err
 		}
 
-		if btcLatestBlockHeight > 0 && btcLatestBlockHeight >= nativeLatestBlockHeight {
+		if isBTCCaughtUp(btcLatestBlockHeight, nativeLatestBlockHeight) {
 			r.logger.Infof(
 				"BTC chain (length %d) now catches up with light client header chain (length %d), continue bootstrapping",
 				btcLatestBlockHeight, nativeLatestBlockHeight,
 			)
-			break
+			return nil
 		}
 
 		r.logger.Infof(
 			"BTC chain (length %d) still falls behind light client header chain (length %d), keep waiting",
 			btcLatestBlockHeight, nativeLatestBlockHeight,
 		)
-	}
 
-	return nil
+		<-ticker.C
+	}
+}
+
+func isBTCCaughtUp(btcHeight int64, nativeHeight int64) bool {
+	return btcHeight > 0 && btcHeight >= nativeHeight
 }
