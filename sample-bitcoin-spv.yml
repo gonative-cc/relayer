@@ -26,7 +26,7 @@ btc:
   zmq-block-endpoint: tcp://127.0.0.1:28332
   zmq-tx-endpoint: tcp://127.0.0.1:28333
 native:
-  rpc-endpoint: localhost:9797
+  rpc-endpoint: http://localhost:9797
 metrics:
   host: 0.0.0.0
   server-port: 2112

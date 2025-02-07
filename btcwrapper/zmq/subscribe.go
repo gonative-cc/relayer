@@ -59,7 +59,7 @@ func (c *ZMQClient) SubscribeSequence() error {
 }
 
 func (c *ZMQClient) zmqHandler() {
-	c.cleanup()
+	defer c.cleanup()
 
 	zmqPoller := zeromq.NewPoller()
 	zmqPoller.Add(c.zsubscriber, zeromq.POLLIN)

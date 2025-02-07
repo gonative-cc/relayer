@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultNativeRPCEndpoint = "localhost:9797"
+	DefaultNativeRPCEndpoint = "http://localhost:9797"
 	errEmptyRPCEndpoint      = "native RPC endpoint cannot be empty"
 )
 
