@@ -64,24 +64,24 @@ func (c *ZMQClient) zmqHandler() {
 	zmqPoller := zeromq.NewPoller()
 	zmqPoller.Add(c.zsubscriber, zeromq.POLLIN)
 	zmqPoller.Add(c.zbackendsocket, zeromq.POLLIN)
-OUTER:
+ZMQ_POLLER:
 	for {
 		// Wait forever until a message can be received or the context was canceled.
 		polled, err := zmqPoller.Poll(-1)
 		if err != nil {
-			break OUTER
+			break ZMQ_POLLER
 		}
 
 		for _, p := range polled {
 			switch p.Socket {
 			case c.zsubscriber:
 				if err := handleSubscriberMessage(c); err != nil {
-					break OUTER
+					break ZMQ_POLLER
 				}
 
 			case c.zbackendsocket:
 				if err := handleBackendMessage(c); err != nil {
-					break OUTER
+					break ZMQ_POLLER
 				}
 			}
 		}
@@ -157,14 +157,14 @@ func (c *ZMQClient) cleanup() {
 }
 
 func (c *ZMQClient) sendBlockEventToChannel(hashBytes []byte, event relayertypes.EventType) {
-	blockHashStr := hex.EncodeToString(hashBytes)
-	blockHash, err := chainhash.NewHashFromStr(blockHashStr)
+	blockHashString := hex.EncodeToString(hashBytes)
+	blockHash, err := chainhash.NewHashFromStr(blockHashString)
 	if err != nil {
-		c.logger.Errorf("Failed to parse block hash %v: %v", blockHashStr, err)
+		c.logger.Errorf("Failed to parse block hash %v: %v", blockHashString, err)
 		return
 	}
 
-	c.logger.Infof("Received zmq sequence message for block %v", blockHashStr)
+	c.logger.Infof("Received zmq sequence message for block %v", blockHashString)
 
 	indexedBlock, err := c.getBlockByHash(blockHash)
 	if err != nil {
