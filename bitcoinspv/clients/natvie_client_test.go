@@ -6,16 +6,15 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNatvieClient_InsertHeader(t *testing.T) {
-	t.Skip("Test to be run locally for debugging purposes only")
 
-	localRPC := "127.0.0.1:2000"
-	localMnemonic := "local mnemonic here"
-	lightClientObjectId := "0x..."
-	gasObjectId := "0x..."
+	localRPC := "https://fullnode.devnet.sui.io:443"
+	localMnemonic := "elegant aware place green laptop secret misery mass crystal cash armor opera"
+	lightClientObjectId := "0x11c3a8e5848a516b50fbccf4d7504aa4e9fc1fe7c29493b7c951c417349da8d1"
 
 	cl := sui.NewSuiClient(localRPC).(*sui.Client)
 	s, err := signer.NewSignertWithMnemonic(localMnemonic)
@@ -25,18 +24,19 @@ func TestNatvieClient_InsertHeader(t *testing.T) {
 		cl,
 		s,
 		lightClientObjectId,
-		gasObjectId,
 	)
 	assert.Nil(t, err)
 
-	rawHeaderHex := "00801e31c24ae25304cbac7c3d3b076e241abb20ff2da1d3ddfc00000000000000000000530e6745eca48e937428b0f15669efdce807a071703ed5a4df0e85a3f6cc0f601c35cf665b25031780f1e351"
+	rawHeaderHex := "0000002038e3369b8a033550a8443c3e0f51c0110c7d527d98437da1ca24557147b38c4a0530f86490bb70e5a8233a2f9b7c3a525bd7267498d4b4efa2bf2ff00cd988f21d5b6167ffff7f2000000000"
 
 	header, err := BlockHeaderFromHex(rawHeaderHex)
 	assert.Nil(t, err)
 
+	var headers []*wire.BlockHeader = []*wire.BlockHeader{&header}
+
 	err = client.InsertHeaders(
 		context.Background(),
-		&header,
+		headers,
 	)
 
 	assert.Nil(t, err)

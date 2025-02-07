@@ -4,9 +4,7 @@ package clients
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/btcsuite/btcd/wire"
 )
@@ -32,12 +30,11 @@ func BlockHeaderFromHex(hexStr string) (wire.BlockHeader, error) {
 	return header, err
 }
 
-func serializeBlockHeader(header *wire.BlockHeader) ([]byte, error) {
-	// Use JSON serialization as an example
-	// You can replace this with any other serialization method (e.g., gob, protobuf, etc.)
-	rawHeader, err := json.Marshal(header)
+func BlockHeaderToHex(header wire.BlockHeader) (string, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, 80))
+	err := header.Serialize(buf)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling block header: %w", err)
+		return "", err
 	}
-	return rawHeader, nil
+	return "0x" + hex.EncodeToString(buf.Bytes()), nil
 }

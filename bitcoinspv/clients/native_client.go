@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/models"
@@ -16,36 +15,33 @@ import (
 const (
 	InsertHeader = "insert_header"
 	VerifyTx     = "verify_tx"
-	LcModule     = "bitcoin_spv"
-	LcPackage    = "0x<your_package_object_id>"
+	LcModule     = "light_client"
+	LcPackage    = "0xec871f40adb592f9143351695a225c09b23a7dca6586a5ce1c6bf358de5ddc62"
 )
 
 type Client struct {
 	c                   *sui.Client
 	signerAccount       *signer.Signer
 	lightClientObjectId string
-	gasObjectId         string
 }
 
-func NewNativeClient(suiClient *sui.Client, signer *signer.Signer, lightClientObjectId string, gasObjectId string) Client {
+func NewNativeClient(suiClient *sui.Client, signer *signer.Signer, lightClientObjectId string) Client {
 	return Client{
 		c:                   suiClient,
 		signerAccount:       signer,
 		lightClientObjectId: lightClientObjectId,
-		gasObjectId:         gasObjectId,
 	}
 }
 
-func (c *Client) InsertHeaders(ctx context.Context, blockHeader *wire.BlockHeader) error {
-	rawHeader, err := serializeBlockHeader(blockHeader)
+func (c Client) InsertHeaders(ctx context.Context, blockHeader []*wire.BlockHeader) error {
+	rawHeader, err := BlockHeaderToHex(*blockHeader[0])
 	if err != nil {
 		return fmt.Errorf("error serializing block header: %w", err)
 	}
-	rawHeaderHex := hex.EncodeToString(rawHeader)
 
 	arguments := []interface{}{
 		c.lightClientObjectId, // The object ID of the light client
-		rawHeaderHex,          // The serialized block header as a hex string
+		rawHeader,             // The serialized block header as a hex string
 	}
 
 	req := models.MoveCallRequest{
@@ -76,28 +72,28 @@ func (c *Client) InsertHeaders(ctx context.Context, blockHeader *wire.BlockHeade
 	return nil
 }
 
-func (c *Client) ContainsBTCBlock(blockHash *chainhash.Hash) (bool, error) {
+func (c Client) ContainsBTCBlock(blockHash *chainhash.Hash) (bool, error) {
 	// TODO: Implement logic to call the Sui smart contract method for checking block existence
 	// Use nc.suiClient to interact with the Sui blockchain
 	fmt.Println("ContainsBTCBlock called")
 	return false, nil
 }
 
-func (c *Client) BTCHeaderChainTip() (int64, *chainhash.Hash, error) {
+func (c Client) GetBTCHeaderChainTip() (Block, error) {
 	// TODO: Implement logic to call the Sui smart contract method for fetching chain tip
 	// Use nc.suiClient to interact with the Sui blockchain
 	fmt.Println("BTCHeaderChainTip called")
-	return 0, nil, nil
+	return Block{nil, 0}, nil
 }
 
-func (c *Client) VerifySPV(spvProof types.SPVProof) (int, error) {
+func (c Client) VerifySPV(spvProof types.SPVProof) (int, error) {
 	// TODO: Implement logic to call the Sui smart contract method for verifying SPV proofs
 	// Use nc.suiClient to interact with the Sui blockchain
 	fmt.Println("VerifySPV called")
 	return 0, nil
 }
 
-func (c *Client) Stop() error {
+func (c Client) Stop() error {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
 	return nil
