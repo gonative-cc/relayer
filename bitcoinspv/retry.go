@@ -80,11 +80,11 @@ func RetryDo(sleep time.Duration, maxSleepDuration time.Duration, retryableFunc 
 	sleep += jitter / 2
 
 	if sleep > maxSleepDuration {
-		logger.Info("retry timed out")
+		logger.Info("Retry timed out")
 		return err
 	}
 
-	logger.Info("starting exponential backoff", "sleep", sleep, "err", err)
+	logger.Info("Starting exponential backoff", "sleep", sleep, "err", err)
 	time.Sleep(sleep)
 
 	return RetryDo(2*sleep, maxSleepDuration, retryableFunc)

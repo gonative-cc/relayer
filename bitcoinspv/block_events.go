@@ -15,13 +15,13 @@ func (r *Relayer) onBlockEvent() {
 		select {
 		case event, open := <-r.btcClient.BlockEventChannel():
 			if !open {
-				r.logger.Errorf("block event channel is closed")
+				r.logger.Errorf("Block event channel is closed")
 				return
 			}
 
 			if err := r.handleBlockEvent(event); err != nil {
 				r.logger.Warnf(
-					"due to error in event processing: %v, bootstrap process need to be restarted",
+					"Due to error in event processing: %v, bootstrap process need to be restarted",
 					err,
 				)
 				r.multitryBootstrap(true)

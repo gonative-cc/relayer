@@ -36,7 +36,7 @@ func (r *Relayer) getHeaderMsgsToSubmit(
 
 	// all headers are duplicated, no need to submit
 	if startPoint == -1 {
-		r.logger.Info("all headers are duplicated, no need to submit")
+		r.logger.Info("All headers are duplicated, no need to submit")
 		return nil, nil
 	}
 
@@ -86,7 +86,7 @@ func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 			return err
 		}
 		r.logger.Infof(
-			"successfully submitted %d headers to light client", len(msg),
+			"Successfully submitted %d headers to light client", len(msg),
 		)
 		return nil
 	})
@@ -105,7 +105,7 @@ func (r *Relayer) ProcessHeaders(indexed_blocks []*types.IndexedBlock) (int, err
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
 	if len(headerMsgsToSubmit) == 0 {
-		r.logger.Info("no new headers to submit")
+		r.logger.Info("No new headers to submit")
 	}
 
 	numSubmitted := 0
@@ -134,7 +134,7 @@ func (r *Relayer) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, err
 
 func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcutil.Tx) error {
 	if tx == nil {
-		r.logger.Warnf("found a nil tx in block %v", ib.BlockHash())
+		r.logger.Warnf("Found a nil tx in block %v", ib.BlockHash())
 		return nil
 	}
 
@@ -142,7 +142,7 @@ func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcut
 	//nolint:gosec
 	proof, err := ib.GenSPVProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
 	if err != nil {
-		r.logger.Errorf("failed to construct spv proof from tx %v: %v", tx.Hash(), err)
+		r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
 		return err
 	}
 
@@ -152,11 +152,11 @@ func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcut
 	// submit the checkpoint to light client
 	res, err := r.nativeClient.VerifySPV(&msgSpvProof)
 	if err != nil {
-		r.logger.Errorf("failed to submit MsgInsertBTCSpvProof with error %v", err)
+		r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
 		return err
 	}
 
-	r.logger.Infof("successfully submitted MsgInsertBTCSpvProof with response %d", res)
+	r.logger.Infof("Successfully submitted MsgInsertBTCSpvProof with response %d", res)
 
 	return nil
 }
@@ -171,7 +171,7 @@ func (r *Relayer) ProcessTransactions(indexed_blocks []*types.IndexedBlock) (int
 		blockTxs, err := r.extractAndSubmitTransactions(block)
 		if err != nil {
 			if totalTxs > 0 {
-				r.logger.Infof("submitted %d transactions", totalTxs)
+				r.logger.Infof("Submitted %d transactions", totalTxs)
 			}
 			return totalTxs, fmt.Errorf(
 				"failed to extract transactions from block %v: %w", block.BlockHash(), err,
@@ -182,7 +182,7 @@ func (r *Relayer) ProcessTransactions(indexed_blocks []*types.IndexedBlock) (int
 
 	// log total transactions processed if any
 	if totalTxs > 0 {
-		r.logger.Infof("submitted %d transactions", totalTxs)
+		r.logger.Infof("Submitted %d transactions", totalTxs)
 	}
 
 	return totalTxs, nil
