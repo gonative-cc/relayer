@@ -46,6 +46,7 @@ func (r *Relayer) handleBlockEvent(blockEvent *types.BlockEvent) error {
 }
 
 // onConnectedBlock handles connected blocks from the BTC client.
+// It is invoked when a new connected block is received from the Bitcoin node.
 func (r *Relayer) onConnectedBlock(blockEvent *types.BlockEvent) error {
 	if err := r.validateBlockHeight(blockEvent); err != nil {
 		return err
@@ -159,6 +160,8 @@ func (r *Relayer) processBlock(ib *types.IndexedBlock) error {
 }
 
 // onDisconnectedBlock handles disconnected blocks from the BTC client.
+// It is invoked when event for a previously sent connected block
+// is to be reversed received from the Bitcoin node.
 func (r *Relayer) onDisconnectedBlock(blockEvent *types.BlockEvent) error {
 	tipCacheBlock := r.btcCache.Tip()
 	if tipCacheBlock == nil {
