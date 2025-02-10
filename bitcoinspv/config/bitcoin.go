@@ -65,19 +65,19 @@ func (cfg *BTCConfig) validateBitcoindConfig() error {
 	}
 
 	if cfg.ZmqBlockEndpoint == "" {
-		return errors.New("zmq block endpoint cannot be empty")
+		return errors.New("zmq block endpoint cannot be empty in config file")
 	}
 
 	if cfg.ZmqTxEndpoint == "" {
-		return errors.New("zmq tx endpoint cannot be empty")
+		return errors.New("zmq tx endpoint cannot be empty in config file")
 	}
 
 	if cfg.ZmqSeqEndpoint == "" {
-		return errors.New("zmq seq endpoint cannot be empty")
+		return errors.New("zmq seq endpoint cannot be empt in config file")
 	}
 
 	if cfg.EstimateMode != "ECONOMICAL" && cfg.EstimateMode != "CONSERVATIVE" {
-		return errors.New("estimate-mode must be either ECONOMICAL or CONSERVATIVE when the backend is bitcoind")
+		return errors.New("estimate-mode must be in (ECONOMICAL, CONSERVATIVE) when the backend is bitcoind")
 	}
 
 	return nil
@@ -85,23 +85,23 @@ func (cfg *BTCConfig) validateBitcoindConfig() error {
 
 func (cfg *BTCConfig) validateFeeConfig() error {
 	if cfg.TargetBlockNum <= 0 {
-		return errors.New("target-block-num should be positive")
+		return errors.New("target-block-num should be positive in config file")
 	}
 
 	if cfg.TxFeeMax <= 0 {
-		return errors.New("tx-fee-max must be positive")
+		return errors.New("tx-fee-max must be positive in config file")
 	}
 
 	if cfg.TxFeeMin <= 0 {
-		return errors.New("tx-fee-min must be positive")
+		return errors.New("tx-fee-min must be positive in config file")
 	}
 
 	if cfg.TxFeeMin > cfg.TxFeeMax {
-		return errors.New("tx-fee-min is larger than tx-fee-max")
+		return errors.New("tx-fee-min is larger than tx-fee-max in config file")
 	}
 
 	if cfg.DefaultFee <= 0 {
-		return errors.New("default-fee must be positive")
+		return errors.New("default-fee must be positive in config file")
 	}
 
 	if cfg.DefaultFee < cfg.TxFeeMin || cfg.DefaultFee > cfg.TxFeeMax {
