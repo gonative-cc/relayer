@@ -58,7 +58,7 @@ func CmdStart() *cobra.Command {
 
 			// create BTC client and connect to BTC server
 			// Note that bitcoin-spv relayer needs to subscribe to new BTC blocks
-			btcClient, err = btcwrapper.NewWithBlockSubscriber(
+			btcClient, err = btcwrapper.NewClientWithBlockSubscriber(
 				&cfg.BTC,
 				cfg.Common.SleepDuration,
 				cfg.Common.MaxSleepDuration,
