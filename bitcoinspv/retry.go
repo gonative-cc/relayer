@@ -63,12 +63,12 @@ func RetryDo(sleep time.Duration, maxSleepDuration time.Duration, retryableFunc 
 	}
 
 	if isUnrecoverableErr(err) {
-		logger.Error("skip retry, error unrecoverable", "err", err)
+		logger.Error("Skip retry, error unrecoverable", "err", err)
 		return err
 	}
 
 	if isExpectedErr(err) {
-		logger.Error("skip retry, error expected", "err", err)
+		logger.Error("Skip retry, error expected", "err", err)
 		return nil
 	}
 

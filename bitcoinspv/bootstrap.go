@@ -79,7 +79,6 @@ func (r *Relayer) resizeAndTrimCache() error {
 }
 
 func (r *Relayer) createRelayerContext() (context.Context, func()) {
-	quitChan := r.quitChan()
 	ctx, cancel := context.WithCancel(context.Background())
 	r.wg.Add(1)
 
@@ -90,7 +89,7 @@ func (r *Relayer) createRelayerContext() (context.Context, func()) {
 		}()
 
 		select {
-		case <-quitChan:
+		case <-r.quitChan():
 
 		case <-ctx.Done():
 		}
@@ -203,7 +202,7 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 }
 
 func (r *Relayer) getNativeLatestBlockHeight() (int64, error) {
-	nativeBlock, err := r.nativeClient.GetBTCHeaderChainTip()
+	nativeBlock, err := r.nativeClient.GetHeaderChainTip()
 	if err != nil {
 		return 0, err
 	}

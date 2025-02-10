@@ -15,11 +15,10 @@ type Block struct {
 }
 
 type Client struct {
-	Ping                 func(int) int
-	InsertHeaders        func(blockHeaders []*wire.BlockHeader) error
-	GetBTCHeaderChainTip func() (Block, error)
-	ContainsBTCBlock     func(blockHash *chainhash.Hash) (bool, error)
-	VerifySPV            func(spvProof *types.SPVProof) (int, error)
+	InsertHeaders     func(blockHeaders []*wire.BlockHeader) error
+	GetHeaderChainTip func() (Block, error)
+	ContainsBTCBlock  func(blockHash *chainhash.Hash) (bool, error)
+	VerifySPV         func(spvProof *types.SPVProof) (int, error)
 }
 
 func New(rpcURL string) (*Client, jsonrpc.ClientCloser, error) {
