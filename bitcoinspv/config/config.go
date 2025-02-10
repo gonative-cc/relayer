@@ -21,15 +21,15 @@ var (
 	defaultConfigFile      = filepath.Join(defaultAppDataDir, defaultConfigFilename)
 )
 
-// Config defines the server's top level configuration
+// Config defines the server's top level configuration.
 type Config struct {
-	Common CommonConfig `mapstructure:"common"`
-	BTC    BTCConfig    `mapstructure:"btc"`
-	Native NativeConfig `mapstructure:"native"`
-	// Metrics MetricsConfig `mapstructure:"metrics"`
+	Common  CommonConfig  `mapstructure:"common"`
+	BTC     BTCConfig     `mapstructure:"btc"`
+	Native  NativeConfig  `mapstructure:"native"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
 }
 
+// Validate validates all the configuration options.
 func (cfg *Config) Validate() error {
 	if err := cfg.Common.Validate(); err != nil {
 		return fmt.Errorf("invalid config in common: %w", err)
@@ -42,10 +42,6 @@ func (cfg *Config) Validate() error {
 	if err := cfg.Native.Validate(); err != nil {
 		return fmt.Errorf("invalid config in native: %w", err)
 	}
-
-	// if err := cfg.Metrics.Validate(); err != nil {
-	// 	return fmt.Errorf("invalid config in metrics: %w", err)
-	// }
 
 	if err := cfg.Relayer.Validate(); err != nil {
 		return fmt.Errorf("invalid config in relayer: %w", err)
@@ -65,10 +61,9 @@ func DefaultConfigFile() string {
 // DefaultConfig returns server's default configuration.
 func DefaultConfig() *Config {
 	return &Config{
-		Common: DefaultCommonConfig(),
-		BTC:    DefaultBTCConfig(),
-		Native: DefaultNativeConfig(),
-		// Metrics: DefaultMetricsConfig(),
+		Common:  DefaultCommonConfig(),
+		BTC:     DefaultBTCConfig(),
+		Native:  DefaultNativeConfig(),
 		Relayer: DefaultRelayerConfig(),
 	}
 }

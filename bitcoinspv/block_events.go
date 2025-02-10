@@ -143,12 +143,10 @@ func (r *Relayer) processBlock(ib *types.IndexedBlock) error {
 
 	headersToProcess := []*types.IndexedBlock{ib}
 
-	// Process headers
 	if _, err := r.ProcessHeaders(headersToProcess); err != nil {
 		r.logger.Warnf("Failed to submit header: %v", err)
 	}
 
-	// Process transactions
 	if _, err := r.ProcessTransactions(headersToProcess); err != nil {
 		r.logger.Warnf("Failed to submit transactions: %v", err)
 	}
