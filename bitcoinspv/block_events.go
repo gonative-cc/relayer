@@ -85,9 +85,7 @@ func (r *Relayer) validateBlockHeight(blockEvent *types.BlockEvent) error {
 }
 
 func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
-	// if the received header is within the cache's region, then this means the events have
-	// an overlap with the cache. Then, perform a consistency check. If the block is duplicated,
-	// then ignore the block, otherwise there is an inconsistency and redo bootstrap
+	// check if block exists in cache and validate consistency
 	// NOTE: this might happen when bootstrapping is triggered after the relayer
 	// has subscribed to the BTC blocks
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
@@ -124,8 +122,7 @@ func (r *Relayer) getAndValidateBlock(
 		)
 	}
 
-	// if the parent of the block is not the tip of the cache, then the cache is not up-to-date,
-	// and we might have missed some blocks. In this case, restart the bootstrap process.
+	// if parent block != cache tip, cache needs update - restart bootstrap
 	parentHash := msgBlock.Header.PrevBlock
 	tipCacheBlock := r.btcCache.Tip() // NOTE: cache is guaranteed to be non-empty at this stage
 	if parentHash != tipCacheBlock.BlockHash() {
