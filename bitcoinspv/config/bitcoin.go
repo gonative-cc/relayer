@@ -45,15 +45,15 @@ type BTCConfig struct {
 
 func (cfg *BTCConfig) validateBasicConfig() error {
 	if cfg.ReconnectAttempts < 0 {
-		return errors.New("reconnect-attempts must be non-negative")
+		return errors.New("config file value reconnect-attempts must be non-negative")
 	}
 
 	if _, ok := types.GetValidNetParams()[cfg.NetParams]; !ok {
-		return errors.New("invalid net params")
+		return errors.New("invalid net params in config file")
 	}
 
 	if _, ok := types.GetValidBtcBackends()[cfg.BtcBackend]; !ok {
-		return errors.New("invalid btc backend")
+		return errors.New("invalid btc backend value in config file")
 	}
 
 	return nil

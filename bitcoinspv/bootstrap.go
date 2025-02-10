@@ -27,7 +27,7 @@ func (r *Relayer) bootstrapRelayer(skipSubscription bool) error {
 		return err
 	}
 
-	r.logger.Infof("Size of the BTC cache: %d", r.btcCache.Size())
+	r.logger.Infof("BTC cache size: %d", r.btcCache.Size())
 	r.logger.Info("Successfully finished bootstrapping")
 	return nil
 }
@@ -126,7 +126,7 @@ func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(n uint, err error) {
 			r.logger.Warnf(
-				"Failed to bootstap relayer: %v. Attempt: %d, Max attempts: %d",
+				"Error bootstrapping relayer: %v. Attempts: %d, Max attempts: %d",
 				err, n+1, bootstrapRetryAttempts,
 			)
 		}),
@@ -166,9 +166,9 @@ func (r *Relayer) initializeBTCCache() error {
 	return nil
 }
 
-// waitForBTCToSyncWithNative waits for BTC to synchronize
-// until BTC is no shorter than Native's BTC light client.
-// It returns BTC last block hash, BTC last block height, and Native's base height.
+// waitForBTCToSyncWithNative ensures BTC node is synchronized by checking
+// that its chain height is at least equal to the Native light client height.
+// This synchronization is required before proceeding with relayer operations.
 func (r *Relayer) waitForBTCToSyncWithNative() error {
 	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 	if err != nil {

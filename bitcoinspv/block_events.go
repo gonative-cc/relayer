@@ -15,13 +15,13 @@ func (r *Relayer) onBlockEvent() {
 		select {
 		case event, open := <-r.btcClient.BlockEventChannel():
 			if !open {
-				r.logger.Errorf("Block event channel is closed")
+				r.logger.Errorf("BTC Block event channel is now closed")
 				return
 			}
 
 			if err := r.handleBlockEvent(event); err != nil {
 				r.logger.Warnf(
-					"Due to error in event processing: %v, bootstrap process need to be restarted",
+					"Error in event processing: %v, bootstrap process need to be restarted",
 					err,
 				)
 				r.multitryBootstrap(true)
@@ -91,7 +91,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
 		if block.BlockHash() == blockEvent.Header.BlockHash() {
 			r.logger.Debugf(
-				"The connecting block (height: %d, hash: %s) is known to cache, skipping the block",
+				"Connecting block (height: %d, hash: %s) is already in cache, skipping",
 				block.Height,
 				block.BlockHash().String(),
 			)
@@ -117,7 +117,7 @@ func (r *Relayer) getAndValidateBlock(
 	indexedBlock, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"failed to get block %v with number %d, from BTC client: %w",
+			"failed to get block (hash: %v, height: %d), from BTC client: %w",
 			blockHash, blockEvent.Height, err,
 		)
 	}
