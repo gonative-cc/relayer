@@ -120,11 +120,8 @@ func (cfg *BTCConfig) Validate() error {
 		return err
 	}
 
-	if err := cfg.validateFeeConfig(); err != nil {
-		return err
-	}
-
-	return nil
+	err := cfg.validateFeeConfig()
+	return err
 }
 
 const (

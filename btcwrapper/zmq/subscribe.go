@@ -34,7 +34,7 @@ type Subscriptions struct {
 // SubscribeSequence subscribes to the ZMQ "sequence" messages as SequenceMessage items pushed onto the channel.
 // Call cancel to cancel the subscription and let the client release the resources. The channel is closed
 // when the subscription is canceled or when the client is closed.
-func (c *ZMQClient) SubscribeSequence() error {
+func (c *Client) SubscribeSequence() error {
 	if c.zsubscriber == nil {
 		return ErrSubIsDisabled
 	}
@@ -58,7 +58,7 @@ func (c *ZMQClient) SubscribeSequence() error {
 	return nil
 }
 
-func (c *ZMQClient) zmqHandler() {
+func (c *Client) zmqHandler() {
 	defer c.cleanup()
 
 	zmqPoller := zeromq.NewPoller()
@@ -106,7 +106,7 @@ ZMQ_POLLER:
 }
 
 // handleSubscriberMessage processes messages from the subscriber socket
-func handleSubscriberMessage(c *ZMQClient) error {
+func handleSubscriberMessage(c *Client) error {
 	message, err := c.zsubscriber.RecvMessage(0)
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func handleSubscriberMessage(c *ZMQClient) error {
 }
 
 // handleBackendMessage processes messages from the backend socket
-func handleBackendMessage(c *ZMQClient) error {
+func handleBackendMessage(c *Client) error {
 	message, err := c.zbackendsocket.RecvMessage(0)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func handleBackendMessage(c *ZMQClient) error {
 	return nil
 }
 
-func (c *ZMQClient) cleanup() {
+func (c *Client) cleanup() {
 	c.wg.Done()
 	if err := c.zsubscriber.Close(); err != nil {
 		c.logger.Errorf("Error closing ZMQ socket: %v", err)
@@ -156,7 +156,7 @@ func (c *ZMQClient) cleanup() {
 	}
 }
 
-func (c *ZMQClient) sendBlockEventToChannel(hashBytes []byte, event relayertypes.EventType) {
+func (c *Client) sendBlockEventToChannel(hashBytes []byte, event relayertypes.EventType) {
 	blockHashString := hex.EncodeToString(hashBytes)
 	blockHash, err := chainhash.NewHashFromStr(blockHashString)
 	if err != nil {
@@ -176,7 +176,7 @@ func (c *ZMQClient) sendBlockEventToChannel(hashBytes []byte, event relayertypes
 	c.blockEventsChannel <- blockEvent
 }
 
-func (c *ZMQClient) getBlockByHash(
+func (c *Client) getBlockByHash(
 	blockHash *chainhash.Hash,
 ) (*relayertypes.IndexedBlock, error) {
 	blockVerbose, err := c.rpcClient.GetBlockVerbose(blockHash)

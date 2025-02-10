@@ -23,7 +23,7 @@ var _ BTCClient = &Client{}
 // information about the current state of the best block chain.
 type Client struct {
 	*rpcclient.Client
-	zeromqClient *zeromq.ZMQClient
+	zeromqClient *zeromq.Client
 
 	// Chain configuration
 	chainParams *chaincfg.Params

@@ -27,9 +27,9 @@ func chunkBy[T any](items []T, chunkSize int) [][]T {
 // getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
 // should be submitted to Native light client from a given set of indexed blocks
 func (r *Relayer) getHeaderMsgsToSubmit(
-	indexed_blocks []*types.IndexedBlock,
+	indexedBlocks []*types.IndexedBlock,
 ) ([][]*wire.BlockHeader, error) {
-	startPoint, err := r.findFirstNewHeader(indexed_blocks)
+	startPoint, err := r.findFirstNewHeader(indexedBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -41,15 +41,15 @@ func (r *Relayer) getHeaderMsgsToSubmit(
 	}
 
 	// Get subset of blocks starting from first new header
-	blocksToSubmit := indexed_blocks[startPoint:]
+	blocksToSubmit := indexedBlocks[startPoint:]
 
 	// Split into chunks and convert to header messages
 	return r.createHeaderMessages(blocksToSubmit), nil
 }
 
 // findFirstNewHeader finds the index of the first header not in the Native chain
-func (r *Relayer) findFirstNewHeader(indexed_blocks []*types.IndexedBlock) (int, error) {
-	for i, header := range indexed_blocks {
+func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, error) {
+	for i, header := range indexedBlocks {
 		blockHash := header.BlockHash()
 		var res bool
 		var err error
@@ -68,8 +68,8 @@ func (r *Relayer) findFirstNewHeader(indexed_blocks []*types.IndexedBlock) (int,
 }
 
 // createHeaderMessages splits blocks into chunks and creates header messages
-func (r *Relayer) createHeaderMessages(indexed_blocks []*types.IndexedBlock) [][]*wire.BlockHeader {
-	blockChunks := chunkBy(indexed_blocks, int(r.Config.MaxHeadersInMsg))
+func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]*wire.BlockHeader {
+	blockChunks := chunkBy(indexedBlocks, int(r.Config.MaxHeadersInMsg))
 	headerMsgs := make([][]*wire.BlockHeader, 0, len(blockChunks))
 
 	for _, chunk := range blockChunks {
@@ -99,8 +99,8 @@ func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
 
 // ProcessHeaders extracts and reports headers from a list of blocks
 // It returns the number of headers that need to be reported (after deduplication)
-func (r *Relayer) ProcessHeaders(indexed_blocks []*types.IndexedBlock) (int, error) {
-	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(indexed_blocks)
+func (r *Relayer) ProcessHeaders(indexedBlocks []*types.IndexedBlock) (int, error) {
+	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(indexedBlocks)
 	if err != nil {
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
@@ -163,11 +163,11 @@ func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcut
 
 // ProcessTransactions tries to extract valid transactions from a list of blocks
 // It returns the number of valid transactions segments, and the number of valid transactions
-func (r *Relayer) ProcessTransactions(indexed_blocks []*types.IndexedBlock) (int, error) {
+func (r *Relayer) ProcessTransactions(indexedBlocks []*types.IndexedBlock) (int, error) {
 	var totalTxs int
 
 	// process transactions from each block
-	for _, block := range indexed_blocks {
+	for _, block := range indexedBlocks {
 		blockTxs, err := r.extractAndSubmitTransactions(block)
 		if err != nil {
 			if totalTxs > 0 {

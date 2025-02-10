@@ -29,9 +29,7 @@ func NewClientWithBlockSubscriber(
 		return nil, err
 	}
 
-	if err := configureClientLogger(client, parentLogger); err != nil {
-		return nil, err
-	}
+	configureClientLogger(client, parentLogger)
 
 	if err := setupBackendConnection(client); err != nil {
 		return nil, err
@@ -63,9 +61,8 @@ func initializeClient(
 	return client, nil
 }
 
-func configureClientLogger(client *Client, parentLogger *zap.Logger) error {
+func configureClientLogger(client *Client, parentLogger *zap.Logger) {
 	client.logger = parentLogger.With(zap.String("module", "btcwrapper")).Sugar()
-	return nil
 }
 
 func setupBackendConnection(client *Client) error {

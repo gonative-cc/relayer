@@ -25,10 +25,8 @@ func (cfg *RelayerConfig) Validate() error {
 	if err := cfg.validateBTCCacheSize(); err != nil {
 		return err
 	}
-	if err := cfg.validateMaxHeadersInMsg(); err != nil {
-		return err
-	}
-	return nil
+	err := cfg.validateMaxHeadersInMsg()
+	return err
 }
 
 func (cfg *RelayerConfig) validateNetParams() error {

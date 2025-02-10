@@ -20,7 +20,7 @@ var (
 // Client manages ZMQ subscriptions and communication with a Bitcoin node.
 // It handles ZMQ message routing and provides thread-safe access to subscriptions.
 // Must be created with New() and cleaned up with Close().
-type ZMQClient struct {
+type Client struct {
 	// RPC connection
 	rpcClient *rpcclient.Client
 	logger    *zap.SugaredLogger
@@ -46,8 +46,8 @@ func New(
 	zeromqEndpoint string,
 	blockEventsChannel chan *relayertypes.BlockEvent,
 	rpcClient *rpcclient.Client,
-) (*ZMQClient, error) {
-	zmqClient := &ZMQClient{
+) (*Client, error) {
+	zmqClient := &Client{
 		quitChan:           make(chan struct{}),
 		rpcClient:          rpcClient,
 		zeromqEndpoint:     zeromqEndpoint,
@@ -66,7 +66,7 @@ func New(
 	return zmqClient, nil
 }
 
-func (c *ZMQClient) initZMQ() error {
+func (c *Client) initZMQ() error {
 	var err error
 
 	// Initialize ZMQ context
@@ -106,7 +106,7 @@ func (c *ZMQClient) initZMQ() error {
 	return nil
 }
 
-func (c *ZMQClient) Close() error {
+func (c *Client) Close() error {
 	if !atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
 		return ErrClientClosed
 	}
@@ -121,7 +121,7 @@ func (c *ZMQClient) Close() error {
 	return nil
 }
 
-func (c *ZMQClient) closeZmqContext() error {
+func (c *Client) closeZmqContext() error {
 	c.zcontext.SetRetryAfterEINTR(false)
 
 	c.subscriptions.Lock()

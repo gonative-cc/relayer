@@ -52,11 +52,8 @@ func (r *Relayer) processAndTrimCache() error {
 		return err
 	}
 
-	if err := r.resizeAndTrimCache(); err != nil {
-		return err
-	}
-
-	return nil
+	err := r.resizeAndTrimCache()
+	return err
 }
 
 func (r *Relayer) processHeaders() error {
@@ -160,10 +157,8 @@ func (r *Relayer) initializeBTCCache() error {
 	}
 
 	// Initialize cache with fetched blocks
-	if err = r.btcCache.Init(blocks); err != nil {
-		return err
-	}
-	return nil
+	err = r.btcCache.Init(blocks)
+	return err
 }
 
 // waitForBTCToSyncWithNative ensures BTC node is synchronized by checking
