@@ -13,12 +13,12 @@ This relayer is responsible for:
 
 2. Build the `bitcoin-spv` binary:
 
-```bash
-go build ./cmd/bitcoin-spv
-```
+    ```bash
+    go build ./cmd/bitcoin-spv
+    ```
 
 3. Start the relayer:
 
-```bash
-./bitcoin-spv start --config ./sample-bitcoin-spv.yml
-```
+    ```bash
+    ./bitcoin-spv start --config ./sample-bitcoin-spv.yml
+    ```
