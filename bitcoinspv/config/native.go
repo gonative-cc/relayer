@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultNativeRPCEndpoint = "http://localhost:9797"
+	defaultNativeRPCEndpoint = "http://localhost:9797"
 )
 
 // NativeConfig defines the native RPC server configuration
