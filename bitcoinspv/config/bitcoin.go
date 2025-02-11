@@ -111,7 +111,7 @@ func (cfg *BTCConfig) validateFeeConfig() error {
 	return nil
 }
 
-// Validate does validation checks on bitcoin node configuartion values
+// Validate does validation checks on bitcoin node configuration values
 func (cfg *BTCConfig) Validate() error {
 	if err := cfg.validateBasicConfig(); err != nil {
 		return err
@@ -136,7 +136,7 @@ const (
 	defaultZmqTxEndpoint       = "tcp://127.0.0.1:29002"
 )
 
-// DefaultBTCConfig returns the deafult values for
+// DefaultBTCConfig returns the default values for
 func DefaultBTCConfig() BTCConfig {
 	return BTCConfig{
 		DisableClientTLS:  false,
