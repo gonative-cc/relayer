@@ -36,6 +36,7 @@ type Relayer struct {
 	quitMu      sync.Mutex
 }
 
+// New creates and returns a new relayer object
 func New(
 	config *config.RelayerConfig,
 	parentLogger *zap.Logger,

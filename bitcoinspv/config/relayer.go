@@ -18,6 +18,7 @@ type RelayerConfig struct {
 	MaxHeadersInMsg uint32 `mapstructure:"max_headers_in_msg"` // maximum number of headers in a MsgInsertHeaders message
 }
 
+// Validate does validation checks for relayer configration values
 func (cfg *RelayerConfig) Validate() error {
 	if err := cfg.validateNetParams(); err != nil {
 		return err
@@ -50,6 +51,7 @@ func (cfg *RelayerConfig) validateMaxHeadersInMsg() error {
 	return nil
 }
 
+// DefaultRelayerConfig returns default values for relayer config
 func DefaultRelayerConfig() RelayerConfig {
 	return RelayerConfig{
 		NetParams:       types.BtcSimnet.String(),

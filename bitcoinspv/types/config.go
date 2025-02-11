@@ -73,6 +73,7 @@ func (cfg *RelayerConfig) validateHeadersLimit() error {
 	return nil
 }
 
+// DefaultRelayerConfig returns a RelayerConfig with default values
 func DefaultRelayerConfig() RelayerConfig {
 	return RelayerConfig{
 		NetParams:       BtcSimnet.String(),

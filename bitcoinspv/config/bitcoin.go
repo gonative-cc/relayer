@@ -111,6 +111,7 @@ func (cfg *BTCConfig) validateFeeConfig() error {
 	return nil
 }
 
+// Validate does validation checks on bitcoin node configuartion values
 func (cfg *BTCConfig) Validate() error {
 	if err := cfg.validateBasicConfig(); err != nil {
 		return err
@@ -125,22 +126,22 @@ func (cfg *BTCConfig) Validate() error {
 }
 
 const (
-	DefaultTxPollingJitter     = 0.5
-	DefaultRPCBtcNodeHost      = "127.0.01:18556"
-	DefaultBtcNodeRPCUser      = "rpcuser"
-	DefaultBtcNodeRPCPass      = "rpcpass"
-	DefaultBtcNodeEstimateMode = "CONSERVATIVE"
-	DefaultBtcblockCacheSize   = 20 * 1024 * 1024 // 20 MB
-	DefaultZmqSeqEndpoint      = "tcp://127.0.0.1:29000"
-	DefaultZmqBlockEndpoint    = "tcp://127.0.0.1:29001"
-	DefaultZmqTxEndpoint       = "tcp://127.0.0.1:29002"
+	defaultRPCBtcNodeHost      = "127.0.01:18556"
+	defaultBtcNodeRPCUser      = "rpcuser"
+	defaultBtcNodeRPCPass      = "rpcpass"
+	defaultBtcNodeEstimateMode = "CONSERVATIVE"
+	defaultBtcblockCacheSize   = 20 * 1024 * 1024 // 20 MB
+	defaultZmqSeqEndpoint      = "tcp://127.0.0.1:29000"
+	defaultZmqBlockEndpoint    = "tcp://127.0.0.1:29001"
+	defaultZmqTxEndpoint       = "tcp://127.0.0.1:29002"
 )
 
+// DefaultBTCConfig returns the deafult values for
 func DefaultBTCConfig() BTCConfig {
 	return BTCConfig{
 		DisableClientTLS:  false,
 		CAFile:            defaultBtcCAFile,
-		Endpoint:          DefaultRPCBtcNodeHost,
+		Endpoint:          defaultRPCBtcNodeHost,
 		WalletEndpoint:    "localhost:18554",
 		WalletPassword:    "walletpass",
 		WalletName:        "default",
@@ -149,27 +150,29 @@ func DefaultBTCConfig() BTCConfig {
 		TxFeeMax:          chainfee.SatPerKVByte(20 * 1000), // 20,000sat/kvb = 20sat/vbyte
 		TxFeeMin:          chainfee.SatPerKVByte(1 * 1000),  // 1,000sat/kvb = 1sat/vbyte
 		DefaultFee:        chainfee.SatPerKVByte(1 * 1000),  // 1,000sat/kvb = 1sat/vbyte
-		EstimateMode:      DefaultBtcNodeEstimateMode,
+		EstimateMode:      defaultBtcNodeEstimateMode,
 		TargetBlockNum:    1,
 		NetParams:         types.BtcSimnet.String(),
-		Username:          DefaultBtcNodeRPCUser,
-		Password:          DefaultBtcNodeRPCPass,
+		Username:          defaultBtcNodeRPCUser,
+		Password:          defaultBtcNodeRPCPass,
 		ReconnectAttempts: 3,
-		ZmqSeqEndpoint:    DefaultZmqSeqEndpoint,
-		ZmqBlockEndpoint:  DefaultZmqBlockEndpoint,
-		ZmqTxEndpoint:     DefaultZmqTxEndpoint,
+		ZmqSeqEndpoint:    defaultZmqSeqEndpoint,
+		ZmqBlockEndpoint:  defaultZmqBlockEndpoint,
+		ZmqTxEndpoint:     defaultZmqTxEndpoint,
 	}
 }
 
+// ReadCAFile reads and returns the content of bitcoin RPC's certificate file
 func (cfg *BTCConfig) ReadCAFile() []byte {
-	return cfg.ReadCertificateFile(cfg.CAFile)
+	return cfg.readCertificateFile(cfg.CAFile)
 }
 
+// ReadCAFile reads and returns the content of bitcoin wallet RPC's certificate file
 func (cfg *BTCConfig) ReadWalletCAFile() []byte {
-	return cfg.ReadCertificateFile(cfg.WalletCAFile)
+	return cfg.readCertificateFile(cfg.WalletCAFile)
 }
 
-func (cfg *BTCConfig) ReadCertificateFile(filePath string) []byte {
+func (cfg *BTCConfig) readCertificateFile(filePath string) []byte {
 	if cfg.DisableClientTLS {
 		return nil
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
+// GetBTCNodeParams extracts and returns the BTC node parameters
 func GetBTCNodeParams(net string) (*chaincfg.Params, error) {
 	switch net {
 	case types.BtcMainnet.String():

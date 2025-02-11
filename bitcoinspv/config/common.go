@@ -33,6 +33,7 @@ func isOneOf(v string, list []string) bool {
 	return false
 }
 
+// Validate does validation checks for common configration values
 func (cfg *CommonConfig) Validate() error {
 	if !isOneOf(cfg.Format, []string{"json", "auto", "console", "logfmt"}) {
 		return errors.New("log-format is not one of json|auto|console|logfmt")
@@ -49,10 +50,12 @@ func (cfg *CommonConfig) Validate() error {
 	return nil
 }
 
+// CreateLogger creates and returns root logger
 func (cfg *CommonConfig) CreateLogger() (*zap.Logger, error) {
 	return NewRootLogger(cfg.Format, cfg.Level)
 }
 
+// DefaultCommonConfig returns default values for common config
 func DefaultCommonConfig() CommonConfig {
 	return CommonConfig{
 		Format:           "auto",

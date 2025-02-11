@@ -12,9 +12,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultConfigFilename = "bitcoin-spv.yml"
-
 var (
+	defaultConfigFilename  = "bitcoin-spv.yml"
 	defaultBtcCAFile       = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
 	defaultBtcWalletCAFile = filepath.Join(btcutil.AppDataDir("btcwallet", false), "rpc.cert")
 	defaultAppDataDir      = btcutil.AppDataDir("native-bitcoin-spv", false)
@@ -50,10 +49,12 @@ func (cfg *Config) Validate() error {
 	return nil
 }
 
+// CreateLogger creates and returns a logger from common config values
 func (cfg *Config) CreateLogger() (*zap.Logger, error) {
 	return cfg.Common.CreateLogger()
 }
 
+// DefaultConfigFile returns the default config file path
 func DefaultConfigFile() string {
 	return defaultConfigFile
 }
@@ -94,6 +95,7 @@ func New(configFile string) (Config, error) {
 	return cfg, nil
 }
 
+// WriteSample creates and writes a sample config yaml file
 func WriteSample() error {
 	cfg := DefaultConfig()
 	d, err := yaml.Marshal(&cfg)

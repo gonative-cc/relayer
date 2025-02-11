@@ -17,11 +17,13 @@ var (
 	ErrSubAlreadyActive = errors.New("bitcoin node subscription already exists")
 )
 
+// SequenceMessage denotes the message struct received from zmq
 type SequenceMessage struct {
 	Hash  [32]byte // use encoding/hex.EncodeToString() to get it into the RPC method string format.
 	Event relayertypes.EventType
 }
 
+// Subscriptions keeps track of the zmq connection state
 type Subscriptions struct {
 	sync.RWMutex
 
@@ -31,9 +33,7 @@ type Subscriptions struct {
 	isActive      bool
 }
 
-// SubscribeSequence subscribes to the ZMQ "sequence" messages as SequenceMessage items pushed onto the channel.
-// Call cancel to cancel the subscription and let the client release the resources. The channel is closed
-// when the subscription is canceled or when the client is closed.
+// SubscribeSequence subscribes to ZMQ "sequence" messages. Call cancel to unsubscribe.
 func (c *Client) SubscribeSequence() error {
 	if c.zsubscriber == nil {
 		return ErrSubIsDisabled
@@ -105,7 +105,6 @@ ZMQ_POLLER:
 	c.subscriptions.Unlock()
 }
 
-// handleSubscriberMessage processes messages from the subscriber socket
 func handleSubscriberMessage(c *Client) error {
 	message, err := c.zsubscriber.RecvMessage(0)
 	if err != nil {
@@ -129,7 +128,6 @@ func handleSubscriberMessage(c *Client) error {
 	return nil
 }
 
-// handleBackendMessage processes messages from the backend socket
 func handleBackendMessage(c *Client) error {
 	message, err := c.zbackendsocket.RecvMessage(0)
 	if err != nil {

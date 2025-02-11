@@ -157,6 +157,7 @@ func setupBtcdConnection(client *Client) error {
 	return nil
 }
 
+// SubscribeNewBlocks create subscription to new block events
 func (client *Client) SubscribeNewBlocks() {
 	switch client.config.BtcBackend {
 	case relayertypes.Btcd:
@@ -178,6 +179,7 @@ func (client *Client) SubscribeNewBlocks() {
 	}
 }
 
+// BlockEventChannel returns the channel used for zmq block events
 func (client *Client) BlockEventChannel() <-chan *relayertypes.BlockEvent {
 	return client.blockEventsChannel
 }

@@ -41,6 +41,7 @@ type Client struct {
 	zbackendsocket *zmq4.Socket  // Backend socket for internal communication
 }
 
+// New creates a new zmq client
 func New(
 	parentLogger *zap.Logger,
 	zeromqEndpoint string,
@@ -66,6 +67,7 @@ func New(
 	return zmqClient, nil
 }
 
+// initZMQ setups the zmq connections with the bitcoin node
 func (c *Client) initZMQ() error {
 	var err error
 
@@ -106,6 +108,7 @@ func (c *Client) initZMQ() error {
 	return nil
 }
 
+// Close closes the zmq connections to the bitcoin node
 func (c *Client) Close() error {
 	if !atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
 		return ErrClientClosed
@@ -121,6 +124,7 @@ func (c *Client) Close() error {
 	return nil
 }
 
+// closeZmqContext closes the zmq context
 func (c *Client) closeZmqContext() error {
 	c.zcontext.SetRetryAfterEINTR(false)
 

@@ -42,6 +42,7 @@ func (client *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
 	return hash, block.Height, nil
 }
 
+// GetBTCBlockByHash returns the block of given block hash
 func (client *Client) GetBTCBlockByHash(
 	blockHash *chainhash.Hash,
 ) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error) {

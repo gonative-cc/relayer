@@ -74,7 +74,7 @@ func mainInterruptHandler() {
 	}
 }
 
-// AddInterruptHandler adds a handler to call when a SIGINT (Ctrl+C) is
+// addInterruptHandler adds a handler to call when a SIGINT (Ctrl+C) is
 // received.
 func addInterruptHandler(handler func()) {
 	// Create the channel and start the main interrupt handler which invokes
