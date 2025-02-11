@@ -126,14 +126,15 @@ func (cfg *BTCConfig) Validate() error {
 }
 
 const (
+	// RPC endpoint
 	defaultRPCBtcNodeHost      = "127.0.01:18556"
 	defaultBtcNodeRPCUser      = "rpcuser"
 	defaultBtcNodeRPCPass      = "rpcpass"
 	defaultBtcNodeEstimateMode = "CONSERVATIVE"
-	defaultBtcblockCacheSize   = 20 * 1024 * 1024 // 20 MB
-	defaultZmqSeqEndpoint      = "tcp://127.0.0.1:29000"
-	defaultZmqBlockEndpoint    = "tcp://127.0.0.1:29001"
-	defaultZmqTxEndpoint       = "tcp://127.0.0.1:29002"
+	// ZMQ endpoints
+	defaultZmqSeqEndpoint   = "tcp://127.0.0.1:29000"
+	defaultZmqBlockEndpoint = "tcp://127.0.0.1:29001"
+	defaultZmqTxEndpoint    = "tcp://127.0.0.1:29002"
 )
 
 // DefaultBTCConfig returns the default values for
@@ -167,7 +168,7 @@ func (cfg *BTCConfig) ReadCAFile() []byte {
 	return cfg.readCertificateFile(cfg.CAFile)
 }
 
-// ReadCAFile reads and returns the content of bitcoin wallet RPC's certificate file
+// ReadWalletCAFile reads and returns the content of bitcoin wallet RPC's certificate file
 func (cfg *BTCConfig) ReadWalletCAFile() []byte {
 	return cfg.readCertificateFile(cfg.WalletCAFile)
 }

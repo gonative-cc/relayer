@@ -11,6 +11,7 @@ import (
 
 var (
 	bootstrapRetryAttempts = uint(60)
+	bootstrapSyncTicker    = 10 * time.Second
 	bootstrapRetryInterval = retry.Delay(30 * time.Second)
 )
 
@@ -216,7 +217,7 @@ func (r *Relayer) waitForBTCCatchup(btcHeight int64, nativeHeight int64) error {
 		btcHeight, nativeHeight,
 	)
 
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(bootstrapSyncTicker)
 	defer ticker.Stop()
 
 	for {

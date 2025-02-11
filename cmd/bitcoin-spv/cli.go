@@ -45,7 +45,6 @@ func CmdStart() *cobra.Command {
 				nativeCloser jsonrpc.ClientCloser
 			)
 
-			// get the config from the given file or the default file
 			cfg, err = config.New(cfgFile)
 			if err != nil {
 				panic(fmt.Errorf("failed to load config: %w", err))
@@ -67,7 +66,6 @@ func CmdStart() *cobra.Command {
 				panic(fmt.Errorf("failed to open BTC client: %w", err))
 			}
 
-			// get tip block info
 			tipBlock, err := btcClient.GetTipBlock()
 			if err != nil {
 				panic(fmt.Errorf("failed to get chain tip block: %w", err))
@@ -78,13 +76,11 @@ func CmdStart() *cobra.Command {
 				zap.Int64("height", tipBlock.Height),
 				zap.Int64("time", tipBlock.Time))
 
-			// create Native client. Note that requests from Native client are ad hoc
 			nativeClient, nativeCloser, err = lcclient.New(cfg.Native.RPCEndpoint)
 			if err != nil {
 				panic(fmt.Errorf("failed to open Native client: %w", err))
 			}
 
-			// create relayer
 			spvRelayer, err = bitcoinspv.New(
 				&cfg.Relayer,
 				rootLogger,

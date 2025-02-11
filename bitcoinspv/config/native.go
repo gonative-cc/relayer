@@ -25,6 +25,6 @@ func (cfg *NativeConfig) Validate() error {
 // DefaultNativeConfig returns default values for native node config
 func DefaultNativeConfig() NativeConfig {
 	return NativeConfig{
-		RPCEndpoint: DefaultNativeRPCEndpoint,
+		RPCEndpoint: defaultNativeRPCEndpoint,
 	}
 }
