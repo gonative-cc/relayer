@@ -29,7 +29,7 @@ func (r *Relayer) bootstrapRelayer(skipSubscription bool) error {
 	}
 
 	r.logger.Infof("BTC cache size: %d", r.btcCache.Size())
-	r.logger.Info("Successfully finished bootstrapping")
+	r.logger.Info("Successfully bootstrapped")
 	return nil
 }
 
