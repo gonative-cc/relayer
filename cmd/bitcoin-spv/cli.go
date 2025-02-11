@@ -43,7 +43,6 @@ func CmdStart() *cobra.Command {
 				nativeClient *lcclient.Client
 				spvRelayer   *bitcoinspv.Relayer
 				nativeCloser jsonrpc.ClientCloser
-				// server           *rpcserver.Server
 			)
 
 			// get the config from the given file or the default file
@@ -85,9 +84,6 @@ func CmdStart() *cobra.Command {
 				panic(fmt.Errorf("failed to open Native client: %w", err))
 			}
 
-			// register relayer metrics
-			relayerMetrics := bitcoinspv.NewRelayerMetrics()
-
 			// create relayer
 			spvRelayer, err = bitcoinspv.New(
 				&cfg.Relayer,
@@ -96,7 +92,6 @@ func CmdStart() *cobra.Command {
 				nativeClient,
 				cfg.Common.SleepDuration,
 				cfg.Common.MaxSleepDuration,
-				relayerMetrics,
 			)
 			if err != nil {
 				panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))
@@ -104,10 +99,6 @@ func CmdStart() *cobra.Command {
 
 			// start normal-case execution
 			spvRelayer.Start()
-
-			// // start Prometheus metrics server
-			// addr := fmt.Sprintf("%s:%d", cfg.Metrics.Host, cfg.Metrics.ServerPort)
-			// spvRelayer.MetricsStart(addr, relayerMetrics.Registry)
 
 			// SIGINT handling stuff
 			addInterruptHandler(func() {

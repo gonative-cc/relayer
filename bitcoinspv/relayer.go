@@ -28,7 +28,6 @@ type Relayer struct {
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
-	metrics              *RelayerMetrics
 
 	// Control
 	wg          sync.WaitGroup
@@ -44,7 +43,6 @@ func New(
 	nativeClient *lcclient.Client,
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
-	metrics *RelayerMetrics,
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
@@ -61,7 +59,6 @@ func New(
 		btcClient:             btcClient,
 		nativeClient:          nativeClient,
 		btcConfirmationDepth:  defaultConfirmationDepth,
-		metrics:               metrics,
 		quitChannel:           make(chan struct{}),
 	}
 
@@ -108,9 +105,6 @@ func (r *Relayer) initializeRelayer() {
 
 	r.wg.Add(1)
 	go r.onBlockEvent()
-
-	// start record time-related metrics
-	r.metrics.RecordMetrics()
 
 	r.logger.Infof("Successfully started the spv relayer")
 }
