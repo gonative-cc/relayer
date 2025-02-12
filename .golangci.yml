@@ -1,6 +1,5 @@
 run:
   tests: false
-
   govet:
     # Enable analyzers by name (in addition to default).
     # Run `go tool vet help` to see all analyzers.
