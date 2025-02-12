@@ -24,7 +24,7 @@ linters:
     # - depguard
     - dogsled
     - errcheck
-    - exportloopref
+    - copyloopvar
     - goconst
     - gocritic
     - gofmt
