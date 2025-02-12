@@ -153,7 +153,6 @@ func (r *Relayer) initializeBTCCache() error {
 		return err
 	}
 
-	// Initialize cache with fetched blocks
 	err = r.btcCache.Init(blocks)
 	return err
 }
