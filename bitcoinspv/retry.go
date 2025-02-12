@@ -11,24 +11,22 @@ import (
 )
 
 var (
-	errInvalidHeader            = errors.New("invalid header")
-	errHeaderParentDoesNotExist = errors.New("header parent does not exist")
-	errChainWithNotEnoughWork   = errors.New("chain with not enough work")
-	errDuplicatedSubmission     = errors.New("duplicated header submitted")
+	errHeaderInvalid   = errors.New("header is not valid")
+	errParentNotFound  = errors.New("parent header cannot be found")
+	errDuplicateHeader = errors.New("header was already submitted")
 )
 
 var logger = log.NewLogger(os.Stdout)
 
 // unrecoverableErrors is a list of errors which are unsafe and should not be retried.
 var unrecoverableErrors = []error{
-	errInvalidHeader,
-	errHeaderParentDoesNotExist,
-	errChainWithNotEnoughWork,
+	errHeaderInvalid,
+	errParentNotFound,
 }
 
 // expectedErrors is a list of errors which can safely be ignored and should not be retried.
 var expectedErrors = []error{
-	errDuplicatedSubmission,
+	errDuplicateHeader,
 }
 
 func isUnrecoverableErr(err error) bool {
