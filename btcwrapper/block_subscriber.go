@@ -137,7 +137,7 @@ func setupBtcdConnection(client *Client) error {
 		User:         client.config.Username,
 		Pass:         client.config.Password,
 		DisableTLS:   client.config.DisableClientTLS,
-		Certificates: client.config.ReadCAFile(),
+		Certificates: client.config.ReadCertFile(),
 	}
 
 	rpcClient, err := rpcclient.New(connectionCfg, &notificationHandlers)

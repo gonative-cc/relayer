@@ -53,17 +53,11 @@ func (cfg *RelayerConfig) CreateLogger() (*zap.Logger, error) {
 
 // Validate does validation checks for relayer configration values
 func (cfg *RelayerConfig) Validate() error {
-	if !isPresent(cfg.Format, []string{"json", "auto", "console", "logfmt"}) {
-		return errors.New("log-format is not one of json|auto|console|logfmt")
+	if err := cfg.validateLogging(); err != nil {
+		return err
 	}
-	if !isPresent(cfg.Level, []string{"debug", "warn", "error", "panic", "fatal"}) {
-		return errors.New("log-level is not one of debug|warn|error|panic|fatal")
-	}
-	if cfg.SleepDuration < 0 {
-		return errors.New("retry-sleep-duration can't be negative")
-	}
-	if cfg.MaxSleepDuration < 0 {
-		return errors.New("max-retry-sleep-duration can't be negative")
+	if err := cfg.validateSleepDurations(); err != nil {
+		return err
 	}
 	if err := cfg.validateNetParams(); err != nil {
 		return err
@@ -73,6 +67,26 @@ func (cfg *RelayerConfig) Validate() error {
 	}
 	err := cfg.validateMaxHeadersInMsg()
 	return err
+}
+
+func (cfg *RelayerConfig) validateLogging() error {
+	if !isPresent(cfg.Format, []string{"json", "auto", "console", "logfmt"}) {
+		return errors.New("log-format is not one of json|auto|console|logfmt")
+	}
+	if !isPresent(cfg.Level, []string{"debug", "warn", "error", "panic", "fatal"}) {
+		return errors.New("log-level is not one of debug|warn|error|panic|fatal")
+	}
+	return nil
+}
+
+func (cfg *RelayerConfig) validateSleepDurations() error {
+	if cfg.SleepDuration < 0 {
+		return errors.New("retry-sleep-duration can't be negative")
+	}
+	if cfg.MaxSleepDuration < 0 {
+		return errors.New("max-retry-sleep-duration can't be negative")
+	}
+	return nil
 }
 
 func (cfg *RelayerConfig) validateNetParams() error {

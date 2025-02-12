@@ -10,23 +10,10 @@ btc:
   no-client-tls: true # use true for bitcoind as it does not support tls
   ca-file: $HOME/.btcd/rpc.cert
   endpoint: localhost:18443 # use port 18443 for bitcoind regtest
-  estimate-mode: CONSERVATIVE # only needed by bitcoind
-  tx-fee-max: 20000 # maximum tx fee, 20,000sat/kvb
-  tx-fee-min: 1000 # minimum tx fee, 1,000sat/kvb
-  default-fee: 1000 # 1,000sat/kvb
-  target-block-num: 2
-  wallet-endpoint: localhost:18554
-  wallet-password: password
-  wallet-name: default
-  wallet-lock-time: 10
-  wallet-ca-file: $HOME/.btcwallet/rpc.cert
   net-params: regtest  # use regtest for bitcoind as it does not support simnet
   username: user
   password: password
-  reconnect-attempts: 3
   btc-backend: bitcoind # {btcd, bitcoind}
   zmq-seq-endpoint: tcp://127.0.0.1:28331  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
-  zmq-block-endpoint: tcp://127.0.0.1:28332
-  zmq-tx-endpoint: tcp://127.0.0.1:28333
 native:
   rpc-endpoint: http://localhost:9797

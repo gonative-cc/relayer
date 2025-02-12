@@ -13,11 +13,10 @@ import (
 )
 
 var (
-	defaultConfigFilename  = "bitcoin-spv.yml"
-	defaultBtcCAFile       = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
-	defaultBtcWalletCAFile = filepath.Join(btcutil.AppDataDir("btcwallet", false), "rpc.cert")
-	defaultAppDataDir      = btcutil.AppDataDir("native-bitcoin-spv", false)
-	defaultConfigFile      = filepath.Join(defaultAppDataDir, defaultConfigFilename)
+	defaultConfigFilename = "bitcoin-spv.yml"
+	defaultBtcCAFile      = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
+	defaultAppDataDir     = btcutil.AppDataDir("native-bitcoin-spv", false)
+	defaultConfigFile     = filepath.Join(defaultAppDataDir, defaultConfigFilename)
 )
 
 // Config defines the server's top level configuration.
@@ -96,6 +95,5 @@ func WriteSample() error {
 	if err != nil {
 		return err
 	}
-	// write to file
 	return os.WriteFile("./sample-bitcoin-spv.yml", d, 0600)
 }
