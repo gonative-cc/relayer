@@ -45,7 +45,7 @@ var relayerConfig = RelayerConfig{
 
 func initTestDB(t *testing.T) dal.DB {
 	t.Helper()
-         // this is needed if there are multiple go routines accessing the database
+	// this is needed if there are multiple go routines accessing the database
 	db, err := dal.NewDB("file::memory:?cache=shared")
 	assert.NilError(t, err)
 	err = db.InitDB()
