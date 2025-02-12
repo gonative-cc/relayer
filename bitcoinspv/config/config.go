@@ -22,7 +22,6 @@ var (
 
 // Config defines the server's top level configuration.
 type Config struct {
-	Common  CommonConfig  `mapstructure:"common"`
 	BTC     BTCConfig     `mapstructure:"btc"`
 	Native  NativeConfig  `mapstructure:"native"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
@@ -30,10 +29,6 @@ type Config struct {
 
 // Validate validates all the configuration options.
 func (cfg *Config) Validate() error {
-	if err := cfg.Common.Validate(); err != nil {
-		return fmt.Errorf("invalid config in common: %w", err)
-	}
-
 	if err := cfg.BTC.Validate(); err != nil {
 		return fmt.Errorf("invalid config in btc: %w", err)
 	}
@@ -51,7 +46,7 @@ func (cfg *Config) Validate() error {
 
 // CreateLogger creates and returns a logger from common config values
 func (cfg *Config) CreateLogger() (*zap.Logger, error) {
-	return cfg.Common.CreateLogger()
+	return cfg.Relayer.CreateLogger()
 }
 
 // DefaultConfigFile returns the default config file path
@@ -62,7 +57,6 @@ func DefaultConfigFile() string {
 // DefaultConfig returns server's default configuration.
 func DefaultConfig() *Config {
 	return &Config{
-		Common:  DefaultCommonConfig(),
 		BTC:     DefaultBTCConfig(),
 		Native:  DefaultNativeConfig(),
 		Relayer: DefaultRelayerConfig(),

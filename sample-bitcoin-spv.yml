@@ -1,8 +1,11 @@
-common:
+relayer:
   log-format: "auto" # format of the log (json|auto|console|logfmt)
   log-level: "debug" # log level (debug|warn|error|panic|fatal)
   retry-sleep-duration: 5s
   max-retry-sleep-duration: 5m
+  netparams: simnet
+  btc_cache_size: 1000
+  max_headers_in_msg: 100
 btc:
   no-client-tls: true # use true for bitcoind as it does not support tls
   ca-file: $HOME/.btcd/rpc.cert
@@ -27,10 +30,3 @@ btc:
   zmq-tx-endpoint: tcp://127.0.0.1:28333
 native:
   rpc-endpoint: http://localhost:9797
-metrics:
-  host: 0.0.0.0
-  server-port: 2112
-relayer:
-  netparams: simnet
-  btc_cache_size: 1000
-  max_headers_in_msg: 100
