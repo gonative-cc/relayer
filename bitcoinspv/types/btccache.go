@@ -205,11 +205,12 @@ func (cache *BTCCache) FindBlock(height int64) *IndexedBlock {
 		block := blocks[mid]
 		blockHeight := block.BlockHeight
 
-		if blockHeight == height {
+		switch {
+		case blockHeight == height:
 			return block
-		} else if blockHeight > height {
+		case blockHeight > height:
 			right = mid - 1
-		} else {
+		default:
 			left = mid + 1
 		}
 	}

@@ -40,11 +40,11 @@ func (b *BTCHeaderBytes) Size() int {
 }
 
 func (b BTCHeaderBytes) ToBlockHeader() *wire.BlockHeader {
-	if header, err := NewBlockHeader(b); err != nil {
+	header, err := NewBlockHeader(b)
+	if err != nil {
 		panic("failed to convert bytes to block header format")
-	} else {
-		return header
 	}
+	return header
 }
 
 func (b *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) {
