@@ -54,7 +54,7 @@ func initTestDB(t *testing.T) dal.DB {
 }
 
 // setupTestProcessor initializes the common dependencies
-func setupTestSuite(t *testing.T, populateDB bool) *testSuite {
+func setupTestSuite(t *testing.T) *testSuite {
 	db := initTestDB(t)
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
@@ -62,10 +62,6 @@ func setupTestSuite(t *testing.T, populateDB bool) *testSuite {
 	nativeProcessor := native2ika.NewProcessor(ikaClient, db)
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
 	assert.NilError(t, err)
-
-	if populateDB {
-		daltest.PopulateDB(t, db)
-	}
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher)
 	assert.NilError(t, err)
@@ -85,8 +81,10 @@ func setupTestSuite(t *testing.T, populateDB bool) *testSuite {
 }
 
 func Test_Start(t *testing.T) {
-	ts := setupTestSuite(t, true)
+	ts := setupTestSuite(t)
 	defer ts.cancel()
+
+	daltest.PopulateDB(t, ts.db)
 
 	// Start the relayer in a separate goroutine
 	go func() {
@@ -107,12 +105,11 @@ func Test_Start(t *testing.T) {
 		assert.NilError(t, err)
 		assert.Equal(t, dal.Confirmed, confirmedTx.Status)
 	})
-
 	ts.db.Close()
 }
 
 func TestNewRelayer_ErrorCases(t *testing.T) {
-	ts := setupTestSuite(t, false)
+	ts := setupTestSuite(t)
 	testCases := []struct {
 		name            string
 		db              dal.DB
@@ -152,10 +149,11 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 			assert.Assert(t, relayer == nil)
 		})
 	}
+	ts.db.Close()
 }
 
 func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
-	ts := setupTestSuite(t, false)
+	ts := setupTestSuite(t)
 
 	err := ts.relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
@@ -164,18 +162,24 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 5) // Should be 5 inserted requests
+	ts.db.Close()
 }
 
 func TestRelayer_storeSignRequest(t *testing.T) {
-	ts := setupTestSuite(t, false)
+	ts := setupTestSuite(t)
+
+	requests, err := ts.db.GetPendingIkaSignRequests()
+	assert.NilError(t, err)
+	assert.Equal(t, len(requests), 0)
 
 	sr := native.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
 
-	err := ts.relayer.storeSignRequest(sr)
+	err = ts.relayer.storeSignRequest(sr)
 	assert.NilError(t, err)
 
-	requests, err := ts.db.GetPendingIkaSignRequests()
+	requests, err = ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 1)
+	ts.db.Close()
 }
