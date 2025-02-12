@@ -114,17 +114,17 @@ func (r *Relayer) getAndValidateBlock(
 	indexedBlock, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"failed to get block (hash: %v, height: %d), from BTC client: %w",
+			"error retrieving block (hash: %v, height: %d) from BTC client: %w",
 			blockHash, blockEvent.Height, err,
 		)
 	}
 
 	// if parent block != cache tip, cache needs update - restart bootstrap
 	parentHash := msgBlock.Header.PrevBlock
-	tipCacheBlock := r.btcCache.Tip() // NOTE: cache is guaranteed to be non-empty at this stage
+	tipCacheBlock := r.btcCache.Tip()
 	if parentHash != tipCacheBlock.BlockHash() {
 		return nil, nil, fmt.Errorf(
-			"cache (tip %d) is not up-to-date while connecting block %d, restart bootstrap process",
+			"cache tip height %d is outdated for connecting block %d, bootstrap process needs restart",
 			tipCacheBlock.Height, indexedBlock.Height,
 		)
 	}
