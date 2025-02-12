@@ -85,9 +85,8 @@ func (r *Relayer) validateBlockHeight(blockEvent *types.BlockEvent) error {
 }
 
 func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
-	// check if block exists in cache and validate consistency
-	// NOTE: this might happen when bootstrapping is triggered after the relayer
-	// has subscribed to the BTC blocks
+	// verify if block is already in cache and check for consistency
+	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
 		if block.BlockHash() == blockEvent.Header.BlockHash() {
 			r.logger.Debugf(
