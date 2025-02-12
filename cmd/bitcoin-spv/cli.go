@@ -125,18 +125,18 @@ func setupShutdown(
 	btcClient *btcwrapper.Client,
 	nativeCloser func(),
 ) {
-	addInterruptHandler(func() {
+	addHandler(func() {
 		rootLogger.Info("Stopping relayer...")
 		spvRelayer.Stop()
 		rootLogger.Info("Relayer shutdown")
 	})
-	addInterruptHandler(func() {
+	addHandler(func() {
 		rootLogger.Info("Stopping BTC client...")
 		btcClient.Stop()
 		btcClient.WaitForShutdown()
 		rootLogger.Info("BTC client shutdown")
 	})
-	addInterruptHandler(func() {
+	addHandler(func() {
 		rootLogger.Info("Stopping Native client...")
 		nativeCloser()
 		rootLogger.Info("Native client shutdown")
