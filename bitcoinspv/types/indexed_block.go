@@ -12,52 +12,36 @@ import (
 // IndexedBlock represents a BTC block with additional metadata including block height
 // and transaction details needed for Merkle proof generation
 type IndexedBlock struct {
-	Height int64
-	Header *wire.BlockHeader
-	Txs    []*btcutil.Tx
+	BlockHeight  int64
+	BlockHeader  *wire.BlockHeader
+	Transactions []*btcutil.Tx
 }
 
-func NewIndexedBlock(height int64, header *wire.BlockHeader, txs []*btcutil.Tx) *IndexedBlock {
+func NewIndexedBlock(
+	blockHeight int64,
+	blockHeader *wire.BlockHeader,
+	transactions []*btcutil.Tx,
+) *IndexedBlock {
 	return &IndexedBlock{
-		Height: height,
-		Header: header,
-		Txs:    txs,
+		BlockHeight:  blockHeight,
+		BlockHeader:  blockHeader,
+		Transactions: transactions,
 	}
 }
 
-func NewIndexedBlockFromMsgBlock(height int64, block *wire.MsgBlock) *IndexedBlock {
-	return &IndexedBlock{
-		Height: height,
-		Header: &block.Header,
-		Txs:    GetWrappedTxs(block),
-	}
+func (indexedBlock *IndexedBlock) BlockHash() chainhash.Hash {
+	return indexedBlock.BlockHeader.BlockHash()
 }
 
-// MsgBlock converts the IndexedBlock back to a wire.MsgBlock
-func (ib *IndexedBlock) MsgBlock() *wire.MsgBlock {
-	msgTxs := make([]*wire.MsgTx, 0, len(ib.Txs))
-	for _, tx := range ib.Txs {
-		msgTxs = append(msgTxs, tx.MsgTx())
-	}
-
-	return &wire.MsgBlock{
-		Header:       *ib.Header,
-		Transactions: msgTxs,
-	}
-}
-
-func (ib *IndexedBlock) BlockHash() chainhash.Hash {
-	return ib.Header.BlockHash()
-}
-
-// GenSPVProof generates a Merkle proof for the transaction at the given index
-func (ib *IndexedBlock) GenSPVProof(txIdx uint32) (*BTCSpvProof, error) {
-	if err := ib.validateTxIndex(txIdx); err != nil {
+// GenerateProof creates a Merkle proof for the specified transaction
+// using its index in the block
+func (indexedBlock *IndexedBlock) GenerateProof(txIdx uint32) (*BTCSpvProof, error) {
+	if err := indexedBlock.validateTxIndex(txIdx); err != nil {
 		return nil, err
 	}
 
-	headerBytes := NewBTCHeaderBytesFromBlockHeader(ib.Header)
-	txsBytes := ib.serializeTransactions()
+	headerBytes := NewBTCHeaderBytesFromBlockHeader(indexedBlock.BlockHeader)
+	txsBytes := indexedBlock.serializeTransactions()
 	if len(txsBytes) == 0 {
 		return nil, fmt.Errorf("failed to serialize transactions")
 	}
@@ -65,20 +49,20 @@ func (ib *IndexedBlock) GenSPVProof(txIdx uint32) (*BTCSpvProof, error) {
 	return SpvProofFromHeaderAndTransactions(&headerBytes, txsBytes, txIdx)
 }
 
-func (ib *IndexedBlock) validateTxIndex(txIdx uint32) error {
-	if int(txIdx) >= len(ib.Txs) {
+func (indexedBlock *IndexedBlock) validateTxIndex(txIdx uint32) error {
+	if int(txIdx) >= len(indexedBlock.Transactions) {
 		return fmt.Errorf(
 			"transaction index is out of scope: idx=%d, len(Txs)=%d",
-			txIdx, len(ib.Txs),
+			txIdx, len(indexedBlock.Transactions),
 		)
 	}
 	return nil
 }
 
 // serializeTransactions converts all transactions to byte slices
-func (ib *IndexedBlock) serializeTransactions() [][]byte {
-	txsBytes := make([][]byte, 0, len(ib.Txs))
-	for _, tx := range ib.Txs {
+func (indexedBlock *IndexedBlock) serializeTransactions() [][]byte {
+	txsBytes := make([][]byte, 0, len(indexedBlock.Transactions))
+	for _, tx := range indexedBlock.Transactions {
 		var txBuf bytes.Buffer
 		if err := tx.MsgTx().Serialize(&txBuf); err != nil {
 			return nil

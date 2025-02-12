@@ -170,7 +170,7 @@ func (c *Client) sendBlockEventToChannel(hashBytes []byte, event relayertypes.Ev
 		return
 	}
 
-	blockEvent := relayertypes.NewBlockEvent(event, indexedBlock.Height, indexedBlock.Header)
+	blockEvent := relayertypes.NewBlockEvent(event, indexedBlock.BlockHeight, indexedBlock.BlockHeader)
 	c.blockEventsChannel <- blockEvent
 }
 

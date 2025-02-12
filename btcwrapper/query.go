@@ -172,7 +172,7 @@ func (client *Client) getChainBlocks(
 	baseHeight int64,
 	tipBlock *relayertypes.IndexedBlock,
 ) ([]*relayertypes.IndexedBlock, error) {
-	tipHeight := tipBlock.Height
+	tipHeight := tipBlock.BlockHeight
 	if err := validateBlockHeights(baseHeight, tipHeight); err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (client *Client) populateChainBlocks(
 	blocks []*relayertypes.IndexedBlock, tipBlock *relayertypes.IndexedBlock,
 ) error {
 	// Start from the second to last block and work backwards
-	prevBlockHash := &tipBlock.Header.PrevBlock
+	prevBlockHash := &tipBlock.BlockHeader.PrevBlock
 	for i := len(blocks) - 2; i >= 0; i-- {
 		// Get block info for the previous hash
 		indexedBlock, msgBlock, err := client.GetBTCBlockByHash(prevBlockHash)
@@ -250,10 +250,10 @@ func (client *Client) GetBTCTailBlocksByHeight(baseHeight int64) ([]*relayertype
 	}
 
 	// Validate base height is not greater than tip
-	if baseHeight > tipBlock.Height {
+	if baseHeight > tipBlock.BlockHeight {
 		return nil, fmt.Errorf(
 			"base height %d exceeds current tip height %d",
-			baseHeight, tipBlock.Height,
+			baseHeight, tipBlock.BlockHeight,
 		)
 	}
 

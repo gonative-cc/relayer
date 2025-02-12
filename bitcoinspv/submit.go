@@ -120,7 +120,7 @@ func (r *Relayer) ProcessHeaders(indexedBlocks []*types.IndexedBlock) (int, erro
 
 func (r *Relayer) extractAndSubmitTransactions(indexedBlock *types.IndexedBlock) (int, error) {
 	txnsSubmitted := 0
-	for txIdx, tx := range indexedBlock.Txs {
+	for txIdx, tx := range indexedBlock.Transactions {
 		if err := r.submitTransaction(indexedBlock, txIdx, tx); err != nil {
 			return txnsSubmitted, err
 		}
@@ -142,7 +142,7 @@ func (r *Relayer) submitTransaction(
 
 	// construct spv proof from tx
 	//nolint:gosec
-	proof, err := indexedBlock.GenSPVProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
+	proof, err := indexedBlock.GenerateProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
 	if err != nil {
 		r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
 		return err

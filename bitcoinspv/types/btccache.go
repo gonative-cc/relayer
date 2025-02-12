@@ -32,7 +32,7 @@ func (b *BTCCache) Init(ibs []*IndexedBlock) error {
 	}
 
 	if !sort.SliceIsSorted(ibs, func(i, j int) bool {
-		return ibs[i].Height < ibs[j].Height
+		return ibs[i].BlockHeight < ibs[j].BlockHeight
 	}) {
 		return ErrorUnsortedBlocks
 	}
@@ -121,8 +121,8 @@ func (b *BTCCache) GetLastBlocks(stopHeight int64) ([]*IndexedBlock, error) {
 		return []*IndexedBlock{}, nil
 	}
 
-	firstHeight := b.blocks[0].Height
-	lastHeight := b.blocks[len(b.blocks)-1].Height
+	firstHeight := b.blocks[0].BlockHeight
+	lastHeight := b.blocks[len(b.blocks)-1].BlockHeight
 
 	if stopHeight < firstHeight || lastHeight < stopHeight {
 		return []*IndexedBlock{}, fmt.Errorf(
@@ -133,7 +133,7 @@ func (b *BTCCache) GetLastBlocks(stopHeight int64) ([]*IndexedBlock, error) {
 
 	var startIdx int
 	for i := len(b.blocks) - 1; i >= 0; i-- {
-		if b.blocks[i].Height == stopHeight {
+		if b.blocks[i].BlockHeight == stopHeight {
 			startIdx = i
 			break
 		}
@@ -173,8 +173,8 @@ func (b *BTCCache) FindBlock(blockHeight int64) *IndexedBlock {
 		return nil
 	}
 
-	firstHeight := b.blocks[0].Height
-	lastHeight := b.blocks[len(b.blocks)-1].Height
+	firstHeight := b.blocks[0].BlockHeight
+	lastHeight := b.blocks[len(b.blocks)-1].BlockHeight
 	if blockHeight < firstHeight || lastHeight < blockHeight {
 		return nil
 	}
@@ -187,9 +187,9 @@ func (b *BTCCache) FindBlock(blockHeight int64) *IndexedBlock {
 		block := b.blocks[mid]
 
 		switch {
-		case block.Height == blockHeight:
+		case block.BlockHeight == blockHeight:
 			return block
-		case block.Height > blockHeight:
+		case block.BlockHeight > blockHeight:
 			right = mid - 1
 		default:
 			left = mid + 1

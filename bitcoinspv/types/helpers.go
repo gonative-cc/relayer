@@ -7,14 +7,15 @@ import (
 
 // GetWrappedTxs returns transactions from a block message
 func GetWrappedTxs(msg *wire.MsgBlock) []*btcutil.Tx {
-	btcTxs := make([]*btcutil.Tx, 0, len(msg.Transactions))
+	txCount := len(msg.Transactions)
+	wrappedTxs := make([]*btcutil.Tx, txCount)
 
-	for i, tx := range msg.Transactions {
-		newTx := btcutil.NewTx(tx)
-		newTx.SetIndex(i)
-
-		btcTxs = append(btcTxs, newTx)
+	for idx := 0; idx < txCount; idx++ {
+		tx := msg.Transactions[idx]
+		wrappedTx := btcutil.NewTx(tx)
+		wrappedTx.SetIndex(idx)
+		wrappedTxs[idx] = wrappedTx
 	}
 
-	return btcTxs
+	return wrappedTxs
 }

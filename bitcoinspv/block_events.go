@@ -71,7 +71,7 @@ func (r *Relayer) validateBlockHeight(blockEvent *types.BlockEvent) error {
 		err := fmt.Errorf("cache is empty, restart bootstrap process")
 		return err
 	}
-	if blockEvent.Height < latestCachedBlock.Height {
+	if blockEvent.Height < latestCachedBlock.BlockHeight {
 		r.logger.Debugf(
 			"Connecting block (height: %d, hash: %s) too early, skipping",
 			blockEvent.Height,
@@ -90,7 +90,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
 		if block.BlockHash() == blockEvent.Header.BlockHash() {
 			r.logger.Debugf(
 				"Connecting block (height: %d, hash: %s) already in cache, skipping",
-				block.Height,
+				block.BlockHeight,
 				block.BlockHash().String(),
 			)
 			return nil
@@ -124,7 +124,7 @@ func (r *Relayer) getAndValidateBlock(
 	if parentHash != tipCacheBlock.BlockHash() {
 		return nil, nil, fmt.Errorf(
 			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
-			tipCacheBlock.Height, indexedBlock.Height,
+			tipCacheBlock.BlockHeight, indexedBlock.BlockHeight,
 		)
 	}
 
