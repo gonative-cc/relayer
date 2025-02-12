@@ -58,7 +58,7 @@ func (c *Client) SubscribeSequence() error {
 	return nil
 }
 
-func (c *Client) zmqHandler() {
+func (c *Client) zeromqHandler() {
 	defer c.cleanup()
 
 	zmqPoller := zeromq.NewPoller()

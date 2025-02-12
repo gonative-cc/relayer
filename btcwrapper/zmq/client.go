@@ -4,6 +4,7 @@ package zmq
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -26,7 +27,7 @@ type Client struct {
 	logger    *zap.SugaredLogger
 
 	// Lifecycle management
-	closed   int32 // Set atomically
+	isClosed int32 // Set atomically
 	wg       sync.WaitGroup
 	quitChan chan struct{}
 
@@ -58,11 +59,11 @@ func New(
 
 	err := zmqClient.initZMQ()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create zmq client: %v", err)
 	}
 
 	zmqClient.wg.Add(1)
-	go zmqClient.zmqHandler()
+	go zmqClient.zeromqHandler()
 
 	return zmqClient, nil
 }
@@ -110,7 +111,7 @@ func (c *Client) initZMQ() error {
 
 // Close closes the zmq connections to the bitcoin node
 func (c *Client) Close() error {
-	if !atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
+	if !atomic.CompareAndSwapInt32(&c.isClosed, 0, 1) {
 		return ErrClientClosed
 	}
 	if c.zcontext != nil {
