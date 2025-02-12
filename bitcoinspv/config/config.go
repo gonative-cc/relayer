@@ -9,14 +9,11 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
 )
 
 var (
-	defaultConfigFilename = "bitcoin-spv.yml"
-	defaultBtcCAFile      = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
-	defaultAppDataDir     = btcutil.AppDataDir("native-bitcoin-spv", false)
-	defaultConfigFile     = filepath.Join(defaultAppDataDir, defaultConfigFilename)
+	defaultAppDataDir = btcutil.AppDataDir("native-bitcoin-spv", false)
+	defaultConfigFile = filepath.Join(defaultAppDataDir, "bitcoin-spv.yml")
 )
 
 // Config defines the server's top level configuration.
@@ -45,7 +42,7 @@ func (cfg *Config) Validate() error {
 
 // CreateLogger creates and returns a logger from common config values
 func (cfg *Config) CreateLogger() (*zap.Logger, error) {
-	return cfg.Relayer.CreateLogger()
+	return NewRootLogger(cfg.Relayer.Format, cfg.Relayer.Level)
 }
 
 // DefaultConfigFile returns the default config file path
@@ -86,14 +83,4 @@ func New(configFile string) (Config, error) {
 	}
 
 	return cfg, nil
-}
-
-// WriteSample creates and writes a sample config yaml file
-func WriteSample() error {
-	cfg := DefaultConfig()
-	d, err := yaml.Marshal(&cfg)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile("./sample-bitcoin-spv.yml", d, 0600)
 }

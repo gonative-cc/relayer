@@ -38,17 +38,12 @@ type RelayerConfig struct {
 }
 
 func isPresent(v string, list []string) bool {
-	for _, item := range list {
-		if v == item {
+	for i := range list {
+		if list[i] == v {
 			return true
 		}
 	}
 	return false
-}
-
-// CreateLogger creates and returns root logger
-func (cfg *RelayerConfig) CreateLogger() (*zap.Logger, error) {
-	return NewRootLogger(cfg.Format, cfg.Level)
 }
 
 // Validate does validation checks for relayer configration values

@@ -3,7 +3,9 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
@@ -19,6 +21,10 @@ const (
 	defaultBtcNodeEstimateMode = "CONSERVATIVE"
 	// ZMQ endpoints
 	defaultZmqSeqEndpoint = "tcp://127.0.0.1:29000"
+)
+
+var (
+	defaultBtcCAFile = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
 )
 
 // BTCConfig defines configuration for the Bitcoin client
