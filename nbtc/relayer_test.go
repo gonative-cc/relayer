@@ -23,6 +23,9 @@ type testSuite struct {
 	btcProcessor    *ika2btc.Processor
 	nativeProcessor *native2ika.Processor
 	signReqFetcher  *native.APISignRequestFetcher
+	relayer         *Relayer
+	ctx             context.Context
+	cancel          context.CancelFunc
 }
 
 var btcClientConfig = rpcclient.ConnConfig{
@@ -50,44 +53,50 @@ func setupTestSuite(t *testing.T) *testSuite {
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
 	assert.NilError(t, err)
 
+	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher)
+	assert.NilError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &testSuite{
 		db:              db,
 		ikaClient:       ikaClient,
 		btcProcessor:    btcProcessor,
 		nativeProcessor: nativeProcessor,
 		signReqFetcher:  signReqFetcher,
+		relayer:         relayer,
+		ctx:             ctx,
+		cancel:          cancel,
 	}
 }
 
 func Test_Start(t *testing.T) {
 	ts := setupTestSuite(t)
+	defer ts.cancel()
+
 	daltest.PopulateDB(t, ts.db)
-
-	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.signReqFetcher)
-	assert.NilError(t, err)
-
-	ctx := context.Background()
 
 	// Start the relayer in a separate goroutine
 	go func() {
-		err := relayer.Start(ctx)
+		err := ts.relayer.Start(ts.ctx)
 		assert.NilError(t, err)
 	}()
 
-	time.Sleep(time.Second * 6)
+	t.Run("Transaction Broadcasted", func(t *testing.T) {
+		time.Sleep(time.Second * 6)
+		confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+		assert.NilError(t, err)
+		assert.Equal(t, dal.Broadcasted, confirmedTx.Status)
+	})
 
-	confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
-	assert.NilError(t, err)
-	assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
+	t.Run("Transaction Confirmed", func(t *testing.T) {
+		time.Sleep(time.Second * 3) // Give time for confirmation
+		confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+		assert.NilError(t, err)
+		assert.Equal(t, dal.Confirmed, confirmedTx.Status)
+	})
 
-	time.Sleep(time.Second * 3)
-
-	confirmedTx, err = ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
-	assert.NilError(t, err)
-	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
-
-	relayer.Stop()
-	relayer.db.Close()
+	ts.db.Close()
 }
 
 func TestNewRelayer_ErrorCases(t *testing.T) {
@@ -135,12 +144,10 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 
 func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	ts := setupTestSuite(t)
-	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.signReqFetcher)
-	assert.NilError(t, err)
 
-	err = relayer.fetchAndStoreNativeSignRequests()
+	err := ts.relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
-	assert.Equal(t, relayer.signReqFetchFrom, 5) // Should be 5 after fetching 5 sign requests
+	assert.Equal(t, ts.relayer.signReqFetchFrom, 5) // Should be 5 after fetching 5 sign requests
 
 	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
@@ -149,13 +156,11 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 
 func TestRelayer_storeSignRequest(t *testing.T) {
 	ts := setupTestSuite(t)
-	relayer, err := NewRelayer(relayerConfig, ts.db, ts.nativeProcessor, ts.btcProcessor, ts.signReqFetcher)
-	assert.NilError(t, err)
 
 	sr := native.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
 
-	err = relayer.storeSignRequest(sr)
+	err := ts.relayer.storeSignRequest(sr)
 	assert.NilError(t, err)
 
 	requests, err := ts.db.GetPendingIkaSignRequests()
