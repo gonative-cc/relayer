@@ -135,7 +135,6 @@ func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
 // where T is the height of the latest block in Native light client
 // and k is the confirmation depth
 func (r *Relayer) initializeBTCCache() error {
-	// Initialize cache with configured size
 	cache, err := relayertypes.NewBTCCache(r.Config.BTCCacheSize)
 	if err != nil {
 		return err
