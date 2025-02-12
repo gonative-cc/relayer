@@ -43,6 +43,16 @@ var relayerConfig = RelayerConfig{
 	SignReqFetchLimit:  5,
 }
 
+func initTestDB(t *testing.T) dal.DB {
+	t.Helper()
+
+	db, err := dal.NewDB(":memory:")
+	assert.NilError(t, err)
+	err = db.InitDB()
+	assert.NilError(t, err)
+	return db
+}
+
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
 	db := initTestDB(t)
@@ -52,6 +62,8 @@ func setupTestSuite(t *testing.T) *testSuite {
 	nativeProcessor := native2ika.NewProcessor(ikaClient, db)
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
 	assert.NilError(t, err)
+
+	daltest.PopulateDB(t, db)
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher)
 	assert.NilError(t, err)
@@ -73,8 +85,6 @@ func setupTestSuite(t *testing.T) *testSuite {
 func Test_Start(t *testing.T) {
 	ts := setupTestSuite(t)
 	defer ts.cancel()
-
-	daltest.PopulateDB(t, ts.db)
 
 	// Start the relayer in a separate goroutine
 	go func() {
@@ -166,14 +176,4 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 1)
-}
-
-func initTestDB(t *testing.T) dal.DB {
-	t.Helper()
-
-	db, err := dal.NewDB(":memory:")
-	assert.NilError(t, err)
-	err = db.InitDB()
-	assert.NilError(t, err)
-	return db
 }
