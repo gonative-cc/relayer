@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-func initalize() {
+func init() {
 	signals = []os.Signal{os.Interrupt, syscall.SIGTERM}
 }
 

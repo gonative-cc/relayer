@@ -1,19 +1,19 @@
 relayer:
-  log-format: "auto" # format of the log (json|auto|console|logfmt)
-  log-level: "debug" # log level (debug|warn|error|panic|fatal)
+  log-format: "auto" # (json|auto|console|logfmt)
+  log-level: "debug" # (debug|warn|error|panic|fatal)
   retry-sleep-duration: 5s
   max-retry-sleep-duration: 5m
   netparams: simnet
-  btc_cache_size: 1000
-  max_headers_in_msg: 100
+  cache-size: 1000
+  headers-chunk-size: 100
 btc:
-  no-client-tls: true # use true for bitcoind as it does not support tls
+  no-client-tls: true
   ca-file: $HOME/.btcd/rpc.cert
-  endpoint: localhost:18443 # use port 18443 for bitcoind regtest
-  net-params: regtest  # use regtest for bitcoind as it does not support simnet
+  endpoint: localhost:18443
+  net-params: regtest
   username: user
   password: password
   btc-backend: bitcoind # {btcd, bitcoind}
-  zmq-seq-endpoint: tcp://127.0.0.1:28331  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
+  zmq-seq-endpoint: tcp://127.0.0.1:28331
 native:
   rpc-endpoint: http://localhost:9797

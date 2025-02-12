@@ -49,7 +49,7 @@ func (cfg *BTCConfig) validateBasicConfig() error {
 		return fmt.Errorf("invalid net params in config file: %s", cfg.NetParams)
 	}
 
-	if _, ok := btctypes.GetValidBtcBackends()[cfg.BtcBackend]; !ok {
+	if _, ok := btctypes.GetValidBackends()[cfg.BtcBackend]; !ok {
 		return fmt.Errorf("invalid btc backend value in config file: %s", cfg.BtcBackend)
 	}
 

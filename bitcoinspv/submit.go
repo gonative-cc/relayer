@@ -69,7 +69,7 @@ func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, 
 
 // createHeaderMessages splits blocks into chunks and creates header messages
 func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]*wire.BlockHeader {
-	blockChunks := breakIntoChunks(indexedBlocks, int(r.Config.MaxHeadersInMsg))
+	blockChunks := breakIntoChunks(indexedBlocks, int(r.Config.HeadersChunkSize))
 	headerMsgs := make([][]*wire.BlockHeader, 0, len(blockChunks))
 
 	for _, chunk := range blockChunks {

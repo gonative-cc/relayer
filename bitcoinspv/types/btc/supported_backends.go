@@ -39,8 +39,8 @@ func GetValidNetParams() map[string]bool {
 	}
 }
 
-// GetValidBtcBackends returns a map of supported Bitcoin backend types
-func GetValidBtcBackends() map[SupportedBackend]bool {
+// GetValidBackends returns a map of supported Bitcoin backend types
+func GetValidBackends() map[SupportedBackend]bool {
 	return map[SupportedBackend]bool{
 		Bitcoind: true,
 		Btcd:     true,

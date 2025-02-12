@@ -16,7 +16,7 @@ const (
 	defaultRetrySleepDuration    = 5 * time.Second
 	defaultMaxRetrySleepDuration = 5 * time.Minute
 	minBTCCacheSize              = 1000
-	maxHeadersInMsg              = 100 // maximum number of headers in a MsgInsertHeaders message
+	maxheadersChunkSize          = 100
 )
 
 // RelayerConfig defines configuration for the spv relayer.
@@ -32,9 +32,9 @@ type RelayerConfig struct {
 	// NetParams should be mainnet|testnet|simnet|signet
 	NetParams string `mapstructure:"netparams"`
 	// BTCCacheSize is size of the BTC cache
-	BTCCacheSize int64 `mapstructure:"btc_cache_size"`
-	// MaxHeadersInMsg is maximum number of headers in a MsgInsertHeaders message
-	MaxHeadersInMsg uint32 `mapstructure:"max_headers_in_msg"`
+	BTCCacheSize int64 `mapstructure:"cache-size"`
+	// HeadersChunkSize is maximum number of headers in a MsgInsertHeaders message
+	HeadersChunkSize uint32 `mapstructure:"headers-chunk-size"`
 }
 
 func isPresent(v string, list []string) bool {
@@ -60,7 +60,7 @@ func (cfg *RelayerConfig) Validate() error {
 	if err := cfg.validateBTCCacheSize(); err != nil {
 		return err
 	}
-	err := cfg.validateMaxHeadersInMsg()
+	err := cfg.validateHeadersChunkSize()
 	return err
 }
 
@@ -98,9 +98,9 @@ func (cfg *RelayerConfig) validateBTCCacheSize() error {
 	return nil
 }
 
-func (cfg *RelayerConfig) validateMaxHeadersInMsg() error {
-	if cfg.MaxHeadersInMsg < maxHeadersInMsg {
-		return fmt.Errorf("max_headers_in_msg has to be at least %d", maxHeadersInMsg)
+func (cfg *RelayerConfig) validateHeadersChunkSize() error {
+	if cfg.HeadersChunkSize < maxheadersChunkSize {
+		return fmt.Errorf("headers-chunk-size has to be at least %d", maxheadersChunkSize)
 	}
 	return nil
 }
@@ -114,7 +114,7 @@ func DefaultRelayerConfig() RelayerConfig {
 		MaxSleepDuration: defaultMaxRetrySleepDuration,
 		NetParams:        btctypes.Testnet.String(),
 		BTCCacheSize:     minBTCCacheSize,
-		MaxHeadersInMsg:  maxHeadersInMsg,
+		HeadersChunkSize: maxheadersChunkSize,
 	}
 }
 
