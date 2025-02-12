@@ -6,60 +6,58 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-type BTCHeaderHashBytes []byte
-
 const BTCHeaderHashLen = 32
 
-func NewBTCHeaderHashBytesFromChainhash(chHash *chainhash.Hash) BTCHeaderHashBytes {
-	var headerHashBytes BTCHeaderHashBytes
-	headerHashBytes.FromChainhash(chHash)
-	return headerHashBytes
+type BTCHeaderHashBytes []byte
+
+func (b BTCHeaderHashBytes) Marshal() ([]byte, error) {
+	return b, nil
 }
 
-func (m BTCHeaderHashBytes) Marshal() ([]byte, error) {
-	// Just return the bytes
-	return m, nil
-}
+func (b *BTCHeaderHashBytes) Unmarshal(data []byte) error {
+	if len(data) != BTCHeaderHashLen {
+		return errors.New("header hash must be exactly 32 bytes")
+	}
 
-func (m *BTCHeaderHashBytes) Unmarshal(bz []byte) error {
-	if len(bz) != BTCHeaderHashLen {
-		return errors.New("invalid header hash length")
+	if _, err := toChainhash(data); err != nil {
+		return errors.New("failed to convert bytes to chainhash.Hash format")
 	}
-	// Verify that the bytes can be transformed to a *chainhash.Hash object
-	_, err := toChainhash(bz)
-	if err != nil {
-		return errors.New("bytes do not correspond to *chainhash.Hash object")
-	}
-	*m = bz
+
+	*b = data
 	return nil
 }
 
-func (m *BTCHeaderHashBytes) Size() int {
-	bz, _ := m.Marshal()
-	return len(bz)
+func (b *BTCHeaderHashBytes) Size() int {
+	data, _ := b.Marshal()
+	return len(data)
 }
 
-func (m BTCHeaderHashBytes) ToChainhash() *chainhash.Hash {
-	chHash, err := toChainhash(m)
+func NewBTCHeaderHashBytesFromChainhash(hash *chainhash.Hash) BTCHeaderHashBytes {
+	result := BTCHeaderHashBytes{}
+	result.FromChainhash(hash)
+	return result
+}
+
+func (b BTCHeaderHashBytes) ToChainhash() *chainhash.Hash {
+	result, err := toChainhash(b)
 	if err != nil {
-		panic("BTCHeaderHashBytes cannot be converted to chainhash")
+		panic("failed to convert BTCHeaderHashBytes to chainhash format")
 	}
-	return chHash
+	return result
 }
 
-func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
-	err := m.Unmarshal(hash[:])
-	if err != nil {
-		panic("*chainhash.Hash bytes cannot be unmarshalled")
+func (b *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
+	if err := b.Unmarshal(hash[:]); err != nil {
+		panic("failed to convert chainhash.Hash bytes to BTCHeaderHashBytes")
 	}
 }
 
-func (m *BTCHeaderHashBytes) String() string {
-	return m.ToChainhash().String()
+func (b *BTCHeaderHashBytes) String() string {
+	return b.ToChainhash().String()
 }
 
-func (m *BTCHeaderHashBytes) Eq(hash *BTCHeaderHashBytes) bool {
-	return m.String() == hash.String()
+func (b *BTCHeaderHashBytes) Eq(other *BTCHeaderHashBytes) bool {
+	return b.String() == other.String()
 }
 
 func toChainhash(data []byte) (*chainhash.Hash, error) {

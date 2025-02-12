@@ -12,74 +12,65 @@ type BTCHeaderBytes []byte
 const BTCHeaderLen = 80
 
 func NewBTCHeaderBytesFromBlockHeader(header *wire.BlockHeader) BTCHeaderBytes {
-	var headerBytes BTCHeaderBytes
+	headerBytes := BTCHeaderBytes{}
 	headerBytes.FromBlockHeader(header)
 	return headerBytes
 }
 
-func (m BTCHeaderBytes) Marshal() ([]byte, error) {
-	return m, nil
+func (b BTCHeaderBytes) Marshal() ([]byte, error) {
+	return b, nil
 }
 
-func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
+func (b *BTCHeaderBytes) Unmarshal(data []byte) error {
 	if len(data) != BTCHeaderLen {
-		return errors.New("invalid header length")
-	}
-	// Verify that the bytes can be transformed to a *wire.BlockHeader object
-	_, err := NewBlockHeader(data)
-	if err != nil {
-		return errors.New("bytes do not correspond to a *wire.BlockHeader object")
+		return errors.New("header length must be exactly 80 bytes")
 	}
 
-	*m = data
+	if _, err := NewBlockHeader(data); err != nil {
+		return errors.New("failed to parse bytes as valid block header")
+	}
+
+	*b = data
 	return nil
 }
 
-func (m *BTCHeaderBytes) Size() int {
-	bz, _ := m.Marshal()
-	return len(bz)
+func (b *BTCHeaderBytes) Size() int {
+	bytes, _ := b.Marshal()
+	return len(bytes)
 }
 
-func (m BTCHeaderBytes) ToBlockHeader() *wire.BlockHeader {
-	header, err := NewBlockHeader(m)
-	// There was a parsing error
-	if err != nil {
-		panic("BTCHeaderBytes cannot be converted to a block header object")
-	}
-	return header
-}
-
-func (m *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) {
-	var buf bytes.Buffer
-	err := header.Serialize(&buf)
-	if err != nil {
-		panic("*wire.BlockHeader cannot be serialized")
-	}
-
-	err = m.Unmarshal(buf.Bytes())
-	if err != nil {
-		panic("*wire.BlockHeader serialized bytes cannot be unmarshalled")
+func (b BTCHeaderBytes) ToBlockHeader() *wire.BlockHeader {
+	if header, err := NewBlockHeader(b); err != nil {
+		panic("failed to convert bytes to block header format")
+	} else {
+		return header
 	}
 }
 
-func (m *BTCHeaderBytes) Eq(other *BTCHeaderBytes) bool {
-	return m.Hash().Eq(other.Hash())
+func (b *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) {
+	buffer := bytes.Buffer{}
+	if err := header.Serialize(&buffer); err != nil {
+		panic("failed to serialize block header to bytes")
+	}
+
+	if err := b.Unmarshal(buffer.Bytes()); err != nil {
+		panic("failed to validate serialized block header bytes")
+	}
 }
 
-func (m *BTCHeaderBytes) Hash() *BTCHeaderHashBytes {
-	blockHash := m.ToBlockHeader().BlockHash()
-	hashBytes := NewBTCHeaderHashBytesFromChainhash(&blockHash)
-	return &hashBytes
+func (b *BTCHeaderBytes) Eq(other *BTCHeaderBytes) bool {
+	return b.Hash().Eq(other.Hash())
+}
+
+func (b *BTCHeaderBytes) Hash() *BTCHeaderHashBytes {
+	hash := b.ToBlockHeader().BlockHash()
+	headerHash := NewBTCHeaderHashBytesFromChainhash(&hash)
+	return &headerHash
 }
 
 // NewBlockHeader creates a block header from bytes.
 func NewBlockHeader(data []byte) (*wire.BlockHeader, error) {
-	// Create an empty header
 	header := &wire.BlockHeader{}
-
-	// The Deserialize method expects an io.Reader instance
 	reader := bytes.NewReader(data)
-	// Decode the header bytes
-	err := header.Deserialize(reader)
-	return header, err
+	return header, header.Deserialize(reader)
 }
