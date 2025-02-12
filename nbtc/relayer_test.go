@@ -54,7 +54,7 @@ func initTestDB(t *testing.T) dal.DB {
 }
 
 // setupTestProcessor initializes the common dependencies
-func setupTestSuite(t *testing.T) *testSuite {
+func setupTestSuite(t *testing.T, populateDB bool) *testSuite {
 	db := initTestDB(t)
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
@@ -63,7 +63,9 @@ func setupTestSuite(t *testing.T) *testSuite {
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
 	assert.NilError(t, err)
 
-	daltest.PopulateDB(t, db)
+	if populateDB {
+		daltest.PopulateDB(t, db)
+	}
 
 	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher)
 	assert.NilError(t, err)
@@ -83,7 +85,7 @@ func setupTestSuite(t *testing.T) *testSuite {
 }
 
 func Test_Start(t *testing.T) {
-	ts := setupTestSuite(t)
+	ts := setupTestSuite(t, true)
 	defer ts.cancel()
 
 	// Start the relayer in a separate goroutine
@@ -110,7 +112,7 @@ func Test_Start(t *testing.T) {
 }
 
 func TestNewRelayer_ErrorCases(t *testing.T) {
-	ts := setupTestSuite(t)
+	ts := setupTestSuite(t, false)
 	testCases := []struct {
 		name            string
 		db              dal.DB
@@ -153,7 +155,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 }
 
 func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
-	ts := setupTestSuite(t)
+	ts := setupTestSuite(t, false)
 
 	err := ts.relayer.fetchAndStoreNativeSignRequests()
 	assert.NilError(t, err)
@@ -165,7 +167,7 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 }
 
 func TestRelayer_storeSignRequest(t *testing.T) {
-	ts := setupTestSuite(t)
+	ts := setupTestSuite(t, false)
 
 	sr := native.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
