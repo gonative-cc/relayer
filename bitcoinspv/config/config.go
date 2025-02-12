@@ -11,46 +11,54 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	defaultAppDataDir = btcutil.AppDataDir("native-bitcoin-spv", false)
-	defaultConfigFile = filepath.Join(defaultAppDataDir, "bitcoin-spv.yml")
+const (
+	appName     = "native-bitcoin-spv"
+	cfgFileName = "bitcoin-spv.yml"
 )
 
-// Config defines the server's top level configuration.
+var (
+	defaultCfgDir  = btcutil.AppDataDir(appName, false)
+	defaultCfgFile = filepath.Join(defaultCfgDir, cfgFileName)
+)
+
+// Config represents the main configuration structure for the application
 type Config struct {
 	BTC     BTCConfig     `mapstructure:"btc"`
 	Native  NativeConfig  `mapstructure:"native"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
 }
 
-// Validate validates all the configuration options.
-func (cfg *Config) Validate() error {
-	if err := cfg.BTC.Validate(); err != nil {
-		return fmt.Errorf("invalid config in btc: %w", err)
+// Validate checks if the configuration is valid by running validation on all components
+func (c *Config) Validate() error {
+	validators := []struct {
+		name      string
+		validator func() error
+	}{
+		{"btc", c.BTC.Validate},
+		{"native", c.Native.Validate},
+		{"relayer", c.Relayer.Validate},
 	}
 
-	if err := cfg.Native.Validate(); err != nil {
-		return fmt.Errorf("invalid config in native: %w", err)
-	}
-
-	if err := cfg.Relayer.Validate(); err != nil {
-		return fmt.Errorf("invalid config in relayer: %w", err)
+	for _, v := range validators {
+		if err := v.validator(); err != nil {
+			return fmt.Errorf("invalid config in %s: %w", v.name, err)
+		}
 	}
 
 	return nil
 }
 
-// CreateLogger creates and returns a logger from common config values
-func (cfg *Config) CreateLogger() (*zap.Logger, error) {
-	return NewRootLogger(cfg.Relayer.Format, cfg.Relayer.Level)
+// CreateLogger creates a new logger instance using the relayer configuration
+func (c *Config) CreateLogger() (*zap.Logger, error) {
+	return NewRootLogger(c.Relayer.Format, c.Relayer.Level)
 }
 
-// DefaultConfigFile returns the default config file path
-func DefaultConfigFile() string {
-	return defaultConfigFile
+// DefaultCfgFile returns the default path to the configuration file
+func DefaultCfgFile() string {
+	return defaultCfgFile
 }
 
-// DefaultConfig returns server's default configuration.
+// DefaultConfig returns a new Config instance with default values
 func DefaultConfig() *Config {
 	return &Config{
 		BTC:     DefaultBTCConfig(),
@@ -59,22 +67,21 @@ func DefaultConfig() *Config {
 	}
 }
 
-// New returns a fully parsed Config object from a given file directory
-func New(configFile string) (Config, error) {
-	if _, err := os.Stat(configFile); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return Config{}, fmt.Errorf("no config file found at %s", configFile)
-		}
+// New creates a new Config instance from the specified configuration file
+func New(cfgFile string) (Config, error) {
+	if err := validateConfigFile(cfgFile); err != nil {
 		return Config{}, err
 	}
 
-	viper.SetConfigFile(configFile)
-	if err := viper.ReadInConfig(); err != nil {
+	v := viper.New()
+	v.SetConfigFile(cfgFile)
+
+	if err := v.ReadInConfig(); err != nil {
 		return Config{}, err
 	}
 
 	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := v.Unmarshal(&cfg); err != nil {
 		return Config{}, err
 	}
 
@@ -83,4 +90,14 @@ func New(configFile string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func validateConfigFile(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("no config file found at %s", path)
+		}
+		return err
+	}
+	return nil
 }

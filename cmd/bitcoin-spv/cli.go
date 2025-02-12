@@ -50,7 +50,7 @@ func CmdStart() *cobra.Command {
 			rootLogger.Info("Shutdown complete")
 		},
 	}
-	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultConfigFile(), "config file")
+	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultCfgFile(), "config file")
 	return cmd
 }
 
