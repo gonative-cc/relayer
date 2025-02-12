@@ -60,8 +60,8 @@ func (r *Relayer) processAndTrimCache() error {
 func (r *Relayer) processHeaders() error {
 	blocks := r.btcCache.GetAllBlocks()
 	if _, err := r.ProcessHeaders(blocks); err != nil {
-		// this can happen when there are two contentious spv relayers
-		// or if our btc node is behind.
+		// occurs when multiple competing spv relayers exist
+		// or when our btc node is not fully synchronized
 		r.logger.Errorf("Failed to submit headers: %v", err)
 		return err
 	}
@@ -233,14 +233,14 @@ func (r *Relayer) waitForBTCCatchup(btcHeight int64, nativeHeight int64) error {
 
 		if isBTCCaughtUp(btcLatestBlockHeight, nativeLatestBlockHeight) {
 			r.logger.Infof(
-				"BTC chain (length %d) now catches up with light client header chain (length %d), continue bootstrapping",
+				"BTC (height %d) has synchronized with light client header (height %d), proceeding with bootstrap",
 				btcLatestBlockHeight, nativeLatestBlockHeight,
 			)
 			return nil
 		}
 
 		r.logger.Infof(
-			"BTC chain (length %d) still falls behind light client header chain (length %d), keep waiting",
+			"BTC (height %d) is not yet synchronized with light client header (height %d), continuing to wait",
 			btcLatestBlockHeight, nativeLatestBlockHeight,
 		)
 
