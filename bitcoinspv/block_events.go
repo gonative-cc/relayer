@@ -7,26 +7,25 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-// onBlockEvent handles connected and disconnected blocks from the BTC client.
+// onBlockEvent processes block connection and disconnection events received from the Bitcoin client.
 func (r *Relayer) onBlockEvent() {
 	defer r.wg.Done()
 
 	for {
 		select {
-		case event, open := <-r.btcClient.BlockEventChannel():
-			if !open {
+		case blockEvent, openChan := <-r.btcClient.BlockEventChannel():
+			if !openChan {
 				r.logger.Errorf("BTC Block event channel is now closed")
 				return
 			}
 
-			if err := r.handleBlockEvent(event); err != nil {
+			if err := r.handleBlockEvent(blockEvent); err != nil {
 				r.logger.Warnf(
-					"Error in event processing: %v, bootstrap process need to be restarted",
+					"Error in event processing: %v, restarting bootstrap",
 					err,
 				)
 				r.multitryBootstrap(true)
 			}
-
 		case <-r.quitChan():
 			return
 		}
@@ -74,7 +73,7 @@ func (r *Relayer) validateBlockHeight(blockEvent *types.BlockEvent) error {
 	}
 	if blockEvent.Height < latestCachedBlock.Height {
 		r.logger.Debugf(
-			"the connecting block (height: %d, hash: %s) is too early, skipping the block",
+			"Connecting block (height: %d, hash: %s) too early, skipping",
 			blockEvent.Height,
 			blockEvent.Header.BlockHash().String(),
 		)
@@ -90,7 +89,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
 		if block.BlockHash() == blockEvent.Header.BlockHash() {
 			r.logger.Debugf(
-				"Connecting block (height: %d, hash: %s) is already in cache, skipping",
+				"Connecting block (height: %d, hash: %s) already in cache, skipping",
 				block.Height,
 				block.BlockHash().String(),
 			)
@@ -114,8 +113,8 @@ func (r *Relayer) getAndValidateBlock(
 	indexedBlock, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"error retrieving block (hash: %v, height: %d) from BTC client: %w",
-			blockHash, blockEvent.Height, err,
+			"error retrieving block (height: %d, hash: %v) from BTC client: %w",
+			blockEvent.Height, blockHash, err,
 		)
 	}
 
@@ -124,7 +123,7 @@ func (r *Relayer) getAndValidateBlock(
 	tipCacheBlock := r.btcCache.Tip()
 	if parentHash != tipCacheBlock.BlockHash() {
 		return nil, nil, fmt.Errorf(
-			"cache tip height %d is outdated for connecting block %d, bootstrap process needs restart",
+			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
 			tipCacheBlock.Height, indexedBlock.Height,
 		)
 	}
@@ -132,41 +131,53 @@ func (r *Relayer) getAndValidateBlock(
 	return indexedBlock, msgBlock, nil
 }
 
-func (r *Relayer) processBlock(ib *types.IndexedBlock) error {
-	if ib == nil {
-		r.logger.Debug("No new headers to submit to Native light client")
+func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
+	if indexedBlock == nil {
+		r.logger.Debug("No new headers to submit")
 		return nil
 	}
 
-	headersToProcess := []*types.IndexedBlock{ib}
+	headersToProcess := []*types.IndexedBlock{indexedBlock}
 
 	if _, err := r.ProcessHeaders(headersToProcess); err != nil {
-		r.logger.Warnf("Failed to submit header: %v", err)
+		r.logger.Warnf("Error submitting header: %v", err)
 	}
 
 	if _, err := r.ProcessTransactions(headersToProcess); err != nil {
-		r.logger.Warnf("Failed to submit transactions: %v", err)
+		r.logger.Warnf("Error submitting transactions: %v", err)
 	}
 
 	return nil
 }
 
-// onDisconnectedBlock handles disconnected blocks from the BTC client.
-// It is invoked when event for a previously sent connected block
-// is to be reversed received from the Bitcoin node.
+// onDisconnectedBlock manages the removal of blocks
+// that have been disconnected from the Bitcoin network.
 func (r *Relayer) onDisconnectedBlock(blockEvent *types.BlockEvent) error {
-	tipCacheBlock := r.btcCache.Tip()
-	if tipCacheBlock == nil {
-		return fmt.Errorf("cache is empty, restart bootstrap process")
-	}
-
-	if blockEvent.Header.BlockHash() != tipCacheBlock.BlockHash() {
-		return fmt.Errorf("cache is not up-to-date while disconnecting block, restart bootstrap process")
+	if err := r.checkDisonnected(blockEvent); err != nil {
+		return err
 	}
 
 	if err := r.btcCache.RemoveLast(); err != nil {
-		r.logger.Warnf("Failed to remove last block from cache: %v, restart bootstrap process", err)
+		r.logger.Warnf(
+			"Unable to delete last block from cache: %v, bootstrap process must be restarted",
+			err,
+		)
 		return err
+	}
+
+	return nil
+}
+
+func (r *Relayer) checkDisonnected(blockEvent *types.BlockEvent) error {
+	tipCacheBlock := r.btcCache.Tip()
+	if tipCacheBlock == nil {
+		return fmt.Errorf("no blocks found in cache, bootstrap process must be restarted")
+	}
+
+	if blockEvent.Header.BlockHash() != tipCacheBlock.BlockHash() {
+		return fmt.Errorf(
+			"cache out of sync during block disconnection, bootstrap process needs to be restarted",
+		)
 	}
 
 	return nil

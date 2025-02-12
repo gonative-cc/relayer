@@ -8,25 +8,25 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-func chunkBy[T any](items []T, chunkSize int) [][]T {
-	if len(items) == 0 {
+func breakIntoChunks[T any](v []T, chunkSize int) [][]T {
+	if len(v) == 0 {
 		return nil
 	}
 
-	chunks := make([][]T, 0, (len(items)+chunkSize-1)/chunkSize)
-	for i := 0; i < len(items); i += chunkSize {
+	chunks := make([][]T, 0, (len(v)+chunkSize-1)/chunkSize)
+	for i := 0; i < len(v); i += chunkSize {
 		end := i + chunkSize
-		if end > len(items) {
-			end = len(items)
+		if end > len(v) {
+			end = len(v)
 		}
-		chunks = append(chunks, items[i:end])
+		chunks = append(chunks, v[i:end])
 	}
 	return chunks
 }
 
-// getHeaderMsgsToSubmit creates a set of MsgInsertHeaders messages corresponding to headers that
-// should be submitted to Native light client from a given set of indexed blocks
-func (r *Relayer) getHeaderMsgsToSubmit(
+// getHeaderMessages takes a set of indexed blocks and generates MsgInsertHeaders messages
+// containing block headers that need to be sent to the Native light client
+func (r *Relayer) getHeaderMessages(
 	indexedBlocks []*types.IndexedBlock,
 ) ([][]*wire.BlockHeader, error) {
 	startPoint, err := r.findFirstNewHeader(indexedBlocks)
@@ -69,7 +69,7 @@ func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, 
 
 // createHeaderMessages splits blocks into chunks and creates header messages
 func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]*wire.BlockHeader {
-	blockChunks := chunkBy(indexedBlocks, int(r.Config.MaxHeadersInMsg))
+	blockChunks := breakIntoChunks(indexedBlocks, int(r.Config.MaxHeadersInMsg))
 	headerMsgs := make([][]*wire.BlockHeader, 0, len(blockChunks))
 
 	for _, chunk := range blockChunks {
@@ -79,68 +79,70 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 	return headerMsgs
 }
 
-func (r *Relayer) submitHeaderMsgs(msg []*wire.BlockHeader) error {
-	// submit the headers
-	err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
+func (r *Relayer) submitHeaderMessages(msg []*wire.BlockHeader) error {
+	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
 		if err := r.nativeClient.InsertHeaders(msg); err != nil {
 			return err
 		}
 		r.logger.Infof(
-			"Successfully submitted %d headers to light client", len(msg),
+			"Submitted %d headers to light client", len(msg),
 		)
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to submit headers: %w", err)
 	}
 
 	return nil
 }
 
-// ProcessHeaders extracts and reports headers from a list of blocks
-// It returns the number of headers that need to be reported (after deduplication)
+// ProcessHeaders takes a list of blocks, extracts their headers
+// and submits them to the native client
+// Returns the count of unique headers that were submitted
 func (r *Relayer) ProcessHeaders(indexedBlocks []*types.IndexedBlock) (int, error) {
-	headerMsgsToSubmit, err := r.getHeaderMsgsToSubmit(indexedBlocks)
+	headerMessages, err := r.getHeaderMessages(indexedBlocks)
 	if err != nil {
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
-	if len(headerMsgsToSubmit) == 0 {
+	if len(headerMessages) == 0 {
 		r.logger.Info("No new headers to submit")
 	}
 
-	numSubmitted := 0
-	for _, msgs := range headerMsgsToSubmit {
-		if err := r.submitHeaderMsgs(msgs); err != nil {
+	headersSubmitted := 0
+	for _, msgs := range headerMessages {
+		if err := r.submitHeaderMessages(msgs); err != nil {
 			return 0, fmt.Errorf("failed to submit headers: %w", err)
 		}
-		numSubmitted += len(msgs)
+		headersSubmitted += len(msgs)
 	}
 
-	return numSubmitted, nil
+	return headersSubmitted, nil
 }
 
-func (r *Relayer) extractAndSubmitTransactions(ib *types.IndexedBlock) (int, error) {
-	numSubmittedTxs := 0
-
-	for txIdx, tx := range ib.Txs {
-		if err := r.submitTransaction(ib, txIdx, tx); err != nil {
-			return numSubmittedTxs, err
+func (r *Relayer) extractAndSubmitTransactions(indexedBlock *types.IndexedBlock) (int, error) {
+	txnsSubmitted := 0
+	for txIdx, tx := range indexedBlock.Txs {
+		if err := r.submitTransaction(indexedBlock, txIdx, tx); err != nil {
+			return txnsSubmitted, err
 		}
-		numSubmittedTxs++
+		txnsSubmitted++
 	}
 
-	return numSubmittedTxs, nil
+	return txnsSubmitted, nil
 }
 
-func (r *Relayer) submitTransaction(ib *types.IndexedBlock, txIdx int, tx *btcutil.Tx) error {
+func (r *Relayer) submitTransaction(
+	indexedBlock *types.IndexedBlock,
+	txIdx int,
+	tx *btcutil.Tx,
+) error {
 	if tx == nil {
-		r.logger.Warnf("Found a nil tx in block %v", ib.BlockHash())
+		r.logger.Warnf("Found a nil tx in block %v", indexedBlock.BlockHash())
 		return nil
 	}
 
 	// construct spv proof from tx
 	//nolint:gosec
-	proof, err := ib.GenSPVProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
+	proof, err := indexedBlock.GenSPVProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
 	if err != nil {
 		r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
 		return err
@@ -186,12 +188,4 @@ func (r *Relayer) ProcessTransactions(indexedBlocks []*types.IndexedBlock) (int,
 	}
 
 	return totalTxs, nil
-}
-
-// push msg to channel c, or quit if quit channel is closed
-func PushOrQuit[T any](c chan<- T, msg T, quit <-chan struct{}) {
-	select {
-	case c <- msg:
-	case <-quit:
-	}
 }
