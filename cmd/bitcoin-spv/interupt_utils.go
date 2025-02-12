@@ -8,20 +8,20 @@ import (
 )
 
 func init() {
-	signals = []os.Signal{os.Interrupt, syscall.SIGTERM}
+	interruptSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
 }
 
 var (
-	interruptChannel         chan os.Signal
-	addHandlerChannel        = make(chan func())
-	interruptHandlersDone    = make(chan struct{})
-	simulateInterruptChannel = make(chan struct{}, 1)
-	signals                  = []os.Signal{os.Interrupt}
+	interruptChan       chan os.Signal
+	registerHandlerChan = make(chan func())
+	interruptDone       = make(chan struct{})
+	simulateChan        = make(chan struct{}, 1)
+	interruptSignals    = []os.Signal{os.Interrupt}
 )
 
-// mainInterruptHandler listens for SIGINT (Ctrl+C) signals on the
-// interruptChannel and invokes the registered interruptCallbacks accordingly.
-// It also listens for callback registration.
+// mainInterruptHandler manages system interrupt signals and callback execution.
+// It processes SIGINT/SIGTERM signals and executes registered handlers in reverse order.
+// New handlers can be dynamically added through a dedicated channel.
 func mainInterruptHandler() {
 	var handlers []func()
 
@@ -30,10 +30,10 @@ func mainInterruptHandler() {
 		for i := len(handlers) - 1; i >= 0; i-- {
 			handlers[i]()
 		}
-		close(interruptHandlersDone)
+		close(interruptDone)
 	}
 
-	// handleShutdown processes shutdown requests from different sources
+	// processShutdown handles system termination signals from various inputs
 	processShutdown := func(msg string) {
 		fmt.Print(msg)
 		executeHandlers()
@@ -42,28 +42,28 @@ func mainInterruptHandler() {
 mainLoop:
 	for {
 		select {
-		case sig := <-interruptChannel:
-			processShutdown(fmt.Sprintf("Received signal (%s). Shutting down...", sig))
+		case sig := <-interruptChan:
+			processShutdown(fmt.Sprintf("Signal %s detected. Initiating shutdown...", sig))
 			break mainLoop
-		case <-simulateInterruptChannel:
-			processShutdown("Received shutdown request. Shutting down...")
+		case <-simulateChan:
+			processShutdown("Shutdown request received. System going down...")
 			break mainLoop
-		case h := <-addHandlerChannel:
+		case h := <-registerHandlerChan:
 			handlers = append(handlers, h)
 		}
 	}
 }
 
-// addHandler registers a new interrupt handler function.
-// It initializes the interrupt handling system if this is the first handler.
-func addHandler(callback func()) {
+// registerHandler adds a function to be called when system interruption occurs.
+// On first registration, it sets up the interrupt handling infrastructure.
+func registerHandler(callback func()) {
 	// Initialize interrupt handling if not already done
-	if interruptChannel == nil {
-		interruptChannel = make(chan os.Signal, 1)
-		signal.Notify(interruptChannel, signals...)
+	if interruptChan == nil {
+		interruptChan = make(chan os.Signal, 1)
+		signal.Notify(interruptChan, interruptSignals...)
 		go mainInterruptHandler()
 	}
 
 	// Register the new callback handler
-	addHandlerChannel <- callback
+	registerHandlerChan <- callback
 }

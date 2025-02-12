@@ -46,7 +46,7 @@ func CmdStart() *cobra.Command {
 
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeCloser)
 
-			<-interruptHandlersDone
+			<-interruptDone
 			rootLogger.Info("Shutdown complete")
 		},
 	}
@@ -125,18 +125,18 @@ func setupShutdown(
 	btcClient *btcwrapper.Client,
 	nativeCloser func(),
 ) {
-	addHandler(func() {
+	registerHandler(func() {
 		rootLogger.Info("Stopping relayer...")
 		spvRelayer.Stop()
 		rootLogger.Info("Relayer shutdown")
 	})
-	addHandler(func() {
+	registerHandler(func() {
 		rootLogger.Info("Stopping BTC client...")
 		btcClient.Stop()
 		btcClient.WaitForShutdown()
 		rootLogger.Info("BTC client shutdown")
 	})
-	addHandler(func() {
+	registerHandler(func() {
 		rootLogger.Info("Stopping Native client...")
 		nativeCloser()
 		rootLogger.Info("Native client shutdown")

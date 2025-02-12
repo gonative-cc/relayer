@@ -22,7 +22,7 @@ func GetBTCNodeParams(net string) (*chaincfg.Params, error) {
 		return &chaincfg.SigNetParams, nil
 	}
 	return nil, fmt.Errorf(
-		"BTC network with name %s does not exist. should be one of {%s, %s, %s, %s, %s}",
+		"invalid BTC network '%s'. Valid networks are: %s, %s, %s, %s, %s",
 		net,
 		btctypes.Mainnet.String(),
 		btctypes.Testnet.String(),
