@@ -36,13 +36,13 @@ func (r *Relayer) onBlockEvent() {
 
 // handleBlockEvent processes a block event based on its type
 func (r *Relayer) handleBlockEvent(blockEvent *btctypes.BlockEvent) error {
-	switch blockEvent.EventType {
+	switch blockEvent.Type {
 	case btctypes.BlockConnected:
 		return r.onConnectedBlock(blockEvent)
 	case btctypes.BlockDisconnected:
 		return r.onDisconnectedBlock(blockEvent)
 	default:
-		return fmt.Errorf("unknown block event type: %v", blockEvent.EventType)
+		return fmt.Errorf("unknown block event type: %v", blockEvent.Type)
 	}
 }
 
@@ -77,7 +77,7 @@ func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
 		r.logger.Debugf(
 			"Connecting block (height: %d, hash: %s) too early, skipping",
 			blockEvent.Height,
-			blockEvent.Header.BlockHash().String(),
+			blockEvent.BlockHeader.BlockHash().String(),
 		)
 		return nil
 	}
@@ -89,7 +89,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) erro
 	// verify if block is already in cache and check for consistency
 	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
-		if block.BlockHash() == blockEvent.Header.BlockHash() {
+		if block.BlockHash() == blockEvent.BlockHeader.BlockHash() {
 			r.logger.Debugf(
 				"Connecting block (height: %d, hash: %s) already in cache, skipping",
 				block.BlockHeight,
@@ -100,7 +100,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) erro
 		return fmt.Errorf(
 			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
 			blockEvent.Height,
-			blockEvent.Header.BlockHash().String(),
+			blockEvent.BlockHeader.BlockHash().String(),
 			block.BlockHash().String(),
 		)
 	}
@@ -111,7 +111,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) erro
 func (r *Relayer) getAndValidateBlock(
 	blockEvent *btctypes.BlockEvent,
 ) (*types.IndexedBlock, *wire.MsgBlock, error) {
-	blockHash := blockEvent.Header.BlockHash()
+	blockHash := blockEvent.BlockHeader.BlockHash()
 	indexedBlock, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -176,7 +176,7 @@ func (r *Relayer) checkDisonnected(blockEvent *btctypes.BlockEvent) error {
 		return fmt.Errorf("no blocks found in cache, bootstrap process must be restarted")
 	}
 
-	if blockEvent.Header.BlockHash() != tipCacheBlock.BlockHash() {
+	if blockEvent.BlockHeader.BlockHash() != tipCacheBlock.BlockHash() {
 		return fmt.Errorf(
 			"cache out of sync during block disconnection, bootstrap process needs to be restarted",
 		)

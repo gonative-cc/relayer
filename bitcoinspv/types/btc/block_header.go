@@ -21,6 +21,33 @@ type HeaderBytes []byte
 // HeaderHashBytes represents a Bitcoin header hash as a byte slice
 type HeaderHashBytes []byte
 
+// Represents different types of blockchain events
+type EventType int
+
+const (
+	// Triggered when a block is removed from the chain
+	BlockDisconnected EventType = iota
+	// Triggered when a block is added to the chain
+	BlockConnected
+)
+
+// Contains information about a blockchain event
+type BlockEvent struct {
+	Type        EventType         // Type of event that occurred
+	Height      int64             // Block height
+	BlockHeader *wire.BlockHeader // Block header information
+}
+
+// Creates a new block event with the given parameters
+func NewBlockEvent(evtType EventType, blockHeight int64, blockHeader *wire.BlockHeader) *BlockEvent {
+	evt := &BlockEvent{
+		Type:        evtType,
+		Height:      blockHeight,
+		BlockHeader: blockHeader,
+	}
+	return evt
+}
+
 // NewHeaderBytesFromBlockHeader creates a new HeaderBytes from a wire.BlockHeader.
 func NewHeaderBytesFromBlockHeader(header *wire.BlockHeader) HeaderBytes {
 	headerBytes := HeaderBytes{}
