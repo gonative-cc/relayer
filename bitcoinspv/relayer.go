@@ -66,7 +66,8 @@ func New(
 	return relayer, nil
 }
 
-// Start starts the goroutines necessary to manage a spv relayer.
+// Start initializes and launches the SPV relayer goroutines
+// for Bitcoin header verification and relay
 func (r *Relayer) Start() {
 	r.quitMu.Lock()
 	defer r.quitMu.Unlock()
@@ -110,7 +111,7 @@ func (r *Relayer) initializeRelayer() {
 	r.logger.Infof("Successfully started the spv relayer")
 }
 
-// quitChan atomically reads the quit channel.
+// quitChan returns the quit channel in a thread-safe manner.
 func (r *Relayer) quitChan() <-chan struct{} {
 	r.quitMu.Lock()
 	defer r.quitMu.Unlock()
@@ -128,13 +129,11 @@ func (r *Relayer) Stop() {
 		// already stopped
 		return
 	default:
-		// closing the `quit` channel will trigger all select case `<-quit`,
-		// and thus making all handler routines to break the for loop.
 		close(r.quitChannel)
 	}
 }
 
-// WaitForShutdown blocks until all spv relayer goroutines have finished executing.
+// WaitForShutdown waits for all relayer goroutines to complete before returning
 func (r *Relayer) WaitForShutdown() {
 	r.wg.Wait()
 }
