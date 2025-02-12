@@ -141,7 +141,6 @@ func (r *Relayer) initializeBTCCache() error {
 	}
 	r.btcCache = cache
 
-	// Get latest block height from Native chain
 	nativeBlockHeight, err := r.getNativeLatestBlockHeight()
 	if err != nil {
 		return err
