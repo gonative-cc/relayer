@@ -46,7 +46,7 @@ var relayerConfig = RelayerConfig{
 func initTestDB(t *testing.T) dal.DB {
 	t.Helper()
 
-	db, err := dal.NewDB(":memory:")
+	db, err := dal.NewDB("file::memory:?cache=shared")
 	assert.NilError(t, err)
 	err = db.InitDB()
 	assert.NilError(t, err)
