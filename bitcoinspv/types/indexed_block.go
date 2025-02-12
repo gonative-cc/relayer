@@ -7,6 +7,8 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 // IndexedBlock represents a BTC block with additional metadata including block height
@@ -40,7 +42,7 @@ func (indexedBlock *IndexedBlock) GenerateProof(txIdx uint32) (*BTCSpvProof, err
 		return nil, err
 	}
 
-	headerBytes := NewBTCHeaderBytesFromBlockHeader(indexedBlock.BlockHeader)
+	headerBytes := btctypes.NewHeaderBytesFromBlockHeader(indexedBlock.BlockHeader)
 	txsBytes := indexedBlock.serializeTransactions()
 	if len(txsBytes) == 0 {
 		return nil, fmt.Errorf("failed to serialize transactions")

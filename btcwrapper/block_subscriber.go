@@ -9,7 +9,7 @@ import (
 
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	relayerconfig "github.com/gonative-cc/relayer/bitcoinspv/config"
-	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	zmqclient "github.com/gonative-cc/relayer/btcwrapper/zmq"
 
 	"github.com/btcsuite/btcd/rpcclient"
@@ -46,7 +46,7 @@ func initializeClient(
 	maxRetrySleepDuration time.Duration,
 ) (*Client, error) {
 	client := &Client{
-		blockEventsChannel:    make(chan *relayertypes.BlockEvent, 10000),
+		blockEventsChannel:    make(chan *btctypes.BlockEvent, 10000),
 		config:                config,
 		retrySleepDuration:    retrySleepDuration,
 		maxRetrySleepDuration: maxRetrySleepDuration,
@@ -67,9 +67,9 @@ func configureClientLogger(client *Client, parentLogger *zap.Logger) {
 
 func setupBackendConnection(client *Client) error {
 	switch client.config.BtcBackend {
-	case relayertypes.Bitcoind:
+	case btctypes.Bitcoind:
 		return setupBitcoindConnection(client)
-	case relayertypes.Btcd:
+	case btctypes.Btcd:
 		return setupBtcdConnection(client)
 	default:
 		return fmt.Errorf("unsupported backend type: %v", client.config.BtcBackend)
@@ -116,8 +116,8 @@ func setupBtcdConnection(client *Client) error {
 				"Block %v at height %d has been connected at time %v",
 				header.BlockHash(), height, header.Timestamp,
 			)
-			client.blockEventsChannel <- relayertypes.NewBlockEvent(
-				relayertypes.BlockConnected, int64(height), header,
+			client.blockEventsChannel <- btctypes.NewBlockEvent(
+				btctypes.BlockConnected, int64(height), header,
 			)
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
@@ -125,8 +125,8 @@ func setupBtcdConnection(client *Client) error {
 				"Block %v at height %d has been disconnected at time %v",
 				header.BlockHash(), height, header.Timestamp,
 			)
-			client.blockEventsChannel <- relayertypes.NewBlockEvent(
-				relayertypes.BlockDisconnected, int64(height), header,
+			client.blockEventsChannel <- btctypes.NewBlockEvent(
+				btctypes.BlockDisconnected, int64(height), header,
 			)
 		},
 	}
@@ -160,7 +160,7 @@ func setupBtcdConnection(client *Client) error {
 // SubscribeNewBlocks create subscription to new block events
 func (client *Client) SubscribeNewBlocks() {
 	switch client.config.BtcBackend {
-	case relayertypes.Btcd:
+	case btctypes.Btcd:
 		if err := bitcoinspv.RetryDo(client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
 			err := client.NotifyBlocks()
 			if err != nil {
@@ -171,7 +171,7 @@ func (client *Client) SubscribeNewBlocks() {
 		}); err != nil {
 			panic(err)
 		}
-	case relayertypes.Bitcoind:
+	case btctypes.Bitcoind:
 		err := client.zeromqClient.SubscribeSequence()
 		if err != nil {
 			panic(err)
@@ -180,6 +180,6 @@ func (client *Client) SubscribeNewBlocks() {
 }
 
 // BlockEventChannel returns the channel used for zmq block events
-func (client *Client) BlockEventChannel() <-chan *relayertypes.BlockEvent {
+func (client *Client) BlockEventChannel() <-chan *btctypes.BlockEvent {
 	return client.blockEventsChannel
 }

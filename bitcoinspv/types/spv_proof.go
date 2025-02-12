@@ -6,6 +6,8 @@ import (
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 // BTCSpvProof represents a Bitcoin SPV proof for verifying transaction inclusion
@@ -57,7 +59,7 @@ type SPVProof struct {
 // SpvProofFromHeaderAndTransactions creates a simplified payment verification proof
 // for a transaction at the given index using the block header and transaction list
 func SpvProofFromHeaderAndTransactions(
-	headerBytes *BTCHeaderBytes,
+	headerBytes *btctypes.HeaderBytes,
 	transactions [][]byte,
 	transactionIdx uint32,
 ) (*BTCSpvProof, error) {

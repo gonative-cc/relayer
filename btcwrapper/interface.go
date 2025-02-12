@@ -5,6 +5,7 @@ import (
 	btcwire "github.com/btcsuite/btcd/wire"
 
 	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 // BTCClient defines the interface for interacting with a Bitcoin node
@@ -15,7 +16,7 @@ type BTCClient interface {
 
 	// Block subscription methods
 	SubscribeNewBlocks()
-	BlockEventChannel() <-chan *relayertypes.BlockEvent
+	BlockEventChannel() <-chan *btctypes.BlockEvent
 
 	// Block query methods
 	GetBTCTipBlock() (*chainhash.Hash, int64, error)

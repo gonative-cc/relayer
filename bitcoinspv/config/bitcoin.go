@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 const (
 	// Backend
 	defaultDisableClientTLS = false
-	defaultBtcBackend       = types.Btcd
-	defaultNetParams        = types.BtcSimnet
+	defaultBtcBackend       = btctypes.Btcd
+	defaultNetParams        = btctypes.Simnet
 	// RPC endpoint
 	defaultRPCBtcNodeHost      = "127.0.01:18556"
 	defaultBtcNodeRPCUser      = "rpcuser"
@@ -38,18 +38,18 @@ type BTCConfig struct {
 	Username   string                    `mapstructure:"username"`
 	Password   string                    `mapstructure:"password"`
 	NetParams  string                    `mapstructure:"net-params"`
-	BtcBackend types.SupportedBtcBackend `mapstructure:"btc-backend"`
+	BtcBackend btctypes.SupportedBackend `mapstructure:"btc-backend"`
 
 	// ZMQ configuration
 	ZmqSeqEndpoint string `mapstructure:"zmq-seq-endpoint"`
 }
 
 func (cfg *BTCConfig) validateBasicConfig() error {
-	if _, ok := types.GetValidNetParams()[cfg.NetParams]; !ok {
+	if _, ok := btctypes.GetValidNetParams()[cfg.NetParams]; !ok {
 		return fmt.Errorf("invalid net params in config file: %s", cfg.NetParams)
 	}
 
-	if _, ok := types.GetValidBtcBackends()[cfg.BtcBackend]; !ok {
+	if _, ok := btctypes.GetValidBtcBackends()[cfg.BtcBackend]; !ok {
 		return fmt.Errorf("invalid btc backend value in config file: %s", cfg.BtcBackend)
 	}
 
@@ -57,7 +57,7 @@ func (cfg *BTCConfig) validateBasicConfig() error {
 }
 
 func (cfg *BTCConfig) validateBitcoindConfig() error {
-	if cfg.BtcBackend != types.Bitcoind {
+	if cfg.BtcBackend != btctypes.Bitcoind {
 		return nil
 	}
 

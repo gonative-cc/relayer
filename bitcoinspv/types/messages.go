@@ -1,9 +1,13 @@
 package types
 
-import "github.com/btcsuite/btcd/wire"
+import (
+	"github.com/btcsuite/btcd/wire"
+
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
+)
 
 type MsgInsertHeaders struct {
-	Headers []BTCHeaderBytes
+	Headers []btctypes.HeaderBytes
 }
 
 // NewMsgInsertHeaders converts a slice of IndexedBlock to wire.BlockHeader slice

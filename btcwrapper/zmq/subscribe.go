@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	zeromq "github.com/pebbe/zmq4"
 )
 
@@ -20,7 +21,7 @@ var (
 // SequenceMessage denotes the message struct received from zmq
 type SequenceMessage struct {
 	Hash  [32]byte // use encoding/hex.EncodeToString() to get it into the RPC method string format.
-	Event relayertypes.EventType
+	Event btctypes.EventType
 }
 
 // Subscriptions keeps track of the zmq connection state
@@ -116,9 +117,9 @@ func handleSubscriberMessage(c *Client) error {
 		copy(sequenceMessage.Hash[:], message[1])
 		switch message[1][32] {
 		case 'C':
-			sequenceMessage.Event = relayertypes.BlockConnected
+			sequenceMessage.Event = btctypes.BlockConnected
 		case 'D':
-			sequenceMessage.Event = relayertypes.BlockDisconnected
+			sequenceMessage.Event = btctypes.BlockDisconnected
 		default:
 			return nil
 		}
@@ -154,7 +155,7 @@ func (c *Client) cleanup() {
 	}
 }
 
-func (c *Client) sendBlockEventToChannel(hashBytes []byte, event relayertypes.EventType) {
+func (c *Client) sendBlockEventToChannel(hashBytes []byte, event btctypes.EventType) {
 	blockHashString := hex.EncodeToString(hashBytes)
 	blockHash, err := chainhash.NewHashFromStr(blockHashString)
 	if err != nil {
@@ -170,7 +171,7 @@ func (c *Client) sendBlockEventToChannel(hashBytes []byte, event relayertypes.Ev
 		return
 	}
 
-	blockEvent := relayertypes.NewBlockEvent(event, indexedBlock.BlockHeight, indexedBlock.BlockHeader)
+	blockEvent := btctypes.NewBlockEvent(event, indexedBlock.BlockHeight, indexedBlock.BlockHeader)
 	c.blockEventsChannel <- blockEvent
 }
 

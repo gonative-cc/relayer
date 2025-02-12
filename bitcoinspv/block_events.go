@@ -5,6 +5,8 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
+
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 // onBlockEvent processes block connection and disconnection events received from the Bitcoin client.
@@ -33,11 +35,11 @@ func (r *Relayer) onBlockEvent() {
 }
 
 // handleBlockEvent processes a block event based on its type
-func (r *Relayer) handleBlockEvent(blockEvent *types.BlockEvent) error {
+func (r *Relayer) handleBlockEvent(blockEvent *btctypes.BlockEvent) error {
 	switch blockEvent.EventType {
-	case types.BlockConnected:
+	case btctypes.BlockConnected:
 		return r.onConnectedBlock(blockEvent)
-	case types.BlockDisconnected:
+	case btctypes.BlockDisconnected:
 		return r.onDisconnectedBlock(blockEvent)
 	default:
 		return fmt.Errorf("unknown block event type: %v", blockEvent.EventType)
@@ -46,7 +48,7 @@ func (r *Relayer) handleBlockEvent(blockEvent *types.BlockEvent) error {
 
 // onConnectedBlock handles connected blocks from the BTC client.
 // It is invoked when a new connected block is received from the Bitcoin node.
-func (r *Relayer) onConnectedBlock(blockEvent *types.BlockEvent) error {
+func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	if err := r.validateBlockHeight(blockEvent); err != nil {
 		return err
 	}
@@ -65,7 +67,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *types.BlockEvent) error {
 	return r.processBlock(ib)
 }
 
-func (r *Relayer) validateBlockHeight(blockEvent *types.BlockEvent) error {
+func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
 	latestCachedBlock := r.btcCache.First()
 	if latestCachedBlock == nil {
 		err := fmt.Errorf("cache is empty, restart bootstrap process")
@@ -83,7 +85,7 @@ func (r *Relayer) validateBlockHeight(blockEvent *types.BlockEvent) error {
 	return nil
 }
 
-func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
+func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) error {
 	// verify if block is already in cache and check for consistency
 	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
@@ -107,7 +109,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
 }
 
 func (r *Relayer) getAndValidateBlock(
-	blockEvent *types.BlockEvent,
+	blockEvent *btctypes.BlockEvent,
 ) (*types.IndexedBlock, *wire.MsgBlock, error) {
 	blockHash := blockEvent.Header.BlockHash()
 	indexedBlock, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
@@ -152,7 +154,7 @@ func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 
 // onDisconnectedBlock manages the removal of blocks
 // that have been disconnected from the Bitcoin network.
-func (r *Relayer) onDisconnectedBlock(blockEvent *types.BlockEvent) error {
+func (r *Relayer) onDisconnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	if err := r.checkDisonnected(blockEvent); err != nil {
 		return err
 	}
@@ -168,7 +170,7 @@ func (r *Relayer) onDisconnectedBlock(blockEvent *types.BlockEvent) error {
 	return nil
 }
 
-func (r *Relayer) checkDisonnected(blockEvent *types.BlockEvent) error {
+func (r *Relayer) checkDisonnected(blockEvent *btctypes.BlockEvent) error {
 	tipCacheBlock := r.btcCache.Tip()
 	if tipCacheBlock == nil {
 		return fmt.Errorf("no blocks found in cache, bootstrap process must be restarted")

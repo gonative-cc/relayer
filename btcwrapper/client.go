@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	relayerconfig "github.com/gonative-cc/relayer/bitcoinspv/config"
-	realyertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	zeromq "github.com/gonative-cc/relayer/btcwrapper/zmq"
 )
 
@@ -37,7 +37,7 @@ type Client struct {
 	maxRetrySleepDuration time.Duration
 
 	// Channel for notifying new BTC blocks to relayer
-	blockEventsChannel chan *realyertypes.BlockEvent
+	blockEventsChannel chan *btctypes.BlockEvent
 }
 
 // Stop gracefully shuts down the client and closes channels

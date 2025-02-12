@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/btcsuite/btcd/rpcclient"
-	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	"github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 )
@@ -33,7 +33,7 @@ type Client struct {
 
 	// ZMQ configuration
 	zeromqEndpoint     string
-	blockEventsChannel chan *relayertypes.BlockEvent
+	blockEventsChannel chan *btctypes.BlockEvent
 
 	// ZMQ sockets and subscriptions
 	zcontext       *zmq4.Context
@@ -46,7 +46,7 @@ type Client struct {
 func New(
 	parentLogger *zap.Logger,
 	zeromqEndpoint string,
-	blockEventsChannel chan *relayertypes.BlockEvent,
+	blockEventsChannel chan *btctypes.BlockEvent,
 	rpcClient *rpcclient.Client,
 ) (*Client, error) {
 	zmqClient := &Client{

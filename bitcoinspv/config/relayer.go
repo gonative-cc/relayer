@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	zaplogfmt "github.com/jsternberg/zap-logfmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -85,7 +85,7 @@ func (cfg *RelayerConfig) validateSleepDurations() error {
 }
 
 func (cfg *RelayerConfig) validateNetParams() error {
-	if _, ok := types.GetValidNetParams()[cfg.NetParams]; !ok {
+	if _, ok := btctypes.GetValidNetParams()[cfg.NetParams]; !ok {
 		return fmt.Errorf("invalid net params: %s", cfg.NetParams)
 	}
 	return nil
@@ -112,7 +112,7 @@ func DefaultRelayerConfig() RelayerConfig {
 		Level:            "debug",
 		SleepDuration:    defaultRetrySleepDuration,
 		MaxSleepDuration: defaultMaxRetrySleepDuration,
-		NetParams:        types.BtcTestnet.String(),
+		NetParams:        btctypes.Testnet.String(),
 		BTCCacheSize:     minBTCCacheSize,
 		MaxHeadersInMsg:  maxHeadersInMsg,
 	}

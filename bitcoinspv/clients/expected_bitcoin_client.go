@@ -5,6 +5,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
+
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 // BTCClient is an abstraction over bitcoin node implementations (bitcoind, btcd).
@@ -13,7 +15,7 @@ type BTCClient interface {
 	Stop()
 	WaitForShutdown()
 	SubscribeNewBlocks()
-	BlockEventChannel() <-chan *types.BlockEvent
+	BlockEventChannel() <-chan *btctypes.BlockEvent
 	GetBTCTipBlock() (*chainhash.Hash, int64, error)
 	GetBTCBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error)
 	GetBTCTailBlocksByHeight(height int64) ([]*types.IndexedBlock, error)
