@@ -97,11 +97,9 @@ func (r *Relayer) validateBlockConsistency(blockEvent *types.BlockEvent) error {
 			return nil
 		}
 		return fmt.Errorf(
-			"the connecting block (height: %d, hash: %s) is different from the "+
-				"header (height: %d, hash: %s) at the same height in cache",
+			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
 			blockEvent.Height,
 			blockEvent.Header.BlockHash().String(),
-			block.Height,
 			block.BlockHash().String(),
 		)
 	}
