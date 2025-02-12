@@ -148,7 +148,6 @@ func (r *Relayer) initializeBTCCache() error {
 
 	baseHeight := nativeBlockHeight - r.btcConfirmationDepth + 1
 
-	// Fetch blocks from BTC node
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
 	if err != nil {
 		return err
