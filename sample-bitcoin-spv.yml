@@ -1,0 +1,19 @@
+relayer:
+  log-format: "auto" # (json|auto|console|logfmt)
+  log-level: "debug" # (debug|warn|error|panic|fatal)
+  retry-sleep-duration: 5s
+  max-retry-sleep-duration: 5m
+  netparams: simnet
+  cache-size: 1000
+  headers-chunk-size: 100
+btc:
+  no-client-tls: true
+  ca-file: $HOME/.btcd/rpc.cert
+  endpoint: localhost:18443
+  net-params: regtest
+  username: user
+  password: password
+  btc-backend: bitcoind # {btcd, bitcoind}
+  zmq-seq-endpoint: tcp://127.0.0.1:28331
+native:
+  rpc-endpoint: http://localhost:9797

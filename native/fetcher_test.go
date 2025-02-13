@@ -35,7 +35,7 @@ func TestAPISignRequestFetcher_GetBtcSignRequests(t *testing.T) {
 	})
 
 	t.Run("API request failure", func(t *testing.T) {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}))
 		defer ts.Close()
