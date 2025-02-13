@@ -38,8 +38,8 @@ func InitTestDB(t *testing.T) dal.DB {
 	return db
 }
 
-// GetHashBytes creates a byte array from a hash string.
-func GetHashBytes(t *testing.T, hashString string) []byte {
+// DecodeBTCHash decodes a byte-reversed hexadecimal string.
+func DecodeBTCHash(t *testing.T, hashString string) []byte {
 	t.Helper()
 	hash, err := chainhash.NewHashFromStr(hashString)
 	assert.NilError(t, err)
@@ -105,9 +105,9 @@ func PopulateBitcoinTxs(t *testing.T, db dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
-		{SrID: 2, Status: dal.Pending, BtcTxID: GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
-		{SrID: 4, Status: dal.Pending, BtcTxID: GetHashBytes(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
-		{SrID: 4, Status: dal.Broadcasted, BtcTxID: GetHashBytes(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 2, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 4, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 4, Status: dal.Broadcasted, BtcTxID: DecodeBTCHash(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
 	}
 
 	for _, tx := range bitcoinTxs {
