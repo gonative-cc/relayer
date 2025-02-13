@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// TransactionDigest is a hash of transaction encoded to a string
 type TransactionDigest = string
 
 // Client defines the methods required for interacting with the Ika network.

@@ -47,13 +47,13 @@ func Test_InsertBitcoinTx(t *testing.T) {
 	db := daltest.InitTestDB(t)
 
 	bitcoinTx := dal.BitcoinTx{
-		SrID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: "",
+		SrID: 1, Status: dal.Pending, BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(), Note: "",
 	}
 
 	err := db.InsertBtcTx(bitcoinTx)
 	assert.NilError(t, err)
 
-	retrievedTx, err := db.GetBitcoinTx(1, daltest.GetHashBytes(t, "1"))
+	retrievedTx, err := db.GetBitcoinTx(1, daltest.DecodeBTCHash(t, "1"))
 	assert.NilError(t, err)
 	assert.DeepEqual(t, retrievedTx, &bitcoinTx)
 }
@@ -141,7 +141,7 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	bitcoinTx := dal.BitcoinTx{
-		SrID: 1, Status: dal.Pending, BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(), Note: "",
+		SrID: 1, Status: dal.Pending, BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(), Note: "",
 	}
 
 	err := db.InsertBtcTx(bitcoinTx)

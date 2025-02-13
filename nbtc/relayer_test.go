@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
+	"gotest.tools/v3/assert"
+
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
@@ -13,7 +15,6 @@ import (
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
-	"gotest.tools/v3/assert"
 )
 
 // testSuite holds the common dependencies
@@ -78,20 +79,18 @@ func Test_Start(t *testing.T) {
 
 	// Start the relayer in a separate goroutine
 	go func() {
-		err := ts.relayer.Start(ts.ctx)
-		assert.NilError(t, err)
-	}()
+		assert.NilError(t, relayer.Start(ctx))
 
 	t.Run("Transaction Broadcasted", func(t *testing.T) {
 		time.Sleep(time.Second * 6)
-		confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+		confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.DecodeBTCHash(t, "0"))
 		assert.NilError(t, err)
 		assert.Equal(t, dal.Broadcasted, confirmedTx.Status)
 	})
 
 	t.Run("Transaction Confirmed", func(t *testing.T) {
 		time.Sleep(time.Second * 3) // Give time for confirmation
-		confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+		confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.DecodeBTCHash(t, "0"))
 		assert.NilError(t, err)
 		assert.Equal(t, dal.Confirmed, confirmedTx.Status)
 	})

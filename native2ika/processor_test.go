@@ -56,7 +56,7 @@ func TestRun_EdgeCases(t *testing.T) {
 		{
 			name:      "NoPendingRequests",
 			ikaClient: new(ika.MockClient),
-			setupDB:   func(t *testing.T, db dal.DB) {}, // No need to populate the database
+			setupDB:   func(_ *testing.T, _ dal.DB) {}, // No need to populate the database
 		},
 		{
 			name: "IKAClientError",
