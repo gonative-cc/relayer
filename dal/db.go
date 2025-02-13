@@ -117,7 +117,7 @@ func (db DB) GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSignReque
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	signReq, err := db.Querier.GetIkaSignRequestByID(ctx, int64(id))
+	signReq, err := db.Querier.GetIkaSignRequestByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows { // TODO test if we can just return it since we are using `emit_empty_slices: true` flag
 			return nil, nil // Return nil, nil for not found
@@ -132,7 +132,7 @@ func (db DB) GetIkaTx(ctx context.Context, signRequestID int64, ikaTxID string) 
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	ikaTx, err := db.Querier.GetIkaTx(ctx, &GetIkaTxParams{SrID: int64(signRequestID), IkaTxID: ikaTxID})
+	ikaTx, err := db.Querier.GetIkaTx(ctx, &GetIkaTxParams{SrID: signRequestID, IkaTxID: ikaTxID})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -147,7 +147,7 @@ func (db DB) GetBitcoinTx(ctx context.Context, signRequestID int64, btcTxID []by
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	bitcoinTx, err := db.Querier.GetBitcoinTx(ctx, &GetBitcoinTxParams{SrID: int64(signRequestID), BtcTxID: btcTxID})
+	bitcoinTx, err := db.Querier.GetBitcoinTx(ctx, &GetBitcoinTxParams{SrID: signRequestID, BtcTxID: btcTxID})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -162,7 +162,7 @@ func (db DB) GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*GetIka
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	result, err := db.Querier.GetIkaSignRequestWithStatus(ctx, int64(id))
+	result, err := db.Querier.GetIkaSignRequestWithStatus(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -223,7 +223,7 @@ func (db DB) UpdateIkaSignRequestFinalSig(ctx context.Context, id int64, finalSi
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	err := db.Querier.UpdateIkaSignRequestFinalSig(ctx, &UpdateIkaSignRequestFinalSigParams{ID: int64(id), FinalSig: finalSig})
+	err := db.Querier.UpdateIkaSignRequestFinalSig(ctx, &UpdateIkaSignRequestFinalSigParams{ID: id, FinalSig: finalSig})
 	if err != nil {
 		return fmt.Errorf("dal: updating ika_sign_request final sig: %w", err)
 	}
@@ -236,7 +236,7 @@ func (db DB) UpdateBitcoinTxToConfirmed(ctx context.Context, id int64, txID []by
 	defer db.mutex.Unlock()
 	timestamp := time.Now().Unix()
 
-	err := db.Querier.UpdateBitcoinTxToConfirmed(ctx, &UpdateBitcoinTxToConfirmedParams{SrID: int64(id), BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp})
+	err := db.Querier.UpdateBitcoinTxToConfirmed(ctx, &UpdateBitcoinTxToConfirmedParams{SrID: id, BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp})
 	if err != nil {
 		return fmt.Errorf("dal: updating bitcoin_tx to confirmed: %w", err)
 	}
