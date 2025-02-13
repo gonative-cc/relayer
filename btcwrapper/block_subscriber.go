@@ -46,7 +46,7 @@ func initializeClient(
 	maxRetrySleepDuration time.Duration,
 ) (*Client, error) {
 	client := &Client{
-		blockEventsChannel:    make(chan *btctypes.BlockEvent, 10000),
+		blockEvents:           make(chan *btctypes.BlockEvent, 10000),
 		config:                config,
 		retrySleepDuration:    retrySleepDuration,
 		maxRetrySleepDuration: maxRetrySleepDuration,
@@ -99,7 +99,7 @@ func setupBitcoindConnection(client *Client) error {
 	}
 
 	zeromqClient, err := zmqclient.New(
-		client.logger.Desugar(), client.config.ZmqSeqEndpoint, client.blockEventsChannel, rpcClient,
+		client.logger.Desugar(), client.config.ZmqSeqEndpoint, client.blockEvents, rpcClient,
 	)
 	if err != nil {
 		return err
@@ -111,12 +111,12 @@ func setupBitcoindConnection(client *Client) error {
 
 func setupBtcdConnection(client *Client) error {
 	notificationHandlers := rpcclient.NotificationHandlers{
-		OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
+		OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, _ []*btcutil.Tx) {
 			client.logger.Debugf(
 				"Block %v at height %d has been connected at time %v",
 				header.BlockHash(), height, header.Timestamp,
 			)
-			client.blockEventsChannel <- btctypes.NewBlockEvent(
+			client.blockEvents <- btctypes.NewBlockEvent(
 				btctypes.BlockConnected, int64(height), header,
 			)
 		},
@@ -125,7 +125,7 @@ func setupBtcdConnection(client *Client) error {
 				"Block %v at height %d has been disconnected at time %v",
 				header.BlockHash(), height, header.Timestamp,
 			)
-			client.blockEventsChannel <- btctypes.NewBlockEvent(
+			client.blockEvents <- btctypes.NewBlockEvent(
 				btctypes.BlockDisconnected, int64(height), header,
 			)
 		},
@@ -181,5 +181,5 @@ func (client *Client) SubscribeNewBlocks() {
 
 // BlockEventChannel returns the channel used for zmq block events
 func (client *Client) BlockEventChannel() <-chan *btctypes.BlockEvent {
-	return client.blockEventsChannel
+	return client.blockEvents
 }

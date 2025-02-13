@@ -32,15 +32,15 @@ type Client struct {
 	maxRetrySleepDuration time.Duration
 
 	// Channel for notifying new BTC blocks to relayer
-	blockEventsChannel chan *btctypes.BlockEvent
+	blockEvents chan *btctypes.BlockEvent
 }
 
 // Stop gracefully shuts down the client and closes channels
 func (client *Client) Stop() {
 	if client != nil {
 		client.Shutdown()
-		if client.blockEventsChannel != nil {
-			close(client.blockEventsChannel)
+		if client.blockEvents != nil {
+			close(client.blockEvents)
 		}
 	}
 }
