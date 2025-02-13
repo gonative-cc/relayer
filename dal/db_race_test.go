@@ -60,7 +60,7 @@ func insertManySignReq(ctx context.Context, t *testing.T, wg *sync.WaitGroup, db
 		sr := IkaSignRequest{
 			ID:        int64(i),
 			Payload:   []byte{},
-			DwalletID: "",
+			DWalletID: "",
 			UserSig:   "",
 			FinalSig:  nil,
 			Timestamp: testTimestamp,

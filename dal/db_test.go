@@ -17,7 +17,7 @@ func Test_InsertIkaSignRequest(t *testing.T) {
 	request := dal.IkaSignRequest{
 		ID:        1,
 		Payload:   []byte("payload"),
-		DwalletID: "dwallet_id",
+		DWalletID: "dwallet_id",
 		UserSig:   "user_sig",
 		FinalSig:  nil,
 		Timestamp: time.Now().Unix(),
@@ -133,7 +133,7 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 	request := dal.IkaSignRequest{
 		ID:        1,
 		Payload:   []byte("payload"),
-		DwalletID: "dwallet_id",
+		DWalletID: "dwallet_id",
 		UserSig:   "user_sig",
 		FinalSig:  nil,
 		Timestamp: time.Now().Unix(),

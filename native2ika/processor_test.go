@@ -99,7 +99,7 @@ func TestRun_EdgeCases(t *testing.T) {
 				return mockIkaClient
 			}(),
 			setupDB: func(t *testing.T, db dal.DB) {
-				request := dal.IkaSignRequest{ID: 1, Payload: make([]byte, 0), DwalletID: "dwallet1",
+				request := dal.IkaSignRequest{ID: 1, Payload: make([]byte, 0), DWalletID: "dwallet1",
 					UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
 				err := db.InsertIkaSignRequest(ctx, request)
 				assert.NoError(t, err)
