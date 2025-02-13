@@ -76,13 +76,13 @@ func Test_Start(t *testing.T) {
 
 	time.Sleep(time.Second * 6)
 
-	confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	confirmedTx, err := ts.db.GetBitcoinTx(2, daltest.DecodeBTCHash(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
 
 	time.Sleep(time.Second * 3)
 
-	confirmedTx, err = ts.db.GetBitcoinTx(2, daltest.GetHashBytes(t, "0"))
+	confirmedTx, err = ts.db.GetBitcoinTx(2, daltest.DecodeBTCHash(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 
