@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	ErrClientClosed = errors.New("client already closed")
+	errClientClosed = errors.New("client already closed")
 )
 
 // Client manages ZMQ subscriptions and communication with a Bitcoin node.
@@ -112,7 +112,7 @@ func (c *Client) initZMQ() error {
 // Close closes the zmq connections to the bitcoin node
 func (c *Client) Close() error {
 	if !atomic.CompareAndSwapInt32(&c.isClosed, 0, 1) {
-		return ErrClientClosed
+		return errClientClosed
 	}
 	if c.zcontext != nil {
 		err := c.closeZmqContext()

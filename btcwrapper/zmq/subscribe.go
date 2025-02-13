@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	ErrSubIsDisabled    = errors.New("bitcoin node subscription disabled as zmq-endpoint not set")
-	ErrSubHasExited     = errors.New("bitcoin node subscription exited")
-	ErrSubAlreadyActive = errors.New("bitcoin node subscription already exists")
+	errSubscriberIsDisabled    = errors.New("bitcoin node subscription disabled as zmq-endpoint not set")
+	errSubscriberHasExited     = errors.New("bitcoin node subscription exited")
+	errSubscriberAlreadyActive = errors.New("bitcoin node subscription already exists")
 )
 
 // SequenceMessage denotes the message struct received from zmq
@@ -37,18 +37,18 @@ type Subscriptions struct {
 // SubscribeSequence subscribes to ZMQ "sequence" messages. Call cancel to unsubscribe.
 func (c *Client) SubscribeSequence() error {
 	if c.zsubscriber == nil {
-		return ErrSubIsDisabled
+		return errSubscriberIsDisabled
 	}
 	c.subscriptions.Lock()
 	defer c.subscriptions.Unlock()
 	select {
 	case <-c.subscriptions.exitedChannel:
-		return ErrSubHasExited
+		return errSubscriberHasExited
 	default:
 	}
 
 	if c.subscriptions.isActive {
-		return ErrSubAlreadyActive
+		return errSubscriberAlreadyActive
 	}
 
 	if _, err := c.subscriptions.zfront.SendMessage("subscribe", "sequence"); err != nil {

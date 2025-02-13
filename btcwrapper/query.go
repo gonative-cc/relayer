@@ -241,8 +241,11 @@ func (client *Client) getBestIndexedBlock() (*relayertypes.IndexedBlock, error) 
 	return tipIndexedBlock, nil
 }
 
-// GetBTCTailBlocksByHeight retrieves a sequence of blocks from a given base height up to the current chain tip
-func (client *Client) GetBTCTailBlocksByHeight(baseHeight int64) ([]*relayertypes.IndexedBlock, error) {
+// GetBTCTailBlocksByHeight retrieves a sequence of blocks
+// from a given base height up to the current chain tip
+func (client *Client) GetBTCTailBlocksByHeight(
+	baseHeight int64,
+) ([]*relayertypes.IndexedBlock, error) {
 	// Get the current tip block
 	tipBlock, err := client.getBestIndexedBlock()
 	if err != nil {

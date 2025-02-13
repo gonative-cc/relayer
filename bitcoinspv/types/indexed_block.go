@@ -19,6 +19,8 @@ type IndexedBlock struct {
 	Transactions []*btcutil.Tx
 }
 
+// NewIndexedBlock creates a new IndexedBlock instance with the given block height,
+// header and transactions
 func NewIndexedBlock(
 	blockHeight int64,
 	blockHeader *wire.BlockHeader,
@@ -31,12 +33,14 @@ func NewIndexedBlock(
 	}
 }
 
+// BlockHash returns the hash of this block's header
 func (indexedBlock *IndexedBlock) BlockHash() chainhash.Hash {
 	return indexedBlock.BlockHeader.BlockHash()
 }
 
 // GenerateProof creates a Merkle proof for the specified transaction
-// using its index in the block
+// using its index in the block. Returns an error if the transaction index
+// is invalid or if transaction serialization fails.
 func (indexedBlock *IndexedBlock) GenerateProof(txIdx uint32) (*BTCSpvProof, error) {
 	if err := indexedBlock.validateTxIndex(txIdx); err != nil {
 		return nil, err
@@ -61,7 +65,6 @@ func (indexedBlock *IndexedBlock) validateTxIndex(txIdx uint32) error {
 	return nil
 }
 
-// serializeTransactions converts all transactions to byte slices
 func (indexedBlock *IndexedBlock) serializeTransactions() [][]byte {
 	txsBytes := make([][]byte, 0, len(indexedBlock.Transactions))
 	for _, tx := range indexedBlock.Transactions {
