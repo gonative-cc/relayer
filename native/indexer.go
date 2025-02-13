@@ -110,7 +110,6 @@ func (i *Indexer) IndexBlocksFromTo(ctx context.Context, from, to int) {
 	mapBlockByHeight := make(map[int]*tmtypes.Block)
 
 	for blockHeight := from; blockHeight < to; blockHeight++ {
-		blockHeight := blockHeight
 		// TODO - check if there is anything to index, if not - early return
 
 		i.logger.Debug().Int("blockHeight", blockHeight).Msg("indexing old block")
