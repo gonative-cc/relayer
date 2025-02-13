@@ -7,7 +7,6 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	"github.com/gonative-cc/relayer/lcclient"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +18,7 @@ type Relayer struct {
 
 	// Clients
 	btcClient    clients.BTCClient
-	nativeClient *lcclient.Client
+	nativeClient clients.NativeClient
 
 	// Retry settings
 	retrySleepDuration    time.Duration
@@ -41,7 +40,7 @@ func New(
 	config *config.RelayerConfig,
 	parentLogger *zap.Logger,
 	btcClient clients.BTCClient,
-	nativeClient *lcclient.Client,
+	nativeClient clients.NativeClient,
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
 ) (*Relayer, error) {

@@ -1,6 +1,7 @@
 package bitcoinspv
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -54,7 +55,7 @@ func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, 
 		var res bool
 		var err error
 		err = RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
-			res, err = r.nativeClient.ContainsBTCBlock(&blockHash)
+			res, err = r.nativeClient.ContainsBTCBlock(blockHash)
 			return err
 		})
 		if err != nil {
@@ -80,8 +81,9 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 }
 
 func (r *Relayer) submitHeaderMessages(msg []*wire.BlockHeader) error {
+	ctx := context.Background()
 	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
-		if err := r.nativeClient.InsertHeaders(msg); err != nil {
+		if err := r.nativeClient.InsertHeaders(ctx, msg); err != nil {
 			return err
 		}
 		r.logger.Infof(
