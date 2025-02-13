@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.28.0
 
-package internal
+package dal
 
 import (
 	"database/sql"
@@ -19,7 +19,7 @@ type BitcoinTx struct {
 type IkaSignRequest struct {
 	ID        int64  `json:"id"`
 	Payload   []byte `json:"payload"`
-	DwalletID string `json:"dwallet_id"`
+	DWalletID string `json:"dwallet_id"`
 	UserSig   string `json:"user_sig"`
 	FinalSig  []byte `json:"final_sig"`
 	Timestamp int64  `json:"timestamp"`

@@ -7,7 +7,6 @@ import (
 
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
-	"github.com/gonative-cc/relayer/dal/internal"
 	"gotest.tools/v3/assert"
 )
 
@@ -15,7 +14,7 @@ func Test_InsertIkaSignRequest(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	ctx := context.Background()
 
-	request := internal.IkaSignRequest{
+	request := dal.IkaSignRequest{
 		ID:        1,
 		Payload:   []byte("payload"),
 		DwalletID: "dwallet_id",
@@ -36,7 +35,7 @@ func Test_InsertIkaTx(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	ctx := context.Background()
 
-	ikaTx := internal.IkaTx{
+	ikaTx := dal.IkaTx{
 		SrID: 1, Status: int64(dal.Success), IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(),
 	}
 
@@ -52,7 +51,7 @@ func Test_InsertBitcoinTx(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	ctx := context.Background()
 
-	bitcoinTx := internal.BitcoinTx{
+	bitcoinTx := dal.BitcoinTx{
 		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}
 
@@ -131,7 +130,7 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	ctx := context.Background()
 	requestID := int64(1)
-	request := internal.IkaSignRequest{
+	request := dal.IkaSignRequest{
 		ID:        1,
 		Payload:   []byte("payload"),
 		DwalletID: "dwallet_id",
@@ -155,7 +154,7 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	ctx := context.Background()
-	bitcoinTx := internal.BitcoinTx{
+	bitcoinTx := dal.BitcoinTx{
 		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}
 

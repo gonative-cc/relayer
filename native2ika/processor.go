@@ -2,12 +2,12 @@ package native2ika
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gonative-cc/relayer/dal"
-	"github.com/gonative-cc/relayer/dal/internal"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog/log"
 )
@@ -41,15 +41,15 @@ func (p *Processor) Run(ctx context.Context) error {
 
 	for _, sr := range ikaSignRequests {
 		payloads := [][]byte{sr.Payload} // TODO: this wont be needed in the future when we support singing in batches
-		signatures, txDigest, err := p.ikaClient.ApproveAndSign(ctx, sr.DwalletID, sr.UserSig, payloads)
+		signatures, txDigest, err := p.ikaClient.ApproveAndSign(ctx, sr.DWalletID, sr.UserSig, payloads)
 		if err != nil {
 			if errors.Is(err, ika.ErrEventParsing) {
-				ikaTx := internal.IkaTx{
+				ikaTx := dal.IkaTx{
 					SrID:      sr.ID,
-					Status:    dal.Failed,
+					Status:    int64(dal.Failed),
 					IkaTxID:   txDigest,
 					Timestamp: time.Now().Unix(),
-					Note:      "Transaction successful, but error parsing events.",
+					Note:      sql.NullString{String: "Transaction successful, but error parsing events.", Valid: true},
 				}
 
 				insertErr := p.db.InsertIkaTx(ctx, ikaTx)
@@ -65,12 +65,11 @@ func (p *Processor) Run(ctx context.Context) error {
 			return fmt.Errorf("failed to update the signature in db: %w", err)
 		}
 
-		ikaTx := internal.IkaTx{
+		ikaTx := dal.IkaTx{
 			SrID:      sr.ID,
-			Status:    dal.Success,
+			Status:    int64(dal.Success),
 			IkaTxID:   txDigest,
 			Timestamp: time.Now().Unix(),
-			Note:      "",
 		}
 
 		err = p.db.InsertIkaTx(ctx, ikaTx)

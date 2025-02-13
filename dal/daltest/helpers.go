@@ -8,7 +8,6 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gonative-cc/relayer/dal"
-	"github.com/gonative-cc/relayer/dal/internal"
 	"gotest.tools/assert"
 )
 
@@ -50,7 +49,7 @@ func DecodeBTCHash(t *testing.T, hashString string) []byte {
 }
 
 // PopulateSignRequests inserts a set of predefined IkaSignRequest into the database.
-func PopulateSignRequests(ctx context.Context, t *testing.T, db dal.DB) []internal.IkaSignRequest {
+func PopulateSignRequests(ctx context.Context, t *testing.T, db dal.DB) []dal.IkaSignRequest {
 	t.Helper()
 
 	var rawTxBytes = []byte{
@@ -65,14 +64,14 @@ func PopulateSignRequests(ctx context.Context, t *testing.T, db dal.DB) []intern
 		0x00, 0x00,
 	}
 
-	requests := []internal.IkaSignRequest{
-		{ID: 1, Payload: rawTxBytes, DwalletID: "dwallet1",
+	requests := []dal.IkaSignRequest{
+		{ID: 1, Payload: rawTxBytes, DWalletID: "dwallet1",
 			UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()},
-		{ID: 2, Payload: rawTxBytes, DwalletID: "dwallet2",
+		{ID: 2, Payload: rawTxBytes, DWalletID: "dwallet2",
 			UserSig: "user_sig2", FinalSig: []byte("final_sig2"), Timestamp: time.Now().Unix()},
-		{ID: 3, Payload: rawTxBytes, DwalletID: "dwallet3",
+		{ID: 3, Payload: rawTxBytes, DWalletID: "dwallet3",
 			UserSig: "user_sig3", FinalSig: nil, Timestamp: time.Now().Unix()},
-		{ID: 4, Payload: rawTxBytes, DwalletID: "dwallet4",
+		{ID: 4, Payload: rawTxBytes, DWalletID: "dwallet4",
 			UserSig: "user_sig4", FinalSig: []byte("final_sig4"), Timestamp: time.Now().Unix()},
 	}
 
@@ -85,10 +84,10 @@ func PopulateSignRequests(ctx context.Context, t *testing.T, db dal.DB) []intern
 }
 
 // PopulateIkaTxs inserts a set of predefined IkaTxs into the database.
-func PopulateIkaTxs(ctx context.Context, t *testing.T, db dal.DB) []internal.IkaTx {
+func PopulateIkaTxs(ctx context.Context, t *testing.T, db dal.DB) []dal.IkaTx {
 	t.Helper()
 
-	ikaTxs := []internal.IkaTx{
+	ikaTxs := []dal.IkaTx{
 		{SrID: 1, Status: int64(dal.Success), IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix()},
 		{SrID: 2, Status: int64(dal.Success), IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix()},
 		{SrID: 3, Status: int64(dal.Failed), IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix()},
@@ -103,10 +102,10 @@ func PopulateIkaTxs(ctx context.Context, t *testing.T, db dal.DB) []internal.Ika
 }
 
 // PopulateBitcoinTxs inserts a set of predefined BitcoinTxs into the database.
-func PopulateBitcoinTxs(ctx context.Context, t *testing.T, db dal.DB) []internal.BitcoinTx {
+func PopulateBitcoinTxs(ctx context.Context, t *testing.T, db dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
-	bitcoinTxs := []internal.BitcoinTx{
+	bitcoinTxs := []dal.BitcoinTx{
 		{SrID: 2, Status: int64(dal.Pending), BtcTxID: DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix()},
 		{SrID: 4, Status: int64(dal.Pending), BtcTxID: DecodeBTCHash(t, "2"), Timestamp: time.Now().Unix()},
 		{SrID: 4, Status: int64(dal.Broadcasted), BtcTxID: DecodeBTCHash(t, "3"), Timestamp: time.Now().Unix()},

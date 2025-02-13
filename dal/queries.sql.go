@@ -3,7 +3,7 @@
 //   sqlc v1.28.0
 // source: queries.sql
 
-package internal
+package dal
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func (q *Queries) GetBitcoinTxsToBroadcast(ctx context.Context, status int64) ([
 		if err := rows.Scan(
 			&i.ID,
 			&i.Payload,
-			&i.DwalletID,
+			&i.DWalletID,
 			&i.UserSig,
 			&i.FinalSig,
 			&i.Timestamp,
@@ -125,7 +125,7 @@ func (q *Queries) GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSign
 	err := row.Scan(
 		&i.ID,
 		&i.Payload,
-		&i.DwalletID,
+		&i.DWalletID,
 		&i.UserSig,
 		&i.FinalSig,
 		&i.Timestamp,
@@ -145,7 +145,7 @@ LIMIT 1
 type GetIkaSignRequestWithStatusRow struct {
 	ID        int64  `json:"id"`
 	Payload   []byte `json:"payload"`
-	DwalletID string `json:"dwallet_id"`
+	DWalletID string `json:"dwallet_id"`
 	UserSig   string `json:"user_sig"`
 	FinalSig  []byte `json:"final_sig"`
 	Timestamp int64  `json:"timestamp"`
@@ -158,7 +158,7 @@ func (q *Queries) GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*G
 	err := row.Scan(
 		&i.ID,
 		&i.Payload,
-		&i.DwalletID,
+		&i.DWalletID,
 		&i.UserSig,
 		&i.FinalSig,
 		&i.Timestamp,
@@ -209,7 +209,7 @@ func (q *Queries) GetPendingIkaSignRequests(ctx context.Context) ([]*IkaSignRequ
 		if err := rows.Scan(
 			&i.ID,
 			&i.Payload,
-			&i.DwalletID,
+			&i.DWalletID,
 			&i.UserSig,
 			&i.FinalSig,
 			&i.Timestamp,
@@ -259,7 +259,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 type InsertIkaSignRequestParams struct {
 	ID        int64  `json:"id"`
 	Payload   []byte `json:"payload"`
-	DwalletID string `json:"dwallet_id"`
+	DWalletID string `json:"dwallet_id"`
 	UserSig   string `json:"user_sig"`
 	FinalSig  []byte `json:"final_sig"`
 	Timestamp int64  `json:"timestamp"`
@@ -269,7 +269,7 @@ func (q *Queries) InsertIkaSignRequest(ctx context.Context, arg *InsertIkaSignRe
 	_, err := q.db.ExecContext(ctx, insertIkaSignRequest,
 		arg.ID,
 		arg.Payload,
-		arg.DwalletID,
+		arg.DWalletID,
 		arg.UserSig,
 		arg.FinalSig,
 		arg.Timestamp,

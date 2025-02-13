@@ -3,12 +3,10 @@ package dal
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
-	"os"
 	"sync"
 	"time"
-
-	"github.com/gonative-cc/relayer/dal/internal"
 
 	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
 )
@@ -42,7 +40,7 @@ type Signature = []byte
 type DB struct {
 	conn  *sql.DB
 	mutex *sync.RWMutex
-	internal.Querier
+	Querier
 }
 
 // NewDB creates a new DB instance
@@ -51,9 +49,12 @@ func NewDB(dbPath string) (DB, error) {
 	if err != nil {
 		return DB{}, fmt.Errorf("dal: can't open sqlite3: %w", err)
 	}
-	queries := internal.New(conn)
+	queries := New(conn)
 	return DB{conn: conn, mutex: &sync.RWMutex{}, Querier: queries}, err
 }
+
+//go:embed schema.sql
+var content embed.FS
 
 // InitDB initializes the database and creates the tables.
 func (db DB) InitDB() error {
@@ -61,7 +62,7 @@ func (db DB) InitDB() error {
 	defer db.mutex.Unlock()
 
 	ctx := context.Background()
-	schema, err := os.ReadFile("schema.sql")
+	schema, err := content.ReadFile("schema.sql")
 	if err != nil {
 		return fmt.Errorf("dal: reading schema file: %w", err)
 	}
@@ -73,11 +74,11 @@ func (db DB) InitDB() error {
 }
 
 // InsertIkaSignRequest inserts a new transaction into the database
-func (db DB) InsertIkaSignRequest(ctx context.Context, signReq internal.IkaSignRequest) error {
+func (db DB) InsertIkaSignRequest(ctx context.Context, signReq IkaSignRequest) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	params := internal.InsertIkaSignRequestParams(signReq)
+	params := InsertIkaSignRequestParams(signReq)
 	err := db.Querier.InsertIkaSignRequest(ctx, &params)
 	if err != nil {
 		return fmt.Errorf("dal: inserting ika_sign_request: %w", err)
@@ -86,11 +87,11 @@ func (db DB) InsertIkaSignRequest(ctx context.Context, signReq internal.IkaSignR
 }
 
 // InsertIkaTx inserts a new Ika transaction into the database.
-func (db DB) InsertIkaTx(ctx context.Context, tx internal.IkaTx) error {
+func (db DB) InsertIkaTx(ctx context.Context, tx IkaTx) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	params := internal.InsertIkaTxParams(tx)
+	params := InsertIkaTxParams(tx)
 	err := db.Querier.InsertIkaTx(ctx, &params)
 	if err != nil {
 		return fmt.Errorf("dal: inserting ika_tx: %w", err)
@@ -99,11 +100,11 @@ func (db DB) InsertIkaTx(ctx context.Context, tx internal.IkaTx) error {
 }
 
 // InsertBtcTx inserts a new Bitcoin transaction into the database.
-func (db DB) InsertBtcTx(ctx context.Context, tx internal.BitcoinTx) error {
+func (db DB) InsertBtcTx(ctx context.Context, tx BitcoinTx) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	params := internal.InsertBtcTxParams(tx)
+	params := InsertBtcTxParams(tx)
 	err := db.Querier.InsertBtcTx(ctx, &params)
 	if err != nil {
 		return fmt.Errorf("dal: inserting bitcoin_tx: %w", err)
@@ -112,7 +113,7 @@ func (db DB) InsertBtcTx(ctx context.Context, tx internal.BitcoinTx) error {
 }
 
 // GetIkaSignRequestByID retrives a signature request by its id
-func (db DB) GetIkaSignRequestByID(ctx context.Context, id int64) (*internal.IkaSignRequest, error) {
+func (db DB) GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSignRequest, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -127,11 +128,11 @@ func (db DB) GetIkaSignRequestByID(ctx context.Context, id int64) (*internal.Ika
 }
 
 // GetIkaTx retrieves an Ika transaction by its primary key (sr_id and ika_tx_id).
-func (db DB) GetIkaTx(ctx context.Context, signRequestID int64, ikaTxID string) (*internal.IkaTx, error) {
+func (db DB) GetIkaTx(ctx context.Context, signRequestID int64, ikaTxID string) (*IkaTx, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	ikaTx, err := db.Querier.GetIkaTx(ctx, &internal.GetIkaTxParams{SrID: int64(signRequestID), IkaTxID: ikaTxID})
+	ikaTx, err := db.Querier.GetIkaTx(ctx, &GetIkaTxParams{SrID: int64(signRequestID), IkaTxID: ikaTxID})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -142,11 +143,11 @@ func (db DB) GetIkaTx(ctx context.Context, signRequestID int64, ikaTxID string) 
 }
 
 // GetBitcoinTx retrieves a Bitcoin transaction by its primary key (sr_id and btc_tx_id).
-func (db DB) GetBitcoinTx(ctx context.Context, signRequestID int64, btcTxID []byte) (*internal.BitcoinTx, error) {
+func (db DB) GetBitcoinTx(ctx context.Context, signRequestID int64, btcTxID []byte) (*BitcoinTx, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	bitcoinTx, err := db.Querier.GetBitcoinTx(ctx, &internal.GetBitcoinTxParams{SrID: int64(signRequestID), BtcTxID: btcTxID})
+	bitcoinTx, err := db.Querier.GetBitcoinTx(ctx, &GetBitcoinTxParams{SrID: int64(signRequestID), BtcTxID: btcTxID})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -157,7 +158,7 @@ func (db DB) GetBitcoinTx(ctx context.Context, signRequestID int64, btcTxID []by
 }
 
 // GetIkaSignRequestWithStatus retrieves an IkaSignRequest with its associated IkaTx status.
-func (db DB) GetIkaSignRequestWithStatus(ctx context.Context, id uint64) (*internal.GetIkaSignRequestWithStatusRow, error) {
+func (db DB) GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*GetIkaSignRequestWithStatusRow, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -181,7 +182,7 @@ func (db DB) GetIkaSignRequestWithStatus(ctx context.Context, id uint64) (*inter
 //
 // The reason for checking these conditions is that we cannot have a Bitcoin transaction hash (btc_tx_id)
 // before the first broadcast attempt.
-func (db DB) GetBitcoinTxsToBroadcast(ctx context.Context) ([]*internal.IkaSignRequest, error) {
+func (db DB) GetBitcoinTxsToBroadcast(ctx context.Context) ([]*IkaSignRequest, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -194,7 +195,7 @@ func (db DB) GetBitcoinTxsToBroadcast(ctx context.Context) ([]*internal.IkaSignR
 
 // GetBroadcastedBitcoinTxsInfo queries Bitcoin transactions that has been braodcasted but not confirmed.
 // that do not have a "Confirmed" status.
-func (db DB) GetBroadcastedBitcoinTxsInfo(ctx context.Context) ([]*internal.GetBroadcastedBitcoinTxsInfoRow, error) {
+func (db DB) GetBroadcastedBitcoinTxsInfo(ctx context.Context) ([]*GetBroadcastedBitcoinTxsInfoRow, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -206,7 +207,7 @@ func (db DB) GetBroadcastedBitcoinTxsInfo(ctx context.Context) ([]*internal.GetB
 }
 
 // GetPendingIkaSignRequests retrieves IkaSignRequests that need to be signed.
-func (db DB) GetPendingIkaSignRequests(ctx context.Context) ([]*internal.IkaSignRequest, error) {
+func (db DB) GetPendingIkaSignRequests(ctx context.Context) ([]*IkaSignRequest, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -222,7 +223,7 @@ func (db DB) UpdateIkaSignRequestFinalSig(ctx context.Context, id int64, finalSi
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	err := db.Querier.UpdateIkaSignRequestFinalSig(ctx, &internal.UpdateIkaSignRequestFinalSigParams{ID: int64(id), FinalSig: finalSig})
+	err := db.Querier.UpdateIkaSignRequestFinalSig(ctx, &UpdateIkaSignRequestFinalSigParams{ID: int64(id), FinalSig: finalSig})
 	if err != nil {
 		return fmt.Errorf("dal: updating ika_sign_request final sig: %w", err)
 	}
@@ -235,7 +236,7 @@ func (db DB) UpdateBitcoinTxToConfirmed(ctx context.Context, id int64, txID []by
 	defer db.mutex.Unlock()
 	timestamp := time.Now().Unix()
 
-	err := db.Querier.UpdateBitcoinTxToConfirmed(ctx, &internal.UpdateBitcoinTxToConfirmedParams{SrID: int64(id), BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp})
+	err := db.Querier.UpdateBitcoinTxToConfirmed(ctx, &UpdateBitcoinTxToConfirmedParams{SrID: int64(id), BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp})
 	if err != nil {
 		return fmt.Errorf("dal: updating bitcoin_tx to confirmed: %w", err)
 	}

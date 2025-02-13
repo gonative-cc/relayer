@@ -5,7 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gonative-cc/relayer/dal/internal"
 	"gotest.tools/v3/assert"
 )
 
@@ -58,7 +57,7 @@ func Test_DbRace(t *testing.T) {
 
 func insertManySignReq(ctx context.Context, t *testing.T, wg *sync.WaitGroup, db DB, idFrom, idTo int64) {
 	for i := idFrom; i < idTo; i++ {
-		sr := internal.IkaSignRequest{
+		sr := IkaSignRequest{
 			ID:        int64(i),
 			Payload:   []byte{},
 			DwalletID: "",

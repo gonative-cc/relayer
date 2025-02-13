@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS ika_sign_requests (
     id INTEGER PRIMARY KEY,
     payload BLOB NOT NULL,
-    dwallet_id TEXT NOT NULL,
+    dWallet_id TEXT NOT NULL,
     user_sig TEXT NOT NULL,
     final_sig BLOB,
     timestamp INTEGER NOT NULL
