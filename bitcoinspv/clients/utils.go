@@ -1,6 +1,6 @@
 package clients
 
-//copied from our bitcoin light client repo
+// copied from our bitcoin light client repo
 import (
 	"bytes"
 	"encoding/hex"
