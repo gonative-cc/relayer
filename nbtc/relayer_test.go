@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
+	"gotest.tools/v3/assert"
+
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
@@ -13,7 +15,6 @@ import (
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
-	"gotest.tools/v3/assert"
 )
 
 // testSuite holds the common dependencies
@@ -42,7 +43,7 @@ var relayerConfig = RelayerConfig{
 
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
-	db := initTestDB(t)
+	db := daltest.InitTestDB(t)
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
@@ -70,8 +71,7 @@ func Test_Start(t *testing.T) {
 
 	// Start the relayer in a separate goroutine
 	go func() {
-		err := relayer.Start(ctx)
-		assert.NilError(t, err)
+		assert.NilError(t, relayer.Start(ctx))
 	}()
 
 	time.Sleep(time.Second * 6)
@@ -161,14 +161,4 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	requests, err := ts.db.GetPendingIkaSignRequests()
 	assert.NilError(t, err)
 	assert.Equal(t, len(requests), 1)
-}
-
-func initTestDB(t *testing.T) dal.DB {
-	t.Helper()
-
-	db, err := dal.NewDB(":memory:")
-	assert.NilError(t, err)
-	err = db.InitDB()
-	assert.NilError(t, err)
-	return db
 }
