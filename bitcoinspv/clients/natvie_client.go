@@ -79,22 +79,21 @@ func (c Client) ContainsBTCBlock(blockHash chainhash.Hash) (bool, error) {
 	return false, nil
 }
 
-func (c Client) GetBTCHeaderChainTip() (Block, error) {
+func (c Client) GetHeaderChainTip() (Block, error) {
 	// TODO: Implement logic to call the Sui smart contract method for fetching chain tip
 	// Use nc.suiClient to interact with the Sui blockchain
 	fmt.Println("BTCHeaderChainTip called")
 	return Block{nil, 0}, nil
 }
 
-func (c Client) VerifySPV(spvProof types.SPVProof) (int, error) {
+func (c Client) VerifySPV(spvProof *types.SPVProof) (int, error) {
 	// TODO: Implement logic to call the Sui smart contract method for verifying SPV proofs
 	// Use nc.suiClient to interact with the Sui blockchain
 	fmt.Println("VerifySPV called")
 	return 0, nil
 }
 
-func (c Client) Stop() error {
+func (c Client) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
-	return nil
 }

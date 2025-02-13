@@ -26,6 +26,7 @@ type Config struct {
 	BTC     BTCConfig     `mapstructure:"btc"`
 	Native  NativeConfig  `mapstructure:"native"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
+	Sui     SuiConfig     `mapstucture:"sui"`
 }
 
 // Validate checks if the configuration is valid by running validation on all components

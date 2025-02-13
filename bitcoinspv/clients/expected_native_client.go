@@ -24,5 +24,6 @@ type NativeClient interface {
 	// ContainsBTCBlock(blockHash *chainhash.Hash) (bool, error)
 	// returns if spvProof is valid or not
 	VerifySPV(spvProof *types.SPVProof) (int, error)
-	ContainsBTCBlock(blockHash chainhash.Hash)
+	ContainsBTCBlock(blockHash chainhash.Hash) (bool, error)
+	Stop()
 }

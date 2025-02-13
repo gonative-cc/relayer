@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 
+	"github.com/block-vision/sui-go-sdk/signer"
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/btcwrapper"
-	"github.com/gonative-cc/relayer/lcclient"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -37,14 +39,14 @@ func CmdStart() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cfg, rootLogger := initConfig(cfgFile)
 			btcClient := initBTCClient(cfg, rootLogger)
-			nativeClient, nativeCloser := initNativeClient(cfg)
+			nativeClient := initNativeClient(cfg)
 
 			logTipBlock(btcClient, rootLogger)
 
 			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient)
 			spvRelayer.Start()
 
-			setupShutdown(rootLogger, spvRelayer, btcClient, nativeCloser)
+			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
 
 			<-interruptDone
 			rootLogger.Info("Shutdown complete")
@@ -91,19 +93,22 @@ func logTipBlock(btcClient *btcwrapper.Client, rootLogger *zap.Logger) {
 		zap.Int64("time", latestBTCBlock.Time))
 }
 
-func initNativeClient(cfg *config.Config) (*lcclient.Client, func()) {
-	nativeClient, nativeCloser, err := lcclient.New(cfg.Native.RPCEndpoint)
+func initNativeClient(cfg *config.Config) clients.Client {
+	c := sui.NewSuiClient(cfg.Sui.Endpoint).(*sui.Client)
+
+	signer, err := signer.NewSignertWithMnemonic(cfg.Sui.Mnemonic)
 	if err != nil {
-		panic(fmt.Errorf("failed to open Native client: %w", err))
+		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
-	return nativeClient, nativeCloser
+
+	return clients.NewNativeClient(c, signer, cfg.Sui.LCObjectId)
 }
 
 func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger *zap.Logger,
 	btcClient *btcwrapper.Client,
-	nativeClient *lcclient.Client,
+	nativeClient clients.NativeClient,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
@@ -123,7 +128,7 @@ func setupShutdown(
 	rootLogger *zap.Logger,
 	spvRelayer *bitcoinspv.Relayer,
 	btcClient *btcwrapper.Client,
-	nativeCloser func(),
+	nativeClient clients.NativeClient,
 ) {
 	registerHandler(func() {
 		rootLogger.Info("Stopping relayer...")
@@ -138,7 +143,7 @@ func setupShutdown(
 	})
 	registerHandler(func() {
 		rootLogger.Info("Stopping Native client...")
-		nativeCloser()
+		nativeClient.Stop()
 		rootLogger.Info("Native client shutdown")
 	})
 }
