@@ -101,7 +101,7 @@ func initNativeClient(cfg *config.Config) clients.Client {
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	return clients.NewNativeClient(c, signer, cfg.Sui.LCObjectId)
+	return clients.NewNativeClient(c, signer, cfg.Sui.LCObjectID)
 }
 
 func initSPVRelayer(

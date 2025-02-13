@@ -11,10 +11,10 @@ import (
 )
 
 func TestNatvieClient_InsertHeader(t *testing.T) {
-
+	t.Skip("Test to be run locally for debugging purposes only")
 	localRPC := "https://fullnode.devnet.sui.io:443"
 	localMnemonic := "elegant aware place green laptop secret misery mass crystal cash armor opera"
-	lightClientObjectId := "0x11c3a8e5848a516b50fbccf4d7504aa4e9fc1fe7c29493b7c951c417349da8d1"
+	lightClientObjectID := "0x11c3a8e5848a516b50fbccf4d7504aa4e9fc1fe7c29493b7c951c417349da8d1"
 
 	cl := sui.NewSuiClient(localRPC).(*sui.Client)
 	s, err := signer.NewSignertWithMnemonic(localMnemonic)
@@ -23,7 +23,7 @@ func TestNatvieClient_InsertHeader(t *testing.T) {
 	client := NewNativeClient(
 		cl,
 		s,
-		lightClientObjectId,
+		lightClientObjectID,
 	)
 	assert.Nil(t, err)
 

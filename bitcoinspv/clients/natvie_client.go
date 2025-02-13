@@ -22,14 +22,14 @@ const (
 type Client struct {
 	c                   *sui.Client
 	signerAccount       *signer.Signer
-	lightClientObjectId string
+	lightClientObjectID string
 }
 
-func NewNativeClient(suiClient *sui.Client, signer *signer.Signer, lightClientObjectId string) Client {
+func NewNativeClient(suiClient *sui.Client, signer *signer.Signer, lightClientObjectID string) Client {
 	return Client{
 		c:                   suiClient,
 		signerAccount:       signer,
-		lightClientObjectId: lightClientObjectId,
+		lightClientObjectID: lightClientObjectID,
 	}
 }
 
@@ -40,7 +40,7 @@ func (c Client) InsertHeaders(ctx context.Context, blockHeader []*wire.BlockHead
 	}
 
 	arguments := []interface{}{
-		c.lightClientObjectId, // The object ID of the light client
+		c.lightClientObjectID, // The object ID of the light client
 		rawHeader,             // The serialized block header as a hex string
 	}
 
