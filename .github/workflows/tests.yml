@@ -21,6 +21,10 @@ jobs:
           FILES: |
             go.mod
             go.sum
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libzmq3-dev pkg-config
       - name: Compile
         if: env.GIT_DIFF
         run: |
@@ -38,6 +42,10 @@ jobs:
           FILES: |
             go.mod
             go.sum
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libzmq3-dev pkg-config
       - uses: actions/setup-go@v5
         if: env.GIT_DIFF
         with:

@@ -53,13 +53,13 @@ func Test_InsertBitcoinTx(t *testing.T) {
 	ctx := context.Background()
 
 	bitcoinTx := internal.BitcoinTx{
-		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(),
+		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}
 
 	err := db.InsertBtcTx(ctx, bitcoinTx)
 	assert.NilError(t, err)
 
-	retrievedTx, err := db.GetBitcoinTx(ctx, 1, daltest.GetHashBytes(t, "1"))
+	retrievedTx, err := db.GetBitcoinTx(ctx, 1, daltest.DecodeBTCHash(t, "1"))
 	assert.NilError(t, err)
 	assert.DeepEqual(t, retrievedTx, &bitcoinTx)
 }
@@ -156,7 +156,7 @@ func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	db := daltest.InitTestDB(t)
 	ctx := context.Background()
 	bitcoinTx := internal.BitcoinTx{
-		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.GetHashBytes(t, "1"), Timestamp: time.Now().Unix(),
+		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}
 
 	err := db.InsertBtcTx(ctx, bitcoinTx)

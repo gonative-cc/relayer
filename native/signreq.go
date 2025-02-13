@@ -12,4 +12,5 @@ type SignReq struct {
 	Timestamp int64  // Timestamp of the sign request (in Unix time)
 }
 
+// SignReqs is a slice of SignReq
 type SignReqs []SignReq
