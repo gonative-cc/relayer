@@ -79,7 +79,8 @@ func Test_Start(t *testing.T) {
 
 	// Start the relayer in a separate goroutine
 	go func() {
-		assert.NilError(t, relayer.Start(ctx))
+		assert.NilError(t, ts.relayer.Start(ts.ctx))
+	}()
 
 	t.Run("Transaction Broadcasted", func(t *testing.T) {
 		time.Sleep(time.Second * 6)
