@@ -3,8 +3,8 @@ package types
 import "errors"
 
 var (
-	ErrEmptyCache        = errors.New("empty block cache")
-	ErrInvalidMaxEntries = errors.New("invalid max entries")
-	ErrTooManyEntries    = errors.New("number of blocks is more than maxEntries")
-	ErrorUnsortedBlocks  = errors.New("blocks are not sorted by height")
+	errEmptyBlockCache          = errors.New("empty block cache")
+	errCacheIncorrectMaxEntries = errors.New("incorrect max entries")
+	errBlockEntriesExceeded     = errors.New("number of blocks is more than maxEntries")
+	errUnorderedBlocks          = errors.New("blocks are not sorted by height")
 )

@@ -16,7 +16,7 @@ type BTCCache struct {
 // NewBTCCache creates a new BTCCache with the specified max entries
 func NewBTCCache(maxEntries int64) (*BTCCache, error) {
 	if maxEntries <= 0 {
-		return nil, ErrInvalidMaxEntries
+		return nil, errCacheIncorrectMaxEntries
 	}
 	cache := &BTCCache{
 		blocks:     make([]*IndexedBlock, 0, maxEntries),
@@ -31,13 +31,13 @@ func (cache *BTCCache) Init(blocks []*IndexedBlock) error {
 	defer cache.Unlock()
 
 	if int64(len(blocks)) > cache.maxEntries {
-		return ErrTooManyEntries
+		return errBlockEntriesExceeded
 	}
 
 	if !sort.SliceIsSorted(blocks, func(i, j int) bool {
 		return blocks[i].BlockHeight < blocks[j].BlockHeight
 	}) {
-		return ErrorUnsortedBlocks
+		return errUnorderedBlocks
 	}
 
 	for _, block := range blocks {
@@ -56,7 +56,7 @@ func (cache *BTCCache) Add(block *IndexedBlock) {
 
 func (cache *BTCCache) add(block *IndexedBlock) {
 	if cache.size() > cache.maxEntries {
-		panic(ErrTooManyEntries)
+		panic(errBlockEntriesExceeded)
 	}
 
 	if cache.size() == cache.maxEntries {
@@ -95,7 +95,7 @@ func (cache *BTCCache) RemoveLast() error {
 	defer cache.Unlock()
 
 	if cache.size() == 0 {
-		return ErrEmptyCache
+		return errEmptyBlockCache
 	}
 
 	lastIdx := len(cache.blocks) - 1
@@ -224,7 +224,7 @@ func (cache *BTCCache) Resize(maxEntries int64) error {
 	defer cache.Unlock()
 
 	if maxEntries <= 0 {
-		return ErrInvalidMaxEntries
+		return errCacheIncorrectMaxEntries
 	}
 	cache.maxEntries = maxEntries
 	return nil
