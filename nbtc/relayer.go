@@ -8,6 +8,7 @@ import (
 
 	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/gonative-cc/relayer/dal/internal"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
@@ -167,7 +168,7 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 
 // storeSignRequest stores a single SignReq from the Native chain.
 func (r *Relayer) storeSignRequest(signRequest native.SignReq) error {
-	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(signRequest))
+	err := r.db.InsertIkaSignRequest(internal.IkaSignRequest(signRequest))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)
 	}
