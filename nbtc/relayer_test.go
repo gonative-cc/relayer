@@ -43,19 +43,9 @@ var relayerConfig = RelayerConfig{
 	SignReqFetchLimit:  5,
 }
 
-func initTestDB(t *testing.T) dal.DB {
-	t.Helper()
-	// this is needed if there are multiple go routines accessing the database
-	db, err := dal.NewDB("file::memory:?cache=shared")
-	assert.NilError(t, err)
-	err = db.InitDB()
-	assert.NilError(t, err)
-	return db
-}
-
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
-	db := initTestDB(t)
+	db := daltest.InitTestDB(t)
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
