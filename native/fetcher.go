@@ -9,7 +9,7 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-// SignRequestFetcher is an interface for getting sign requests from the Native network.
+// SignReqFetcher is an interface for getting sign requests from the Native network.
 type SignReqFetcher interface {
 	GetBtcSignRequests(from int, limit int) ([]SignReq, error)
 }
