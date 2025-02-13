@@ -105,28 +105,12 @@ func (r *Relayer) Start(ctx context.Context) error {
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			go func() {
-				if err := r.processSignRequests(ctx); err != nil {
-					r.handleError(err, "processSignRequests")
-				}
-			}()
-			go func() {
-				if err := r.processSignedTxs(); err != nil {
-					r.handleError(err, "processSignedTxs")
-				}
-			}()
+			go r.runProcessor(func() error { return r.processSignRequests(ctx) }, "processSignRequests")
+			go r.runProcessor(r.processSignedTxs, "processSignedTxs")
 		case <-r.confirmTxsTicker.C:
-			go func() {
-				if err := r.btcProcessor.CheckConfirmations(); err != nil {
-					r.handleError(err, "CheckConfirmations")
-				}
-			}()
+			go r.runProcessor(r.btcProcessor.CheckConfirmations, "CheckConfirmations")
 		case <-r.signReqTicker.C:
-			go func() {
-				if err := r.fetchAndStoreNativeSignRequests(); err != nil {
-					r.handleError(err, "fetchAndStoreNativeSignRequests")
-				}
-			}()
+			go r.runProcessor(r.fetchAndStoreNativeSignRequests, "fetchAndStoreNativeSignRequests")
 		}
 	}
 }
@@ -180,6 +164,12 @@ func (r *Relayer) storeSignRequest(signRequest native.SignReq) error {
 	}
 
 	return nil
+}
+
+func (r *Relayer) runProcessor(f func() error, name string) {
+	if err := f(); err != nil {
+		r.handleError(err, name)
+	}
 }
 
 // Stop initiates a shutdown of the relayer.
