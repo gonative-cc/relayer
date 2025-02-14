@@ -223,7 +223,10 @@ func (db DB) UpdateIkaSignRequestFinalSig(ctx context.Context, id int64, finalSi
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	err := db.Querier.UpdateIkaSignRequestFinalSig(ctx, &UpdateIkaSignRequestFinalSigParams{ID: id, FinalSig: finalSig})
+	err := db.Querier.UpdateIkaSignRequestFinalSig(
+		ctx,
+		&UpdateIkaSignRequestFinalSigParams{ID: id, FinalSig: finalSig},
+	)
 	if err != nil {
 		return fmt.Errorf("dal: updating ika_sign_request final sig: %w", err)
 	}
@@ -236,7 +239,10 @@ func (db DB) UpdateBitcoinTxToConfirmed(ctx context.Context, id int64, txID []by
 	defer db.mutex.Unlock()
 	timestamp := time.Now().Unix()
 
-	err := db.Querier.UpdateBitcoinTxToConfirmed(ctx, &UpdateBitcoinTxToConfirmedParams{SrID: id, BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp})
+	err := db.Querier.UpdateBitcoinTxToConfirmed(
+		ctx,
+		&UpdateBitcoinTxToConfirmedParams{SrID: id, BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp},
+	)
 	if err != nil {
 		return fmt.Errorf("dal: updating bitcoin_tx to confirmed: %w", err)
 	}
