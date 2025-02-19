@@ -6,45 +6,20 @@
 relayer:
   log-format: "auto" # (json|auto|console|logfmt)
   log-level: "debug" # (debug|warn|error|panic|fatal)
-  retry-sleep-duration: 5s
-  max-retry-sleep-duration: 5m
-  netparams: simnet
-  cache-size: 1000
-  headers-chunk-size: 100
+  retry-sleep-duration: 5s # Duration to wait between retry attempts
+  max-retry-sleep-duration: 5m # Maximum duration to wait between retry attempts
+  netparams: regtest # (mainnet|testnet|simnet|regtest)
+  cache-size: 1000 # Size of the block headers cache
+  headers-chunk-size: 100 # Number of headers posted to lightclient in a single chunk
 btc:
-  no-client-tls: true
-  ca-file: $HOME/.btcd/rpc.cert
-  endpoint: localhost:18443
-  net-params: regtest
-  username: user
-  password: password
+  no-client-tls: true # Disable TLS for client connections to Bitcoin node
+  ca-file: $HOME/.btcd/rpc.cert # Path to Bitcoin node's TLS certificate file
+  endpoint: localhost:18443 # Bitcoin node RPC endpoint address
+  net-params: regtest # (mainnet|testnet|simnet|regtest)
+  username: user # RPC username for Bitcoin node
+  password: password # RPC password for Bitcoin node
   btc-backend: bitcoind # {btcd, bitcoind}
-  zmq-seq-endpoint: tcp://127.0.0.1:28331
+  zmq-seq-endpoint: tcp://127.0.0.1:28331 # ZeroMQ sequence notification endpoint for Bitcoin node
 native:
-  rpc-endpoint: http://localhost:9797
+  rpc-endpoint: http://localhost:9797 # RPC endpoint address for the Bitcoin light client
 ```
-
-## Relayer config
-
-- `log-format`: Format for log output (json|auto|console|logfmt)
-- `log-level`: Logging level (debug|warn|error|panic|fatal)
-- `retry-sleep-duration`: Duration to wait between retry attempts
-- `max-retry-sleep-duration`: Maximum duration to wait between retry attempts
-- `netparams`: Bitcoin network parameters (mainnet|testnet|simnet|regtest)
-- `cache-size`: Size of the block headers cache
-- `headers-chunk-size`: Number of headers to request in a single chunk
-
-## Bitcoin node config
-
-- `no-client-tls`: Disable TLS for client connections to Bitcoin node
-- `ca-file`: Path to Bitcoin node's TLS certificate file
-- `endpoint`: Bitcoin node RPC endpoint address
-- `net-params`: Bitcoin network parameters (mainnet|testnet|simnet|regtest)
-- `username`: RPC username for Bitcoin node authentication
-- `password`: RPC password for Bitcoin node authentication
-- `btc-backend`: Bitcoin node implementation to use (btcd|bitcoind)
-- `zmq-seq-endpoint`: ZeroMQ sequence notification endpoint for Bitcoin node
-
-## Bitcoin-lightclient config
-
-- `rpc-endpoint`: RPC endpoint address for the Bitcoin light client
