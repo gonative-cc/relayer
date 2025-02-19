@@ -2,6 +2,7 @@
 
 This relayer is responsible for syncing the latest BTC blocks with a BTC node.
 
+- [Flow](./flow.md)
 - [Configuration](./configuration.md)
 
 ## Setup
