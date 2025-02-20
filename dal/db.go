@@ -15,7 +15,7 @@ type IkaSignRequest struct {
 	UserSig   string    `json:"user_sig"`
 	Payload   Payload   `json:"payload"`
 	FinalSig  Signature `json:"final_sig"`
-	ID        uint64    `json:"id"`
+	ID        uint64    `json:"id"` // ID is a sign request reported and managed by Native
 	Timestamp int64     `json:"time"`
 }
 
@@ -23,7 +23,7 @@ type IkaSignRequest struct {
 type IkaTx struct {
 	IkaTxID   string      `json:"ika_tx_id"`
 	Note      string      `json:"note"`
-	SrID      uint64      `json:"sr_id"`
+	SrID      uint64      `json:"sr_id"` // SrID is the IkaSignRequest.ID (from Native)
 	Timestamp int64       `json:"timestamp"`
 	Status    IkaTxStatus `json:"status"`
 }
@@ -32,7 +32,7 @@ type IkaTx struct {
 type BitcoinTx struct {
 	Note      string          `json:"note"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
-	SrID      uint64          `json:"sr_id"`
+	SrID      uint64          `json:"sr_id"` // SrID is the IkaSignRequest.ID (from Native)
 	Timestamp int64           `json:"timestamp"`
 	Status    BitcoinTxStatus `json:"status"`
 }
@@ -40,7 +40,7 @@ type BitcoinTx struct {
 // BitcoinTxInfo holds the relevant information for a Bitcoin transaction.
 type BitcoinTxInfo struct {
 	BtcTxID []byte          `json:"btc_tx_id"`
-	TxID    uint64          `json:"tx_id"`
+	TxID    uint64          `json:"tx_id"` // TxID reported by Bitcoin
 	Status  BitcoinTxStatus `json:"status"`
 }
 

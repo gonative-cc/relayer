@@ -21,13 +21,20 @@ const (
 
 // RelayerConfig defines configuration for the spv relayer.
 type RelayerConfig struct {
-	Format           string        `mapstructure:"log-format"`
-	Level            string        `mapstructure:"log-level"`
-	NetParams        string        `mapstructure:"netparams"`
-	SleepDuration    time.Duration `mapstructure:"retry-sleep-duration"`
+	// Format is the format of the log (json|auto|console|logfmt)
+	Format string `mapstructure:"log-format"`
+	// Level is the log level (debug|warn|error|panic|fatal)
+	Level string `mapstructure:"log-level"`
+	// NetParams should be mainnet|testnet|simnet|signet
+	NetParams string `mapstructure:"netparams"`
+	// SleepDuration is the backoff interval for the first retry
+	SleepDuration time.Duration `mapstructure:"retry-sleep-duration"`
+	// MaxSleepDuration is the maximum backoff interval between retries
 	MaxSleepDuration time.Duration `mapstructure:"max-retry-sleep-duration"`
-	BTCCacheSize     int64         `mapstructure:"cache-size"`
-	HeadersChunkSize uint32        `mapstructure:"headers-chunk-size"`
+	// BTCCacheSize is size of the BTC cache
+	BTCCacheSize int64 `mapstructure:"cache-size"`
+	// HeadersChunkSize is maximum number of headers in a MsgInsertHeaders message
+	HeadersChunkSize uint32 `mapstructure:"headers-chunk-size"`
 }
 
 func isPresent(v string, list []string) bool {

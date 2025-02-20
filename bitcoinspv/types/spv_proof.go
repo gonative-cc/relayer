@@ -50,9 +50,9 @@ type MsgInsertBTCSpvProof struct {
 
 // SPVProof represents a simplified payment verification proof
 type SPVProof struct {
-	TxID       string
+	TxID       string // 32bytes hash value in string hex format
 	MerklePath []chainhash.Hash
-	TxIndex    uint32
+	TxIndex    uint32 // index of transaction in block
 	BlockHash  chainhash.Hash
 }
 
