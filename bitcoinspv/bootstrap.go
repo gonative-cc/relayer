@@ -193,7 +193,7 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 }
 
 func (r *Relayer) getNativeLatestBlockHeight() (int64, error) {
-	nativeBlock, err := r.nativeClient.GetHeaderChainTip()
+	nativeBlock, err := r.nativeClient.GetHeaderChainTip(context.Background())
 	if err != nil {
 		return 0, err
 	}

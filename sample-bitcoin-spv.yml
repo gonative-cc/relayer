@@ -5,7 +5,7 @@ relayer:
   max-retry-sleep-duration: 5m
   netparams: simnet
   cache-size: 1000
-  headers-chunk-size: 100
+  headers-chunk-size: 10
 btc:
   no-client-tls: true
   ca-file: $HOME/.btcd/rpc.cert
@@ -22,3 +22,4 @@ sui:
   endpoint: https://fullnode.devnet.sui.io:443
   mnemonic: "your mnemonic"
   lc_object_id: 0x...
+  lc_package_id: 0x ...

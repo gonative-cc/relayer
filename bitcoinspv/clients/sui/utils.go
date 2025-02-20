@@ -1,4 +1,4 @@
-package clients
+package sui
 
 // copied from our bitcoin light client repo
 import (
@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -30,6 +31,7 @@ func BlockHeaderFromHex(hexStr string) (wire.BlockHeader, error) {
 	return header, err
 }
 
+// BlockHeaderToHex transforms header to hex encoded string
 func BlockHeaderToHex(header wire.BlockHeader) (string, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, 80))
 	err := header.Serialize(buf)
@@ -37,4 +39,9 @@ func BlockHeaderToHex(header wire.BlockHeader) (string, error) {
 		return "", err
 	}
 	return "0x" + hex.EncodeToString(buf.Bytes()), nil
+}
+
+// BlockHeaderToHex transforms Hash to a natural order hex endoed string
+func BlockHashToHex(hash chainhash.Hash) string {
+	return "0x" + hex.EncodeToString(hash.CloneBytes())
 }
