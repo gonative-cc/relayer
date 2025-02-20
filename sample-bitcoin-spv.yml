@@ -17,7 +17,6 @@ btc:
   zmq-seq-endpoint: tcp://127.0.0.1:28331
 native:
   rpc-endpoint: http://localhost:9797
-
 sui:
   endpoint: https://fullnode.devnet.sui.io:443
   mnemonic: "your mnemonic"
