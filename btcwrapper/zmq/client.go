@@ -25,14 +25,14 @@ type Client struct {
 	rpcClient          *rpcclient.Client
 	logger             *zap.SugaredLogger
 	quitChan           chan struct{}
-	blockEventsChannel chan *btctypes.BlockEvent
+	blockEventsChannel chan *btctypes.BlockEvent // Channel for notifying new BTC blocks to relayer
 	zcontext           *zmq4.Context
-	zsubscriber        *zmq4.Socket
-	zbackendsocket     *zmq4.Socket
-	subscriptions      Subscriptions
+	zsubscriber        *zmq4.Socket // Subscriber socket
+	zbackendsocket     *zmq4.Socket // Backend socket for internal communication
 	zeromqEndpoint     string
+	subscriptions      Subscriptions // Subscription management
 	wg                 sync.WaitGroup
-	isClosed           int32
+	isClosed           int32 // Set atomically
 }
 
 // New creates a new zmq client

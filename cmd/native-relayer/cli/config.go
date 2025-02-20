@@ -5,9 +5,9 @@ import "time"
 // Configuration struct
 type Config struct {
 	Ika     IkaCfg     `mapstructure:"ika"`
-	Btc     BitcoinCfg `mapstructure:"bitcoin"`
 	Native  NativeCfg  `mapstructure:"native"`
 	DB      DBCfg      `mapstructure:"db"`
+	Btc     BitcoinCfg `mapstructure:"bitcoin"`
 	Relayer RelayerCfg `mapstructure:"relayer"`
 }
 
