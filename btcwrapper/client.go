@@ -18,21 +18,13 @@ var _ BTCClient = &Client{}
 // information about the current state of the best block chain.
 type Client struct {
 	*rpcclient.Client
-	zeromqClient *zeromq.Client
-
-	// Chain configuration
-	chainParams *chaincfg.Params
-	config      *relayerconfig.BTCConfig
-
-	// Logging
-	logger *zap.SugaredLogger
-
-	// Retry configuration
+	zeromqClient          *zeromq.Client
+	chainParams           *chaincfg.Params
+	config                *relayerconfig.BTCConfig
+	logger                *zap.SugaredLogger
+	blockEventsChannel    chan *btctypes.BlockEvent
 	retrySleepDuration    time.Duration
 	maxRetrySleepDuration time.Duration
-
-	// Channel for notifying new BTC blocks to relayer
-	blockEventsChannel chan *btctypes.BlockEvent
 }
 
 // Stop gracefully shuts down the client and closes channels

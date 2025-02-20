@@ -13,27 +13,18 @@ import (
 
 // Relayer manages the Bitcoin SPV relayer functionality
 type Relayer struct {
-	// Configuration
-	Config *config.RelayerConfig
-	logger *zap.SugaredLogger
-
-	// Clients
-	btcClient    clients.BTCClient
-	nativeClient *lcclient.Client
-
-	// Retry settings
+	btcClient             clients.BTCClient
+	Config                *config.RelayerConfig
+	logger                *zap.SugaredLogger
+	nativeClient          *lcclient.Client
+	btcCache              *types.BTCCache
+	quitChannel           chan struct{}
+	wg                    sync.WaitGroup
 	retrySleepDuration    time.Duration
 	maxRetrySleepDuration time.Duration
-
-	// Cache and state
-	btcCache             *types.BTCCache
-	btcConfirmationDepth int64
-
-	// Control
-	wg          sync.WaitGroup
-	isStarted   bool
-	quitChannel chan struct{}
-	quitMu      sync.Mutex
+	btcConfirmationDepth  int64
+	quitMu                sync.Mutex
+	isStarted             bool
 }
 
 // New creates and returns a new relayer object

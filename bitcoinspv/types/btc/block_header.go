@@ -33,9 +33,9 @@ const (
 
 // Contains information about a blockchain event
 type BlockEvent struct {
-	Type        EventType         // Type of event that occurred
-	Height      int64             // Block height
-	BlockHeader *wire.BlockHeader // Block header information
+	BlockHeader *wire.BlockHeader
+	Type        EventType
+	Height      int64
 }
 
 // Creates a new block event with the given parameters

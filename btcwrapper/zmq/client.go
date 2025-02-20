@@ -22,24 +22,17 @@ var (
 // It handles ZMQ message routing and provides thread-safe access to subscriptions.
 // Must be created with New() and cleaned up with Close().
 type Client struct {
-	// RPC connection
-	rpcClient *rpcclient.Client
-	logger    *zap.SugaredLogger
-
-	// Lifecycle management
-	isClosed int32 // Set atomically
-	wg       sync.WaitGroup
-	quitChan chan struct{}
-
-	// ZMQ configuration
-	zeromqEndpoint     string
+	rpcClient          *rpcclient.Client
+	logger             *zap.SugaredLogger
+	quitChan           chan struct{}
 	blockEventsChannel chan *btctypes.BlockEvent
-
-	// ZMQ sockets and subscriptions
-	zcontext       *zmq4.Context
-	zsubscriber    *zmq4.Socket  // Subscriber socket
-	subscriptions  Subscriptions // Subscription management
-	zbackendsocket *zmq4.Socket  // Backend socket for internal communication
+	zcontext           *zmq4.Context
+	zsubscriber        *zmq4.Socket
+	zbackendsocket     *zmq4.Socket
+	subscriptions      Subscriptions
+	zeromqEndpoint     string
+	wg                 sync.WaitGroup
+	isClosed           int32
 }
 
 // New creates a new zmq client

@@ -17,13 +17,10 @@ const (
 // Indexer struct responsible for calling blockchain rpc/websocket for data and
 // storing that into the database.
 type Indexer struct {
-	b Blockchain
-	// defines the lowest block that the node has available in store.
-	// Usually nodes prun blocks after 2 weeks.
-	lowestBlock int
 	logger      zerolog.Logger
-
-	ika ika.Client
+	b           Blockchain
+	ika         ika.Client
+	lowestBlock int
 }
 
 // NewIndexer returns a new indexer struct with open connections.

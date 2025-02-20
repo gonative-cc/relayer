@@ -14,9 +14,9 @@ import (
 // IndexedBlock represents a BTC block with additional metadata including block height
 // and transaction details needed for Merkle proof generation
 type IndexedBlock struct {
-	BlockHeight  int64
 	BlockHeader  *wire.BlockHeader
 	Transactions []*btcutil.Tx
+	BlockHeight  int64
 }
 
 // NewIndexedBlock creates a new IndexedBlock instance with the given block height,
