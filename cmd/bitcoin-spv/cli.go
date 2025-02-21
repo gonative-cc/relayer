@@ -102,7 +102,7 @@ func initNativeClient(cfg *config.Config) clients.BitcoinSPVClient {
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	client, err := suiLC.NewSuiSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
+	client, err := suiLC.NewBitcoinSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))
