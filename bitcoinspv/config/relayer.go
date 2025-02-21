@@ -25,12 +25,12 @@ type RelayerConfig struct {
 	Format string `mapstructure:"log-format"`
 	// Level is the log level (debug|warn|error|panic|fatal)
 	Level string `mapstructure:"log-level"`
+	// NetParams should be mainnet|testnet|simnet|signet
+	NetParams string `mapstructure:"netparams"`
 	// SleepDuration is the backoff interval for the first retry
 	SleepDuration time.Duration `mapstructure:"retry-sleep-duration"`
 	// MaxSleepDuration is the maximum backoff interval between retries
 	MaxSleepDuration time.Duration `mapstructure:"max-retry-sleep-duration"`
-	// NetParams should be mainnet|testnet|simnet|signet
-	NetParams string `mapstructure:"netparams"`
 	// BTCCacheSize is size of the BTC cache
 	BTCCacheSize int64 `mapstructure:"cache-size"`
 	// HeadersChunkSize is maximum number of headers in a MsgInsertHeaders message

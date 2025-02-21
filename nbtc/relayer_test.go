@@ -101,12 +101,12 @@ func Test_Start(t *testing.T) {
 func TestNewRelayer_ErrorCases(t *testing.T) {
 	ts := setupTestSuite(t)
 	testCases := []struct {
-		name            string
 		db              dal.DB
-		nativeProcessor *native2ika.Processor
-		btcProcessor    *ika2btc.Processor
 		expectedError   error
 		fetcher         native.SignReqFetcher
+		nativeProcessor *native2ika.Processor
+		btcProcessor    *ika2btc.Processor
+		name            string
 	}{
 		{
 			name:            "NativeProcessorError",

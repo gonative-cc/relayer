@@ -21,6 +21,8 @@ var (
 // Client manages ZMQ subscriptions and communication with a Bitcoin node.
 // It handles ZMQ message routing and provides thread-safe access to subscriptions.
 // Must be created with New() and cleaned up with Close().
+//
+//nolint:govet
 type Client struct {
 	// RPC connection
 	rpcClient *rpcclient.Client
