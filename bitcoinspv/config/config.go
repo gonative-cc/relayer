@@ -32,12 +32,12 @@ type Config struct {
 // Validate checks if the configuration is valid by running validation on all components
 func (c *Config) Validate() error {
 	validators := []struct {
-		name      string
 		validator func() error
+		name      string
 	}{
-		{"btc", c.BTC.Validate},
-		{"native", c.Native.Validate},
-		{"relayer", c.Relayer.Validate},
+		{c.BTC.Validate, "btc"},
+		{c.Native.Validate, "native"},
+		{c.Relayer.Validate, "relayer"},
 	}
 
 	for _, v := range validators {
