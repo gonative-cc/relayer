@@ -23,6 +23,7 @@ var (
 
 // Config represents the main configuration structure for the application
 type Config struct {
+	Sui     SuiConfig     `mapstucture:"sui"`
 	BTC     BTCConfig     `mapstructure:"btc"`
 	Native  NativeConfig  `mapstructure:"native"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
