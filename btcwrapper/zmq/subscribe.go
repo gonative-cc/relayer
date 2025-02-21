@@ -25,12 +25,14 @@ type SequenceMessage struct {
 }
 
 // Subscriptions keeps track of the zmq connection state
+//
+//nolint:govet
 type Subscriptions struct {
+	sync.RWMutex
 	latestEvent   time.Time
 	exitedChannel chan struct{}
 	zfront        *zeromq.Socket
-	sync.RWMutex
-	isActive bool
+	isActive      bool
 }
 
 // SubscribeSequence subscribes to ZMQ "sequence" messages. Call cancel to unsubscribe.

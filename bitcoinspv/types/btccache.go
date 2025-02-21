@@ -7,9 +7,11 @@ import (
 )
 
 // BTCCache represents a thread-safe cache of indexed blocks
+//
+//nolint:govet
 type BTCCache struct {
-	blocks []*IndexedBlock
 	sync.RWMutex
+	blocks     []*IndexedBlock
 	maxEntries int64
 }
 
