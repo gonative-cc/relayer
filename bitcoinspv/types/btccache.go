@@ -8,9 +8,9 @@ import (
 
 // BTCCache represents a thread-safe cache of indexed blocks
 type BTCCache struct {
-	blocks     []*IndexedBlock
-	maxEntries int64
+	blocks []*IndexedBlock
 	sync.RWMutex
+	maxEntries int64
 }
 
 // NewBTCCache creates a new BTCCache with the specified max entries

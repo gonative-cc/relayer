@@ -21,18 +21,27 @@ var (
 // Client manages ZMQ subscriptions and communication with a Bitcoin node.
 // It handles ZMQ message routing and provides thread-safe access to subscriptions.
 // Must be created with New() and cleaned up with Close().
+//
+//nolint:fieldalignment
 type Client struct {
-	rpcClient          *rpcclient.Client
-	logger             *zap.SugaredLogger
-	quitChan           chan struct{}
-	blockEventsChannel chan *btctypes.BlockEvent // Channel for notifying new BTC blocks to relayer
-	zcontext           *zmq4.Context
-	zsubscriber        *zmq4.Socket // Subscriber socket
-	zbackendsocket     *zmq4.Socket // Backend socket for internal communication
+	// RPC connection
+	rpcClient *rpcclient.Client
+	logger    *zap.SugaredLogger
+
+	// Lifecycle management
+	isClosed int32 // Set atomically
+	wg       sync.WaitGroup
+	quitChan chan struct{}
+
+	// ZMQ configuration
 	zeromqEndpoint     string
-	subscriptions      Subscriptions // Subscription management
-	wg                 sync.WaitGroup
-	isClosed           int32 // Set atomically
+	blockEventsChannel chan *btctypes.BlockEvent
+
+	// ZMQ sockets and subscriptions
+	zcontext       *zmq4.Context
+	zsubscriber    *zmq4.Socket  // Subscriber socket
+	subscriptions  Subscriptions // Subscription management
+	zbackendsocket *zmq4.Socket  // Backend socket for internal communication
 }
 
 // New creates a new zmq client
