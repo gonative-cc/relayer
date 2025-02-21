@@ -19,13 +19,13 @@ var (
 	lcPackage           = "0x063d5eab5a5d09c22f1cf4e2dad1c91fd7172f72bea6a9d9a34939996fc84e2a"
 )
 
-func setupIntegrationTest(t *testing.T) *SuiSPVClient {
+func setupIntegrationTest(t *testing.T) *BitcoinSPVClient {
 	t.Helper()
 
 	cl := sui.NewSuiClient(localRPC).(*sui.Client)
 	s, err := signer.NewSignertWithMnemonic(localMnemonic)
 	assert.Nil(t, err)
-	client, err := NewSuiSPVClient(
+	client, err := NewBitcoinSPVClient(
 		cl,
 		s,
 		lightClientObjectID,
