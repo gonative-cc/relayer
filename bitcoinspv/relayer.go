@@ -12,6 +12,8 @@ import (
 )
 
 // Relayer manages the Bitcoin SPV relayer functionality
+//
+//nolint:govet
 type Relayer struct {
 	// Configuration
 	Config *config.RelayerConfig

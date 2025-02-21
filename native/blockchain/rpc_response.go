@@ -14,7 +14,6 @@ func CheckRespID(idSent, idReceived int) error {
 
 // RPCRespChainID represents the response struct for a chain ID call.
 type RPCRespChainID struct {
-	ID     int `json:"id"`
 	Result struct {
 		Block struct {
 			Header struct {
@@ -23,6 +22,7 @@ type RPCRespChainID struct {
 			} `json:"header"`
 		} `json:"block"`
 	} `json:"result"`
+	ID int `json:"id"`
 }
 
 // CheckRespID checks if the ID sent matches.

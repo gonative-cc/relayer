@@ -4,11 +4,11 @@ import "time"
 
 // Configuration struct
 type Config struct {
-	Native  NativeCfg  `mapstructure:"native"`
 	Ika     IkaCfg     `mapstructure:"ika"`
+	Native  NativeCfg  `mapstructure:"native"`
+	DB      DBCfg      `mapstructure:"db"`
 	Btc     BitcoinCfg `mapstructure:"bitcoin"`
 	Relayer RelayerCfg `mapstructure:"relayer"`
-	DB      DBCfg      `mapstructure:"db"`
 }
 
 type NativeCfg struct {
@@ -30,10 +30,10 @@ type BitcoinCfg struct {
 	RPCHost               string `mapstructure:"rpc_host"`
 	RPCUser               string `mapstructure:"rpc_user"`
 	RPCPass               string `mapstructure:"rpc_pass"`
+	Network               string `mapstructure:"network"`
 	ConfirmationThreshold uint8  `mapstructure:"confirmation_threshold"`
 	HTTPPostMode          bool   `mapstructure:"http_post_mode"`
 	DisableTLS            bool   `mapstructure:"disable_tls"`
-	Network               string `mapstructure:"network"`
 }
 
 type RelayerCfg struct {
