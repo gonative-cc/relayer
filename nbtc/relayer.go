@@ -99,18 +99,30 @@ func NewRelayer(
 
 // Start starts the relayer's main loop.
 func (r *Relayer) Start(ctx context.Context) error {
+	nativeCtx, nativeCancel := context.WithCancel(ctx)
+	defer nativeCancel()
+
+	btcCtx, btcCancel := context.WithCancel(ctx)
+	defer btcCancel()
+
+	fetchCtx, fetchCancel := context.WithCancel(ctx)
+	defer fetchCancel()
+
 	for {
 		select {
 		case <-r.shutdownChan:
 			r.btcProcessor.Shutdown()
 			return nil
 		case <-r.processTxsTicker.C:
-			go r.runProcessor(func() error { return r.processSignRequests(ctx) }, "processSignRequests")
-			go r.runProcessor(r.processSignedTxs, "processSignedTxs")
+			go r.runProcessor(func() error { return r.processSignRequests(nativeCtx) }, "processSignRequests")
+			go r.runProcessor(func() error { return r.processSignedTxs(btcCtx) }, "processSignedTxs")
 		case <-r.confirmTxsTicker.C:
-			go r.runProcessor(r.btcProcessor.CheckConfirmations, "CheckConfirmations")
+			go r.runProcessor(func() error { return r.btcProcessor.CheckConfirmations(btcCtx) }, "CheckConfirmations")
 		case <-r.signReqTicker.C:
-			go r.runProcessor(r.fetchAndStoreNativeSignRequests, "fetchAndStoreNativeSignRequests")
+			go r.runProcessor(
+				func() error { return r.fetchAndStoreNativeSignRequests(fetchCtx) },
+				"fetchAndStoreNativeSignRequests",
+			)
 		}
 	}
 }
@@ -133,12 +145,12 @@ func (r *Relayer) processSignRequests(ctx context.Context) error {
 }
 
 // processSignedTxs processes signed transactions and broadcasts them to Bitcoin.
-func (r *Relayer) processSignedTxs() error {
-	return r.btcProcessor.Run()
+func (r *Relayer) processSignedTxs(ctx context.Context) error {
+	return r.btcProcessor.Run(ctx)
 }
 
 // fetchAndStoreSignRequests fetches and stores sign requests from the Native chain.
-func (r *Relayer) fetchAndStoreNativeSignRequests() error {
+func (r *Relayer) fetchAndStoreNativeSignRequests(ctx context.Context) error {
 	log.Info().Msg("Fetching sign requests from Native...")
 
 	signRequests, err := r.signReqFetcher.GetBtcSignRequests(r.signReqFetchFrom, r.signReqFetchLimit)
@@ -147,7 +159,7 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 	}
 	log.Info().Msgf("SUCCESS: Fetched %d sign requests from Native.", len(signRequests))
 	for _, sr := range signRequests {
-		err = r.storeSignRequest(sr)
+		err = r.storeSignRequest(ctx, sr)
 		if err != nil {
 			return fmt.Errorf("fetchAndStore: %w", err)
 		}
@@ -157,8 +169,8 @@ func (r *Relayer) fetchAndStoreNativeSignRequests() error {
 }
 
 // storeSignRequest stores a single SignReq from the Native chain.
-func (r *Relayer) storeSignRequest(signRequest native.SignReq) error {
-	err := r.db.InsertIkaSignRequest(dal.IkaSignRequest(signRequest))
+func (r *Relayer) storeSignRequest(ctx context.Context, signRequest native.SignReq) error {
+	err := r.db.InsertIkaSignRequest(ctx, dal.IkaSignRequest(signRequest))
 	if err != nil {
 		return fmt.Errorf("failed to insert IkaSignRequest: %w", err)
 	}

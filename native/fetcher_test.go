@@ -23,7 +23,7 @@ func TestAPISignRequestFetcher_GetBtcSignRequests(t *testing.T) {
 		assert.Equal(t, 3, len(requests))
 
 		for i, req := range requests {
-			assert.Equal(t, uint64(i+1), req.ID)
+			assert.Equal(t, int64(i+1), req.ID)
 			assert.Equal(t, fmt.Sprintf("dwallet-%d", i+1), req.DWalletID)
 		}
 	})

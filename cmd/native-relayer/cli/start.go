@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -31,7 +32,7 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Failed to prepare environment")
 			os.Exit(1)
 		}
-		db, err := initDatabase(config.DB)
+		db, err := initDatabase(cmd.Context(), config.DB)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to initialize database")
 			os.Exit(1)
@@ -105,12 +106,12 @@ func prepareEnv(cmd *cobra.Command) (*Config, error) {
 	return config, nil
 }
 
-func initDatabase(cfg DBCfg) (dal.DB, error) {
+func initDatabase(ctx context.Context, cfg DBCfg) (dal.DB, error) {
 	db, err := dal.NewDB(cfg.File)
 	if err != nil {
 		return db, fmt.Errorf("error creating database: %w", err)
 	}
-	if err := db.InitDB(); err != nil {
+	if err := db.InitDB(ctx); err != nil {
 		return db, fmt.Errorf("error initializing database: %w", err)
 	}
 	return db, nil
