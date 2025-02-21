@@ -22,7 +22,7 @@ var btcClientConfig = rpcclient.ConnConfig{
 func TestProcessSignedTxs(t *testing.T) {
 	ctx := context.Background()
 	processor, db := initProcessor(t)
-	err := processor.Run()
+	err := processor.Run(ctx)
 	assert.NilError(t, err)
 
 	updatedTx, err := db.GetBitcoinTx(ctx, 2, daltest.DecodeBTCHash(t, "0"))
@@ -34,7 +34,7 @@ func TestCheckConfirmations(t *testing.T) {
 	ctx := context.Background()
 	processor, db := initProcessor(t)
 	processor.BtcClient = &bitcoin.MockClient{}
-	err := processor.CheckConfirmations()
+	err := processor.CheckConfirmations(ctx)
 	assert.NilError(t, err)
 
 	updatedTx, err := db.GetBitcoinTx(ctx, 4, daltest.DecodeBTCHash(t, "3"))
@@ -44,7 +44,8 @@ func TestCheckConfirmations(t *testing.T) {
 
 func TestNewProcessor(t *testing.T) {
 	// missing BTC config
-	db := daltest.InitTestDB(t)
+	ctx := context.Background()
+	db := daltest.InitTestDB(t, ctx)
 	btcClientConfig.Host = ""
 	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.ErrorIs(t, err, bitcoin.ErrNoBtcConfig)
@@ -55,8 +56,7 @@ func TestNewProcessor(t *testing.T) {
 func initProcessor(t *testing.T) (*Processor, dal.DB) {
 	t.Helper()
 	ctx := context.Background()
-
-	db := daltest.InitTestDB(t)
+	db := daltest.InitTestDB(t, ctx)
 	daltest.PopulateSignRequests(ctx, t, db)
 	daltest.PopulateBitcoinTxs(ctx, t, db)
 	processor, err := NewProcessor(btcClientConfig, 6, db)

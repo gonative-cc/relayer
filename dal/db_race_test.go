@@ -17,9 +17,9 @@ const (
 func Test_DbRace(t *testing.T) {
 	db, err := NewDB(":memory:")
 	assert.NilError(t, err)
-	err = db.InitDB()
-	assert.NilError(t, err)
 	ctx := context.Background()
+	err = db.InitDB(ctx)
+	assert.NilError(t, err)
 
 	// Test 1: Parallel inserts
 	var wg sync.WaitGroup

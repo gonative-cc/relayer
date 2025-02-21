@@ -57,11 +57,10 @@ func NewDB(dbPath string) (DB, error) {
 var content embed.FS
 
 // InitDB initializes the database and creates the tables.
-func (db DB) InitDB() error {
+func (db DB) InitDB(ctx context.Context) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
-	ctx := context.Background()
 	schema, err := content.ReadFile("schema.sql")
 	if err != nil {
 		return fmt.Errorf("dal: reading schema file: %w", err)

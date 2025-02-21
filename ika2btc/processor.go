@@ -44,8 +44,7 @@ func NewProcessor(
 }
 
 // Run starts a loop to query and process signed transactions from the database.
-func (p *Processor) Run() error {
-	ctx := context.Background()
+func (p *Processor) Run(ctx context.Context) error {
 	signedTxs, err := p.db.GetBitcoinTxsToBroadcast(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch signed txs from db: %w", err)
@@ -81,8 +80,7 @@ func (p *Processor) Run() error {
 
 // CheckConfirmations checks all the broadcasted transactions to bitcoin
 // and if confirmed updates the database accordingly.
-func (p *Processor) CheckConfirmations() error {
-	ctx := context.Background()
+func (p *Processor) CheckConfirmations(ctx context.Context) error {
 	broadcastedTxs, err := p.db.GetBroadcastedBitcoinTxsInfo(ctx)
 	if err != nil {
 		return err

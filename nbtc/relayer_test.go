@@ -46,7 +46,8 @@ var relayerConfig = RelayerConfig{
 
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
-	db := daltest.InitTestDB(t)
+	ctx := context.Background()
+	db := daltest.InitTestDB(t, ctx)
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
@@ -144,8 +145,9 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 
 func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 	ts := setupTestSuite(t)
+	ctx := context.Background()
 
-	err := ts.relayer.fetchAndStoreNativeSignRequests()
+	err := ts.relayer.fetchAndStoreNativeSignRequests(ctx)
 	assert.NilError(t, err)
 	assert.Equal(t, ts.relayer.signReqFetchFrom, 5) // Should be 5 after fetching 5 sign requests
 
@@ -157,6 +159,7 @@ func TestRelayer_fetchAndStoreNativeSignRequests(t *testing.T) {
 
 func TestRelayer_storeSignRequest(t *testing.T) {
 	ts := setupTestSuite(t)
+	ctx := context.Background()
 
 	requests, err := ts.db.GetPendingIkaSignRequests(ts.ctx)
 	assert.NilError(t, err)
@@ -165,7 +168,7 @@ func TestRelayer_storeSignRequest(t *testing.T) {
 	sr := native.SignReq{ID: 1, Payload: []byte("rawTxBytes"), DWalletID: "dwallet1",
 		UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
 
-	err = ts.relayer.storeSignRequest(sr)
+	err = ts.relayer.storeSignRequest(ctx, sr)
 	assert.NilError(t, err)
 
 	requests, err = ts.db.GetPendingIkaSignRequests(ts.ctx)
