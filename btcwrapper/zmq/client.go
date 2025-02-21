@@ -22,7 +22,7 @@ var (
 // It handles ZMQ message routing and provides thread-safe access to subscriptions.
 // Must be created with New() and cleaned up with Close().
 //
-//nolint:fieldalignment
+//nolint:govet
 type Client struct {
 	// RPC connection
 	rpcClient *rpcclient.Client
