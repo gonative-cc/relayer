@@ -12,7 +12,7 @@ import (
 
 func Test_InsertIkaSignRequest(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 
 	request := dal.IkaSignRequest{
 		ID:        1,
@@ -33,7 +33,7 @@ func Test_InsertIkaSignRequest(t *testing.T) {
 
 func Test_InsertIkaTx(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 
 	ikaTx := dal.IkaTx{
 		SrID: 1, Status: int64(dal.Success), IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(),
@@ -49,7 +49,7 @@ func Test_InsertIkaTx(t *testing.T) {
 
 func Test_InsertBitcoinTx(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 
 	bitcoinTx := dal.BitcoinTx{
 		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
@@ -65,7 +65,7 @@ func Test_InsertBitcoinTx(t *testing.T) {
 
 func Test_GetIkaSignRequestByID(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 
 	requests := daltest.PopulateSignRequests(ctx, t, db)
 
@@ -76,7 +76,7 @@ func Test_GetIkaSignRequestByID(t *testing.T) {
 
 func Test_GetIkaTx(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	ikaTxs := daltest.PopulateIkaTxs(ctx, t, db)
 
 	ikaTx, err := db.GetIkaTx(ctx, ikaTxs[0].SrID, ikaTxs[0].IkaTxID)
@@ -86,7 +86,7 @@ func Test_GetIkaTx(t *testing.T) {
 
 func Test_GetBitcoinTx(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	btcTxs := daltest.PopulateBitcoinTxs(ctx, t, db)
 
 	btcTx, err := db.GetBitcoinTx(ctx, btcTxs[0].SrID, btcTxs[0].BtcTxID)
@@ -96,7 +96,7 @@ func Test_GetBitcoinTx(t *testing.T) {
 
 func Test_GetPendingIkaSignRequests(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	daltest.PopulateSignRequests(ctx, t, db)
 
 	requests, err := db.GetPendingIkaSignRequests(ctx)
@@ -106,7 +106,7 @@ func Test_GetPendingIkaSignRequests(t *testing.T) {
 
 func Test_GetBitcoinTxsToBroadcast(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	daltest.PopulateSignRequests(ctx, t, db)
 	daltest.PopulateBitcoinTxs(ctx, t, db)
 
@@ -117,7 +117,7 @@ func Test_GetBitcoinTxsToBroadcast(t *testing.T) {
 
 func Test_GetBroadcastedBitcoinTxsInfo(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	daltest.PopulateSignRequests(ctx, t, db)
 	daltest.PopulateBitcoinTxs(ctx, t, db)
 
@@ -128,7 +128,7 @@ func Test_GetBroadcastedBitcoinTxsInfo(t *testing.T) {
 
 func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	requestID := int64(1)
 	request := dal.IkaSignRequest{
 		ID:        1,
@@ -153,7 +153,7 @@ func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 
 func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	bitcoinTx := dal.BitcoinTx{
 		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}

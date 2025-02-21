@@ -16,7 +16,7 @@ import (
 // newIkaProcessor creates a new Processor instance with a mocked IKA client and populated database.
 func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	return &Processor{
 		ikaClient: ikaClient,
 		db:        db,

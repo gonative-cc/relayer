@@ -119,7 +119,10 @@ func (r *Relayer) Start(ctx context.Context) error {
 		case <-r.confirmTxsTicker.C:
 			go r.runProcessor(func() error { return r.btcProcessor.CheckConfirmations(btcCtx) }, "CheckConfirmations")
 		case <-r.signReqTicker.C:
-			go r.runProcessor(func() error { return r.fetchAndStoreNativeSignRequests(fetchCtx) }, "fetchAndStoreNativeSignRequests")
+			go r.runProcessor(
+				func() error { return r.fetchAndStoreNativeSignRequests(fetchCtx) },
+				"fetchAndStoreNativeSignRequests",
+			)
 		}
 	}
 }

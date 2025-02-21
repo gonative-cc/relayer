@@ -47,7 +47,7 @@ var relayerConfig = RelayerConfig{
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}

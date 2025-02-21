@@ -45,7 +45,7 @@ func TestCheckConfirmations(t *testing.T) {
 func TestNewProcessor(t *testing.T) {
 	// missing BTC config
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	btcClientConfig.Host = ""
 	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.ErrorIs(t, err, bitcoin.ErrNoBtcConfig)
@@ -56,7 +56,7 @@ func TestNewProcessor(t *testing.T) {
 func initProcessor(t *testing.T) (*Processor, dal.DB) {
 	t.Helper()
 	ctx := context.Background()
-	db := daltest.InitTestDB(t, ctx)
+	db := daltest.InitTestDB(ctx, t)
 	daltest.PopulateSignRequests(ctx, t, db)
 	daltest.PopulateBitcoinTxs(ctx, t, db)
 	processor, err := NewProcessor(btcClientConfig, 6, db)

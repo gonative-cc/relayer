@@ -28,7 +28,7 @@ var testDBCounter = 0
 
 // InitTestDB initializes an in-memory database for testing purposes. Subsequent calls will
 // create a new in-memory DB.
-func InitTestDB(t *testing.T, ctx context.Context) dal.DB {
+func InitTestDB(ctx context.Context, t *testing.T) dal.DB {
 	t.Helper()
 
 	testDBCounter++
