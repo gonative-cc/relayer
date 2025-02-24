@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 	"gotest.tools/assert"
 
 	relayerconfig "github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -24,7 +24,7 @@ func TestSetupBitcoindConnection(t *testing.T) {
 				zeromqClient:          nil,
 				chainParams:           &chaincfg.MainNetParams,
 				config:                &relayerconfig.DefaultConfig().BTC,
-				logger:                &zap.SugaredLogger{},
+				logger:                zaptest.NewLogger(t).Sugar(),
 				blockEventsChannel:    nil,
 				retrySleepDuration:    time.Second,
 				maxRetrySleepDuration: time.Minute,
