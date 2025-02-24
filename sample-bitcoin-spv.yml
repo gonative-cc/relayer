@@ -18,7 +18,7 @@ btc:
 native:
   rpc-endpoint: http://localhost:9797
 sui:
-  endpoint: https://fullnode.devnet.sui.io:443
+  endpoint: https://fullnode.devnet.sui.io:443 # for local endpoint use http://127.0.0.1:9000
   mnemonic: "your mnemonic"
   lc_object_id: 0x...
   lc_package_id: 0x ...
