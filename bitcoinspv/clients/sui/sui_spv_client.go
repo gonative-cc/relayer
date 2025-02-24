@@ -59,14 +59,14 @@ func NewSPVClient(
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
-func (c SPVClient) InsertHeaders(ctx context.Context, blockHeaders []*wire.BlockHeader) error {
+func (c SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
 
 	rawHeaders := make([]string, 0, len(blockHeaders))
 	for _, header := range blockHeaders {
-		rawHeader, err := BlockHeaderToHex(*header)
+		rawHeader, err := BlockHeaderToHex(header)
 		if err != nil {
 			return fmt.Errorf("error serializing block header: %w", err)
 		}

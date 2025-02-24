@@ -14,10 +14,10 @@ type MsgInsertHeaders struct {
 
 // NewMsgInsertHeaders converts a slice of IndexedBlock to wire.BlockHeader slice.
 // It extracts the BlockHeader from each IndexedBlock and returns them as a slice.
-func NewMsgInsertHeaders(blocks []*IndexedBlock) []*wire.BlockHeader {
-	result := make([]*wire.BlockHeader, 0, len(blocks))
+func NewMsgInsertHeaders(blocks []*IndexedBlock) []wire.BlockHeader {
+	result := make([]wire.BlockHeader, 0, len(blocks))
 	for _, block := range blocks {
-		result = append(result, block.BlockHeader)
+		result = append(result, *block.BlockHeader)
 	}
 	return result
 }

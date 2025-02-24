@@ -29,7 +29,7 @@ func breakIntoChunks[T any](v []T, chunkSize int) [][]T {
 // containing block headers that need to be sent to the Native light client
 func (r *Relayer) getHeaderMessages(
 	indexedBlocks []*types.IndexedBlock,
-) ([][]*wire.BlockHeader, error) {
+) ([][]wire.BlockHeader, error) {
 	startPoint, err := r.findFirstNewHeader(indexedBlocks)
 	if err != nil {
 		return nil, err
@@ -69,9 +69,9 @@ func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, 
 }
 
 // createHeaderMessages splits blocks into chunks and creates header messages
-func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]*wire.BlockHeader {
+func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]wire.BlockHeader {
 	blockChunks := breakIntoChunks(indexedBlocks, int(r.Config.HeadersChunkSize))
-	headerMsgs := make([][]*wire.BlockHeader, 0, len(blockChunks))
+	headerMsgs := make([][]wire.BlockHeader, 0, len(blockChunks))
 
 	for _, chunk := range blockChunks {
 		headerMsgs = append(headerMsgs, types.NewMsgInsertHeaders(chunk))
@@ -80,7 +80,7 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 	return headerMsgs
 }
 
-func (r *Relayer) submitHeaderMessages(msg []*wire.BlockHeader) error {
+func (r *Relayer) submitHeaderMessages(msg []wire.BlockHeader) error {
 	ctx := context.Background()
 	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
 		if err := r.SPVClient.InsertHeaders(ctx, msg); err != nil {

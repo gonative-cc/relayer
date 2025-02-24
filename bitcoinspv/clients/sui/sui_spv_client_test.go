@@ -45,7 +45,7 @@ func TestInsertHeader(t *testing.T) {
 	header, err := BlockHeaderFromHex(rawHeaderHex)
 	assert.Nil(t, err)
 
-	headers := []*wire.BlockHeader{&header}
+	headers := []wire.BlockHeader{header}
 
 	err = client.InsertHeaders(context.Background(), headers)
 	assert.Nil(t, err)
