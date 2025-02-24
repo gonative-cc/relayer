@@ -55,7 +55,7 @@ func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, 
 		var res bool
 		var err error
 		err = RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
-			res, err = r.nativeClient.ContainsBlock(context.Background(), blockHash)
+			res, err = r.SPVClient.ContainsBlock(context.Background(), blockHash)
 			return err
 		})
 		if err != nil {
@@ -83,7 +83,7 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 func (r *Relayer) submitHeaderMessages(msg []*wire.BlockHeader) error {
 	ctx := context.Background()
 	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
-		if err := r.nativeClient.InsertHeaders(ctx, msg); err != nil {
+		if err := r.SPVClient.InsertHeaders(ctx, msg); err != nil {
 			return err
 		}
 		r.logger.Infof(
@@ -154,7 +154,7 @@ func (r *Relayer) submitTransaction(
 	msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID(), tx.Hash())
 
 	// submit the checkpoint to light client
-	res, err := r.nativeClient.VerifySPV(context.Background(), &msgSpvProof)
+	res, err := r.SPVClient.VerifySPV(context.Background(), &msgSpvProof)
 	if err != nil {
 		r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
 		return err

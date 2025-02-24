@@ -19,8 +19,8 @@ type Relayer struct {
 	logger *zap.SugaredLogger
 
 	// Clients
-	btcClient    clients.BTCClient
-	nativeClient clients.BitcoinSPV
+	btcClient clients.BTCClient
+	SPVClient clients.BitcoinSPV
 
 	// Retry settings
 	retrySleepDuration    time.Duration
@@ -59,7 +59,7 @@ func New(
 		retrySleepDuration:    retrySleepDuration,
 		maxRetrySleepDuration: maxRetrySleepDuration,
 		btcClient:             btcClient,
-		nativeClient:          nativeClient,
+		SPVClient:             nativeClient,
 		btcConfirmationDepth:  defaultConfirmationDepth,
 		quitChannel:           make(chan struct{}),
 	}
