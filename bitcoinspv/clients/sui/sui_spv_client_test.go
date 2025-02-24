@@ -36,7 +36,7 @@ func setupIntegrationTest(t *testing.T) *BitcoinSPVClient {
 	return client
 }
 
-func TestNatvieClient_InsertHeader(t *testing.T) {
+func TestInsertHeader(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	client := setupIntegrationTest(t)
 
@@ -44,13 +44,13 @@ func TestNatvieClient_InsertHeader(t *testing.T) {
 	header, err := BlockHeaderFromHex(rawHeaderHex)
 	assert.Nil(t, err)
 
-	var headers []*wire.BlockHeader = []*wire.BlockHeader{&header}
+	headers := []wire.BlockHeader{header}
 
 	err = client.InsertHeaders(context.Background(), headers)
 	assert.Nil(t, err)
 }
 
-func TestNatvieClient_ContainsBTCBlock(t *testing.T) {
+func TestContainsBlock(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	client := setupIntegrationTest(t)
 
@@ -70,7 +70,7 @@ func TestNatvieClient_ContainsBTCBlock(t *testing.T) {
 	assert.False(t, exist, "Non-existent block should not exist")
 }
 
-func TestNatvieClient_GetHeaderChainTip(t *testing.T) {
+func TestGetHeaderChainTip(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	client := setupIntegrationTest(t)
 

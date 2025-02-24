@@ -75,7 +75,7 @@ func (c BitcoinSPVClient) InsertHeaders(ctx context.Context, blockHeaders []*wir
 
 	arguments := []interface{}{
 		c.lcObjectID,
-		rawHeaders, // The serialized block headers as a array of hex string
+		rawHeaders,
 	}
 
 	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
@@ -85,13 +85,10 @@ func (c BitcoinSPVClient) InsertHeaders(ctx context.Context, blockHeaders []*wir
 
 // ContainsBTCBlock checks if the light client's chain includes a block with the given hash.
 func (c *BitcoinSPVClient) ContainsBTCBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
-	hexHash := BlockHashToHex(blockHash)
-
 	arguments := []interface{}{
 		c.lcObjectID,
-		hexHash,
+		BlockHashToHex(blockHash),
 	}
-
 	response, err := c.moveCall(ctx, containsBlockFunc, arguments)
 	if err != nil {
 		return false, err
@@ -114,7 +111,6 @@ func (c *BitcoinSPVClient) GetHeaderChainTip(ctx context.Context) (*clients.Bloc
 	arguments := []interface{}{
 		c.lcObjectID,
 	}
-
 	response, err := c.moveCall(ctx, getChainTipFunc, arguments)
 	if err != nil {
 		return nil, err
@@ -261,5 +257,6 @@ func (c *BitcoinSPVClient) extractEventData(ctx context.Context, txDigest string
 		return nil, fmt.Errorf("no events found for transaction digest: %s", txDigest)
 	}
 
+	// TODO: use raw JSON
 	return events[0].ParsedJson, nil
 }

@@ -80,7 +80,7 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 	return headerMsgs
 }
 
-func (r *Relayer) submitHeaderMessages(msg []*wire.BlockHeader) error {
+func (r *Relayer) submitHeaderMessages(msg []wire.BlockHeader) error {
 	ctx := context.Background()
 	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
 		if err := r.nativeClient.InsertHeaders(ctx, msg); err != nil {

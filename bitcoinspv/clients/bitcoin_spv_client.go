@@ -20,7 +20,7 @@ type BlockInfo struct {
 type BitcoinSPVClient interface {
 
 	// InsertHeaders adds new Bitcoin block headers to the light client's chain.
-	InsertHeaders(ctx context.Context, blockHeaders []*wire.BlockHeader) error
+	InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error
 
 	// GetChainTip returns the block hash and height of the best (highest height)
 	// block header known to the light client.

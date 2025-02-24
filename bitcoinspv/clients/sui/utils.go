@@ -16,7 +16,6 @@ const BTCHeaderSize = 80 // 80 bytes
 // The input must be 80 bytes hex string type
 func BlockHeaderFromHex(hexStr string) (wire.BlockHeader, error) {
 	var header wire.BlockHeader
-
 	if len(hexStr) != BTCHeaderSize*2 {
 		return header, errors.New("invalid header size, must be 80 bytes")
 	}
@@ -33,7 +32,7 @@ func BlockHeaderFromHex(hexStr string) (wire.BlockHeader, error) {
 
 // BlockHeaderToHex transforms header to hex encoded string
 func BlockHeaderToHex(header wire.BlockHeader) (string, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, 80))
+	buf := bytes.NewBuffer(make([]byte, 0, BTCHeaderSize))
 	err := header.Serialize(buf)
 	if err != nil {
 		return "", err
