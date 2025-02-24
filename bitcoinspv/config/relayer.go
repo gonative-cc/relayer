@@ -16,7 +16,7 @@ const (
 	defaultRetrySleepDuration    = 5 * time.Second
 	defaultMaxRetrySleepDuration = 5 * time.Minute
 	minBTCCacheSize              = 1000
-	maxheadersChunkSize          = 100
+	minheadersChunkSize          = 1
 )
 
 // RelayerConfig defines configuration for the spv relayer.
@@ -99,8 +99,8 @@ func (cfg *RelayerConfig) validateBTCCacheSize() error {
 }
 
 func (cfg *RelayerConfig) validateHeadersChunkSize() error {
-	if cfg.HeadersChunkSize < maxheadersChunkSize {
-		return fmt.Errorf("headers-chunk-size has to be at least %d", maxheadersChunkSize)
+	if cfg.HeadersChunkSize < minheadersChunkSize {
+		return fmt.Errorf("headers-chunk-size has to be at least %d", minheadersChunkSize)
 	}
 	return nil
 }
@@ -114,7 +114,7 @@ func DefaultRelayerConfig() RelayerConfig {
 		MaxSleepDuration: defaultMaxRetrySleepDuration,
 		NetParams:        btctypes.Testnet.String(),
 		BTCCacheSize:     minBTCCacheSize,
-		HeadersChunkSize: maxheadersChunkSize,
+		HeadersChunkSize: minheadersChunkSize,
 	}
 }
 
