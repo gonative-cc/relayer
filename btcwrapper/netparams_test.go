@@ -38,7 +38,10 @@ func TestGetBTCNodeParams(t *testing.T) {
 			params, err := GetBTCNodeParams(tt.network)
 
 			if tt.expectError {
-				assert.Error(t, err, "expected an error for invalid network")
+				assert.Error(
+					t, err,
+					"invalid BTC network '%s'. Valid networks are: mainnet, testnet, simnet, regtest, signet", tt.network,
+				)
 				return
 			}
 
