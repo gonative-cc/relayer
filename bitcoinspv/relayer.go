@@ -20,7 +20,7 @@ type Relayer struct {
 
 	// Clients
 	btcClient    clients.BTCClient
-	nativeClient clients.BitcoinSPVClient
+	nativeClient clients.BitcoinSPV
 
 	// Retry settings
 	retrySleepDuration    time.Duration
@@ -42,7 +42,7 @@ func New(
 	config *config.RelayerConfig,
 	parentLogger *zap.Logger,
 	btcClient clients.BTCClient,
-	nativeClient clients.BitcoinSPVClient,
+	nativeClient clients.BitcoinSPV,
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
 ) (*Relayer, error) {

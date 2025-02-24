@@ -24,22 +24,22 @@ const (
 	defaultGasBudget  = "100000000"
 )
 
-// BitcoinSPVClient implements the BitcoinSPVClient interface, interacting with a
+// SPVClient implements the BitcoinSPV interface, interacting with a
 // Bitcoin SPV light client deployed as a smart contract on Sui.
-type BitcoinSPVClient struct {
+type SPVClient struct {
 	suiClient   *sui.Client
 	signer      *signer.Signer
 	lcObjectID  string
 	lcPackageID string
 }
 
-// NewBitcoinSPVClient creates a new BitcoinSPVClient instance.
-func NewBitcoinSPVClient(
+// NewSPVClient creates a new SPVClient instance.
+func NewSPVClient(
 	suiClient *sui.Client,
 	signer *signer.Signer,
 	lightClientObjectID string,
 	lightClientPackageID string,
-) (*BitcoinSPVClient, error) {
+) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
 		return nil, ErrSuiClientNil
 	}
@@ -50,7 +50,7 @@ func NewBitcoinSPVClient(
 		return nil, ErrEmptyObjectID
 	}
 
-	return &BitcoinSPVClient{
+	return &SPVClient{
 		suiClient:   suiClient,
 		signer:      signer,
 		lcObjectID:  lightClientObjectID,
@@ -59,9 +59,9 @@ func NewBitcoinSPVClient(
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
-func (c BitcoinSPVClient) InsertHeaders(ctx context.Context, blockHeaders []*wire.BlockHeader) error {
+func (c SPVClient) InsertHeaders(ctx context.Context, blockHeaders []*wire.BlockHeader) error {
 	if len(blockHeaders) == 0 {
-		return fmt.Errorf("no block headers provided")
+		return ErrNoBlockHeaders
 	}
 
 	rawHeaders := make([]string, 0, len(blockHeaders))
@@ -80,21 +80,21 @@ func (c BitcoinSPVClient) InsertHeaders(ctx context.Context, blockHeaders []*wir
 
 	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
 	return err
-
 }
 
-// ContainsBTCBlock checks if the light client's chain includes a block with the given hash.
-func (c *BitcoinSPVClient) ContainsBTCBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
+// ContainsBlock checks if the light client's chain includes a block with the given hash.
+func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
 	arguments := []interface{}{
 		c.lcObjectID,
 		BlockHashToHex(blockHash),
 	}
+
 	response, err := c.moveCall(ctx, containsBlockFunc, arguments)
 	if err != nil {
 		return false, err
 	}
 
-	eventData, err := c.extractEventData(ctx, response.Effects.TransactionDigest)
+	eventData, err := c.extractFirstEvent(ctx, response.Effects.TransactionDigest)
 	if err != nil {
 		return false, err
 	}
@@ -106,39 +106,40 @@ func (c *BitcoinSPVClient) ContainsBTCBlock(ctx context.Context, blockHash chain
 	return exist, nil
 }
 
-// GetHeaderChainTip returns the block hash and height of the best block header.
-func (c *BitcoinSPVClient) GetHeaderChainTip(ctx context.Context) (*clients.BlockInfo, error) {
+// GetLatestBlockInfo returns the block hash and height of the best block header.
+func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
 	arguments := []interface{}{
 		c.lcObjectID,
 	}
+
 	response, err := c.moveCall(ctx, getChainTipFunc, arguments)
 	if err != nil {
 		return nil, err
 	}
 
-	eventData, err := c.extractEventData(ctx, response.Effects.TransactionDigest)
+	eventData, err := c.extractFirstEvent(ctx, response.Effects.TransactionDigest)
 	if err != nil {
 		return nil, err
 	}
 
 	lightBlockHashData, ok := eventData["light_block_hash"].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("unexpected event data format: 'light_block_hash' field not found or not a slice")
+		return nil, ErrLightBlockHashNotFound
 	}
 
 	heightData, ok := eventData["height"]
 	if !ok {
-		return nil, fmt.Errorf("unexpected event data format: 'height' field not found")
+		return nil, ErrHeightNotFound
 	}
 
 	heightStr, ok := heightData.(string)
 	if !ok {
-		return nil, fmt.Errorf("unexpected event data format: 'height' expected type of string got %T", heightData)
+		return nil, fmt.Errorf("%w: got %T", ErrHeightInvalidType, heightData)
 	}
 
 	height, err := strconv.ParseInt(heightStr, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid height value '%s': %w", heightStr, err)
+		return nil, fmt.Errorf("%w: %s", ErrHeightInvalidValue, err.Error())
 	}
 
 	hashBytes := make([]byte, len(lightBlockHashData))
@@ -146,17 +147,17 @@ func (c *BitcoinSPVClient) GetHeaderChainTip(ctx context.Context) (*clients.Bloc
 		byteVal, ok := v.(float64) // JSON numbers come as float64.
 		if !ok {
 			return nil,
-				fmt.Errorf("unexpected type in 'light_block_hash' array: expected float64, got %T at index %d", v, i)
+				fmt.Errorf("%w: got %T at index %d", ErrBlockHashInvalidType, v, i)
 		}
 		if byteVal < 0 || byteVal > 255 {
-			return nil, fmt.Errorf("invalid byte value in 'light_block_hash' array: %f at index %d", byteVal, i)
+			return nil, fmt.Errorf("%w: %f at index %d", ErrBlockHashInvalidByte, byteVal, i)
 		}
 		hashBytes[i] = byte(byteVal)
 	}
 
 	blockHash, err := chainhash.NewHash(hashBytes)
 	if err != nil {
-		return nil, fmt.Errorf("invalid block hash bytes: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrBlockHashInvalid, err)
 	}
 
 	return &clients.BlockInfo{
@@ -167,7 +168,7 @@ func (c *BitcoinSPVClient) GetHeaderChainTip(ctx context.Context) (*clients.Bloc
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
 // TODO: finish implementation
-func (c *BitcoinSPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (int, error) {
+func (c *SPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (int, error) {
 	arguments := []interface{}{
 		c.lcObjectID,
 		spvProof.TxID,
@@ -179,7 +180,7 @@ func (c *BitcoinSPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVPro
 	if err != nil {
 		return -1, err
 	}
-	eventData, err := c.extractEventData(ctx, response.Effects.TransactionDigest)
+	eventData, err := c.extractFirstEvent(ctx, response.Effects.TransactionDigest)
 	if err != nil {
 		return -1, err
 	}
@@ -196,13 +197,13 @@ func (c *BitcoinSPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVPro
 	return 1, nil
 }
 
-func (c BitcoinSPVClient) Stop() {
+func (c SPVClient) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
 }
 
 // moveCall is a helper function to construct and execute a Move call on the Sui blockchain.
-func (c *BitcoinSPVClient) moveCall(
+func (c *SPVClient) moveCall(
 	ctx context.Context,
 	function string,
 	arguments []interface{},
@@ -242,21 +243,20 @@ func (c *BitcoinSPVClient) moveCall(
 	return signedResp, nil
 }
 
-// extractEventData is a helper function to extract data from the first event in a transaction.
+// extractFirstEvent is a helper function to extract data from the first event in a transaction.
 //
 //	It returns error if there is no events.
-func (c *BitcoinSPVClient) extractEventData(ctx context.Context, txDigest string) (map[string]interface{}, error) {
+func (c *SPVClient) extractFirstEvent(ctx context.Context, txDigest string) (map[string]interface{}, error) {
 	events, err := c.suiClient.SuiGetEvents(ctx, models.SuiGetEventsRequest{
 		Digest: txDigest,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve Sui events: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrEventDataFormat, err)
 	}
 
 	if len(events) == 0 {
-		return nil, fmt.Errorf("no events found for transaction digest: %s", txDigest)
+		return nil, fmt.Errorf("%w: %s", ErrNoEventsFound, txDigest)
 	}
 
-	// TODO: use raw JSON
 	return events[0].ParsedJson, nil
 }

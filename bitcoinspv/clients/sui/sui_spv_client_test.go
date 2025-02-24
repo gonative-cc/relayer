@@ -8,24 +8,25 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/stretchr/testify/assert"
 )
 
 // local variables used for testing
 var (
-	localRPC            = "https://fullnode.devnet.sui.io:443"
+	localRPC            = "http://127.0.0.1:9000"
 	localMnemonic       = "hungry soft price stem lobster liar super protect script captain spring doctor"
 	lightClientObjectID = "0xfdd31cc07afc6950aaee0ac85c45d244778b4b9c7f1ce91ccd39ada8c2731460"
 	lcPackage           = "0x063d5eab5a5d09c22f1cf4e2dad1c91fd7172f72bea6a9d9a34939996fc84e2a"
 )
 
-func setupIntegrationTest(t *testing.T) *BitcoinSPVClient {
+func setupIntegrationTest(t *testing.T) clients.BitcoinSPV {
 	t.Helper()
 
 	cl := sui.NewSuiClient(localRPC).(*sui.Client)
 	s, err := signer.NewSignertWithMnemonic(localMnemonic)
 	assert.Nil(t, err)
-	client, err := NewBitcoinSPVClient(
+	client, err := NewSPVClient(
 		cl,
 		s,
 		lightClientObjectID,
@@ -44,7 +45,7 @@ func TestInsertHeader(t *testing.T) {
 	header, err := BlockHeaderFromHex(rawHeaderHex)
 	assert.Nil(t, err)
 
-	headers := []wire.BlockHeader{header}
+	headers := []*wire.BlockHeader{&header}
 
 	err = client.InsertHeaders(context.Background(), headers)
 	assert.Nil(t, err)
@@ -59,13 +60,13 @@ func TestContainsBlock(t *testing.T) {
 	header, err := BlockHeaderFromHex(rawHeaderHex)
 	assert.Nil(t, err)
 
-	exist, err := client.ContainsBTCBlock(context.Background(), header.BlockHash())
+	exist, err := client.ContainsBlock(context.Background(), header.BlockHash())
 	assert.Nil(t, err)
 	assert.True(t, exist, "Block should exist")
 
 	nonExistentHash, _ := chainhash.NewHashFromStr("0000000000000000000000000000000000000000000000000000000000000001")
 
-	exist, err = client.ContainsBTCBlock(context.Background(), *nonExistentHash)
+	exist, err = client.ContainsBlock(context.Background(), *nonExistentHash)
 	assert.Nil(t, err)
 	assert.False(t, exist, "Non-existent block should not exist")
 }
@@ -74,11 +75,11 @@ func TestGetHeaderChainTip(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	client := setupIntegrationTest(t)
 
-	blockInfo, err := client.GetHeaderChainTip(context.Background())
+	blockInfo, err := client.GetLatestBlockInfo(context.Background())
 	assert.Nil(t, err)
 	assert.NotZero(t, blockInfo.Height)
 
-	exist, err := client.ContainsBTCBlock(context.Background(), *blockInfo.Hash)
+	exist, err := client.ContainsBlock(context.Background(), *blockInfo.Hash)
 	assert.Nil(t, err)
 	assert.True(t, exist, "Chain tip block should exist")
 }

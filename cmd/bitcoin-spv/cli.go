@@ -94,7 +94,7 @@ func logTipBlock(btcClient *btcwrapper.Client, rootLogger *zap.Logger) {
 		zap.Int64("time", latestBTCBlock.Time))
 }
 
-func initNativeClient(cfg *config.Config) clients.BitcoinSPVClient {
+func initNativeClient(cfg *config.Config) clients.BitcoinSPV {
 	c := sui.NewSuiClient(cfg.Sui.Endpoint).(*sui.Client)
 
 	signer, err := signer.NewSignertWithMnemonic(cfg.Sui.Mnemonic)
@@ -102,7 +102,7 @@ func initNativeClient(cfg *config.Config) clients.BitcoinSPVClient {
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	client, err := suiLC.NewBitcoinSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
+	client, err := suiLC.NewSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))
@@ -115,7 +115,7 @@ func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger *zap.Logger,
 	btcClient *btcwrapper.Client,
-	nativeClient clients.BitcoinSPVClient,
+	nativeClient clients.BitcoinSPV,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
@@ -135,7 +135,7 @@ func setupShutdown(
 	rootLogger *zap.Logger,
 	spvRelayer *bitcoinspv.Relayer,
 	btcClient *btcwrapper.Client,
-	nativeClient clients.BitcoinSPVClient,
+	nativeClient clients.BitcoinSPV,
 ) {
 	registerHandler(func() {
 		rootLogger.Info("Stopping relayer...")
