@@ -1,6 +1,7 @@
 package btcwrapper
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -30,6 +31,20 @@ func TestSetupBitcoindConnection(t *testing.T) {
 				maxRetrySleepDuration: time.Minute,
 			},
 			expectError: nil,
+		},
+		{
+			name: "invalid config",
+			client: &Client{
+				Client:                nil,
+				zeromqClient:          nil,
+				chainParams:           &chaincfg.MainNetParams,
+				config:                nil,
+				logger:                zaptest.NewLogger(t).Sugar(),
+				blockEventsChannel:    nil,
+				retrySleepDuration:    time.Second,
+				maxRetrySleepDuration: time.Minute,
+			},
+			expectError: fmt.Errorf("invalid BTC network 'invalid'"),
 		},
 	}
 
