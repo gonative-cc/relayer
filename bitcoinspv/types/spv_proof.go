@@ -12,10 +12,10 @@ import (
 
 // BTCSpvProof represents a Bitcoin SPV proof for verifying transaction inclusion
 type BTCSpvProof struct {
-	ConfirmingBtcBlockHash chainhash.Hash
 	BtcTransaction         []byte
-	BtcTransactionIndex    uint32
 	MerkleNodes            []byte
+	BtcTransactionIndex    uint32
+	ConfirmingBtcBlockHash chainhash.Hash
 }
 
 // ToMsgSpvProof converts a BTCSpvProof to an SPVProof message
@@ -50,10 +50,10 @@ type MsgInsertBTCSpvProof struct {
 
 // SPVProof represents a simplified payment verification proof
 type SPVProof struct {
-	BlockHash  chainhash.Hash
 	TxID       string // 32bytes hash value in string hex format
-	TxIndex    uint32 // index of transaction in block
 	MerklePath []chainhash.Hash
+	TxIndex    uint32 // index of transaction in block
+	BlockHash  chainhash.Hash
 }
 
 // SpvProofFromHeaderAndTransactions creates a simplified payment verification proof

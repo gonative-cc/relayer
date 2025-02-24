@@ -28,13 +28,12 @@ const (
 
 // chainRPC defines the structure to get information about the chain.
 type chainRPC struct {
-	mu         sync.Mutex
+	encCfg     testutil.TestEncodingConfig
 	conn       *Conn
 	chainID    string
 	nextRPCID  int
+	mu         sync.Mutex
 	rpcIDMutex sync.Mutex
-
-	encCfg testutil.TestEncodingConfig
 }
 
 // New returns a new blockchain structure with a RPC connection

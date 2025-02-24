@@ -29,19 +29,14 @@ var (
 
 // BTCConfig defines configuration for the Bitcoin client
 type BTCConfig struct {
-	// TLS configuration
-	DisableClientTLS bool   `mapstructure:"no-client-tls"`
-	CAFile           string `mapstructure:"ca-file"`
-
-	// Node configuration
-	Endpoint   string                    `mapstructure:"endpoint"`
-	Username   string                    `mapstructure:"username"`
-	Password   string                    `mapstructure:"password"`
-	NetParams  string                    `mapstructure:"net-params"`
-	BtcBackend btctypes.SupportedBackend `mapstructure:"btc-backend"`
-
-	// ZMQ configuration
-	ZmqSeqEndpoint string `mapstructure:"zmq-seq-endpoint"`
+	CAFile           string                    `mapstructure:"ca-file"`
+	Endpoint         string                    `mapstructure:"endpoint"`
+	Username         string                    `mapstructure:"username"`
+	Password         string                    `mapstructure:"password"`
+	NetParams        string                    `mapstructure:"net-params"`
+	BtcBackend       btctypes.SupportedBackend `mapstructure:"btc-backend"`
+	ZmqSeqEndpoint   string                    `mapstructure:"zmq-seq-endpoint"`
+	DisableClientTLS bool                      `mapstructure:"no-client-tls"`
 }
 
 func (cfg *BTCConfig) validateBasicConfig() error {

@@ -44,11 +44,11 @@ func TestRun(t *testing.T) {
 }
 
 type testRunCase struct {
-	name          string
 	ikaClient     ika.Client
 	setupDB       func(t *testing.T, db dal.DB)
-	expectedError string
 	assertions    func(t *testing.T, processor *Processor)
+	name          string
+	expectedError string
 }
 
 func TestRun_EdgeCases(t *testing.T) {
