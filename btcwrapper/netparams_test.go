@@ -1,6 +1,7 @@
 package btcwrapper
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -12,24 +13,26 @@ func TestGetBTCNodeParams(t *testing.T) {
 		name           string
 		network        string
 		expectedParams *chaincfg.Params
-		expectError    bool
+		expectError    error
 	}{
 		{
 			name:           "mainnet",
 			network:        "mainnet",
 			expectedParams: &chaincfg.MainNetParams,
-			expectError:    false,
+			expectError:    nil,
 		},
 		{
 			name:           "regtest",
 			network:        "regtest",
 			expectedParams: &chaincfg.RegressionNetParams,
-			expectError:    false,
+			expectError:    nil,
 		},
 		{
-			name:        "invalid network",
-			network:     "invalid",
-			expectError: true,
+			name:    "invalid network",
+			network: "invalid",
+			expectError: fmt.Errorf(
+				"invalid BTC network 'invalid'. Valid networks are: mainnet, testnet, simnet, regtest, signet",
+			),
 		},
 	}
 
@@ -37,11 +40,8 @@ func TestGetBTCNodeParams(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			params, err := GetBTCNodeParams(tt.network)
 
-			if tt.expectError {
-				assert.Error(
-					t, err,
-					"invalid BTC network '%s'. Valid networks are: mainnet, testnet, simnet, regtest, signet", tt.network,
-				)
+			if tt.expectError != nil {
+				assert.Error(t, err, tt.expectError.Error())
 				return
 			}
 
