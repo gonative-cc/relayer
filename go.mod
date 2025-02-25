@@ -3,7 +3,7 @@ module github.com/gonative-cc/relayer
 go 1.23.1
 
 require (
-	github.com/avast/retry-go/v4 v4.6.0
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/block-vision/sui-go-sdk v1.0.6
 	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.17
