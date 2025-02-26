@@ -78,7 +78,8 @@ func (c SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 		rawHeaders,
 	}
 
-	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
+	resp, err := c.moveCall(ctx, insertHeadersFunc, arguments)
+	log.Debug().Msgf("\nresults :%+v\n", resp)
 	return err
 }
 
@@ -237,7 +238,17 @@ func (c *SPVClient) moveCall(
 	})
 	if err != nil {
 		return models.SuiTransactionBlockResponse{},
-			fmt.Errorf("sui transaction execution for '%s' failed: %w", function, err)
+			fmt.Errorf("sui transaction submission for '%s' failed: %w", function, err)
+	}
+
+	// The error returned by SignAndExecuteTransactionBlock only indicates
+	// whether the transaction was successfully submitted to the network.
+	// It does NOT guarantee that the transaction succeeded  during execution.
+	// Thats why we MUST inspect the `Effects.Status` field.
+	// It will tell us about execution errors like: Abort, OutOfGas etc.
+	if signedResp.Effects.Status.Status != "success" {
+		return signedResp, fmt.Errorf("%w: function '%s' status: %s, error: %s",
+			ErrSuiTransactionFailed, function, signedResp.Effects.Status.Status, signedResp.Effects.Status.Error)
 	}
 
 	return signedResp, nil
