@@ -145,10 +145,6 @@ func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 		r.logger.Warnf("Error submitting header: %v", err)
 	}
 
-	if _, err := r.ProcessTransactions(headersToProcess); err != nil {
-		r.logger.Warnf("Error submitting transactions: %v", err)
-	}
-
 	return nil
 }
 
