@@ -43,7 +43,7 @@ GROUP BY sr.id
 HAVING COUNT(CASE WHEN bt.status = ? THEN 1 ELSE NULL END) = COUNT(bt.sr_id)
 `
 
-func (q *Queries) GetBitcoinTxsToBroadcast(ctx context.Context, status int64) ([]*IkaSignRequest, error) {
+func (q *Queries) GetBitcoinTxsToBroadcast(ctx context.Context, status BitcoinTxStatus) ([]*IkaSignRequest, error) {
 	rows, err := q.db.QueryContext(ctx, getBitcoinTxsToBroadcast, status)
 	if err != nil {
 		return nil, err
@@ -85,9 +85,9 @@ AND NOT EXISTS (
 `
 
 type GetBroadcastedBitcoinTxsInfoRow struct {
-	SrID    int64  `json:"sr_id"`
-	BtcTxID []byte `json:"btc_tx_id"`
-	Status  int64  `json:"status"`
+	SrID    int64           `json:"sr_id"`
+	BtcTxID []byte          `json:"btc_tx_id"`
+	Status  BitcoinTxStatus `json:"status"`
 }
 
 func (q *Queries) GetBroadcastedBitcoinTxsInfo(ctx context.Context) ([]*GetBroadcastedBitcoinTxsInfoRow, error) {
@@ -143,13 +143,13 @@ LIMIT 1
 `
 
 type GetIkaSignRequestWithStatusRow struct {
-	ID        int64  `json:"id"`
-	Payload   []byte `json:"payload"`
-	DWalletID string `json:"dwallet_id"`
-	UserSig   string `json:"user_sig"`
-	FinalSig  []byte `json:"final_sig"`
-	Timestamp int64  `json:"timestamp"`
-	Status    int64  `json:"status"`
+	ID        int64       `json:"id"`
+	Payload   []byte      `json:"payload"`
+	DWalletID string      `json:"dwallet_id"`
+	UserSig   string      `json:"user_sig"`
+	FinalSig  []byte      `json:"final_sig"`
+	Timestamp int64       `json:"timestamp"`
+	Status    IkaTxStatus `json:"status"`
 }
 
 func (q *Queries) GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*GetIkaSignRequestWithStatusRow, error) {
@@ -233,11 +233,11 @@ VALUES (?, ?, ?, ?, ?)
 `
 
 type InsertBtcTxParams struct {
-	SrID      int64          `json:"sr_id"`
-	Status    int64          `json:"status"`
-	BtcTxID   []byte         `json:"btc_tx_id"`
-	Timestamp int64          `json:"timestamp"`
-	Note      sql.NullString `json:"note"`
+	SrID      int64           `json:"sr_id"`
+	Status    BitcoinTxStatus `json:"status"`
+	BtcTxID   []byte          `json:"btc_tx_id"`
+	Timestamp int64           `json:"timestamp"`
+	Note      sql.NullString  `json:"note"`
 }
 
 func (q *Queries) InsertBtcTx(ctx context.Context, arg *InsertBtcTxParams) error {
@@ -284,7 +284,7 @@ VALUES (?, ?, ?, ?, ?)
 
 type InsertIkaTxParams struct {
 	SrID      int64          `json:"sr_id"`
-	Status    int64          `json:"status"`
+	Status    IkaTxStatus    `json:"status"`
 	IkaTxID   string         `json:"ika_tx_id"`
 	Timestamp int64          `json:"timestamp"`
 	Note      sql.NullString `json:"note"`
@@ -308,10 +308,10 @@ WHERE sr_id = ? AND btc_tx_id = ?
 `
 
 type UpdateBitcoinTxToConfirmedParams struct {
-	Status    int64  `json:"status"`
-	Timestamp int64  `json:"timestamp"`
-	SrID      int64  `json:"sr_id"`
-	BtcTxID   []byte `json:"btc_tx_id"`
+	Status    BitcoinTxStatus `json:"status"`
+	Timestamp int64           `json:"timestamp"`
+	SrID      int64           `json:"sr_id"`
+	BtcTxID   []byte          `json:"btc_tx_id"`
 }
 
 func (q *Queries) UpdateBitcoinTxToConfirmed(ctx context.Context, arg *UpdateBitcoinTxToConfirmedParams) error {

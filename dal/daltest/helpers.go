@@ -88,9 +88,9 @@ func PopulateIkaTxs(ctx context.Context, t *testing.T, db dal.DB) []dal.IkaTx {
 	t.Helper()
 
 	ikaTxs := []dal.IkaTx{
-		{SrID: 1, Status: int64(dal.Success), IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix()},
-		{SrID: 2, Status: int64(dal.Success), IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix()},
-		{SrID: 3, Status: int64(dal.Failed), IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix()},
+		{SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix()},
+		{SrID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix()},
+		{SrID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix()},
 	}
 
 	for _, tx := range ikaTxs {
@@ -106,9 +106,9 @@ func PopulateBitcoinTxs(ctx context.Context, t *testing.T, db dal.DB) []dal.Bitc
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
-		{SrID: 2, Status: int64(dal.Pending), BtcTxID: DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix()},
-		{SrID: 4, Status: int64(dal.Pending), BtcTxID: DecodeBTCHash(t, "2"), Timestamp: time.Now().Unix()},
-		{SrID: 4, Status: int64(dal.Broadcasted), BtcTxID: DecodeBTCHash(t, "3"), Timestamp: time.Now().Unix()},
+		{SrID: 2, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix()},
+		{SrID: 4, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "2"), Timestamp: time.Now().Unix()},
+		{SrID: 4, Status: dal.Broadcasted, BtcTxID: DecodeBTCHash(t, "3"), Timestamp: time.Now().Unix()},
 	}
 
 	for _, tx := range bitcoinTxs {

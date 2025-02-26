@@ -87,14 +87,14 @@ func Test_Start(t *testing.T) {
 		time.Sleep(time.Second * 6)
 		confirmedTx, err := ts.db.GetBitcoinTx(ts.ctx, 2, daltest.DecodeBTCHash(t, "0"))
 		assert.NilError(t, err)
-		assert.Equal(t, confirmedTx.Status, int64(dal.Broadcasted))
+		assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
 	})
 
 	t.Run("Transaction Confirmed", func(t *testing.T) {
 		time.Sleep(time.Second * 3) // Give time for confirmation
 		confirmedTx, err := ts.db.GetBitcoinTx(ts.ctx, 2, daltest.DecodeBTCHash(t, "0"))
 		assert.NilError(t, err)
-		assert.Equal(t, confirmedTx.Status, int64(dal.Confirmed))
+		assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 	})
 	ts.db.Close()
 }

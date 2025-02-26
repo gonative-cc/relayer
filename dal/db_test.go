@@ -36,7 +36,7 @@ func Test_InsertIkaTx(t *testing.T) {
 	db := daltest.InitTestDB(ctx, t)
 
 	ikaTx := dal.IkaTx{
-		SrID: 1, Status: int64(dal.Success), IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(),
+		SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(),
 	}
 
 	err := db.InsertIkaTx(ctx, ikaTx)
@@ -52,7 +52,7 @@ func Test_InsertBitcoinTx(t *testing.T) {
 	db := daltest.InitTestDB(ctx, t)
 
 	bitcoinTx := dal.BitcoinTx{
-		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
+		SrID: 1, Status: dal.Pending, BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}
 
 	err := db.InsertBtcTx(ctx, bitcoinTx)
@@ -155,7 +155,7 @@ func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 	ctx := context.Background()
 	db := daltest.InitTestDB(ctx, t)
 	bitcoinTx := dal.BitcoinTx{
-		SrID: 1, Status: int64(dal.Pending), BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
+		SrID: 1, Status: dal.Pending, BtcTxID: daltest.DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(),
 	}
 
 	err := db.InsertBtcTx(ctx, bitcoinTx)
@@ -163,12 +163,12 @@ func Test_UpdateBitcoinTxToConfirmed(t *testing.T) {
 
 	tx, err := db.GetBitcoinTx(ctx, bitcoinTx.SrID, bitcoinTx.BtcTxID)
 	assert.NilError(t, err)
-	assert.Equal(t, tx.Status, int64(dal.Pending))
+	assert.Equal(t, tx.Status, dal.Pending)
 
 	err = db.UpdateBitcoinTxToConfirmed(ctx, bitcoinTx.SrID, bitcoinTx.BtcTxID)
 	assert.NilError(t, err)
 
 	confirmedTx, err := db.GetBitcoinTx(ctx, bitcoinTx.SrID, bitcoinTx.BtcTxID)
 	assert.NilError(t, err)
-	assert.Equal(t, confirmedTx.Status, int64(dal.Confirmed))
+	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 }

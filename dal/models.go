@@ -9,11 +9,11 @@ import (
 )
 
 type BitcoinTx struct {
-	SrID      int64          `json:"sr_id"`
-	Status    int64          `json:"status"`
-	BtcTxID   []byte         `json:"btc_tx_id"`
-	Timestamp int64          `json:"timestamp"`
-	Note      sql.NullString `json:"note"`
+	SrID      int64           `json:"sr_id"`
+	Status    BitcoinTxStatus `json:"status"`
+	BtcTxID   []byte          `json:"btc_tx_id"`
+	Timestamp int64           `json:"timestamp"`
+	Note      sql.NullString  `json:"note"`
 }
 
 type IkaSignRequest struct {
@@ -27,7 +27,7 @@ type IkaSignRequest struct {
 
 type IkaTx struct {
 	SrID      int64          `json:"sr_id"`
-	Status    int64          `json:"status"`
+	Status    IkaTxStatus    `json:"status"`
 	IkaTxID   string         `json:"ika_tx_id"`
 	Timestamp int64          `json:"timestamp"`
 	Note      sql.NullString `json:"note"`

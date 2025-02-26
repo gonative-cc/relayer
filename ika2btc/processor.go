@@ -67,7 +67,7 @@ func (p *Processor) Run(ctx context.Context) error {
 
 		err = p.db.InsertBtcTx(ctx, dal.BitcoinTx{
 			SrID:      tx.ID,
-			Status:    int64(dal.Broadcasted),
+			Status:    dal.Broadcasted,
 			BtcTxID:   txHash.CloneBytes(),
 			Timestamp: time.Now().Unix(),
 		})

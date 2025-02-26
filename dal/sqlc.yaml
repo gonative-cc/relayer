@@ -17,3 +17,10 @@ sql:
         output_db_file_name: gen_db.go
         rename:
           dwallet_id: "DWalletID"
+        overrides:
+          - column: ika_txs.status
+            go_type: 
+              type: "IkaTxStatus"
+          - column: bitcoin_txs.status
+            go_type: 
+              type: "BitcoinTxStatus"

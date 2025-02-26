@@ -27,7 +27,7 @@ func TestProcessSignedTxs(t *testing.T) {
 
 	updatedTx, err := db.GetBitcoinTx(ctx, 2, daltest.DecodeBTCHash(t, "0"))
 	assert.NilError(t, err)
-	assert.Equal(t, updatedTx.Status, int64(dal.Broadcasted))
+	assert.Equal(t, updatedTx.Status, dal.Broadcasted)
 }
 
 func TestCheckConfirmations(t *testing.T) {
@@ -39,7 +39,7 @@ func TestCheckConfirmations(t *testing.T) {
 
 	updatedTx, err := db.GetBitcoinTx(ctx, 4, daltest.DecodeBTCHash(t, "3"))
 	assert.NilError(t, err)
-	assert.Equal(t, updatedTx.Status, int64(dal.Confirmed))
+	assert.Equal(t, updatedTx.Status, dal.Confirmed)
 }
 
 func TestNewProcessor(t *testing.T) {

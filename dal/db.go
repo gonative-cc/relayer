@@ -185,7 +185,7 @@ func (db DB) GetBitcoinTxsToBroadcast(ctx context.Context) ([]*IkaSignRequest, e
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	requests, err := db.Querier.GetBitcoinTxsToBroadcast(ctx, int64(Pending))
+	requests, err := db.Querier.GetBitcoinTxsToBroadcast(ctx, Pending)
 	if err != nil {
 		return nil, fmt.Errorf("dal: querying bitcoin_txs to broadcast: %w", err)
 	}
@@ -240,7 +240,7 @@ func (db DB) UpdateBitcoinTxToConfirmed(ctx context.Context, id int64, txID []by
 
 	err := db.Querier.UpdateBitcoinTxToConfirmed(
 		ctx,
-		&UpdateBitcoinTxToConfirmedParams{SrID: id, BtcTxID: txID, Status: int64(Confirmed), Timestamp: timestamp},
+		&UpdateBitcoinTxToConfirmedParams{SrID: id, BtcTxID: txID, Status: Confirmed, Timestamp: timestamp},
 	)
 	if err != nil {
 		return fmt.Errorf("dal: updating bitcoin_tx to confirmed: %w", err)

@@ -46,7 +46,7 @@ func (p *Processor) Run(ctx context.Context) error {
 			if errors.Is(err, ika.ErrEventParsing) {
 				ikaTx := dal.IkaTx{
 					SrID:      sr.ID,
-					Status:    int64(dal.Failed),
+					Status:    dal.Failed,
 					IkaTxID:   txDigest,
 					Timestamp: time.Now().Unix(),
 					Note:      sql.NullString{String: "Transaction successful, but error parsing events.", Valid: true},
@@ -67,7 +67,7 @@ func (p *Processor) Run(ctx context.Context) error {
 
 		ikaTx := dal.IkaTx{
 			SrID:      sr.ID,
-			Status:    int64(dal.Success),
+			Status:    dal.Success,
 			IkaTxID:   txDigest,
 			Timestamp: time.Now().Unix(),
 		}
