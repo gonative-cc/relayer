@@ -238,7 +238,7 @@ func (c *SPVClient) moveCall(
 	})
 	if err != nil {
 		return models.SuiTransactionBlockResponse{},
-			fmt.Errorf("sui transaction subbmition for '%s' failed: %w", function, err)
+			fmt.Errorf("sui transaction submission for '%s' failed: %w", function, err)
 	}
 
 	// The error returned by SignAndExecuteTransactionBlock only indicates
