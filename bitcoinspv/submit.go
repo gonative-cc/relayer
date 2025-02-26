@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
@@ -118,76 +117,4 @@ func (r *Relayer) ProcessHeaders(indexedBlocks []*types.IndexedBlock) (int, erro
 	}
 
 	return headersSubmitted, nil
-}
-
-func (r *Relayer) extractAndSubmitTransactions(indexedBlock *types.IndexedBlock) (int, error) {
-	txnsSubmitted := 0
-	for txIdx, tx := range indexedBlock.Transactions {
-		if err := r.submitTransaction(indexedBlock, txIdx, tx); err != nil {
-			return txnsSubmitted, err
-		}
-		txnsSubmitted++
-	}
-
-	return txnsSubmitted, nil
-}
-
-func (r *Relayer) submitTransaction(
-	indexedBlock *types.IndexedBlock,
-	txIdx int,
-	tx *btcutil.Tx,
-) error {
-	if tx == nil {
-		r.logger.Warnf("Found a nil tx in block %v", indexedBlock.BlockHash())
-		return nil
-	}
-
-	// construct spv proof from tx
-	//nolint:gosec
-	proof, err := indexedBlock.GenerateProof(uint32(txIdx)) // Ignore G115, txIdx always >= 0
-	if err != nil {
-		r.logger.Errorf("Failed to construct spv proof from tx %v: %v", tx.Hash(), err)
-		return err
-	}
-
-	// wrap to MsgSpvProof
-	msgSpvProof := proof.ToMsgSpvProof(tx.MsgTx().TxID(), tx.Hash())
-
-	// submit the checkpoint to light client
-	res, err := r.SPVClient.VerifySPV(context.Background(), &msgSpvProof)
-	if err != nil {
-		r.logger.Errorf("Failed to submit MsgInsertBTCSpvProof with error %v", err)
-		return err
-	}
-
-	r.logger.Infof("Successfully submitted MsgInsertBTCSpvProof with response %d", res)
-
-	return nil
-}
-
-// ProcessTransactions tries to extract valid transactions from a list of blocks
-// It returns the number of valid transactions segments, and the number of valid transactions
-func (r *Relayer) ProcessTransactions(indexedBlocks []*types.IndexedBlock) (int, error) {
-	var totalTxs int
-
-	// process transactions from each block
-	for _, block := range indexedBlocks {
-		blockTxs, err := r.extractAndSubmitTransactions(block)
-		if err != nil {
-			if totalTxs > 0 {
-				r.logger.Infof("Submitted %d transactions", totalTxs)
-			}
-			return totalTxs, fmt.Errorf(
-				"failed to extract transactions from block %v: %w", block.BlockHash(), err,
-			)
-		}
-		totalTxs += blockTxs
-	}
-
-	// log total transactions processed if any
-	if totalTxs > 0 {
-		r.logger.Infof("Submitted %d transactions", totalTxs)
-	}
-
-	return totalTxs, nil
 }
