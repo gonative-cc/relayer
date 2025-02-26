@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gonative-cc/relayer/bitcoinspv"
+	zmqclient "github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper/zmq"
 	relayerconfig "github.com/gonative-cc/relayer/bitcoinspv/config"
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
-	zmqclient "github.com/gonative-cc/relayer/btcwrapper/zmq"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
