@@ -112,7 +112,7 @@ func TestRun_EdgeCases(t *testing.T) {
 			processor := newIkaProcessor(t, tc.ikaClient)
 			tc.setupDB(t, processor.db)
 
-			err := processor.Run(context.Background())
+			err := processor.Run(ctx)
 			if tc.expectedError != "" {
 				assert.ErrorContains(t, err, tc.expectedError)
 			} else {

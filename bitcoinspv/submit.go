@@ -26,10 +26,10 @@ func breakIntoChunks[T any](v []T, chunkSize int) [][]T {
 
 // getHeaderMessages takes a set of indexed blocks and generates MsgInsertHeaders messages
 // containing block headers that need to be sent to the Native light client
-func (r *Relayer) getHeaderMessages(
+func (r *Relayer) getHeaderMessages(ctx context.Context,
 	indexedBlocks []*types.IndexedBlock,
 ) ([][]wire.BlockHeader, error) {
-	startPoint, err := r.findFirstNewHeader(indexedBlocks)
+	startPoint, err := r.findFirstNewHeader(ctx, indexedBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (r *Relayer) getHeaderMessages(
 }
 
 // findFirstNewHeader finds the index of the first header not in the Native chain
-func (r *Relayer) findFirstNewHeader(indexedBlocks []*types.IndexedBlock) (int, error) {
+func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
 	for i, header := range indexedBlocks {
 		blockHash := header.BlockHash()
 		var res bool
@@ -79,8 +79,7 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 	return headerMsgs
 }
 
-func (r *Relayer) submitHeaderMessages(msg []wire.BlockHeader) error {
-	ctx := context.Background()
+func (r *Relayer) submitHeaderMessages(ctx context.Context, msg []wire.BlockHeader) error {
 	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
 		if err := r.SPVClient.InsertHeaders(ctx, msg); err != nil {
 			return err
@@ -99,8 +98,8 @@ func (r *Relayer) submitHeaderMessages(msg []wire.BlockHeader) error {
 // ProcessHeaders takes a list of blocks, extracts their headers
 // and submits them to the native client
 // Returns the count of unique headers that were submitted
-func (r *Relayer) ProcessHeaders(indexedBlocks []*types.IndexedBlock) (int, error) {
-	headerMessages, err := r.getHeaderMessages(indexedBlocks)
+func (r *Relayer) ProcessHeaders(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
+	headerMessages, err := r.getHeaderMessages(ctx, indexedBlocks)
 	if err != nil {
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
@@ -110,7 +109,7 @@ func (r *Relayer) ProcessHeaders(indexedBlocks []*types.IndexedBlock) (int, erro
 
 	headersSubmitted := 0
 	for _, msgs := range headerMessages {
-		if err := r.submitHeaderMessages(msgs); err != nil {
+		if err := r.submitHeaderMessages(ctx, msgs); err != nil {
 			return 0, fmt.Errorf("failed to submit headers: %w", err)
 		}
 		headersSubmitted += len(msgs)
