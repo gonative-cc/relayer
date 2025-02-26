@@ -15,7 +15,8 @@ import (
 
 // newIkaProcessor creates a new Processor instance with a mocked IKA client and populated database.
 func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
-	db := daltest.InitTestDB(t)
+	ctx := context.Background()
+	db := daltest.InitTestDB(ctx, t)
 	return &Processor{
 		ikaClient: ikaClient,
 		db:        db,
@@ -23,12 +24,13 @@ func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
 }
 
 func TestRun(t *testing.T) {
+	ctx := context.Background()
 	processor := newIkaProcessor(t, ika.NewMockClient())
-	daltest.PopulateSignRequests(t, processor.db)
-	daltest.PopulateBitcoinTxs(t, processor.db)
+	daltest.PopulateSignRequests(ctx, t, processor.db)
+	daltest.PopulateBitcoinTxs(ctx, t, processor.db)
 
 	// before signing
-	retrievedSignRequests, err := processor.db.GetBitcoinTxsToBroadcast()
+	retrievedSignRequests, err := processor.db.GetBitcoinTxsToBroadcast(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
@@ -37,7 +39,7 @@ func TestRun(t *testing.T) {
 	assert.Nil(t, err)
 
 	// after signing
-	retrievedSignRequests, err = processor.db.GetBitcoinTxsToBroadcast()
+	retrievedSignRequests, err = processor.db.GetBitcoinTxsToBroadcast(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
@@ -52,6 +54,7 @@ type testRunCase struct {
 }
 
 func TestRun_EdgeCases(t *testing.T) {
+	ctx := context.Background()
 	testCases := []testRunCase{
 		{
 			name:      "NoPendingRequests",
@@ -67,7 +70,7 @@ func TestRun_EdgeCases(t *testing.T) {
 				return mockIkaClient
 			}(),
 			setupDB: func(t *testing.T, db dal.DB) {
-				daltest.PopulateSignRequests(t, db)
+				daltest.PopulateSignRequests(ctx, t, db)
 			},
 			expectedError: "failed calling ApproveAndSign",
 		},
@@ -80,10 +83,10 @@ func TestRun_EdgeCases(t *testing.T) {
 				return mockIkaClient
 			}(),
 			setupDB: func(t *testing.T, db dal.DB) {
-				daltest.PopulateSignRequests(t, db)
+				daltest.PopulateSignRequests(ctx, t, db)
 			},
 			assertions: func(t *testing.T, processor *Processor) {
-				signRequests, err := processor.db.GetPendingIkaSignRequests()
+				signRequests, err := processor.db.GetPendingIkaSignRequests(ctx)
 				assert.NoError(t, err)
 				assert.Equal(t, 0, len(signRequests)) // All requests should be processed
 			},
@@ -99,7 +102,7 @@ func TestRun_EdgeCases(t *testing.T) {
 			setupDB: func(t *testing.T, db dal.DB) {
 				request := dal.IkaSignRequest{ID: 1, Payload: make([]byte, 0), DWalletID: "dwallet1",
 					UserSig: "user_sig1", FinalSig: nil, Timestamp: time.Now().Unix()}
-				err := db.InsertIkaSignRequest(request)
+				err := db.InsertIkaSignRequest(ctx, request)
 				assert.NoError(t, err)
 			},
 		},

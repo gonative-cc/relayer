@@ -1,0 +1,35 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "queries.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "dal" 
+        out: "."      
+        sql_package: "database/sql"
+        emit_json_tags: true
+        emit_interface: true 
+        emit_result_struct_pointers: true
+        emit_params_struct_pointers: true
+        emit_methods_with_db_argument: false
+        emit_empty_slices: true
+        output_db_file_name: gen_db.go
+        rename:
+          dwallet_id: "DWalletID"
+        overrides:
+          - column: ika_txs.status
+            go_type: 
+              type: "IkaTxStatus"
+          - column: bitcoin_txs.status
+            go_type: 
+              type: "BitcoinTxStatus"
+          - column: bitcoin_txs.sr_id
+            go_type: 
+              type: "uint64"
+          - column: ika_txs.sr_id
+            go_type: 
+              type: "uint64"
+          - column: ika_sign_requests.id
+            go_type: 
+              type: "uint64"

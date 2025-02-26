@@ -1,6 +1,7 @@
 package ika2btc
 
 import (
+	"context"
 	"testing"
 
 	"github.com/btcsuite/btcd/rpcclient"
@@ -19,29 +20,32 @@ var btcClientConfig = rpcclient.ConnConfig{
 }
 
 func TestProcessSignedTxs(t *testing.T) {
+	ctx := context.Background()
 	processor, db := initProcessor(t)
-	err := processor.Run()
+	err := processor.Run(ctx)
 	assert.NilError(t, err)
 
-	updatedTx, err := db.GetBitcoinTx(2, daltest.DecodeBTCHash(t, "0"))
+	updatedTx, err := db.GetBitcoinTx(ctx, 2, daltest.DecodeBTCHash(t, "0"))
 	assert.NilError(t, err)
 	assert.Equal(t, updatedTx.Status, dal.Broadcasted)
 }
 
 func TestCheckConfirmations(t *testing.T) {
+	ctx := context.Background()
 	processor, db := initProcessor(t)
 	processor.BtcClient = &bitcoin.MockClient{}
-	err := processor.CheckConfirmations()
+	err := processor.CheckConfirmations(ctx)
 	assert.NilError(t, err)
 
-	updatedTx, err := db.GetBitcoinTx(4, daltest.DecodeBTCHash(t, "3"))
+	updatedTx, err := db.GetBitcoinTx(ctx, 4, daltest.DecodeBTCHash(t, "3"))
 	assert.NilError(t, err)
 	assert.Equal(t, updatedTx.Status, dal.Confirmed)
 }
 
 func TestNewProcessor(t *testing.T) {
 	// missing BTC config
-	db := daltest.InitTestDB(t)
+	ctx := context.Background()
+	db := daltest.InitTestDB(ctx, t)
 	btcClientConfig.Host = ""
 	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.ErrorIs(t, err, bitcoin.ErrNoBtcConfig)
@@ -51,10 +55,10 @@ func TestNewProcessor(t *testing.T) {
 // initProcessor initializes processor with a mock Bitcoin client and a populated database.
 func initProcessor(t *testing.T) (*Processor, dal.DB) {
 	t.Helper()
-
-	db := daltest.InitTestDB(t)
-	daltest.PopulateSignRequests(t, db)
-	daltest.PopulateBitcoinTxs(t, db)
+	ctx := context.Background()
+	db := daltest.InitTestDB(ctx, t)
+	daltest.PopulateSignRequests(ctx, t, db)
+	daltest.PopulateBitcoinTxs(ctx, t, db)
 	processor, err := NewProcessor(btcClientConfig, 6, db)
 	assert.NilError(t, err)
 	processor.BtcClient = &bitcoin.MockClient{}
