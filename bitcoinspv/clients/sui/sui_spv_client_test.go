@@ -51,12 +51,25 @@ func TestInsertHeader(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestInsertHeader_AlreadyExistErr(t *testing.T) {
+	t.Skip("Test to be run locally for debugging purposes only")
+	client := setupIntegrationTest(t)
+
+	rawHeaderHex := "00000030759e91f85448e42780695a7c71a6e4f4e845ecd895b19fafaeb6f5e3c030e62233287429255f254a463d90b998ba5523634da7c67ef873268e1db40d1526d5583d5b6167ffff7f2000000000"
+	header, err := BlockHeaderFromHex(rawHeaderHex)
+	assert.Nil(t, err)
+
+	headers := []wire.BlockHeader{header}
+
+	err = client.InsertHeaders(context.Background(), headers)
+	assert.NotNil(t, err)
+}
+
 func TestContainsBlock(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	client := setupIntegrationTest(t)
 
 	rawHeaderHex := "00000030759e91f85448e42780695a7c71a6e4f4e845ecd895b19fafaeb6f5e3c030e62233287429255f254a463d90b998ba5523634da7c67ef873268e1db40d1526d5583d5b6167ffff7f2000000000"
-
 	header, err := BlockHeaderFromHex(rawHeaderHex)
 	assert.Nil(t, err)
 
