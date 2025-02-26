@@ -51,7 +51,7 @@ func TestInsertHeader(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestInsertHeader_AlreadyExistErr(t *testing.T) {
+func TestInsertHeaderAlreadyExistErr(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	client := setupIntegrationTest(t)
 
