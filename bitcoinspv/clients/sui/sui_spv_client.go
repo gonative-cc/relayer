@@ -244,7 +244,7 @@ func (c *SPVClient) moveCall(
 	// The error returned by SignAndExecuteTransactionBlock only indicates
 	// whether the transaction was successfully submitted to the network.
 	// It does NOT guarantee that the transaction succeeded  during execution.
-	// Thats why we MUST insepct the `Effects.Status` field.
+	// Thats why we MUST inspect the `Effects.Status` field.
 	// It will tell us about execution errors like: Abort, OutOfGas etc.
 	if signedResp.Effects.Status.Status != "success" {
 		return signedResp, fmt.Errorf("%w: function '%s' status: %s, error: %s",
