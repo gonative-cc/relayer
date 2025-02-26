@@ -129,9 +129,9 @@ func Test_GetBroadcastedBitcoinTxsInfo(t *testing.T) {
 func Test_UpdateIkaSignRequestFinalSig(t *testing.T) {
 	ctx := context.Background()
 	db := daltest.InitTestDB(ctx, t)
-	requestID := int64(1)
+	requestID := uint64(1)
 	request := dal.IkaSignRequest{
-		ID:        1,
+		ID:        requestID,
 		Payload:   []byte("payload"),
 		DWalletID: "dwallet_id",
 		UserSig:   "user_sig",

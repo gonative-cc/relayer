@@ -12,8 +12,8 @@ type Querier interface {
 	GetBitcoinTx(ctx context.Context, arg *GetBitcoinTxParams) (*BitcoinTx, error)
 	GetBitcoinTxsToBroadcast(ctx context.Context, status BitcoinTxStatus) ([]*IkaSignRequest, error)
 	GetBroadcastedBitcoinTxsInfo(ctx context.Context) ([]*GetBroadcastedBitcoinTxsInfoRow, error)
-	GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSignRequest, error)
-	GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*GetIkaSignRequestWithStatusRow, error)
+	GetIkaSignRequestByID(ctx context.Context, id uint64) (*IkaSignRequest, error)
+	GetIkaSignRequestWithStatus(ctx context.Context, id uint64) (*GetIkaSignRequestWithStatusRow, error)
 	GetIkaTx(ctx context.Context, arg *GetIkaTxParams) (*IkaTx, error)
 	GetPendingIkaSignRequests(ctx context.Context) ([]*IkaSignRequest, error)
 	InsertBtcTx(ctx context.Context, arg *InsertBtcTxParams) error

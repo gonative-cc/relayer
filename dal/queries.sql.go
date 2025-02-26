@@ -17,7 +17,7 @@ WHERE sr_id = ? AND btc_tx_id = ?
 `
 
 type GetBitcoinTxParams struct {
-	SrID    int64  `json:"sr_id"`
+	SrID    uint64 `json:"sr_id"`
 	BtcTxID []byte `json:"btc_tx_id"`
 }
 
@@ -85,7 +85,7 @@ AND NOT EXISTS (
 `
 
 type GetBroadcastedBitcoinTxsInfoRow struct {
-	SrID    int64           `json:"sr_id"`
+	SrID    uint64          `json:"sr_id"`
 	BtcTxID []byte          `json:"btc_tx_id"`
 	Status  BitcoinTxStatus `json:"status"`
 }
@@ -119,7 +119,7 @@ FROM ika_sign_requests
 WHERE id = ?
 `
 
-func (q *Queries) GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSignRequest, error) {
+func (q *Queries) GetIkaSignRequestByID(ctx context.Context, id uint64) (*IkaSignRequest, error) {
 	row := q.db.QueryRowContext(ctx, getIkaSignRequestByID, id)
 	var i IkaSignRequest
 	err := row.Scan(
@@ -143,7 +143,7 @@ LIMIT 1
 `
 
 type GetIkaSignRequestWithStatusRow struct {
-	ID        int64       `json:"id"`
+	ID        uint64      `json:"id"`
 	Payload   []byte      `json:"payload"`
 	DWalletID string      `json:"dwallet_id"`
 	UserSig   string      `json:"user_sig"`
@@ -152,7 +152,7 @@ type GetIkaSignRequestWithStatusRow struct {
 	Status    IkaTxStatus `json:"status"`
 }
 
-func (q *Queries) GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*GetIkaSignRequestWithStatusRow, error) {
+func (q *Queries) GetIkaSignRequestWithStatus(ctx context.Context, id uint64) (*GetIkaSignRequestWithStatusRow, error) {
 	row := q.db.QueryRowContext(ctx, getIkaSignRequestWithStatus, id)
 	var i GetIkaSignRequestWithStatusRow
 	err := row.Scan(
@@ -174,7 +174,7 @@ WHERE sr_id = ? AND ika_tx_id = ?
 `
 
 type GetIkaTxParams struct {
-	SrID    int64  `json:"sr_id"`
+	SrID    uint64 `json:"sr_id"`
 	IkaTxID string `json:"ika_tx_id"`
 }
 
@@ -233,7 +233,7 @@ VALUES (?, ?, ?, ?, ?)
 `
 
 type InsertBtcTxParams struct {
-	SrID      int64           `json:"sr_id"`
+	SrID      uint64          `json:"sr_id"`
 	Status    BitcoinTxStatus `json:"status"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
 	Timestamp int64           `json:"timestamp"`
@@ -257,7 +257,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 `
 
 type InsertIkaSignRequestParams struct {
-	ID        int64  `json:"id"`
+	ID        uint64 `json:"id"`
 	Payload   []byte `json:"payload"`
 	DWalletID string `json:"dwallet_id"`
 	UserSig   string `json:"user_sig"`
@@ -283,7 +283,7 @@ VALUES (?, ?, ?, ?, ?)
 `
 
 type InsertIkaTxParams struct {
-	SrID      int64          `json:"sr_id"`
+	SrID      uint64         `json:"sr_id"`
 	Status    IkaTxStatus    `json:"status"`
 	IkaTxID   string         `json:"ika_tx_id"`
 	Timestamp int64          `json:"timestamp"`
@@ -310,7 +310,7 @@ WHERE sr_id = ? AND btc_tx_id = ?
 type UpdateBitcoinTxToConfirmedParams struct {
 	Status    BitcoinTxStatus `json:"status"`
 	Timestamp int64           `json:"timestamp"`
-	SrID      int64           `json:"sr_id"`
+	SrID      uint64          `json:"sr_id"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
 }
 
@@ -332,7 +332,7 @@ WHERE id = ?
 
 type UpdateIkaSignRequestFinalSigParams struct {
 	FinalSig []byte `json:"final_sig"`
-	ID       int64  `json:"id"`
+	ID       uint64 `json:"id"`
 }
 
 func (q *Queries) UpdateIkaSignRequestFinalSig(ctx context.Context, arg *UpdateIkaSignRequestFinalSigParams) error {

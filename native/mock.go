@@ -140,7 +140,7 @@ func generateMockSignRequests(from, limit int) SignReqs {
 	for i := from; i < from+limit; i++ {
 		rawTxBytes := rawTxMap[i]
 		req := SignReq{
-			ID:        int64(i + 1),
+			ID:        uint64(i + 1),
 			Payload:   rawTxBytes,
 			DWalletID: fmt.Sprintf("dwallet-%d", i+1),
 			UserSig:   fmt.Sprintf("user_sig-%d", i+1),

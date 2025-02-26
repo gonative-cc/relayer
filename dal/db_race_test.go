@@ -29,7 +29,7 @@ func Test_DbRace(t *testing.T) {
 	}
 	wg.Wait()
 
-	var srID int64 = 1
+	var srID uint64 = 1
 	sr, err := db.GetIkaSignRequestByID(ctx, srID)
 	assert.NilError(t, err)
 	assert.Assert(t, sr != nil)
@@ -58,7 +58,7 @@ func Test_DbRace(t *testing.T) {
 func insertManySignReq(ctx context.Context, t *testing.T, wg *sync.WaitGroup, db DB, idFrom, idTo int64) {
 	for i := idFrom; i < idTo; i++ {
 		sr := IkaSignRequest{
-			ID:        int64(i),
+			ID:        uint64(i),
 			Payload:   []byte{},
 			DWalletID: "",
 			UserSig:   "",
@@ -72,14 +72,14 @@ func insertManySignReq(ctx context.Context, t *testing.T, wg *sync.WaitGroup, db
 	wg.Done()
 }
 
-func loopIncrementIkaSRTimestamp(t *testing.T, wg *sync.WaitGroup, db DB, n int64, srID int64) {
+func loopIncrementIkaSRTimestamp(t *testing.T, wg *sync.WaitGroup, db DB, n int64, srID uint64) {
 	for i := int64(0); i < n; i++ {
 		assert.NilError(t, db.incrementIkaSRTimestamp(srID))
 	}
 	wg.Done()
 }
 
-func (db DB) incrementIkaSRTimestamp(srID int64) error {
+func (db DB) incrementIkaSRTimestamp(srID uint64) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 

@@ -9,7 +9,7 @@ import (
 )
 
 type BitcoinTx struct {
-	SrID      int64           `json:"sr_id"`
+	SrID      uint64          `json:"sr_id"`
 	Status    BitcoinTxStatus `json:"status"`
 	BtcTxID   []byte          `json:"btc_tx_id"`
 	Timestamp int64           `json:"timestamp"`
@@ -17,7 +17,7 @@ type BitcoinTx struct {
 }
 
 type IkaSignRequest struct {
-	ID        int64  `json:"id"`
+	ID        uint64 `json:"id"`
 	Payload   []byte `json:"payload"`
 	DWalletID string `json:"dwallet_id"`
 	UserSig   string `json:"user_sig"`
@@ -26,7 +26,7 @@ type IkaSignRequest struct {
 }
 
 type IkaTx struct {
-	SrID      int64          `json:"sr_id"`
+	SrID      uint64         `json:"sr_id"`
 	Status    IkaTxStatus    `json:"status"`
 	IkaTxID   string         `json:"ika_tx_id"`
 	Timestamp int64          `json:"timestamp"`

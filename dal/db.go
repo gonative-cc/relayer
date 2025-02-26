@@ -112,7 +112,7 @@ func (db DB) InsertBtcTx(ctx context.Context, tx BitcoinTx) error {
 }
 
 // GetIkaSignRequestByID retrives a signature request by its id
-func (db DB) GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSignRequest, error) {
+func (db DB) GetIkaSignRequestByID(ctx context.Context, id uint64) (*IkaSignRequest, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -127,7 +127,7 @@ func (db DB) GetIkaSignRequestByID(ctx context.Context, id int64) (*IkaSignReque
 }
 
 // GetIkaTx retrieves an Ika transaction by its primary key (sr_id and ika_tx_id).
-func (db DB) GetIkaTx(ctx context.Context, signRequestID int64, ikaTxID string) (*IkaTx, error) {
+func (db DB) GetIkaTx(ctx context.Context, signRequestID uint64, ikaTxID string) (*IkaTx, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -142,7 +142,7 @@ func (db DB) GetIkaTx(ctx context.Context, signRequestID int64, ikaTxID string) 
 }
 
 // GetBitcoinTx retrieves a Bitcoin transaction by its primary key (sr_id and btc_tx_id).
-func (db DB) GetBitcoinTx(ctx context.Context, signRequestID int64, btcTxID []byte) (*BitcoinTx, error) {
+func (db DB) GetBitcoinTx(ctx context.Context, signRequestID uint64, btcTxID []byte) (*BitcoinTx, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -157,7 +157,7 @@ func (db DB) GetBitcoinTx(ctx context.Context, signRequestID int64, btcTxID []by
 }
 
 // GetIkaSignRequestWithStatus retrieves an IkaSignRequest with its associated IkaTx status.
-func (db DB) GetIkaSignRequestWithStatus(ctx context.Context, id int64) (*GetIkaSignRequestWithStatusRow, error) {
+func (db DB) GetIkaSignRequestWithStatus(ctx context.Context, id uint64) (*GetIkaSignRequestWithStatusRow, error) {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
@@ -218,7 +218,7 @@ func (db DB) GetPendingIkaSignRequests(ctx context.Context) ([]*IkaSignRequest, 
 }
 
 // UpdateIkaSignRequestFinalSig updates the final signature of an IkaSignRequest in the database.
-func (db DB) UpdateIkaSignRequestFinalSig(ctx context.Context, id int64, finalSig Signature) error {
+func (db DB) UpdateIkaSignRequestFinalSig(ctx context.Context, id uint64, finalSig Signature) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
@@ -233,7 +233,7 @@ func (db DB) UpdateIkaSignRequestFinalSig(ctx context.Context, id int64, finalSi
 }
 
 // UpdateBitcoinTxToConfirmed updates the bitcoin transaction to `Confirmed`.
-func (db DB) UpdateBitcoinTxToConfirmed(ctx context.Context, id int64, txID []byte) error {
+func (db DB) UpdateBitcoinTxToConfirmed(ctx context.Context, id uint64, txID []byte) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 	timestamp := time.Now().Unix()

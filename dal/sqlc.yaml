@@ -24,3 +24,12 @@ sql:
           - column: bitcoin_txs.status
             go_type: 
               type: "BitcoinTxStatus"
+          - column: bitcoin_txs.sr_id
+            go_type: 
+              type: "uint64"
+          - column: ika_txs.sr_id
+            go_type: 
+              type: "uint64"
+          - column: ika_sign_requests.id
+            go_type: 
+              type: "uint64"

@@ -6,7 +6,7 @@ package native
 //
 //nolint:govet
 type SignReq struct {
-	ID        int64  // Unique sequence number for the sign request
+	ID        uint64 // Unique sequence number for the sign request
 	Payload   []byte // Bytes to be signed
 	DWalletID string // ID of the  dwallet
 	UserSig   string // Partial signature created with the user's share of the private key
