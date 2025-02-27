@@ -3,16 +3,12 @@ package bitcoinspv
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
-
-// processBlockTimeout is the timeout duration for processing a single block.
-const processBlockTimeout = 20 * time.Second
 
 // onBlockEvent processes block connection and disconnection events received from the Bitcoin client.
 func (r *Relayer) onBlockEvent() {
@@ -139,7 +135,7 @@ func (r *Relayer) getAndValidateBlock(
 }
 
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
-	ctx, cancel := context.WithTimeout(context.Background(), processBlockTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), r.processBlockTimeout)
 	defer cancel()
 
 	if indexedBlock == nil {
