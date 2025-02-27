@@ -41,7 +41,7 @@ bitcoin-cli -regtest -rpcuser=user -rpcpassword=password getblockchaininfo
 
 ## Relayer Flow
 
-Following diagram explains how the bitcoin-SPV relayer interacts with `BitcoinNode` and `LightClient` and how data flows from Bitcoin node to Lightclient through the SPV relayer.
+Following diagram explains how the bitcoin-SPV relayer interacts with `BitcoinNode` and `LightClient` and how data flows from Bitcoin node to Light Client through the SPV relayer.
 
 ### Connecting
 

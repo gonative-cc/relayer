@@ -25,7 +25,7 @@ func breakIntoChunks[T any](v []T, chunkSize int) [][]T {
 }
 
 // getHeaderMessages takes a set of indexed blocks and generates MsgInsertHeaders messages
-// containing block headers that need to be sent to the Native light client
+// containing block headers that need to be sent to the light client.
 func (r *Relayer) getHeaderMessages(ctx context.Context,
 	indexedBlocks []*types.IndexedBlock,
 ) ([][]wire.BlockHeader, error) {
@@ -34,7 +34,6 @@ func (r *Relayer) getHeaderMessages(ctx context.Context,
 		return nil, err
 	}
 
-	// all headers are duplicated, no need to submit
 	if startPoint == -1 {
 		r.logger.Info("All headers are duplicated, no need to submit")
 		return nil, nil
@@ -47,7 +46,7 @@ func (r *Relayer) getHeaderMessages(ctx context.Context,
 	return r.createHeaderMessages(blocksToSubmit), nil
 }
 
-// findFirstNewHeader finds the index of the first header not in the Native chain
+// findFirstNewHeader finds the index of the first header not in the light client.
 func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
 	for i, header := range indexedBlocks {
 		blockHash := header.BlockHash()
@@ -96,8 +95,8 @@ func (r *Relayer) submitHeaderMessages(ctx context.Context, msg []wire.BlockHead
 }
 
 // ProcessHeaders takes a list of blocks, extracts their headers
-// and submits them to the native client
-// Returns the count of unique headers that were submitted
+// and submits them to the light client.
+// Returns the count of unique headers that were submitted.
 func (r *Relayer) ProcessHeaders(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
 	headerMessages, err := r.getHeaderMessages(ctx, indexedBlocks)
 	if err != nil {
