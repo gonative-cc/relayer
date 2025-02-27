@@ -193,7 +193,7 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 }
 
 func (r *Relayer) getLatestBlockHeight(ctx context.Context) (int64, error) {
-	block, err := r.SPVClient.GetLatestBlockInfo(ctx)
+	block, err := r.lcClient.GetLatestBlockInfo(ctx)
 	if err != nil {
 		return 0, err
 	}

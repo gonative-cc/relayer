@@ -20,7 +20,7 @@ type Relayer struct {
 
 	// Clients
 	btcClient clients.BTCClient
-	SPVClient clients.BitcoinSPV
+	lcClient  clients.BitcoinSPV
 
 	// Retry settings
 	retrySleepDuration    time.Duration
@@ -59,7 +59,7 @@ func New(
 		retrySleepDuration:    retrySleepDuration,
 		maxRetrySleepDuration: maxRetrySleepDuration,
 		btcClient:             btcClient,
-		SPVClient:             SPVClient,
+		lcClient:              SPVClient,
 		btcConfirmationDepth:  defaultConfirmationDepth,
 		quitChannel:           make(chan struct{}),
 	}
