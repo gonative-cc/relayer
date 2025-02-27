@@ -12,7 +12,7 @@ import (
 )
 
 // processBlockTimeout is the timeout duration for processing a single block.
-const processBlockTimeout = 30 * time.Second
+const processBlockTimeout = 20 * time.Second
 
 // onBlockEvent processes block connection and disconnection events received from the Bitcoin client.
 func (r *Relayer) onBlockEvent() {

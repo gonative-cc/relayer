@@ -54,7 +54,7 @@ func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types
 		var res bool
 		var err error
 		err = RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
-			res, err = r.SPVClient.ContainsBlock(context.Background(), blockHash)
+			res, err = r.SPVClient.ContainsBlock(ctx, blockHash)
 			return err
 		})
 		if err != nil {
