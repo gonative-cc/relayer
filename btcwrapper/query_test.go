@@ -13,8 +13,8 @@ import (
 )
 
 type MockClient struct {
+	Client
 	mock.Mock
-	*Client
 }
 
 func (m *MockClient) GetBestBlockHash() (*chainhash.Hash, error) {
@@ -51,7 +51,7 @@ func (m *MockClient) GetBlockHash(height int64) (*chainhash.Hash, error) {
 
 func TestGetTipBlock(t *testing.T) {
 	mockClient := new(MockClient)
-	mockClient.Client = &Client{
+	mockClient.Client = Client{
 		retrySleepDuration:    time.Millisecond,
 		maxRetrySleepDuration: time.Millisecond * 10,
 	}
