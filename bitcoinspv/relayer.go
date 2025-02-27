@@ -42,7 +42,7 @@ func New(
 	config *config.RelayerConfig,
 	parentLogger *zap.Logger,
 	btcClient clients.BTCClient,
-	SPVClient clients.BitcoinSPV,
+	lcClient clients.BitcoinSPV,
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
 ) (*Relayer, error) {
@@ -59,7 +59,7 @@ func New(
 		retrySleepDuration:    retrySleepDuration,
 		maxRetrySleepDuration: maxRetrySleepDuration,
 		btcClient:             btcClient,
-		lcClient:              SPVClient,
+		lcClient:              lcClient,
 		btcConfirmationDepth:  defaultConfirmationDepth,
 		quitChannel:           make(chan struct{}),
 	}
