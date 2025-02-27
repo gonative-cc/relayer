@@ -22,7 +22,7 @@ func TestSetupBitcoindConnection(t *testing.T) {
 			client: &Client{
 				Client:                nil,
 				zeromqClient:          nil,
-				chainParams:           &chaincfg.MainNetParams,
+				chainParams:           &chaincfg.SimNetParams,
 				config:                &relayerconfig.DefaultConfig().BTC,
 				logger:                zaptest.NewLogger(t).Sugar(),
 				blockEventsChannel:    nil,
@@ -60,7 +60,7 @@ func TestSetupBtcdConnection(t *testing.T) {
 			client: &Client{
 				Client:                nil,
 				zeromqClient:          nil,
-				chainParams:           &chaincfg.MainNetParams,
+				chainParams:           &chaincfg.SimNetParams,
 				config:                &relayerconfig.DefaultConfig().BTC,
 				logger:                zaptest.NewLogger(t).Sugar(),
 				blockEventsChannel:    nil,
