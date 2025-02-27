@@ -124,6 +124,7 @@ func initSPVRelayer(
 		nativeClient,
 		cfg.Relayer.SleepDuration,
 		cfg.Relayer.MaxSleepDuration,
+		cfg.Relayer.ProcessBlockTimeout,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))

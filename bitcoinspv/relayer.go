@@ -20,7 +20,7 @@ type Relayer struct {
 
 	// Clients
 	btcClient clients.BTCClient
-	SPVClient clients.BitcoinSPV
+	lcClient  clients.BitcoinSPV
 
 	// Retry settings
 	retrySleepDuration    time.Duration
@@ -29,6 +29,9 @@ type Relayer struct {
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
+
+	// Context timeout
+	processBlockTimeout time.Duration
 
 	// Control
 	wg          sync.WaitGroup
@@ -42,9 +45,10 @@ func New(
 	config *config.RelayerConfig,
 	parentLogger *zap.Logger,
 	btcClient clients.BTCClient,
-	nativeClient clients.BitcoinSPV,
+	lcClient clients.BitcoinSPV,
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
+	processBlockTimeout time.Duration,
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
@@ -58,8 +62,9 @@ func New(
 		logger:                logger,
 		retrySleepDuration:    retrySleepDuration,
 		maxRetrySleepDuration: maxRetrySleepDuration,
+		processBlockTimeout:   processBlockTimeout,
 		btcClient:             btcClient,
-		SPVClient:             nativeClient,
+		lcClient:              lcClient,
 		btcConfirmationDepth:  defaultConfirmationDepth,
 		quitChannel:           make(chan struct{}),
 	}

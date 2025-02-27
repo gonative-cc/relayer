@@ -1,6 +1,7 @@
 package bitcoinspv
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/btcsuite/btcd/wire"
@@ -134,6 +135,9 @@ func (r *Relayer) getAndValidateBlock(
 }
 
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.processBlockTimeout)
+	defer cancel()
+
 	if indexedBlock == nil {
 		r.logger.Debug("No new headers to submit")
 		return nil
@@ -141,7 +145,7 @@ func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 
 	headersToProcess := []*types.IndexedBlock{indexedBlock}
 
-	if _, err := r.ProcessHeaders(headersToProcess); err != nil {
+	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
 		r.logger.Warnf("Error submitting header: %v", err)
 	}
 
