@@ -11,6 +11,7 @@ relayer:
   netparams: regtest # (mainnet|testnet|simnet|regtest)
   cache-size: 1000 # Size of the block headers cache
   headers-chunk-size: 100 # Number of headers posted to lightclient in a single chunk
+  process-block-timeout: 20 # Timeout duration for processing a single block, after which the context will be canceled
 btc:
   no-client-tls: true # Disable TLS for client connections to Bitcoin node
   ca-file: $HOME/.btcd/rpc.cert # Path to Bitcoin node's TLS certificate file

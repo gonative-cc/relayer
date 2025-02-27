@@ -6,6 +6,7 @@ relayer:
   netparams: simnet
   cache-size: 1000
   headers-chunk-size: 10
+  process-block-timeout: 20s
 btc:
   no-client-tls: true
   ca-file: $HOME/.btcd/rpc.cert

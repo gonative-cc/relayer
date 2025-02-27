@@ -15,16 +15,16 @@ var (
 	bootstrapRetryInterval = retry.Delay(30 * time.Second)
 )
 
-func (r *Relayer) bootstrapRelayer(skipSubscription bool) error {
-	if err := r.initializeAndSync(); err != nil {
+func (r *Relayer) bootstrapRelayer(ctx context.Context, skipSubscription bool) error {
+	if err := r.initializeAndSync(ctx); err != nil {
 		return err
 	}
 
-	if err := r.setupCache(skipSubscription); err != nil {
+	if err := r.setupCache(ctx, skipSubscription); err != nil {
 		return err
 	}
 
-	if err := r.processAndTrimCache(); err != nil {
+	if err := r.processAndTrimCache(ctx); err != nil {
 		return err
 	}
 
@@ -33,12 +33,12 @@ func (r *Relayer) bootstrapRelayer(skipSubscription bool) error {
 	return nil
 }
 
-func (r *Relayer) initializeAndSync() error {
-	return r.waitForBTCToSyncWithNative()
+func (r *Relayer) initializeAndSync(ctx context.Context) error {
+	return r.waitForLCToSyncWithBTC(ctx)
 }
 
-func (r *Relayer) setupCache(skipSubscription bool) error {
-	if err := r.initializeBTCCache(); err != nil {
+func (r *Relayer) setupCache(ctx context.Context, skipSubscription bool) error {
+	if err := r.initializeBTCCache(ctx); err != nil {
 		return err
 	}
 
@@ -48,8 +48,8 @@ func (r *Relayer) setupCache(skipSubscription bool) error {
 	return nil
 }
 
-func (r *Relayer) processAndTrimCache() error {
-	if err := r.processHeaders(); err != nil {
+func (r *Relayer) processAndTrimCache(ctx context.Context) error {
+	if err := r.processHeaders(ctx); err != nil {
 		return err
 	}
 
@@ -57,9 +57,9 @@ func (r *Relayer) processAndTrimCache() error {
 	return err
 }
 
-func (r *Relayer) processHeaders() error {
-	blocks := r.btcCache.GetAllBlocks()
-	if _, err := r.ProcessHeaders(blocks); err != nil {
+func (r *Relayer) processHeaders(ctx context.Context) error {
+	headersToProcess := r.btcCache.GetAllBlocks()
+	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
 		// occurs when multiple competing spv relayers exist
 		// or when our btc node is not fully synchronized
 		r.logger.Errorf("Failed to submit headers: %v", err)
@@ -104,7 +104,7 @@ func (r *Relayer) multitryBootstrap(skipSubscription bool) {
 
 	if err := retry.Do(
 		func() error {
-			return r.bootstrapRelayer(skipSubscription)
+			return r.bootstrapRelayer(ctx, skipSubscription)
 		},
 		retryOpts...,
 	); err != nil {
@@ -132,21 +132,21 @@ func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
 }
 
 // initializeBTCCache initializes the BTC cache with blocks from T-k to T
-// where T is the height of the latest block in Native light client
+// where T is the height of the latest block in the light client
 // and k is the confirmation depth
-func (r *Relayer) initializeBTCCache() error {
+func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	cache, err := relayertypes.NewBTCCache(r.Config.BTCCacheSize)
 	if err != nil {
 		return err
 	}
 	r.btcCache = cache
 
-	nativeBlockHeight, err := r.getNativeLatestBlockHeight()
+	blockHeight, err := r.getLatestBlockHeight(ctx)
 	if err != nil {
 		return err
 	}
 
-	baseHeight := nativeBlockHeight - r.btcConfirmationDepth + 1
+	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
 	if err != nil {
@@ -157,22 +157,22 @@ func (r *Relayer) initializeBTCCache() error {
 	return err
 }
 
-// waitForBTCToSyncWithNative ensures BTC node is synchronized by checking
-// that its chain height is at least equal to the Native light client height.
+// waitForLCToSyncWithBTC ensures that the light client is synchronized by checking
+// that its height is equal to the BTC chain height.
 // This synchronization is required before proceeding with relayer operations.
-func (r *Relayer) waitForBTCToSyncWithNative() error {
+func (r *Relayer) waitForLCToSyncWithBTC(ctx context.Context) error {
 	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 	if err != nil {
 		return err
 	}
 
-	nativeLatestBlockHeight, err := r.getNativeLatestBlockHeight()
+	latestBlockHeight, err := r.getLatestBlockHeight(ctx)
 	if err != nil {
 		return err
 	}
 
-	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < nativeLatestBlockHeight {
-		return r.waitForBTCCatchup(btcLatestBlockHeight, nativeLatestBlockHeight)
+	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < latestBlockHeight {
+		return r.waitForBTCCatchup(ctx, btcLatestBlockHeight, latestBlockHeight)
 	}
 
 	return nil
@@ -192,24 +192,24 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 	return btcLatestBlockHeight, nil
 }
 
-func (r *Relayer) getNativeLatestBlockHeight() (int64, error) {
-	nativeBlock, err := r.SPVClient.GetLatestBlockInfo(context.Background())
+func (r *Relayer) getLatestBlockHeight(ctx context.Context) (int64, error) {
+	block, err := r.lcClient.GetLatestBlockInfo(ctx)
 	if err != nil {
 		return 0, err
 	}
 
 	r.logger.Infof(
 		"Light client header chain latest block height: (%d)",
-		nativeBlock.Height,
+		block.Height,
 	)
 
-	return nativeBlock.Height, nil
+	return block.Height, nil
 }
 
-func (r *Relayer) waitForBTCCatchup(btcHeight int64, nativeHeight int64) error {
+func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeight int64) error {
 	r.logger.Infof(
 		"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
-		btcHeight, nativeHeight,
+		btcHeight, lcHeight,
 	)
 
 	ticker := time.NewTicker(bootstrapSyncTicker)
@@ -221,28 +221,28 @@ func (r *Relayer) waitForBTCCatchup(btcHeight int64, nativeHeight int64) error {
 			return err
 		}
 
-		nativeLatestBlockHeight, err := r.getNativeLatestBlockHeight()
+		lcLatestBlockHeight, err := r.getLatestBlockHeight(ctx)
 		if err != nil {
 			return err
 		}
 
-		if isBTCCaughtUp(btcLatestBlockHeight, nativeLatestBlockHeight) {
+		if isBTCCaughtUp(btcLatestBlockHeight, lcLatestBlockHeight) {
 			r.logger.Infof(
 				"BTC (height %d) has synchronized with light client header (height %d), proceeding with bootstrap",
-				btcLatestBlockHeight, nativeLatestBlockHeight,
+				btcLatestBlockHeight, lcLatestBlockHeight,
 			)
 			return nil
 		}
 
 		r.logger.Infof(
 			"BTC (height %d) is not yet synchronized with light client header (height %d), continuing to wait",
-			btcLatestBlockHeight, nativeLatestBlockHeight,
+			btcLatestBlockHeight, lcLatestBlockHeight,
 		)
 
 		<-ticker.C
 	}
 }
 
-func isBTCCaughtUp(btcHeight int64, nativeHeight int64) bool {
-	return btcHeight > 0 && btcHeight >= nativeHeight
+func isBTCCaughtUp(btcHeight int64, lcHeight int64) bool {
+	return btcHeight > 0 && btcHeight >= lcHeight
 }
