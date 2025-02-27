@@ -2,6 +2,7 @@ package native2ika
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -28,7 +29,7 @@ func NewProcessor(ikaClient ika.Client, db dal.DB) *Processor {
 // Run processes pending IKA sign requests by sending them to the IKA client for signing.
 // It updates the database with the results of the signing operation.
 func (p *Processor) Run(ctx context.Context) error {
-	ikaSignRequests, err := p.db.GetPendingIkaSignRequests()
+	ikaSignRequests, err := p.db.GetPendingIkaSignRequests(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch pending ika sign requests from db: %w", err)
 	}
@@ -48,10 +49,10 @@ func (p *Processor) Run(ctx context.Context) error {
 					Status:    dal.Failed,
 					IkaTxID:   txDigest,
 					Timestamp: time.Now().Unix(),
-					Note:      "Transaction successful, but error parsing events.",
+					Note:      sql.NullString{String: "Transaction successful, but error parsing events.", Valid: true},
 				}
 
-				insertErr := p.db.InsertIkaTx(ikaTx)
+				insertErr := p.db.InsertIkaTx(ctx, ikaTx)
 				if insertErr != nil {
 					return fmt.Errorf("failed inserting IkaTx: %w", insertErr)
 				}
@@ -59,7 +60,7 @@ func (p *Processor) Run(ctx context.Context) error {
 			return fmt.Errorf("failed calling ApproveAndSign for srID %d: %w", sr.ID, err)
 		}
 		log.Info().Msgf("SUCCESS: IKA signed the sign request")
-		err = p.db.UpdateIkaSignRequestFinalSig(sr.ID, signatures[0])
+		err = p.db.UpdateIkaSignRequestFinalSig(ctx, sr.ID, signatures[0])
 		if err != nil {
 			return fmt.Errorf("failed to update the signature in db: %w", err)
 		}
@@ -69,10 +70,9 @@ func (p *Processor) Run(ctx context.Context) error {
 			Status:    dal.Success,
 			IkaTxID:   txDigest,
 			Timestamp: time.Now().Unix(),
-			Note:      "",
 		}
 
-		err = p.db.InsertIkaTx(ikaTx)
+		err = p.db.InsertIkaTx(ctx, ikaTx)
 		if err != nil {
 			return fmt.Errorf("failed to insert IkaTx: %w", err)
 		}

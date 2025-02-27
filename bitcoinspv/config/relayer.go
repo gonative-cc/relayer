@@ -35,6 +35,8 @@ type RelayerConfig struct {
 	BTCCacheSize int64 `mapstructure:"cache-size"`
 	// HeadersChunkSize is maximum number of headers in a MsgInsertHeaders message
 	HeadersChunkSize uint32 `mapstructure:"headers-chunk-size"`
+	// ProcessBlockTimeout is the timeout duration for processing a single block.
+	ProcessBlockTimeout time.Duration `mapstructure:"process-block-timeout"`
 }
 
 func isPresent(v string, list []string) bool {

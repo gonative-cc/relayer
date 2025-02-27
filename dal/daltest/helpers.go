@@ -1,6 +1,7 @@
 package daltest
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -27,13 +28,13 @@ var testDBCounter = 0
 
 // InitTestDB initializes an in-memory database for testing purposes. Subsequent calls will
 // create a new in-memory DB.
-func InitTestDB(t *testing.T) dal.DB {
+func InitTestDB(ctx context.Context, t *testing.T) dal.DB {
 	t.Helper()
 
 	testDBCounter++
 	db, err := dal.NewDB(fmt.Sprintf("file:db%d?mode=memory&cache=shared", testDBCounter))
 	assert.NilError(t, err)
-	err = db.InitDB()
+	err = db.InitDB(ctx)
 	assert.NilError(t, err)
 	return db
 }
@@ -48,7 +49,7 @@ func DecodeBTCHash(t *testing.T, hashString string) []byte {
 }
 
 // PopulateSignRequests inserts a set of predefined IkaSignRequest into the database.
-func PopulateSignRequests(t *testing.T, db dal.DB) []dal.IkaSignRequest {
+func PopulateSignRequests(ctx context.Context, t *testing.T, db dal.DB) []dal.IkaSignRequest {
 	t.Helper()
 
 	var rawTxBytes = []byte{
@@ -75,7 +76,7 @@ func PopulateSignRequests(t *testing.T, db dal.DB) []dal.IkaSignRequest {
 	}
 
 	for _, request := range requests {
-		err := db.InsertIkaSignRequest(request)
+		err := db.InsertIkaSignRequest(ctx, request)
 		assert.NilError(t, err)
 	}
 
@@ -83,17 +84,17 @@ func PopulateSignRequests(t *testing.T, db dal.DB) []dal.IkaSignRequest {
 }
 
 // PopulateIkaTxs inserts a set of predefined IkaTxs into the database.
-func PopulateIkaTxs(t *testing.T, db dal.DB) []dal.IkaTx {
+func PopulateIkaTxs(ctx context.Context, t *testing.T, db dal.DB) []dal.IkaTx {
 	t.Helper()
 
 	ikaTxs := []dal.IkaTx{
-		{SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix(), Note: ""},
-		{SrID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix(), Note: ""},
-		{SrID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix(), Note: "some error"},
+		{SrID: 1, Status: dal.Success, IkaTxID: "ika_tx_1", Timestamp: time.Now().Unix()},
+		{SrID: 2, Status: dal.Success, IkaTxID: "ika_tx_2", Timestamp: time.Now().Unix()},
+		{SrID: 3, Status: dal.Failed, IkaTxID: "ika_tx_3", Timestamp: time.Now().Unix()},
 	}
 
 	for _, tx := range ikaTxs {
-		err := db.InsertIkaTx(tx)
+		err := db.InsertIkaTx(ctx, tx)
 		assert.NilError(t, err)
 	}
 
@@ -101,17 +102,17 @@ func PopulateIkaTxs(t *testing.T, db dal.DB) []dal.IkaTx {
 }
 
 // PopulateBitcoinTxs inserts a set of predefined BitcoinTxs into the database.
-func PopulateBitcoinTxs(t *testing.T, db dal.DB) []dal.BitcoinTx {
+func PopulateBitcoinTxs(ctx context.Context, t *testing.T, db dal.DB) []dal.BitcoinTx {
 	t.Helper()
 
 	bitcoinTxs := []dal.BitcoinTx{
-		{SrID: 2, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix(), Note: ""},
-		{SrID: 4, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "2"), Timestamp: time.Now().Unix(), Note: ""},
-		{SrID: 4, Status: dal.Broadcasted, BtcTxID: DecodeBTCHash(t, "3"), Timestamp: time.Now().Unix(), Note: ""},
+		{SrID: 2, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "1"), Timestamp: time.Now().Unix()},
+		{SrID: 4, Status: dal.Pending, BtcTxID: DecodeBTCHash(t, "2"), Timestamp: time.Now().Unix()},
+		{SrID: 4, Status: dal.Broadcasted, BtcTxID: DecodeBTCHash(t, "3"), Timestamp: time.Now().Unix()},
 	}
 
 	for _, tx := range bitcoinTxs {
-		err := db.InsertBtcTx(tx)
+		err := db.InsertBtcTx(ctx, tx)
 		assert.NilError(t, err)
 	}
 
@@ -119,9 +120,9 @@ func PopulateBitcoinTxs(t *testing.T, db dal.DB) []dal.BitcoinTx {
 }
 
 // PopulateDB inserts a set of predefined data to all the tables.
-func PopulateDB(t *testing.T, db dal.DB) {
+func PopulateDB(ctx context.Context, t *testing.T, db dal.DB) {
 	t.Helper()
-	PopulateBitcoinTxs(t, db)
-	PopulateIkaTxs(t, db)
-	PopulateSignRequests(t, db)
+	PopulateBitcoinTxs(ctx, t, db)
+	PopulateIkaTxs(ctx, t, db)
+	PopulateSignRequests(ctx, t, db)
 }

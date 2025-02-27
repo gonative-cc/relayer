@@ -19,4 +19,5 @@ var (
 	ErrBlockHashInvalid     = errors.New("invalid block hash bytes")
 	ErrNoEventsFound        = errors.New("no events found for transaction digest")
 	ErrEventDataFormat      = errors.New("failed to retrieve Sui events")
+	ErrSuiTransactionFailed = errors.New("sui transaction execution failed")
 )

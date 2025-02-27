@@ -2,6 +2,7 @@ package ika2btc
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"time"
 
@@ -43,8 +44,8 @@ func NewProcessor(
 }
 
 // Run starts a loop to query and process signed transactions from the database.
-func (p *Processor) Run() error {
-	signedTxs, err := p.db.GetBitcoinTxsToBroadcast()
+func (p *Processor) Run(ctx context.Context) error {
+	signedTxs, err := p.db.GetBitcoinTxsToBroadcast(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch signed txs from db: %w", err)
 	}
@@ -64,12 +65,11 @@ func (p *Processor) Run() error {
 		}
 		log.Info().Msgf("SUCCESS: Broadcasted transaction to Bitcoin: txHash = %s", txHash.String())
 
-		err = p.db.InsertBtcTx(dal.BitcoinTx{
+		err = p.db.InsertBtcTx(ctx, dal.BitcoinTx{
 			SrID:      tx.ID,
 			Status:    dal.Broadcasted,
 			BtcTxID:   txHash.CloneBytes(),
 			Timestamp: time.Now().Unix(),
-			Note:      "",
 		})
 		if err != nil {
 			return fmt.Errorf("failed to update tx status: {tx: %d, err: %w}", tx.ID, err)
@@ -80,8 +80,8 @@ func (p *Processor) Run() error {
 
 // CheckConfirmations checks all the broadcasted transactions to bitcoin
 // and if confirmed updates the database accordingly.
-func (p *Processor) CheckConfirmations() error {
-	broadcastedTxs, err := p.db.GetBroadcastedBitcoinTxsInfo()
+func (p *Processor) CheckConfirmations(ctx context.Context) error {
+	broadcastedTxs, err := p.db.GetBroadcastedBitcoinTxsInfo(ctx)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (p *Processor) CheckConfirmations() error {
 		}
 
 		if txDetails.Confirmations >= int64(p.txConfirmationThreshold) {
-			err = p.db.UpdateBitcoinTxToConfirmed(tx.TxID, tx.BtcTxID)
+			err = p.db.UpdateBitcoinTxToConfirmed(ctx, tx.SrID, tx.BtcTxID)
 			if err != nil {
 				return fmt.Errorf("failed to update tx status: %w}", err)
 			}

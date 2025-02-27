@@ -1,6 +1,7 @@
 package dal
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -8,70 +9,71 @@ import (
 )
 
 const (
-	batch               = 1000
-	workers             = 5
+	batch         int64 = 1000
+	workers       int64 = 5
 	testTimestamp int64 = 123
 )
 
 func Test_DbRace(t *testing.T) {
 	db, err := NewDB(":memory:")
 	assert.NilError(t, err)
-	err = db.InitDB()
+	ctx := context.Background()
+	err = db.InitDB(ctx)
 	assert.NilError(t, err)
 
 	// Test 1: Parallel inserts
 	var wg sync.WaitGroup
-	for i := uint64(0); i < workers; i++ {
+	for i := int64(0); i < workers; i++ {
 		wg.Add(1)
-		go insertManySignReq(t, &wg, db, i*batch, (i+1)*batch)
+		go insertManySignReq(ctx, t, &wg, db, i*batch, (i+1)*batch)
 	}
 	wg.Wait()
 
 	var srID uint64 = 1
-	sr, err := db.GetIkaSignRequestByID(srID)
+	sr, err := db.GetIkaSignRequestByID(ctx, srID)
 	assert.NilError(t, err)
 	assert.Assert(t, sr != nil)
 	assert.Equal(t, testTimestamp, sr.Timestamp)
 
 	row := db.conn.QueryRow(`SELECT COUNT(*) FROM ika_sign_requests`)
-	var count int
+	var count int64
 	err = row.Scan(&count)
 	assert.NilError(t, err)
 	assert.Equal(t, batch*workers, count)
 
 	// Test 2: Parallel updates
-	for i := uint64(0); i < workers; i++ {
+	for i := int64(0); i < workers; i++ {
 		wg.Add(1)
 		go loopIncrementIkaSRTimestamp(t, &wg, db, batch, srID)
 	}
 	wg.Wait()
 
-	sr, err = db.GetIkaSignRequestByID(srID)
+	sr, err = db.GetIkaSignRequestByID(ctx, srID)
 	assert.NilError(t, err)
 	assert.Assert(t, sr != nil)
 	assert.Equal(t, int64(testTimestamp+workers*batch), sr.Timestamp)
 
 }
 
-func insertManySignReq(t *testing.T, wg *sync.WaitGroup, db DB, idFrom, idTo uint64) {
+func insertManySignReq(ctx context.Context, t *testing.T, wg *sync.WaitGroup, db DB, idFrom, idTo int64) {
 	for i := idFrom; i < idTo; i++ {
 		sr := IkaSignRequest{
-			ID:        i,
+			ID:        uint64(i),
 			Payload:   []byte{},
 			DWalletID: "",
 			UserSig:   "",
 			FinalSig:  nil,
 			Timestamp: testTimestamp,
 		}
-		err := db.InsertIkaSignRequest(sr)
+		err := db.InsertIkaSignRequest(ctx, sr)
 		assert.NilError(t, err)
 		t.Logf("Worker %d finished inserting %d sign requests (from ID %d to %d)", i, idTo-idFrom, idFrom, idTo)
 	}
 	wg.Done()
 }
 
-func loopIncrementIkaSRTimestamp(t *testing.T, wg *sync.WaitGroup, db DB, n int, srID uint64) {
-	for i := 0; i < n; i++ {
+func loopIncrementIkaSRTimestamp(t *testing.T, wg *sync.WaitGroup, db DB, n int64, srID uint64) {
+	for i := int64(0); i < n; i++ {
 		assert.NilError(t, db.incrementIkaSRTimestamp(srID))
 	}
 	wg.Done()
