@@ -7,9 +7,9 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
-	suiLC "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"
+	suiClient "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
-	"github.com/gonative-cc/relayer/btcwrapper"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -102,7 +102,7 @@ func initNativeClient(cfg *config.Config) clients.BitcoinSPV {
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	client, err := suiLC.NewSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
+	client, err := suiClient.NewSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))
