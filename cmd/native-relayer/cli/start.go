@@ -31,30 +31,29 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Failed to prepare environment")
 			os.Exit(1)
 		}
-		startRelayer(cmd.Context(), config)
+		if err := startRelayer(cmd.Context(), config); err != nil {
+			log.Error().Err(err).Msg("Failed to start relayer")
+			os.Exit(1)
+		}
 	},
 }
 
-func startRelayer(ctx context.Context, config *Config) {
+func startRelayer(ctx context.Context, config *Config) error {
 	db, err := initDatabase(ctx, config.DB)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to initialize database")
-		os.Exit(1)
+		return fmt.Errorf("initialize database: %w", err)
 	}
 	nativeProcessor, err := createNativeProcessor(config.Ika, db)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create Native Processor")
-		os.Exit(1)
+		return fmt.Errorf("create Native Processor: %w", err)
 	}
 	btcProcessor, err := createBTCProcessor(config.Btc, db)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create Bitcoin processor")
-		os.Exit(1)
+		return fmt.Errorf("create Bitcoin processor: %w", err)
 	}
 	fetcher, err := createSignReqFetcher()
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create SignReq fetcher ")
-		os.Exit(1)
+		return fmt.Errorf("create SignReq fetcher: %w", err)
 	}
 	relayer, err := createRelayer(
 		config.Relayer,
@@ -64,28 +63,24 @@ func startRelayer(ctx context.Context, config *Config) {
 		fetcher,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create relayer")
-		os.Exit(1)
+		return fmt.Errorf("create relayer: %w", err)
 	}
+
 	// We need it to ensure the relayer actually stops before displaying `realyer stopped` and exiting.
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	f, err := os.Create(PidFilePath)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create pid file")
-		os.Exit(1)
+		return fmt.Errorf("create PID file: %w", err)
 	}
 	_, err = f.WriteString(strconv.Itoa(os.Getpid()))
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to write to pid file")
-		_ = f.Close()
-		os.Exit(1)
+		return fmt.Errorf("write PID to file: %w", err)
 	}
 	err = f.Close()
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to close pid file")
-		os.Exit(1)
+		return fmt.Errorf("close pid file: %w", err)
 	}
 	go func() {
 		defer wg.Done()
@@ -95,6 +90,8 @@ func startRelayer(ctx context.Context, config *Config) {
 		}
 	}()
 	wg.Wait()
+
+	return nil
 }
 
 func prepareEnv(cmd *cobra.Command) (*Config, error) {
