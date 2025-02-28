@@ -6,12 +6,12 @@ native:
 
 ika:
   rpc: "127.0.0.1:0001"
-  signer_mnemonic: ""
-  native_lc_package: ""
-  native_lc_module: ""
-  native_lc_function: ""
-  gas_acc: ""                            
-  gas_budget:
+  signer_mnemonic: "require fish happy collect verify bind media unknown media picnic tuna virus"
+  native_lc_package: "0xbc39bc608dd3481a6c7f15dd25021225db7f70579d50e45aacb631612fbe3d59"
+  native_lc_module: "0xbc39bc608dd3481a6c7f15dd25021225db7f70579d50e45aacb631612fbe3d59"
+  native_lc_function: "0xbc39bc608dd3481a6c7f15dd25021225db7f70579d50e45aacb631612fbe3d59"
+  gas_acc: "0xbc39bc608dd3481a6c7f15dd25021225db7f70579d50e45aacb631612fbe3d59"                            
+  gas_budget: 100000
 
 bitcoin:
   rpc_host: "your-bitcoin-rpc.com"
@@ -20,7 +20,7 @@ bitcoin:
   confirmation_threshold: 6
   http_post_mode: true
   disable_tls: false
-  network: "testnet"
+  network: "regtest"
 
 relayer:
   process_txs_interval: 5s
@@ -30,4 +30,4 @@ relayer:
   sign_req_fetch_limit: 5
 
 db:
-  db_file: "relayer.db"
+  file: "relayer.db"

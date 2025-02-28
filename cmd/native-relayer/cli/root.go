@@ -32,4 +32,5 @@ func init() {
 		"Set the log level (trace, debug, info, warn, error, fatal, panic)",
 	)
 	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(stopCmd)
 }
