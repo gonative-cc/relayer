@@ -30,4 +30,4 @@ relayer:
   sign_req_fetch_limit: 5
 
 db:
-  db_file: "relayer.db"
+  file: "relayer.db"

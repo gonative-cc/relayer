@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
+	"strconv"
 	"sync"
-	"syscall"
 
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -32,56 +31,67 @@ var startCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Failed to prepare environment")
 			os.Exit(1)
 		}
-		db, err := initDatabase(cmd.Context(), config.DB)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to initialize database")
+		if err := startRelayer(cmd.Context(), config); err != nil {
+			log.Error().Err(err).Msg("Failed to start relayer")
 			os.Exit(1)
 		}
-		nativeProcessor, err := createNativeProcessor(config.Ika, db)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to create Native Processor")
-			os.Exit(1)
-		}
-		btcProcessor, err := createBTCProcessor(config.Btc, db)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to create Bitcoin processor")
-			os.Exit(1)
-		}
-		fetcher, err := createSignReqFetcher()
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to create SignReq fetcher ")
-			os.Exit(1)
-		}
-		relayer, err := createRelayer(
-			config.Relayer,
-			db,
-			nativeProcessor,
-			btcProcessor,
-			fetcher,
-		)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to create relayer")
-			os.Exit(1)
-		}
-		// We need it to ensure the relayer actually stops before displaying `realyer stopped` and exiting.
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			log.Info().Msg("Starting the relayer...")
-			if err := relayer.Start(cmd.Context()); err != nil {
-				log.Error().Err(err).Msg("Relayer encountered an error")
-			}
-		}()
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
-		<-c
-		log.Info().Msg("Stopping the relayer...")
-		relayer.Stop()
-		wg.Wait()
-		log.Info().Msg("Relayer stopped")
 	},
+}
+
+func startRelayer(ctx context.Context, config *Config) error {
+	db, err := initDatabase(ctx, config.DB)
+	if err != nil {
+		return fmt.Errorf("initialize database: %w", err)
+	}
+	nativeProcessor, err := createNativeProcessor(config.Ika, db)
+	if err != nil {
+		return fmt.Errorf("create Native Processor: %w", err)
+	}
+	btcProcessor, err := createBTCProcessor(config.Btc, db)
+	if err != nil {
+		return fmt.Errorf("create Bitcoin processor: %w", err)
+	}
+	fetcher, err := createSignReqFetcher()
+	if err != nil {
+		return fmt.Errorf("create SignReq fetcher: %w", err)
+	}
+	relayer, err := createRelayer(
+		config.Relayer,
+		db,
+		nativeProcessor,
+		btcProcessor,
+		fetcher,
+	)
+	if err != nil {
+		return fmt.Errorf("create relayer: %w", err)
+	}
+
+	// We need it to ensure the relayer actually stops before displaying `realyer stopped` and exiting.
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	f, err := os.Create(PidFilePath)
+	if err != nil {
+		return fmt.Errorf("create PID file: %w", err)
+	}
+	_, err = f.WriteString(strconv.Itoa(os.Getpid()))
+	if err != nil {
+		return fmt.Errorf("write PID to file: %w", err)
+	}
+	err = f.Close()
+	if err != nil {
+		return fmt.Errorf("close pid file: %w", err)
+	}
+	go func() {
+		defer wg.Done()
+		log.Info().Msg("Starting the relayer...")
+		if err := relayer.Start(ctx); err != nil {
+			log.Error().Err(err).Msg("Relayer encountered an error")
+		}
+	}()
+	wg.Wait()
+
+	return nil
 }
 
 func prepareEnv(cmd *cobra.Command) (*Config, error) {
@@ -182,6 +192,7 @@ func createRelayer(
 		nativeProcessor,
 		btcProcessor,
 		fetcher,
+		PidFilePath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating relayer: %w", err)
