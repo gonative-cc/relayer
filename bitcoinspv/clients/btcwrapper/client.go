@@ -7,12 +7,13 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	"go.uber.org/zap"
 
+	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	zeromq "github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper/zmq"
 	relayerconfig "github.com/gonative-cc/relayer/bitcoinspv/config"
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
-	zeromq "github.com/gonative-cc/relayer/btcwrapper/zmq"
 )
 
-var _ BTCClient = &Client{}
+var _ clients.BTCClient = &Client{}
 
 // Client maintains an ongoing connection to a Bitcoin RPC server to access
 // information about the current state of the best block chain.
