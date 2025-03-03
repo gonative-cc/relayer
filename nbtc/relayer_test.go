@@ -44,8 +44,6 @@ var relayerConfig = RelayerConfig{
 	SignReqFetchLimit:  5,
 }
 
-var pidFilePath = "/tmp/realyer.pid"
-
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
 	ctx := context.Background()
@@ -57,7 +55,7 @@ func setupTestSuite(t *testing.T) *testSuite {
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
 	assert.NilError(t, err)
 
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher, pidFilePath)
+	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher)
 	assert.NilError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -137,7 +135,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			relayer, err := NewRelayer(relayerConfig, tc.db, tc.nativeProcessor, tc.btcProcessor, tc.fetcher, pidFilePath)
+			relayer, err := NewRelayer(relayerConfig, tc.db, tc.nativeProcessor, tc.btcProcessor, tc.fetcher)
 			assert.ErrorIs(t, err, tc.expectedError)
 			assert.Assert(t, relayer == nil)
 		})

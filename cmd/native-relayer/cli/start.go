@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -66,22 +67,15 @@ func startRelayer(ctx context.Context, config *Config) error {
 		return fmt.Errorf("create relayer: %w", err)
 	}
 
+	// Create a channel to receive OS signals.
+	signalChan := make(chan os.Signal, 1)
+	// Notify when SIGTERM is received.
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+
 	// We need it to ensure the relayer actually stops before displaying `realyer stopped` and exiting.
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	f, err := os.Create(PidFilePath)
-	if err != nil {
-		return fmt.Errorf("create PID file: %w", err)
-	}
-	_, err = f.WriteString(strconv.Itoa(os.Getpid()))
-	if err != nil {
-		return fmt.Errorf("write PID to file: %w", err)
-	}
-	err = f.Close()
-	if err != nil {
-		return fmt.Errorf("close pid file: %w", err)
-	}
 	go func() {
 		defer wg.Done()
 		log.Info().Msg("Starting the relayer...")
@@ -89,6 +83,10 @@ func startRelayer(ctx context.Context, config *Config) error {
 			log.Error().Err(err).Msg("Relayer encountered an error")
 		}
 	}()
+
+	<-signalChan
+	log.Info().Msg("Shutting down relayer...")
+	relayer.Stop()
 	wg.Wait()
 
 	return nil
@@ -192,7 +190,6 @@ func createRelayer(
 		nativeProcessor,
 		btcProcessor,
 		fetcher,
-		PidFilePath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating relayer: %w", err)

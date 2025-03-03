@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/gonative-cc/relayer/bitcoin"
@@ -31,7 +28,6 @@ type Relayer struct {
 	processTxsTicker *time.Ticker
 	confirmTxsTicker *time.Ticker
 	signReqTicker    *time.Ticker
-	pidFilePath      string
 	// ID of the first sign req that we want to fetch in the next round
 	signReqFetchFrom  int
 	signReqFetchLimit int
@@ -61,7 +57,6 @@ func NewRelayer(
 	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
 	fetcher native.SignReqFetcher,
-	pidFilePath string,
 ) (*Relayer, error) {
 	if nativeProcessor == nil {
 		return nil, fmt.Errorf("relayer: %w", native.ErrNoNativeProcessor)
@@ -98,15 +93,11 @@ func NewRelayer(
 		signReqFetcher:    fetcher,
 		signReqFetchFrom:  relayerConfig.SignReqFetchFrom,
 		signReqFetchLimit: relayerConfig.SignReqFetchLimit,
-		pidFilePath:       pidFilePath,
 	}, nil
 }
 
 // Start starts the relayer's main loop.
 func (r *Relayer) Start(ctx context.Context) error {
-	// signal handling move here from cli/start.go
-	interruptChannel := make(chan os.Signal, 1)
-	signal.Notify(interruptChannel, os.Interrupt, syscall.SIGTERM)
 
 	nativeCtx, nativeCancel := context.WithCancel(ctx)
 	defer nativeCancel()
@@ -117,20 +108,11 @@ func (r *Relayer) Start(ctx context.Context) error {
 	fetchCtx, fetchCancel := context.WithCancel(ctx)
 	defer fetchCancel()
 
-	defer func() {
-		if _, err := os.Stat(r.pidFilePath); err == nil {
-			os.Remove(r.pidFilePath)
-		}
-	}()
-
 	for {
 		select {
 		case <-r.shutdownChan:
 			log.Info().Msg("Relayer stopped successfully")
 			return nil
-		case <-interruptChannel:
-			log.Info().Msg("Stopping the relayer...")
-			r.Stop()
 		case <-r.processTxsTicker.C:
 			go r.runProcessor(func() error { return r.processSignRequests(nativeCtx) }, "processSignRequests")
 			go r.runProcessor(func() error { return r.processSignedTxs(btcCtx) }, "processSignedTxs")
