@@ -67,9 +67,8 @@ func startRelayer(ctx context.Context, config *Config) error {
 		return fmt.Errorf("create relayer: %w", err)
 	}
 
-	// Create a channel to receive OS signals.
+	// Create a channel to receive OS signals (SIGTERM) to stop the relayer.
 	signalChan := make(chan os.Signal, 1)
-	// Notify when SIGTERM is received.
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
 	// We need it to ensure the relayer actually stops before displaying `realyer stopped` and exiting.
