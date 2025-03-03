@@ -21,14 +21,13 @@ import (
 // - btcProcessor: To broadcast signed transactions to Bitcoin and monitor confirmations.
 type Relayer struct {
 	db               dal.DB
+	signReqFetcher   native.SignReqFetcher
 	nativeProcessor  *native2ika.Processor
 	btcProcessor     *ika2btc.Processor
 	shutdownChan     chan struct{}
 	processTxsTicker *time.Ticker
 	confirmTxsTicker *time.Ticker
-	// native Sign Request
-	signReqTicker  *time.Ticker
-	signReqFetcher native.SignReqFetcher
+	signReqTicker    *time.Ticker
 	// ID of the first sign req that we want to fetch in the next round
 	signReqFetchFrom  int
 	signReqFetchLimit int
@@ -99,6 +98,7 @@ func NewRelayer(
 
 // Start starts the relayer's main loop.
 func (r *Relayer) Start(ctx context.Context) error {
+
 	nativeCtx, nativeCancel := context.WithCancel(ctx)
 	defer nativeCancel()
 
@@ -111,7 +111,7 @@ func (r *Relayer) Start(ctx context.Context) error {
 	for {
 		select {
 		case <-r.shutdownChan:
-			r.btcProcessor.Shutdown()
+			log.Info().Msg("Relayer stopped successfully")
 			return nil
 		case <-r.processTxsTicker.C:
 			go r.runProcessor(func() error { return r.processSignRequests(nativeCtx) }, "processSignRequests")
@@ -186,5 +186,9 @@ func (r *Relayer) runProcessor(f func() error, name string) {
 
 // Stop initiates a shutdown of the relayer.
 func (r *Relayer) Stop() {
+	r.processTxsTicker.Stop()
+	r.confirmTxsTicker.Stop()
+	r.signReqTicker.Stop()
+	r.btcProcessor.Shutdown()
 	close(r.shutdownChan)
 }
