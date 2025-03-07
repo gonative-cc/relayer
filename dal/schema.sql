@@ -23,6 +23,6 @@ CREATE TABLE IF NOT EXISTS bitcoin_txs (
     btc_tx_id BLOB NOT NULL,
     timestamp INTEGER NOT NULL,
     note TEXT,
-    PRIMARY KEY (s__id, btc_tx_id),
+    PRIMARY KEY (sr_id, btc_tx_id),
     FOREIGN KEY (sr_id) REFERENCES ika_sign_requests (id)
 );
