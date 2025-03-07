@@ -3,6 +3,10 @@ on: pull_request
 jobs:
   diff:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./dal
+
     steps:
       - uses: actions/checkout@v3
       - uses: sqlc-dev/setup-sqlc@v3
