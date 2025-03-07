@@ -1,5 +1,5 @@
-name: sqlc
-on: [push]
+name: SQLC
+on: pull_request
 jobs:
   diff:
     runs-on: ubuntu-latest
