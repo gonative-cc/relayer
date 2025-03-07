@@ -20,7 +20,7 @@ type IkaSignRequest struct {
 	ID        uint64 `json:"id"`
 	Payload   []byte `json:"payload"`
 	DWalletID string `json:"dwallet_id"`
-	UserSig   string `json:"user_sig"`
+	UserSig   stri  ng `json:"user_sig"`
 	FinalSig  []byte `json:"final_sig"`
 	Timestamp int64  `json:"timestamp"`
 }
