@@ -1,0 +1,25 @@
+name: SQLC
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./dal
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: sqlc-dev/setup-sqlc@v3
+        with:
+          sqlc-version: "1.28.0"
+      - name: sqlc diff
+        run: sqlc diff
+
+      - name: sqlc vet
+        run: sqlc vet
