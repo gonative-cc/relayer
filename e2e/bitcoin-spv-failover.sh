@@ -22,10 +22,9 @@ if ! docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo; then
 fi
 
 # query the lightclient for the latest block
-chaintip_response_before=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
+chaintip_response_before=$(sui client call --function latest_block_hash --module light_client --package $PACKAGE_ID --gas-budget 10000000 --args $OBJECT_ID --dev-inspect --json)
 
-chaintip_hash_before=$(echo "$chaintip_response_before" | jq -r '.result.Hash')
-chaintip_height_before=$(echo "$chaintip_response_before" | jq -r '.result.Height')
+chaintip_height_before=$(echo "$chaintip_response_before" | jq -r '.events[].parsedJson.height')
 
 # stop the relayer
 echo "Stopping bitcoin-spv relayer..."
@@ -35,11 +34,10 @@ kill $RELAYER_PID_OLD
 docker exec -it bitcoind-node bitcoin-cli -generate 100
 
 # query the lightclient again for the latest block
-chaintip_response_after_stop=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
+chaintip_response_after_stop=$(sui client call --function latest_block_hash --module light_client --package $PACKAGE_ID --gas-budget 10000000 --args $OBJECT_ID --dev-inspect --json)
 
 # parse the JSON to extract values using jq
-chaintip_hash_after_stop=$(echo "$chaintip_response_after_stop" | jq -r '.result.Hash')
-chaintip_height_after_stop=$(echo "$chaintip_response_after_stop" | jq -r '.result.Height')
+chaintip_height_after_stop=$(echo "$chaintip_response_after_stop" | jq -r '.events[].parsedJson.height')
 
 # start the relayer again
 echo "Starting bitcoin-spv relayer again..."
@@ -52,18 +50,15 @@ echo "Waiting for bitcoin-spv relayer to bootstrap..."
 sleep 50 # NOTE: long wait cause waiting for relayer to submit all 100 block headers
 
 # query the lightclient again for the latest block
-chaintip_response_after_restart=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
+chaintip_response_after_restart=$(sui client call --function latest_block_hash --module light_client --package $PACKAGE_ID --gas-budget 10000000 --args $OBJECT_ID --dev-inspect --json)
 
 # parse the JSON to extract values using jq
-chaintip_hash_after_restart=$(echo "$chaintip_response_after_restart" | jq -r '.result.Hash')
-chaintip_height_after_restart=$(echo "$chaintip_response_after_restart" | jq -r '.result.Height')
+chaintip_height_after_restart=$(echo "$chaintip_response_after_restart" | jq -r '.events[].parsedJson.height')
 
 # assert that the lightclient block has increased by exactly 100
 if [[ $((chaintip_height_after_restart-chaintip_height_before)) != 100 ]]; then
   echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
-  echo "Before Hash: $chaintip_hash_before"
   echo "Before Height: $chaintip_height_before"
-  echo "After Hash: $chaintip_hash_after_restart"
   echo "After Height: $chaintip_height_after_restart"
 fi
 
@@ -97,18 +92,15 @@ echo "Waiting for second bitcoin-spv relayer (second instance) to bootstrap..."
 sleep 50 # NOTE: long wait cause waiting for relayer to submit all 100 block headers
 
 # query the lightclient again for the latest block
-chaintip_response_after_concurrent=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
+chaintip_response_after_concurrent=$(sui client call --function latest_block_hash --module light_client --package $PACKAGE_ID --gas-budget 10000000 --args $OBJECT_ID --dev-inspect --json)
 
 # parse the JSON to extract values using jq
-chaintip_hash_after_concurrent=$(echo "$chaintip_response_after_concurrent" | jq -r '.result.Hash')
-chaintip_height_after_concurrent=$(echo "$chaintip_response_after_concurrent" | jq -r '.result.Height')
+chaintip_height_after_concurrent=$(echo "$chaintip_response_after_concurrent" | jq -r '.events[].parsedJson.height')
 
 # assert that the lightclient block has increased by exactly 200
 if [[ $((chaintip_height_after_concurrent-chaintip_height_before)) != 200 ]]; then
   echo "ERROR: light client didn't update correctly: the latest confirmed block didn't change"
-  echo "Before Hash: $chaintip_hash_before"
   echo "Before Height: $chaintip_height_before"
-  echo "After Hash: $chaintip_hash_after_concurrent"
   echo "After Height: $chaintip_height_after_concurrent"
 fi
 
