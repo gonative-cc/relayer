@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e # Exit immediately when the script failed
-echo "Starting bitcoind node and bitcoin-lightclient..."
+echo "Starting bitcoind node..."
 make bitcoind-init
 cd contrib/
 docker compose up -d
@@ -22,20 +22,18 @@ if ! docker exec -it bitcoind-node bitcoin-cli -regtest getblockchaininfo; then
 fi
 
 # query the lightclient for the latest block
-chaintip_response_before=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
+chaintip_response_before=$(sui client call --function latest_block_hash --module light_client --package $PACKAGE_ID --gas-budget 10000000 --args $OBJECT_ID --dev-inspect --json)
 
-chaintip_hash_before=$(echo "$chaintip_response_before" | jq -r '.result.Hash')
-chaintip_height_before=$(echo "$chaintip_response_before" | jq -r '.result.Height')
+chaintip_height_before=$(echo "$chaintip_response_before" | jq -r '.events[].parsedJson.height')
 
 # produce a block
 docker exec -it bitcoind-node bitcoin-cli -generate 1
 
 # query the lightclient again for the latest block
-chaintip_response_after=$(curl --user user:password --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"get_header_chain_tip","params":[]}' -H 'content-type: text/plain;' http://127.0.0.1:9797)
+chaintip_response_after=$(sui client call --function latest_block_hash --module light_client --package $PACKAGE_ID --gas-budget 10000000 --args $OBJECT_ID --dev-inspect --json)
 
 # parse the JSON to extract values using jq
-chaintip_hash_after=$(echo "$chaintip_response_after" | jq -r '.result.Hash')
-chaintip_height_after=$(echo "$chaintip_response_after" | jq -r '.result.Height')
+chaintip_height_after=$(echo "$chaintip_response_after" | jq -r '.events[].parsedJson.height')
 
 # assert that the lightclient block has increased by 1
 if [[ $((chaintip_height_after-chaintip_height_before)) != 1 ]]; then
