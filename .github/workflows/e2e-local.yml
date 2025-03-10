@@ -6,28 +6,27 @@ jobs:
   sui-setup:
     runs-on: ubuntu-latest
 
+    services:
+      sui-node:
+        image: mysten/sui-tools:devnet
+        ports:
+          - 9000:9000
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Sui CLI (Pre-built Binary)
+      - name: Start Local Sui Network)
         run: |
-          curl -sL https://github.com/MystenLabs/sui/releases/download/devnet-v1.44.0/sui-devnet-v1.44.0-ubuntu-x86_64.tgz -o sui.tgz
-          tar -xzf sui.tgz
-          sudo mv sui-devnet-v1.44.0-ubuntu-x86_64/sui /usr/local/bin/sui
-          sui --version
-
-      - name: Start Local Sui Network
-        run: |
-          RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis &
+          docker exec sui-node RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis -d
 
       - name: Wait for Local Sui Network
-        run: sleep 10
+        run: sleep 20
 
       - name: Configure Sui Client
         run: |
-          sui client new-env --alias local --rpc http://127.0.0.1:9000
-          sui client switch --env local
+          docker exec sui-node sui client new-env --alias local --rpc http://127.0.0.1:9000
+          docker exec sui-node sui client switch --env local
 
       - name: Ping Sui Network (Get Total Transactions)
         run: |
