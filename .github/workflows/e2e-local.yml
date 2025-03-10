@@ -49,7 +49,7 @@ jobs:
         run: docker exec sui-node sui client faucet
 
       - name: Get SUI balance of active address
-        run: docker exec sui-node sui client faucet
+        run: docker exec sui-node sui client gas
 
       - name: Deploy and initalize Light Client
         run: echo "deploy and initalize light client"
