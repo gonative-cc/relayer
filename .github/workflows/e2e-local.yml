@@ -22,7 +22,7 @@ jobs:
 
       - name: Configure Sui Client
         run: |
-          docker exec sui-node sui client new-env --alias local --rpc http://127.0.0.1:9000
+          docker exec sui-node sui client new-env --alias local --rpc http://127.0.0.1:9000 -y
           docker exec sui-node sui client switch --env local
 
       - name: Ping Sui Network (Get Total Transactions)
