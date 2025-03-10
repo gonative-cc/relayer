@@ -6,19 +6,16 @@ jobs:
   sui-setup:
     runs-on: ubuntu-latest
 
-    services:
-      sui-node:
-        image: mysten/sui-tools:devnet
-        ports:
-          - 9000:9000
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start Local Sui Network)
+      - name: Start Sui Local Network (Manual Docker Run)
+        id: start-node
         run: |
-          docker exec sui-node RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis -d
+          docker run -d --name sui-node -p 9000:9000 -p 9123:9123 mysten/sui-tools:devnet /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
+          CONTAINER_ID=$(docker ps -aqf "name=sui-node")
+          echo "container_id=$CONTAINER_ID" >> $GITHUB_OUTPUT
 
       - name: Wait for Local Sui Network
         run: sleep 20
