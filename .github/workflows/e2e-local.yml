@@ -14,10 +14,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Start Sui Local Network (Manual Docker Run)
+
         run: |
           docker run -d --name sui-node -p 9000:9000 -p 9123:9123 mysten/sui-tools:devnet /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
           CONTAINER_ID=$(docker ps -aqf "name=sui-node")
           echo "container_id=$CONTAINER_ID" >> $GITHUB_OUTPUT
+
+      - name: Wait for Local Sui Network
+        run: sleep 10
 
       - name: Configure Sui Client
         run: |
