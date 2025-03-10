@@ -1,0 +1,46 @@
+name: Sui Local Network Setup Test
+
+on: pull_request
+
+jobs:
+  sui-setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Sui CLI (Pre-built Binary)
+        run: |
+          curl -sL https://github.com/MystenLabs/sui/releases/download/devnet-v1.44.0/sui-devnet-v1.44.0-ubuntu-x86_64.tgz -o sui.tgz
+          tar -xzf sui.tgz
+          sudo mv sui-devnet-v1.44.0-ubuntu-x86_64/sui /usr/local/bin/sui
+          sui --version
+
+      - name: Start Local Sui Network
+        run: |
+          RUST_LOG="off,sui_node=info" sui start --with-faucet --force-regenesis &
+
+      - name: Wait for Local Sui Network
+        run: sleep 10
+
+      - name: Configure Sui Client
+        run: |
+          sui client new-env --alias local --rpc http://127.0.0.1:9000
+          sui client switch --env local
+
+      - name: Ping Sui Network (Get Total Transactions)
+        run: |
+          RESPONSE=$(curl --location --request POST 'http://127.0.0.1:9000' \
+             --header 'Content-Type: application/json' \
+             --data-raw '{
+               "jsonrpc": "2.0",
+               "id": 1,
+               "method": "sui_getTotalTransactionBlocks",
+               "params": []
+             }')
+
+           echo "Sui Network Response: $RESPONSE"
+
+      - name: Show active address
+        run: sui client active-address
