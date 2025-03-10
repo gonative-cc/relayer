@@ -26,7 +26,7 @@ jobs:
           docker exec sui-node sui client new-env --alias local --rpc http://127.0.0.1:9000
           docker exec sui-node sui client switch --env local
 
-      - name: Ping Sui Network (Get Total Transactions)
+      - name: Ping Sui Network
         run: |
           RESPONSE=$(curl --location --request POST 'http://127.0.0.1:9000' \
              --header 'Content-Type: application/json' \
@@ -40,4 +40,4 @@ jobs:
            echo "Sui Network Response: $RESPONSE"
 
       - name: Show active address
-        run: sui client active-address
+        run: docker exec sui-node sui client active-address
