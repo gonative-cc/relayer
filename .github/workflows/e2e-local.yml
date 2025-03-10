@@ -1,6 +1,9 @@
-name: Sui Local Network Setup Test
+name: Sui E2E Tests
 
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - master
 
 jobs:
   sui-setup:
@@ -11,14 +14,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Start Sui Local Network (Manual Docker Run)
-        id: start-node
         run: |
           docker run -d --name sui-node -p 9000:9000 -p 9123:9123 mysten/sui-tools:devnet /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
           CONTAINER_ID=$(docker ps -aqf "name=sui-node")
           echo "container_id=$CONTAINER_ID" >> $GITHUB_OUTPUT
-
-      - name: Wait for Local Sui Network
-        run: sleep 20
 
       - name: Configure Sui Client
         run: |
@@ -41,3 +40,15 @@ jobs:
 
       - name: Show active address
         run: docker exec sui-node sui client active-address
+
+      - name: Get SUI from faucet
+        run: docker exec sui-node sui client faucet
+
+      - name: Get SUI balance of active address
+        run: docker exec sui-node sui client faucet
+
+      - name: Deploy and initalize Light Client
+        run: echo "deploy and initalize light client"
+
+      - name: Run e2e
+        run: echo "run e2e"
