@@ -52,8 +52,8 @@ echo "Light Client ID: $LIGHT_CLIENT_ID"
 
 echo "Updating $CONFIG_FILE with Package ID and Light Client ID..."
 
-sed -i '' "s|lc_object_id:.*|lc_object_id: $LIGHT_CLIENT_ID|" "$CONFIG_FILE"
-sed -i '' "s|lc_package_id:.*|lc_package_id: $PACKAGE_ID|" "$CONFIG_FILE"
+sed -i "s|lc_object_id:.*|lc_object_id: $LIGHT_CLIENT_ID|" "$CONFIG_FILE"
+sed -i "s|lc_package_id:.*|lc_package_id: $PACKAGE_ID|" "$CONFIG_FILE"
 
 echo "Configuration file updated successfully."
 echo "Light client deployment and initialization complete."
