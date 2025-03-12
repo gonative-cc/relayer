@@ -31,6 +31,7 @@ services:
     post_start:
       - command: "sleep 0.5"
       - command: "bitcoin-cli -regtest loadwallet nativewallet"
+        user: root
 
   btcd:
     profiles:
@@ -62,5 +63,5 @@ services:
     command: >
       /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
 
-# volumes:
-#   btcd-data:
+volumes:
+  btcd-data:
