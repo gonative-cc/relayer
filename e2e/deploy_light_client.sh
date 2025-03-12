@@ -21,7 +21,8 @@ docker exec "$CONTAINER_ID" /bin/bash -c \
 
 echo "Deploying light client to Sui network..."
 # PUBLISH_OUTPUT="$(docker exec "$CONTAINER_ID" sui client publish --skip-dependency-verification --gas-budget 100000000 --json)" 
-# docker exec "$CONTAINER_ID" sui client publish --skip-dependency-verification --gas-budget 100000000 --json
+docker exec sui-node /bin/bash -c "ls"
+# docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' && sui client publish --skip-dependency-verification --gas-budget 100000000 --json")
 PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' && sui client publish --skip-dependency-verification --gas-budget 100000000 --json")
 
 PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
