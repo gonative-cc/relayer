@@ -13,16 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check Docker Compose Version
-        run: docker compose version
-
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Start Services
         run: ./e2e/start_services.sh
 
-      - name: Wait for the docker
+      - name: Wait for the services to start
         run: sleep 20
 
       - name: Ping Sui Network

@@ -22,7 +22,7 @@ Downloads, extracts, deploys, and initializes Bitcoin SPV light client package t
 
 ### `e2e/run_e2e_tests.sh`
 
-Executes the actual end-to-end tests.  This script is a *placeholder*.  You should replace the placeholder `echo` command with the command(s) needed to run E2E tests. All E2E tests should be invoked from this script. The relayer should use the `e2e-bitcoin.yml` file. This file contains the updated package id and object id of the deployed smart contract.
+Executes the actual end-to-end tests.  This script is a *placeholder*.  All E2E tests should be invoked from this script. The relayer should use the `e2e-bitcoin.yml` file. This file contains the updated package id and object id of the deployed smart contract.
 
 ## Workflow
 
