@@ -12,7 +12,9 @@ PACKAGE_PATH="/github/workspace/move-bitcoin-spv-0.1.0"
 
 echo "Downloading and extracting light client inside the container..."
 docker exec "$CONTAINER_ID" /bin/bash -c \
-  "wget '$RELEASE_URL' -O v0.1.0.tar.gz && \
+  "apt-get update && \
+   apt-get install -y wget && \
+   wget '$RELEASE_URL' -O v0.1.0.tar.gz && \
    tar -xzvf v0.1.0.tar.gz && \
    cd '$PACKAGE_PATH'"
 
