@@ -16,7 +16,7 @@ docker exec "$CONTAINER_ID" /bin/bash -c \
   "apt-get update && \
    apt-get install -y wget && \
    wget '$RELEASE_URL' -O v0.1.0.tar.gz && \
-   tar -xzvf v0.1.0.tar.gz &&"
+   tar -xzvf v0.1.0.tar.gz"
 
 
 echo "Deploying light client to Sui network..."
