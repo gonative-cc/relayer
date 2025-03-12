@@ -8,6 +8,9 @@ docker exec "$CONTAINER" sui client switch --address peaceful-crocidolite
 ACTIVE_ADDRESS=$(docker exec "$CONTAINER" sui client active-address)
 echo "Active Sui Address: $ACTIVE_ADDRESS"
 
+ACTIVE_ENV=$(docker exec "$CONTAINER" sui client active-env)
+echo "Active Sui Env: $ACTIVE_ENV"
+
 echo "Requesting SUI from faucet..."
 docker exec "$CONTAINER" sui client faucet
 sleep 10  # Wait for faucet
