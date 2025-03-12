@@ -1,4 +1,4 @@
-# services:
+services:
 #   bitcoind:
 #     container_name: bitcoind-node
 #     # hostname: bitcoind-node
