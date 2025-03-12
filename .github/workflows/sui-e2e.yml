@@ -19,6 +19,9 @@ jobs:
       - name: Start Services
         run: ./e2e/start_services.sh
 
+      - name: Wait for the docker
+        run: sleep 20
+
       - name: Initialize Local Network and Deploy Light Client
         run: ./e2e/init_local_net.sh
 
