@@ -1,55 +1,55 @@
 services:
-#   bitcoind:
-#     container_name: bitcoind-node
-#     # hostname: bitcoind-node
-#     image: kylemanna/bitcoind@sha256:2400e64960457b22be55299a2d7fa2aaa217f3dfc4afb84387e5511fe8ce5055
-#     # restart: unless-stopped
-#     volumes:
-#       - ${BITCOIND_DATA:-./bitcoind-data}:/bitcoin/.bitcoin
-#     ports:
-#       # regtest ports
-#       - 127.0.0.1:28331:28331 # zmq sequence
-#       - 127.0.0.1:28332:28332 # zmq raw blocks
-#       - 127.0.0.1:28333:28333 # zmq raw tx
-#       - 127.0.0.1:28334:28334 # zmq hash blocks
-#       - 127.0.0.1:28335:28335 # zmq hash tx
-#       - 127.0.0.1:18443:18443 # json-rpc
-#       - 127.0.0.1:18444:18444
-#       - 127.0.0.1:18445:18445
-#     command: -printtoconsole
-#       -zmqpubsequence=tcp://0.0.0.0:28331
-#       -zmqpubrawblock=tcp://0.0.0.0:28332
-#       -zmqpubrawtx=tcp://0.0.0.0:28333
-#       -zmqpubhashblock=tcp://0.0.0.0:28334
-#       -zmqpubhashtx=tcp://0.0.0.0:28335
-#       -rpcuser=user
-#       -rpcpassword=password
-#       -regtest
-#       -rest
-#       -rpcbind=0.0.0.0:18443
-#       -rpcallowip=0.0.0.0/0
-#     post_start:
-#       - command: "sleep 0.5"
-#       - command: "bitcoin-cli -regtest loadwallet nativewallet"
+  # bitcoind:
+  #   container_name: bitcoind-node
+  #   # hostname: bitcoind-node
+  #   image: kylemanna/bitcoind@sha256:2400e64960457b22be55299a2d7fa2aaa217f3dfc4afb84387e5511fe8ce5055
+  #   # restart: unless-stopped
+  #   volumes:
+  #     - ${BITCOIND_DATA:-./bitcoind-data}:/bitcoin/.bitcoin
+  #   ports:
+  #     # regtest ports
+  #     - 127.0.0.1:28331:28331 # zmq sequence
+  #     - 127.0.0.1:28332:28332 # zmq raw blocks
+  #     - 127.0.0.1:28333:28333 # zmq raw tx
+  #     - 127.0.0.1:28334:28334 # zmq hash blocks
+  #     - 127.0.0.1:28335:28335 # zmq hash tx
+  #     - 127.0.0.1:18443:18443 # json-rpc
+  #     - 127.0.0.1:18444:18444
+  #     - 127.0.0.1:18445:18445
+  #   command: -printtoconsole
+  #     -zmqpubsequence=tcp://0.0.0.0:28331
+  #     -zmqpubrawblock=tcp://0.0.0.0:28332
+  #     -zmqpubrawtx=tcp://0.0.0.0:28333
+  #     -zmqpubhashblock=tcp://0.0.0.0:28334
+  #     -zmqpubhashtx=tcp://0.0.0.0:28335
+  #     -rpcuser=user
+  #     -rpcpassword=password
+  #     -regtest
+  #     -rest
+  #     -rpcbind=0.0.0.0:18443
+  #     -rpcallowip=0.0.0.0/0
+  #   post_start:
+  #     - command: "sleep 0.5"
+  #     - command: "bitcoin-cli -regtest loadwallet nativewallet"
 
-#   btcd:
-#     profiles:
-#       - donotstart
-#     container_name: btcd
-#     hostname: btcd
-#     build: https://github.com/btcsuite/btcd.git#master
-#     volumes:
-#       - btcd-data:/root/.btcd
-#     ports:
-#       - 18333:18333
-#       - 18334:18334
-#     # https://github.com/btcsuite/btcd/blob/master/docs/configuration.md
-#     command:
-#       [
-#         "--simnet",
-#         "--rpcuser=[CHOOSE_A_USERNAME]",
-#         "--rpcpass=[CREATE_A_VERY_HARD_PASSWORD]",
-#       ]
+  # btcd:
+  #   profiles:
+  #     - donotstart
+  #   container_name: btcd
+  #   hostname: btcd
+  #   build: https://github.com/btcsuite/btcd.git#master
+  #   volumes:
+  #     - btcd-data:/root/.btcd
+  #   ports:
+  #     - 18333:18333
+  #     - 18334:18334
+  #   # https://github.com/btcsuite/btcd/blob/master/docs/configuration.md
+  #   command:
+  #     [
+  #       "--simnet",
+  #       "--rpcuser=[CHOOSE_A_USERNAME]",
+  #       "--rpcpass=[CREATE_A_VERY_HARD_PASSWORD]",
+  #     ]
 
   sui-node:
     container_name: sui-node
@@ -61,6 +61,19 @@ services:
       - 9123:9123
     command: >
       /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
+    healthcheck:
+    test: >
+      curl -s --location --request POST 'http://127.0.0.1:9000' \
+      --header 'Content-Type: application/json' \
+      --data-raw '{
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "sui_getTotalTransactionBlocks",
+        "params": []
+      }' | jq '.result | tonumber'
+    interval: 5s
+    timeout: 5s
+    retries: 10
 
 # volumes:
 #   btcd-data:
