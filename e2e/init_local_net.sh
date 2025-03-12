@@ -18,8 +18,4 @@ sleep 10  # Wait for faucet
 
 docker exec "$CONTAINER" sui client gas
 
-echo "Deploying light client..."
-
-echo "Initializing light client..."
-
-echo "Sui network initialized, faucet request complete, and light client deployed/initialized."
+echo "Sui network initialized, faucet request complete"

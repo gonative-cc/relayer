@@ -1,4 +1,4 @@
-name: Sui E2E Tests
+name: E2E Tests
 
 on:
   pull_request:
@@ -38,11 +38,14 @@ jobs:
 
            echo "Sui Network Response: $RESPONSE"
 
-      - name: Initialize Local Network and Deploy Light Client
+      - name: Initialize Local Network
+        run: ./e2e/init_local_net.sh
+
+      - name: Publish and Initalize Light Client
         run: ./e2e/init_local_net.sh
 
       - name: Run E2E Tests
-        run: ./e2e/run_e2e_tests.sh
+        run: ./e2e/deploy_light_client.sh
 
       - name: Stop Services (Docker Compose)
         if: always()
