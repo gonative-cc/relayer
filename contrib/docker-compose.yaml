@@ -28,10 +28,6 @@ services:
       -rest
       -rpcbind=0.0.0.0:18443
       -rpcallowip=0.0.0.0/0
-    # post_start:
-    #   - command: "sleep 0.5"
-    #   - command: "bitcoin-cli -regtest loadwallet nativewallet"
-    #     user: root
 
   btcd:
     profiles:

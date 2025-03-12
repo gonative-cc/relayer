@@ -29,4 +29,5 @@ Executes the actual end-to-end tests.  This script is a *placeholder*.  You shou
 The GitHub Actions workflow (`.github/workflows/e2e-tests.yml`) orchestrates these scripts.
 
 ## Important Notes
+
 * The `e2e-bitcoin.yml` should be placed at the root of the project and used for all e2e tests.

@@ -57,5 +57,3 @@ sed -i "s|lc_package_id:.*|lc_package_id: $PACKAGE_ID|" "$CONFIG_FILE"
 
 echo "Configuration file updated successfully."
 echo "Light client deployment and initialization complete."
-
-
