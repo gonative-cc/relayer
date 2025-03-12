@@ -3,7 +3,7 @@ name: Sui E2E Tests
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   e2e-tests:

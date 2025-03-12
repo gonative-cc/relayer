@@ -19,11 +19,8 @@ jobs:
       - name: Start Services
         run: ./e2e/start_services.sh
 
-      # - name: Wait for the docker
-      #   run: sleep 20
-
-      - name: Initialize Local Network and Deploy Light Client
-        run: ./e2e/init_local_net.sh
+      - name: Wait for the docker
+        run: sleep 20
 
       - name: Ping Sui Network
         run: |
@@ -37,6 +34,9 @@ jobs:
              }')
 
            echo "Sui Network Response: $RESPONSE"
+
+      - name: Initialize Local Network and Deploy Light Client
+        run: ./e2e/init_local_net.sh
 
       - name: Run E2E Tests
         run: ./e2e/run_e2e_tests.sh

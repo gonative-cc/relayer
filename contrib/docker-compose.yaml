@@ -61,19 +61,6 @@ services:
       - 9123:9123
     command: >
       /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
-    healthcheck:
-      test: >
-        curl -s --location --request POST 'http://127.0.0.1:9000' \
-        --header 'Content-Type: application/json' \
-        --data-raw '{
-          "jsonrpc": "2.0",
-          "id": 1,
-          "method": "sui_getTotalTransactionBlocks",
-          "params": []
-        }' | jq '.result | tonumber'
-      interval: 5s
-      timeout: 5s
-      retries: 12
 
 # volumes:
 #   btcd-data:
