@@ -3,6 +3,7 @@ package bitcoinspv
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -20,7 +21,7 @@ func (r *Relayer) bootstrapRelayer(ctx context.Context, skipSubscription bool) e
 		return err
 	}
 
-	if err := r.setupCache(ctx, skipSubscription); err != nil {
+	if err := r.setupCache(skipSubscription); err != nil {
 		return err
 	}
 
@@ -37,8 +38,8 @@ func (r *Relayer) initializeAndSync(ctx context.Context) error {
 	return r.waitForLCToSyncWithBTC(ctx)
 }
 
-func (r *Relayer) setupCache(ctx context.Context, skipSubscription bool) error {
-	if err := r.initializeBTCCache(ctx); err != nil {
+func (r *Relayer) setupCache(skipSubscription bool) error {
+	if err := r.initializeBTCCache(); err != nil {
 		return err
 	}
 
@@ -134,21 +135,24 @@ func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
 // initializeBTCCache initializes the BTC cache with blocks from T-k to T
 // where T is the height of the latest block in the light client
 // and k is the confirmation depth
-func (r *Relayer) initializeBTCCache(ctx context.Context) error {
+func (r *Relayer) initializeBTCCache() error {
 	cache, err := relayertypes.NewBTCCache(r.Config.BTCCacheSize)
 	if err != nil {
 		return err
 	}
 	r.btcCache = cache
 
-	blockHeight, err := r.getLatestBlockHeight(ctx)
+	lastRelayedHeight, err := r.loadLastRelayedHeight()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load last relayed height: %w", err)
 	}
 
-	baseHeight := blockHeight - r.btcConfirmationDepth + 1
+	startHeight := int64(0) // Defaults to 0 (genesis block) if no previous height.
+	if lastRelayedHeight >= 0 {
+		startHeight = lastRelayedHeight + 1
+	}
 
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(startHeight)
 	if err != nil {
 		return err
 	}
@@ -172,7 +176,7 @@ func (r *Relayer) waitForLCToSyncWithBTC(ctx context.Context) error {
 	}
 
 	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < latestBlockHeight {
-		return r.waitForBTCCatchup(ctx, btcLatestBlockHeight, latestBlockHeight)
+		return r.waitForBTCCatchup(btcLatestBlockHeight, latestBlockHeight)
 	}
 
 	return nil
@@ -206,7 +210,7 @@ func (r *Relayer) getLatestBlockHeight(ctx context.Context) (int64, error) {
 	return block.Height, nil
 }
 
-func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeight int64) error {
+func (r *Relayer) waitForBTCCatchup(btcHeight int64, lcHeight int64) error {
 	r.logger.Infof(
 		"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
 		btcHeight, lcHeight,
@@ -221,22 +225,17 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 			return err
 		}
 
-		lcLatestBlockHeight, err := r.getLatestBlockHeight(ctx)
-		if err != nil {
-			return err
-		}
-
-		if isBTCCaughtUp(btcLatestBlockHeight, lcLatestBlockHeight) {
+		if isBTCCaughtUp(btcLatestBlockHeight, -1) {
 			r.logger.Infof(
-				"BTC (height %d) has synchronized with light client header (height %d), proceeding with bootstrap",
-				btcLatestBlockHeight, lcLatestBlockHeight,
+				"BTC (height %d) has synchronized with light client, proceeding with bootstrap",
+				btcLatestBlockHeight,
 			)
 			return nil
 		}
 
 		r.logger.Infof(
-			"BTC (height %d) is not yet synchronized with light client header (height %d), continuing to wait",
-			btcLatestBlockHeight, lcLatestBlockHeight,
+			"BTC (height %d) is not yet synchronized with light client, continuing to wait",
+			btcLatestBlockHeight,
 		)
 
 		<-ticker.C

@@ -117,6 +117,7 @@ func initSPVRelayer(
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
 ) *bitcoinspv.Relayer {
+	dataDir := "./data"
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
 		rootLogger,
@@ -125,6 +126,7 @@ func initSPVRelayer(
 		cfg.Relayer.SleepDuration,
 		cfg.Relayer.MaxSleepDuration,
 		cfg.Relayer.ProcessBlockTimeout,
+		dataDir,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))

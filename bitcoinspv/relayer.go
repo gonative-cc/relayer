@@ -1,14 +1,21 @@
 package bitcoinspv
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"go.uber.org/zap"
 )
+
+const lastRelayedHeightFile = "last_relayed_height"
 
 // Relayer manages the Bitcoin SPV relayer functionality
 //
@@ -29,6 +36,7 @@ type Relayer struct {
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
+	dataDir              string
 
 	// Context timeout
 	processBlockTimeout time.Duration
@@ -49,6 +57,7 @@ func New(
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
 	processBlockTimeout time.Duration,
+	dataDir string,
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 
@@ -67,6 +76,7 @@ func New(
 		lcClient:              lcClient,
 		btcConfirmationDepth:  defaultConfirmationDepth,
 		quitChannel:           make(chan struct{}),
+		dataDir:               dataDir,
 	}
 
 	return relayer, nil
@@ -142,4 +152,45 @@ func (r *Relayer) Stop() {
 // WaitForShutdown waits for all relayer goroutines to complete before returning
 func (r *Relayer) WaitForShutdown() {
 	r.wg.Wait()
+}
+
+// loadLastRelayedHeight loads the last relayed height from persistent storage.
+func (r *Relayer) loadLastRelayedHeight() (int64, error) {
+	fullPath := filepath.Join(r.dataDir, lastRelayedHeightFile)
+	data, err := os.ReadFile(fullPath) // Use os.ReadFile
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File doesn't exist, return a default value (e.g., -1 or 0).
+			return -1, nil // -1 indicates no previous height
+		}
+		return 0, fmt.Errorf("failed to read last relayed height: %w", err)
+	}
+
+	height, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse last relayed height: %w", err)
+	}
+
+	return height, nil
+}
+
+// saveLastRelayedHeight saves the last relayed height to persistent storage.
+func (r *Relayer) saveLastRelayedHeight(height int64) error {
+	fullPath := filepath.Join(r.dataDir, lastRelayedHeightFile)
+	data := []byte(strconv.FormatInt(height, 10))
+	err := os.WriteFile(fullPath, data, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write last relayed height: %w", err)
+	}
+	return nil
+}
+
+// getHeaderHeight retrieves the block height for a given block header.  It uses the BTCClient.
+func (r *Relayer) getHeaderHeight(header *wire.BlockHeader) (int64, error) {
+	blockHash := header.BlockHash()
+	blockInfo, _, err := r.btcClient.GetBTCBlockByHash(&blockHash)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get block info for hash %s: %w", blockHash.String(), err)
+	}
+	return blockInfo.BlockHeight, nil
 }
