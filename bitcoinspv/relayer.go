@@ -157,10 +157,9 @@ func (r *Relayer) WaitForShutdown() {
 // loadLastRelayedHeight loads the last relayed height from persistent storage.
 func (r *Relayer) loadLastRelayedHeight() (int64, error) {
 	fullPath := filepath.Join(r.dataDir, lastRelayedHeightFile)
-	data, err := os.ReadFile(fullPath) // Use os.ReadFile
+	data, err := os.ReadFile(fullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// File doesn't exist, return a default value (e.g., -1 or 0).
 			return -1, nil // -1 indicates no previous height
 		}
 		return 0, fmt.Errorf("failed to read last relayed height: %w", err)

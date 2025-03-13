@@ -91,12 +91,12 @@ func (r *Relayer) submitHeaderMessages(ctx context.Context, msg []wire.BlockHead
 		return fmt.Errorf("failed to submit headers: %w", err)
 	}
 
-	if len(msg) > 0 { // Prevent panic if msg is empty
-		//find last height
+	if len(msg) > 0 {
+		// find last height
 		lastheader := msg[len(msg)-1]
-		lastHeight, err := r.getHeaderHeight(&lastheader) // Assuming this function exists
+		lastHeight, err := r.getHeaderHeight(&lastheader)
 		if err != nil {
-			//log error
+			// TODO: log error?
 			return err
 		}
 		if err := r.saveLastRelayedHeight(lastHeight); err != nil {
