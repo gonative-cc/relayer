@@ -7,17 +7,16 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
-	"github.com/gonative-cc/relayer/bitcoinspv/mocks"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
-func setupTest(t *testing.T) (*Relayer, *mocks.BTCClient, *mocks.BitcoinSPV) {
+func setupTest(t *testing.T) (*Relayer, *clients.MockBTCClient, *clients.MockBitcoinSPV) {
 	logger, _ := zap.NewDevelopment()
-	btcClient := mocks.NewBTCClient(t)
-	lcClient := mocks.NewBitcoinSPV(t)
+	btcClient := clients.NewMockBTCClient(t)
+	lcClient := clients.NewMockBitcoinSPV(t)
 
 	cfg := &config.RelayerConfig{
 		// Add any necessary config values for testing
