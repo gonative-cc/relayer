@@ -8,6 +8,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
+	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -65,6 +66,7 @@ func TestStartStop(t *testing.T) {
 
 	// Mock necessary method calls
 	btcClient.On("SubscribeNewBlocks").Return()
+	btcClient.On("BlockEventChannel").Return(make(chan *btctypes.BlockEvent))
 	btcClient.On("GetBTCTailBlocksByHeight", mock.Anything).Return([]*types.IndexedBlock{}, nil)
 
 	firstBlockHash, _ := chainhash.NewHashFromStr("4a8cb347715524caa17d43987d527d0c11c0510f3e3c44a85035038a9b36e338")
