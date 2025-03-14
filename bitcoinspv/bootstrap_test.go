@@ -10,16 +10,15 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
-	"github.com/gonative-cc/relayer/bitcoinspv/mocks"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
-func setupTestRelayer(t *testing.T) (*Relayer, *mocks.BTCClient, *mocks.BitcoinSPV) {
-	btcClient := mocks.NewBTCClient(t)
-	lcClient := mocks.NewBitcoinSPV(t)
+func setupTestRelayer(t *testing.T) (*Relayer, *clients.MockBTCClient, *clients.MockBitcoinSPV) {
+	btcClient := clients.NewMockBTCClient(t)
+	lcClient := clients.NewMockBitcoinSPV(t)
 
 	relayerConfig := &config.RelayerConfig{
 		BTCCacheSize: 100,
@@ -53,7 +52,7 @@ func TestBootstrapRelayer(t *testing.T) {
 
 		// Mock GetBTCTailBlocksByHeight
 		blocks := make([]*types.IndexedBlock, 6)
-		for i := int64(85); i <= 100; i++ {
+		for i := int64(85); i <= 90; i++ {
 			blocks[i-85] = &types.IndexedBlock{
 				BlockHeader: &wire.BlockHeader{},
 				BlockHeight: i,
