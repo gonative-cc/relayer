@@ -28,9 +28,6 @@ services:
       -rest
       -rpcbind=0.0.0.0:18443
       -rpcallowip=0.0.0.0/0
-    post_start:
-      - command: "sleep 0.5"
-      - command: "bitcoin-cli -regtest loadwallet nativewallet"
 
   btcd:
     profiles:
@@ -51,12 +48,16 @@ services:
         "--rpcpass=[CREATE_A_VERY_HARD_PASSWORD]",
       ]
 
-  bitcoin-lightclient:
-    container_name: bitcoin-lightclient
-    hostname: bitcoin-lightclient
-    build: https://github.com/gonative-cc/bitcoin-lightclient.git#master
+  sui-node:
+    container_name: sui-node
+    image: mysten/sui-tools:devnet
+    volumes:
+      - ./sui_config:/root/.sui/sui_config
     ports:
-      - 9797:9797
+      - 9000:9000
+      - 9123:9123
+    command: >
+      /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
 
 volumes:
   btcd-data:

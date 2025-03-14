@@ -1,0 +1,49 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Start Services
+        run: ./e2e/start_services.sh
+
+      - name: Wait for the services to start
+        run: sleep 20
+
+      - name: Ping Sui Network
+        run: |
+          RESPONSE=$(curl --location --request POST 'http://127.0.0.1:9000' \
+             --header 'Content-Type: application/json' \
+             --data-raw '{
+               "jsonrpc": "2.0",
+               "id": 1,
+               "method": "sui_getTotalTransactionBlocks",
+               "params": []
+             }')
+
+           echo "Sui Network Response: $RESPONSE"
+
+      - name: Initialize Local Network
+        run: ./e2e/init_local_net.sh
+
+      - name: Publish and Initalize Light Client
+        run: ./e2e/deploy_light_client.sh
+
+      - name: Run E2E Tests
+        run: ./e2e/run_e2e_tests.sh
+
+      - name: Stop Services (Docker Compose)
+        if: always()
+        run: docker compose -f contrib/docker-compose.yaml down -v
