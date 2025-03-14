@@ -66,7 +66,7 @@ func TestStartStop(t *testing.T) {
 
 	// Mock necessary method calls
 	btcClient.On("SubscribeNewBlocks").Return()
-	btcClient.On("BlockEventChannel").Return(make(<-chan *btctypes.BlockEvent))
+	btcClient.On("BlockEventChannel").Maybe().Return(make(<-chan *btctypes.BlockEvent))
 	btcClient.On("GetBTCTailBlocksByHeight", mock.Anything).Return([]*types.IndexedBlock{}, nil)
 
 	firstBlockHash, _ := chainhash.NewHashFromStr("4a8cb347715524caa17d43987d527d0c11c0510f3e3c44a85035038a9b36e338")
@@ -105,7 +105,7 @@ func TestRestartAfterShutdown(t *testing.T) {
 
 	// Mock necessary method calls
 	btcClient.On("SubscribeNewBlocks").Return()
-	btcClient.On("BlockEventChannel").Return(make(<-chan *btctypes.BlockEvent))
+	btcClient.On("BlockEventChannel").Maybe().Return(make(<-chan *btctypes.BlockEvent))
 	btcClient.On("GetBTCTailBlocksByHeight", mock.Anything).Return([]*types.IndexedBlock{}, nil)
 
 	firstBlockHash, _ := chainhash.NewHashFromStr("4a8cb347715524caa17d43987d527d0c11c0510f3e3c44a85035038a9b36e338")
