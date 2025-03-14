@@ -142,7 +142,8 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 		return err
 	}
 
-	// Here we are ensuring that the relayer after every restart starts submitting blocks from the light clients height - confirmationDepth (usually 6).
+	// Here we are ensuring that the relayer after every restart starts
+	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)

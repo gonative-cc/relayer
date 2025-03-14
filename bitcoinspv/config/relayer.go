@@ -109,7 +109,7 @@ func (cfg *RelayerConfig) validateBTCCacheSize() error {
 
 func (cfg *RelayerConfig) validateBTCConfirmationDepth() error {
 	if cfg.BTCConfirmationDepth < 1 {
-		return fmt.Errorf("BTC confrimation depth must be at least 1")
+		return fmt.Errorf("BTC confirmation depth must be at least 1")
 	}
 	return nil
 }
