@@ -16,7 +16,7 @@ var (
 )
 
 func (r *Relayer) bootstrapRelayer(ctx context.Context, skipSubscription bool) error {
-	if err := r.initializeAndSync(ctx); err != nil {
+	if err := r.waitForBitcoinNode(ctx); err != nil {
 		return err
 	}
 
@@ -31,10 +31,6 @@ func (r *Relayer) bootstrapRelayer(ctx context.Context, skipSubscription bool) e
 	r.logger.Infof("BTC cache size: %d", r.btcCache.Size())
 	r.logger.Info("Successfully bootstrapped")
 	return nil
-}
-
-func (r *Relayer) initializeAndSync(ctx context.Context) error {
-	return r.waitForLCToSyncWithBTC(ctx)
 }
 
 func (r *Relayer) setupCache(ctx context.Context, skipSubscription bool) error {
@@ -141,11 +137,12 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	}
 	r.btcCache = cache
 
-	blockHeight, err := r.getLatestBlockHeight(ctx)
+	blockHeight, err := r.getLCLatestBlockHeight(ctx)
 	if err != nil {
 		return err
 	}
 
+	// Here we are ensuring that the relayer after every restart starts submitting blocks from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
@@ -157,22 +154,22 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	return err
 }
 
-// waitForLCToSyncWithBTC ensures that the light client is synchronized by checking
-// that its height is equal to the BTC chain height.
+// waitForBitcoinNode ensures that the bitcoin node is synchronized by checking
+// that its height is equal to the Light client height.
 // This synchronization is required before proceeding with relayer operations.
-func (r *Relayer) waitForLCToSyncWithBTC(ctx context.Context) error {
+func (r *Relayer) waitForBitcoinNode(ctx context.Context) error {
 	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 	if err != nil {
 		return err
 	}
 
-	latestBlockHeight, err := r.getLatestBlockHeight(ctx)
+	lcLatestBlockHeight, err := r.getLCLatestBlockHeight(ctx)
 	if err != nil {
 		return err
 	}
 
-	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < latestBlockHeight {
-		return r.waitForBTCCatchup(ctx, btcLatestBlockHeight, latestBlockHeight)
+	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < lcLatestBlockHeight {
+		return r.waitForBTCCatchup(ctx, btcLatestBlockHeight, lcLatestBlockHeight)
 	}
 
 	return nil
@@ -192,7 +189,7 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 	return btcLatestBlockHeight, nil
 }
 
-func (r *Relayer) getLatestBlockHeight(ctx context.Context) (int64, error) {
+func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 	block, err := r.lcClient.GetLatestBlockInfo(ctx)
 	if err != nil {
 		return 0, err
@@ -221,7 +218,7 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 			return err
 		}
 
-		lcLatestBlockHeight, err := r.getLatestBlockHeight(ctx)
+		lcLatestBlockHeight, err := r.getLCLatestBlockHeight(ctx)
 		if err != nil {
 			return err
 		}

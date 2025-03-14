@@ -51,12 +51,6 @@ func New(
 	processBlockTimeout time.Duration,
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
-
-	// to configure how many blocks needs to be pushed on top
-	// to assume it is confirmed (no reorg)
-	const defaultConfirmationDepth = int64(1)
-	logger.Infof("BTCCheckpoint parameters: k = %d", defaultConfirmationDepth)
-
 	relayer := &Relayer{
 		Config:                config,
 		logger:                logger,
@@ -65,7 +59,7 @@ func New(
 		processBlockTimeout:   processBlockTimeout,
 		btcClient:             btcClient,
 		lcClient:              lcClient,
-		btcConfirmationDepth:  defaultConfirmationDepth,
+		btcConfirmationDepth:  config.BTCConfirmationDepth,
 		quitChannel:           make(chan struct{}),
 	}
 

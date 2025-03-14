@@ -78,6 +78,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		rawHeaders,
 	}
 
+	log.Debug().Msgf("SuiSPVClient: calling insert headers with the following arguemts: %v", arguments...)
+
 	resp, err := c.moveCall(ctx, insertHeadersFunc, arguments)
 	log.Debug().Msgf("\nresults :%+v\n", resp)
 	return err
@@ -218,8 +220,6 @@ func (c *SPVClient) moveCall(
 		Arguments:       arguments,
 		GasBudget:       defaultGasBudget,
 	}
-
-	log.Debug().Msgf("SuiSPVClient: calling insert headers with the following arguemts: %v", arguments...)
 
 	resp, err := c.suiClient.MoveCall(ctx, req)
 	if err != nil {

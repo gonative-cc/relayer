@@ -17,6 +17,7 @@ const (
 	defaultMaxRetrySleepDuration = 5 * time.Minute
 	minBTCCacheSize              = 1000
 	minheadersChunkSize          = 1
+	defaultConfirmationDepth     = 6
 )
 
 // RelayerConfig defines configuration for the spv relayer.
@@ -33,6 +34,9 @@ type RelayerConfig struct {
 	MaxSleepDuration time.Duration `mapstructure:"max-retry-sleep-duration"`
 	// BTCCacheSize is size of the BTC cache
 	BTCCacheSize int64 `mapstructure:"cache-size"`
+	// BTCConfirmationDepth is the number of recent block headers the
+	// relayer keeps in its cache and attempts to re-send to the light client.
+	BTCConfirmationDepth int64 `mapstructure:"confirmation_depth"`
 	// HeadersChunkSize is maximum number of headers in a MsgInsertHeaders message
 	HeadersChunkSize uint32 `mapstructure:"headers-chunk-size"`
 	// ProcessBlockTimeout is the timeout duration for processing a single block.
@@ -60,6 +64,9 @@ func (cfg *RelayerConfig) Validate() error {
 		return err
 	}
 	if err := cfg.validateBTCCacheSize(); err != nil {
+		return err
+	}
+	if err := cfg.validateBTCConfirmationDepth(); err != nil {
 		return err
 	}
 	err := cfg.validateHeadersChunkSize()
@@ -100,6 +107,13 @@ func (cfg *RelayerConfig) validateBTCCacheSize() error {
 	return nil
 }
 
+func (cfg *RelayerConfig) validateBTCConfirmationDepth() error {
+	if cfg.BTCConfirmationDepth < 1 {
+		return fmt.Errorf("BTC confrimation depth must be at least 1")
+	}
+	return nil
+}
+
 func (cfg *RelayerConfig) validateHeadersChunkSize() error {
 	if cfg.HeadersChunkSize < minheadersChunkSize {
 		return fmt.Errorf("headers-chunk-size has to be at least %d", minheadersChunkSize)
@@ -110,13 +124,14 @@ func (cfg *RelayerConfig) validateHeadersChunkSize() error {
 // DefaultRelayerConfig returns default values for relayer config
 func DefaultRelayerConfig() RelayerConfig {
 	return RelayerConfig{
-		Format:           "auto",
-		Level:            "debug",
-		SleepDuration:    defaultRetrySleepDuration,
-		MaxSleepDuration: defaultMaxRetrySleepDuration,
-		NetParams:        btctypes.Testnet.String(),
-		BTCCacheSize:     minBTCCacheSize,
-		HeadersChunkSize: minheadersChunkSize,
+		Format:               "auto",
+		Level:                "debug",
+		SleepDuration:        defaultRetrySleepDuration,
+		MaxSleepDuration:     defaultMaxRetrySleepDuration,
+		NetParams:            btctypes.Testnet.String(),
+		BTCCacheSize:         minBTCCacheSize,
+		HeadersChunkSize:     minheadersChunkSize,
+		BTCConfirmationDepth: defaultConfirmationDepth,
 	}
 }
 
