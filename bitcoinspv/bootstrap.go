@@ -156,7 +156,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 }
 
 // waitForBitcoinNode ensures that the bitcoin node is synchronized by checking
-// that its height is equal to the Light client height.
+// that its height is equal or more than the Light Client's height.
 // This synchronization is required before proceeding with relayer operations.
 func (r *Relayer) waitForBitcoinNode(ctx context.Context) error {
 	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
