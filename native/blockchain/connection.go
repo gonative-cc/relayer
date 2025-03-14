@@ -32,7 +32,7 @@ func NewConn(rpc, gRPC string) (*Conn, error) {
 	}
 	httpClient.Timeout = 0
 
-	websocketRPC, err := rpchttp.NewWithClient(rpc, "/websocket", httpClient)
+	websocketRPC, err := rpchttp.NewWithClient(rpc, httpClient)
 	if err != nil {
 		return nil, err
 	}
