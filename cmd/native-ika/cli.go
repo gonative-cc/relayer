@@ -6,9 +6,9 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/gonative-cc/gonative/client"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/native"
-	"github.com/gonative-cc/relayer/native/blockchain"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -59,7 +59,7 @@ func CmdStart() *cobra.Command {
 			// TODO: load the (should latest indexed block height from a file)
 			log.Info().Int("block", minimumBlockHeight).Msg("Start relaying msgs")
 
-			b, err := blockchain.New(os.Getenv(EnvChainRPC), os.Getenv(EnvChainGRPC))
+			b, err := client.New(os.Getenv(EnvChainRPC), os.Getenv(EnvChainGRPC))
 			if err != nil {
 				return err
 			}
