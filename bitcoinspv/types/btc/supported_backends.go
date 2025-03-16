@@ -7,6 +7,7 @@ type (
 	SupportedBackend string
 )
 
+// Bitcoin network names
 const (
 	Mainnet SupportedNetwork = "mainnet"
 	Testnet SupportedNetwork = "testnet"
@@ -15,6 +16,7 @@ const (
 	Signet  SupportedNetwork = "signet"
 )
 
+// Bitcoin binary name
 const (
 	Btcd     SupportedBackend = "btcd"
 	Bitcoind SupportedBackend = "bitcoind"

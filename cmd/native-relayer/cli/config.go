@@ -2,7 +2,7 @@ package cli
 
 import "time"
 
-// Configuration struct
+// Config for the native relayer
 type Config struct {
 	Ika     IkaCfg     `mapstructure:"ika"`
 	Native  NativeCfg  `mapstructure:"native"`
@@ -11,11 +11,13 @@ type Config struct {
 	Relayer RelayerCfg `mapstructure:"relayer"`
 }
 
+// NativeCfg parameters to connect to gonative chain
 type NativeCfg struct {
 	RPC  string `mapstructure:"rpc"`
 	GRPC string `mapstructure:"grpc"`
 }
 
+// IkaCfg for Ika chain and calling smart contract
 type IkaCfg struct {
 	RPC              string `mapstructure:"rpc"`
 	SignerMnemonic   string `mapstructure:"signer_mnemonic"`
@@ -26,6 +28,7 @@ type IkaCfg struct {
 	GasBudget        string `mapstructure:"gas_budget"`
 }
 
+// BitcoinCfg to connect to Bitcoin node
 type BitcoinCfg struct {
 	RPCHost               string `mapstructure:"rpc_host"`
 	RPCUser               string `mapstructure:"rpc_user"`
@@ -36,6 +39,7 @@ type BitcoinCfg struct {
 	DisableTLS            bool   `mapstructure:"disable_tls"`
 }
 
+// RelayerCfg config
 type RelayerCfg struct {
 	ProcessTxsInterval   time.Duration `mapstructure:"process_txs_interval"`
 	ConfirmTxsInterval   time.Duration `mapstructure:"confirm_txs_interval"`
@@ -44,6 +48,7 @@ type RelayerCfg struct {
 	SignReqFetchLimit    int           `mapstructure:"sign_req_fetch_limit"`
 }
 
+// DBCfg relayer DB config
 type DBCfg struct {
 	File string `mapstructure:"file"`
 }
