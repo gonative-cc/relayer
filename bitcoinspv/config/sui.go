@@ -1,5 +1,6 @@
 package config
 
+// SuiConfig provides parameters for signer and Bitcoin SPV package on Sui to call.
 type SuiConfig struct {
 	Endpoint    string `mapstructure:"endpoint"`
 	Mnemonic    string `mapstructure:"mnemonic"`
