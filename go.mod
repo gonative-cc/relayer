@@ -2,6 +2,8 @@ module github.com/gonative-cc/relayer
 
 go 1.23.4
 
+toolchain go1.24.1
+
 require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/block-vision/sui-go-sdk v1.0.6
@@ -163,7 +165,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
-	github.com/pebbe/zmq4 v1.2.11
+	github.com/pebbe/zmq4 v1.3.0
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
