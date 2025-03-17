@@ -13,6 +13,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.2.5
+	github.com/vektra/mockery/v2 v2.53.2
 	go.uber.org/zap v1.27.0
 )
 
@@ -33,7 +34,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/supranational/blst v0.3.13 // indirect
-	github.com/vektra/mockery/v2 v2.53.2 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
