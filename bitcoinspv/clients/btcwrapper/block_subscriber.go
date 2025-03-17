@@ -111,7 +111,7 @@ func setupBitcoindConnection(client *Client) error {
 
 func setupBtcdConnection(client *Client) error {
 	notificationHandlers := rpcclient.NotificationHandlers{
-		OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
+		OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, _ []*btcutil.Tx) {
 			client.logger.Debugf(
 				"Block %v at height %d has been connected at time %v",
 				header.BlockHash(), height, header.Timestamp,
