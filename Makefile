@@ -63,6 +63,9 @@ cover-html: test-unit-cover
 	@echo "--> Opening in the browser"
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
 
+gen-mocks:
+	go run github.com/vektra/mockery/v2
+
 ###############################################################################
 ##                                Infrastructure                             ##
 ###############################################################################
