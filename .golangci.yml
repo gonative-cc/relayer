@@ -69,8 +69,6 @@ linters-settings:
   revive:
     confidence: 0.8
     severity: error
-    errorCode: 2
-    warningCode: 1
     # List of rules to enable explicitly should be a subset of .revive.toml
     # so only critical rules cause CI to fail instead of just generating annotations.
     rules:
