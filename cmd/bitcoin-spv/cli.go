@@ -72,8 +72,8 @@ func initConfig(cfgFile string) (*config.Config, *zap.Logger) {
 func initBTCClient(cfg *config.Config, rootLogger *zap.Logger) *btcwrapper.Client {
 	btcClient, err := btcwrapper.NewClientWithBlockSubscriber(
 		&cfg.BTC,
-		cfg.Relayer.SleepDuration,
-		cfg.Relayer.MaxSleepDuration,
+		cfg.Relayer.RetrySleepDuration,
+		cfg.Relayer.MaxRetrySleepDuration,
 		rootLogger,
 	)
 	if err != nil {
@@ -122,9 +122,6 @@ func initSPVRelayer(
 		rootLogger,
 		btcClient,
 		nativeClient,
-		cfg.Relayer.SleepDuration,
-		cfg.Relayer.MaxSleepDuration,
-		cfg.Relayer.ProcessBlockTimeout,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))

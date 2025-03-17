@@ -52,7 +52,7 @@ func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types
 		blockHash := header.BlockHash()
 		var res bool
 		var err error
-		err = RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
+		err = RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
 			res, err = r.lcClient.ContainsBlock(ctx, blockHash)
 			return err
 		})
@@ -79,7 +79,7 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 }
 
 func (r *Relayer) submitHeaderMessages(ctx context.Context, msg []wire.BlockHeader) error {
-	if err := RetryDo(r.retrySleepDuration, r.maxRetrySleepDuration, func() error {
+	if err := RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
 		if err := r.lcClient.InsertHeaders(ctx, msg); err != nil {
 			return err
 		}
