@@ -135,7 +135,7 @@ func (r *Relayer) getAndValidateBlock(
 }
 
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.processBlockTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), r.Config.ProcessBlockTimeout)
 	defer cancel()
 
 	if indexedBlock == nil {

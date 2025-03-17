@@ -7,6 +7,7 @@ type (
 	SupportedBackend string
 )
 
+// Constants defining the supported Bitcoin networks.
 const (
 	Mainnet SupportedNetwork = "mainnet"
 	Testnet SupportedNetwork = "testnet"
@@ -15,6 +16,7 @@ const (
 	Signet  SupportedNetwork = "signet"
 )
 
+// Constants defining the supported Bitcoin backend implementations.
 const (
 	Btcd     SupportedBackend = "btcd"
 	Bitcoind SupportedBackend = "bitcoind"

@@ -4,7 +4,7 @@ relayer:
   retry-sleep-duration: 5s
   max-retry-sleep-duration: 5m
   netparams: simnet
-  cache-size: 1000
+  cache-size: 2000
   headers-chunk-size: 10
   confirmation_depth: 6
   process-block-timeout: 20s
@@ -20,7 +20,7 @@ btc:
 native:
   rpc-endpoint: http://localhost:9797
 sui:
-  endpoint: https://fullnode.devnet.sui.io:443 # for local endpoint use http://127.0.0.1:9000
-  mnemonic: "your mnemonic"
-  lc_object_id: 0x...
-  lc_package_id: 0x ...
+  endpoint: http://127.0.0.1:9000
+  mnemonic: "bachelor domain magic seat income pledge now trip lumber rigid empower lesson"
+  lc_object_id: 0x747d8b46b49139d075132d412765f64480fcd1184e81a64610d180d8e7c48722
+  lc_package_id: 0x4848c512ef2fb3d66c8fcd9b7209a35c8e432b5dfe3e922fcd1827e356229065

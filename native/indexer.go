@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/gonative-cc/gonative/client"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog"
 )
@@ -18,7 +19,7 @@ const (
 // storing that into the database.
 type Indexer struct {
 	logger zerolog.Logger
-	b      Blockchain
+	b      client.Blockchain
 	ika    ika.Client
 	// defines the lowest block that the node has available in store.
 	// Usually nodes prun blocks after 2 weeks.
@@ -26,7 +27,7 @@ type Indexer struct {
 }
 
 // NewIndexer returns a new indexer struct with open connections.
-func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
+func NewIndexer(ctx context.Context, b client.Blockchain, logger zerolog.Logger,
 	startBlockHeight int, ika ika.Client) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,

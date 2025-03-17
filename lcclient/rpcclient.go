@@ -9,11 +9,13 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
+// Block info for a light client
 type Block struct {
 	Hash   *chainhash.Hash
 	Height int64
 }
 
+// Client JSON RPC
 type Client struct {
 	InsertHeaders     func(blockHeaders []*wire.BlockHeader) error
 	GetHeaderChainTip func() (Block, error)
@@ -21,6 +23,7 @@ type Client struct {
 	VerifySPV         func(spvProof *types.SPVProof) (int, error)
 }
 
+// New creates bitcoin json rpc
 func New(rpcURL string) (*Client, jsonrpc.ClientCloser, error) {
 	ctx := context.Background()
 	clientHandler := Client{}
