@@ -60,7 +60,24 @@ func (c *Client) SubscribeSequence() error {
 	return nil
 }
 
-func (c *Client) zeromqHandler() {
+func (c *Client) zmqHandlePolled(polled []zeromq.Polled) error {
+	var err error
+	for _, p := range polled {
+		switch p.Socket {
+		case c.zsubscriber:
+			err = handleSubscriberMessage(c)
+		case c.zbackendsocket:
+			err = handleBackendMessage(c)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+	return err
+}
+
+func (c *Client) zmqPoll() {
 	defer c.cleanup()
 
 	zmqPoller := zeromq.NewPoller()
@@ -70,21 +87,12 @@ func (c *Client) zeromqHandler() {
 		// Wait forever until a message can be received or the context was canceled.
 		polled, err := zmqPoller.Poll(-1)
 		if err != nil {
+			c.logger.Error("polling zmq data", err)
 			break
 		}
-
-		for _, p := range polled {
-			switch p.Socket {
-			case c.zsubscriber:
-				if err := handleSubscriberMessage(c); err != nil {
-					break
-				}
-
-			case c.zbackendsocket:
-				if err := handleBackendMessage(c); err != nil {
-					break
-				}
-			}
+		if err = c.zmqHandlePolled(polled); err != nil {
+			c.logger.Error("can't handle zmq polled data", err)
+			break
 		}
 	}
 	c.subscriptions.Lock()

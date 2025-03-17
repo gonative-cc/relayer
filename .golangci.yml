@@ -14,6 +14,7 @@ linters:
     # - depguard
     - dogsled
     - errcheck
+    - exportloopref
     - copyloopvar
     - goconst
     - gocritic
@@ -66,8 +67,10 @@ linters-settings:
     allow-unused: false
     require-explanation: false
   revive:
-    confidence: 0
+    confidence: 0.8
     severity: error
+    errorCode: 2
+    warningCode: 1
     # List of rules to enable explicitly should be a subset of .revive.toml
     # so only critical rules cause CI to fail instead of just generating annotations.
     rules:
@@ -75,22 +78,50 @@ linters-settings:
       - name: context-as-argument
       - name: context-keys-type
       - name: dot-imports
-      - name: empty-block
       - name: error-return
       - name: error-strings
       - name: error-naming
-      - name: errorf
       - name: exported
-      - name: if-return
       - name: increment-decrement
-      - name: indent-error-flow
+      - name: var-naming
+      - name: var-declaration
       - name: range
       - name: receiver-naming
-      # - name: redefines-builtin-id
-      - name: superfluous-else
       - name: time-naming
       - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
       - name: unreachable-code
-      # - name: unused-parameter
-      - name: var-declaration
-      - name: var-naming
+      - name: redefines-builtin-id
+
+      - name: if-return
+      - name: early-return
+      - name: identical-branches
+      - name: unconditional-recursion
+      - name: confusing-results
+      - name: duplicated-imports
+      - name: unnecessary-stmt
+
+      - name: atomic
+      - name: bool-literal-in-expr
+      - name: datarace
+
+      - name: range-val-address
+      - name: range-val-in-closure
+      - name: string-of-int
+      - name: struct-tag
+      - name: time-equal
+      - name: waitgroup-by-value
+      - name: defer
+
+      - name: argument-limit
+        arguments: 6
+      - name: cyclomatic
+        arguments: 10
+      - name: function-result-limit
+        arguments: 3
+      - name: max-control-nesting
+        arguments: 4
