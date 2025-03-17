@@ -66,45 +66,36 @@ func (c *Client) zeromqHandler() {
 	zmqPoller := zeromq.NewPoller()
 	zmqPoller.Add(c.zsubscriber, zeromq.POLLIN)
 	zmqPoller.Add(c.zbackendsocket, zeromq.POLLIN)
-ZMQ_POLLER:
 	for {
 		// Wait forever until a message can be received or the context was canceled.
 		polled, err := zmqPoller.Poll(-1)
 		if err != nil {
-			break ZMQ_POLLER
+			break
 		}
 
 		for _, p := range polled {
 			switch p.Socket {
 			case c.zsubscriber:
 				if err := handleSubscriberMessage(c); err != nil {
-					break ZMQ_POLLER
+					break
 				}
 
 			case c.zbackendsocket:
 				if err := handleBackendMessage(c); err != nil {
-					break ZMQ_POLLER
+					break
 				}
 			}
 		}
 	}
-
 	c.subscriptions.Lock()
+	defer c.subscriptions.Unlock()
 	close(c.subscriptions.exitedChannel)
-	if err := c.subscriptions.zfront.Close(); err != nil {
-		c.logger.Errorf("Error closing zfront: %v", err)
-		return
-	}
-	// Close all subscriber channels.
 	if c.subscriptions.isActive {
-		err := c.zsubscriber.SetUnsubscribe("sequence")
-		if err != nil {
-			c.logger.Errorf("Error unsubscribing from sequence: %v", err)
+		if err := c.zsubscriber.SetUnsubscribe("sequence"); err != nil {
+			c.logger.Errorf("unsubscribe sequence: %v", err)
 			return
 		}
 	}
-
-	c.subscriptions.Unlock()
 }
 
 func handleSubscriberMessage(c *Client) error {
