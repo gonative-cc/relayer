@@ -2,7 +2,7 @@ package cli
 
 import "time"
 
-// Config for the native relayer
+// Config aggregates configurations for different components within the native-relayer.
 type Config struct {
 	Ika     IkaCfg     `mapstructure:"ika"`
 	Native  NativeCfg  `mapstructure:"native"`
@@ -11,13 +11,13 @@ type Config struct {
 	Relayer RelayerCfg `mapstructure:"relayer"`
 }
 
-// NativeCfg parameters to connect to gonative chain
+// NativeCfg holds configuration for interacting with Native.
 type NativeCfg struct {
 	RPC  string `mapstructure:"rpc"`
 	GRPC string `mapstructure:"grpc"`
 }
 
-// IkaCfg for Ika chain and calling smart contract
+// IkaCfg holds configuration specific to Ika.
 type IkaCfg struct {
 	RPC              string `mapstructure:"rpc"`
 	SignerMnemonic   string `mapstructure:"signer_mnemonic"`
@@ -28,7 +28,7 @@ type IkaCfg struct {
 	GasBudget        string `mapstructure:"gas_budget"`
 }
 
-// BitcoinCfg to connect to Bitcoin node
+// BitcoinCfg holds configuration for interacting with Bitcoin.
 type BitcoinCfg struct {
 	RPCHost               string `mapstructure:"rpc_host"`
 	RPCUser               string `mapstructure:"rpc_user"`
@@ -39,7 +39,7 @@ type BitcoinCfg struct {
 	DisableTLS            bool   `mapstructure:"disable_tls"`
 }
 
-// RelayerCfg config
+// RelayerCfg holds configuration specific to the relayer's operation.
 type RelayerCfg struct {
 	ProcessTxsInterval   time.Duration `mapstructure:"process_txs_interval"`
 	ConfirmTxsInterval   time.Duration `mapstructure:"confirm_txs_interval"`
@@ -48,7 +48,7 @@ type RelayerCfg struct {
 	SignReqFetchLimit    int           `mapstructure:"sign_req_fetch_limit"`
 }
 
-// DBCfg relayer DB config
+// DBCfg holds configuration for the database.
 type DBCfg struct {
 	File string `mapstructure:"file"`
 }

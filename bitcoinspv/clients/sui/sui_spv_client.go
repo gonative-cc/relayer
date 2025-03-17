@@ -143,6 +143,23 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		return nil, fmt.Errorf("%w: %s", ErrHeightInvalidValue, err.Error())
 	}
 
+	hashBytes, err := extractHashBytes(lightBlockHashData)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHash, err := chainhash.NewHash(hashBytes)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrBlockHashInvalid, err)
+	}
+
+	return &clients.BlockInfo{
+		Hash:   blockHash,
+		Height: height,
+	}, nil
+}
+
+func extractHashBytes(lightBlockHashData []interface{}) ([]byte, error) {
 	hashBytes := make([]byte, len(lightBlockHashData))
 	for i, v := range lightBlockHashData {
 		byteVal, ok := v.(float64) // JSON numbers come as float64.
@@ -155,16 +172,7 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		}
 		hashBytes[i] = byte(byteVal)
 	}
-
-	blockHash, err := chainhash.NewHash(hashBytes)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrBlockHashInvalid, err)
-	}
-
-	return &clients.BlockInfo{
-		Hash:   blockHash,
-		Height: height,
-	}, nil
+	return hashBytes, nil
 }
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
@@ -198,6 +206,7 @@ func (c *SPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (in
 	return 1, nil
 }
 
+// Stop performs any necessary cleanup and shutdown operations.
 func (c SPVClient) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")

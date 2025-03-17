@@ -10,11 +10,12 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-// BTCHeaderSize header size in bytes
+// BTCHeaderSize is the size in bytes of a Bitcoin block header.
 const BTCHeaderSize = 80
 
-// BlockHeaderFromHex converts hex string to header
-// The input must be 80 bytes hex string type
+// BlockHeaderFromHex converts a hexadecimal string representation of a Bitcoin
+// block header into a wire.BlockHeader struct.
+// The input must be 80 bytes hex string type.
 func BlockHeaderFromHex(hexStr string) (wire.BlockHeader, error) {
 	var header wire.BlockHeader
 	if len(hexStr) != BTCHeaderSize*2 {

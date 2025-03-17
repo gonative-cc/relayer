@@ -14,7 +14,6 @@ linters:
     # - depguard
     - dogsled
     - errcheck
-    - exportloopref
     - copyloopvar
     - goconst
     - gocritic
@@ -69,8 +68,6 @@ linters-settings:
   revive:
     confidence: 0.8
     severity: error
-    errorCode: 2
-    warningCode: 1
     # List of rules to enable explicitly should be a subset of .revive.toml
     # so only critical rules cause CI to fail instead of just generating annotations.
     rules:
@@ -118,10 +115,10 @@ linters-settings:
       - name: defer
 
       - name: argument-limit
-        arguments: 6
+        arguments: [6]
       - name: cyclomatic
-        arguments: 10
+        arguments: [10]
       - name: function-result-limit
-        arguments: 3
+        arguments: [3]
       - name: max-control-nesting
-        arguments: 4
+        arguments: [4]
