@@ -6,7 +6,6 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/gonative-cc/gonative/client"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/rs/zerolog/log"
@@ -15,8 +14,6 @@ import (
 
 // ENV variables
 const (
-	EnvChainRPC            = "NATIVE_RPC"
-	EnvChainGRPC           = "NATIVE_GRPC"
 	FlagMinimumBlockHeight = "block"
 	defaultPort            = "8080"
 	IkaChain               = "IKA_RPC"
@@ -41,7 +38,6 @@ func init() {
 
 // CmdExecute executes the root command.
 func CmdExecute() error {
-	printEnv()
 	return rootCmd.Execute()
 }
 
@@ -59,10 +55,6 @@ func CmdStart() *cobra.Command {
 			// TODO: load the (should latest indexed block height from a file)
 			log.Info().Int("block", minimumBlockHeight).Msg("Start relaying msgs")
 
-			b, err := client.New(os.Getenv(EnvChainRPC), os.Getenv(EnvChainGRPC))
-			if err != nil {
-				return err
-			}
 			c := sui.NewSuiClient(os.Getenv(IkaChain)).(*sui.Client)
 
 			signer, err := signer.NewSignertWithMnemonic(os.Getenv(IkaSignerMnemonic))
@@ -87,7 +79,8 @@ func CmdStart() *cobra.Command {
 				return err
 			}
 
-			idx, err := native.NewIndexer(ctx, b, logger, minimumBlockHeight, ikaClient)
+			// TODO create suiBlockchain client, rather than passing nil
+			idx, err := native.NewIndexer(ctx, nil, logger, minimumBlockHeight, ikaClient)
 			if err != nil {
 				return err
 			}
@@ -98,15 +91,4 @@ func CmdStart() *cobra.Command {
 	cmd.Flags().Int(FlagMinimumBlockHeight, 1, fmt.Sprintf(
 		"%s=100 to start relaying from block 100", FlagMinimumBlockHeight))
 	return cmd
-}
-
-// just prints the env file.
-func printEnv() {
-	fmt.Printf(
-		"__ENVS used__\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n-----------------\n",
-		EnvChainRPC, os.Getenv(EnvChainRPC),
-		EnvChainGRPC, os.Getenv(EnvChainGRPC),
-		IkaChain, os.Getenv(IkaChain),
-		IkaNativeLcFunction, os.Getenv(IkaNativeLcFunction),
-	)
 }
