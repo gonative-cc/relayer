@@ -1,5 +1,6 @@
 package config
 
+// SuiConfig holds configuration for interacting with the light client on Sui.
 type SuiConfig struct {
 	Endpoint    string `mapstructure:"endpoint"`
 	Mnemonic    string `mapstructure:"mnemonic"`

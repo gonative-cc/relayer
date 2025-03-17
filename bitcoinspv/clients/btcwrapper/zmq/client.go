@@ -65,7 +65,7 @@ func New(
 	}
 
 	zmqClient.wg.Add(1)
-	go zmqClient.zeromqHandler()
+	go zmqClient.zmqPoll()
 
 	return zmqClient, nil
 }

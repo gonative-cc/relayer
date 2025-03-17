@@ -2,7 +2,6 @@ package bitcoinspv
 
 import (
 	"sync"
-	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -22,16 +21,9 @@ type Relayer struct {
 	btcClient clients.BTCClient
 	lcClient  clients.BitcoinSPV
 
-	// Retry settings
-	retrySleepDuration    time.Duration
-	maxRetrySleepDuration time.Duration
-
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
-
-	// Context timeout
-	processBlockTimeout time.Duration
 
 	// Control
 	wg          sync.WaitGroup
@@ -46,17 +38,11 @@ func New(
 	parentLogger *zap.Logger,
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
-	retrySleepDuration,
-	maxRetrySleepDuration time.Duration,
-	processBlockTimeout time.Duration,
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 	relayer := &Relayer{
 		Config:                config,
 		logger:                logger,
-		retrySleepDuration:    retrySleepDuration,
-		maxRetrySleepDuration: maxRetrySleepDuration,
-		processBlockTimeout:   processBlockTimeout,
 		btcClient:             btcClient,
 		lcClient:              lcClient,
 		btcConfirmationDepth:  config.BTCConfirmationDepth,
