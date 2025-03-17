@@ -41,12 +41,12 @@ func New(
 ) (*Relayer, error) {
 	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
 	relayer := &Relayer{
-		Config:                config,
-		logger:                logger,
-		btcClient:             btcClient,
-		lcClient:              lcClient,
-		btcConfirmationDepth:  config.BTCConfirmationDepth,
-		quitChannel:           make(chan struct{}),
+		Config:               config,
+		logger:               logger,
+		btcClient:            btcClient,
+		lcClient:             lcClient,
+		btcConfirmationDepth: config.BTCConfirmationDepth,
+		quitChannel:          make(chan struct{}),
 	}
 
 	return relayer, nil

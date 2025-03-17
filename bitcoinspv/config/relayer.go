@@ -131,7 +131,7 @@ func DefaultRelayerConfig() RelayerConfig {
 		NetParams:             btctypes.Testnet.String(),
 		BTCCacheSize:          minBTCCacheSize,
 		HeadersChunkSize:      minheadersChunkSize,
-    BTCConfirmationDepth:  defaultConfirmationDepth,
+		BTCConfirmationDepth:  defaultConfirmationDepth,
 	}
 }
 
