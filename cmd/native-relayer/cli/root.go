@@ -17,6 +17,7 @@ var (
 	}
 )
 
+// Execute is the entry point for the CLI.  It executes the root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Error().Err(err).Msg("CLI execution failed")
