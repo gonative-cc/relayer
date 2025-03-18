@@ -16,7 +16,7 @@ type TransactionDigest = string
 
 // Client defines the methods required for interacting with the Ika network.
 type Client interface {
-	// TODO: move to remote2ika
+	// TODO: move to remote2ika as a proof of concept
 	UpdateLC(
 		ctx context.Context,
 		lb *tmtypes.LightBlock,

@@ -2,6 +2,10 @@
 
 This package provides a way to use our relayer to send sign requests to Ika from remote chains.
 
+## STATUS
+
+Proof of Concept ⚠️
+
 ## About Ika
 
 Ika is an MPC network, that can sign any bytes / messages. MPC wallets are called dWallets. Ika operates through Sui: all dWallets are registered on Sui and every operations has to go through Sui.
