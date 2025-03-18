@@ -8,11 +8,11 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	"gotest.tools/v3/assert"
 
-	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
+	"github.com/gonative-cc/relayer/ika2btc/bitcoin"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/gonative-cc/relayer/native2ika"
 )
