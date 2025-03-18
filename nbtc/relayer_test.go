@@ -14,19 +14,17 @@ import (
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
-	"github.com/gonative-cc/relayer/native2ika"
 )
 
 // testSuite holds the common dependencies
 type testSuite struct {
-	db              dal.DB
-	ikaClient       *ika.MockClient
-	btcProcessor    *ika2btc.Processor
-	nativeProcessor *native2ika.Processor
-	signReqFetcher  *native.APISignRequestFetcher
-	relayer         *Relayer
-	ctx             context.Context
-	cancel          context.CancelFunc
+	db             dal.DB
+	ikaClient      *ika.MockClient
+	btcProcessor   *ika2btc.Processor
+	signReqFetcher *native.APISignRequestFetcher
+	relayer        *Relayer
+	ctx            context.Context
+	cancel         context.CancelFunc
 }
 
 var btcClientConfig = rpcclient.ConnConfig{
@@ -51,24 +49,22 @@ func setupTestSuite(t *testing.T) *testSuite {
 	ikaClient := ika.NewMockClient()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
-	nativeProcessor := native2ika.NewProcessor(ikaClient, db)
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
 	assert.NilError(t, err)
 
-	relayer, err := NewRelayer(relayerConfig, db, nativeProcessor, btcProcessor, signReqFetcher)
+	relayer, err := NewRelayer(relayerConfig, db, btcProcessor, signReqFetcher)
 	assert.NilError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &testSuite{
-		db:              db,
-		ikaClient:       ikaClient,
-		btcProcessor:    btcProcessor,
-		nativeProcessor: nativeProcessor,
-		signReqFetcher:  signReqFetcher,
-		relayer:         relayer,
-		ctx:             ctx,
-		cancel:          cancel,
+		db:             db,
+		ikaClient:      ikaClient,
+		btcProcessor:   btcProcessor,
+		signReqFetcher: signReqFetcher,
+		relayer:        relayer,
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 }
 
@@ -102,34 +98,30 @@ func Test_Start(t *testing.T) {
 func TestNewRelayer_ErrorCases(t *testing.T) {
 	ts := setupTestSuite(t)
 	testCases := []struct {
-		db              dal.DB
-		expectedError   error
-		fetcher         native.SignReqFetcher
-		nativeProcessor *native2ika.Processor
-		btcProcessor    *ika2btc.Processor
-		name            string
+		db            dal.DB
+		expectedError error
+		fetcher       native.SignReqFetcher
+		btcProcessor  *ika2btc.Processor
+		name          string
 	}{
 		{
-			name:            "NativeProcessorError",
-			db:              ts.db,
-			nativeProcessor: nil,
-			btcProcessor:    ts.btcProcessor,
-			expectedError:   native.ErrNoNativeProcessor,
-			fetcher:         ts.signReqFetcher,
+			name:          "NativeProcessorError",
+			db:            ts.db,
+			btcProcessor:  ts.btcProcessor,
+			expectedError: native.ErrNoNativeProcessor,
+			fetcher:       ts.signReqFetcher,
 		}, {
-			name:            "BtcProcessorError",
-			db:              ts.db,
-			nativeProcessor: ts.nativeProcessor,
-			btcProcessor:    nil,
-			expectedError:   bitcoin.ErrNoBtcProcessor,
-			fetcher:         ts.signReqFetcher,
+			name:          "BtcProcessorError",
+			db:            ts.db,
+			btcProcessor:  nil,
+			expectedError: bitcoin.ErrNoBtcProcessor,
+			fetcher:       ts.signReqFetcher,
 		}, {
-			name:            "BlockchainError",
-			db:              ts.db,
-			nativeProcessor: ts.nativeProcessor,
-			btcProcessor:    ts.btcProcessor,
-			expectedError:   native.ErrNoFetcher,
-			fetcher:         nil,
+			name:          "BlockchainError",
+			db:            ts.db,
+			btcProcessor:  ts.btcProcessor,
+			expectedError: native.ErrNoFetcher,
+			fetcher:       nil,
 		},
 	}
 

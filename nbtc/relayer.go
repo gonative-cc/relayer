@@ -10,7 +10,6 @@ import (
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
-	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
 )
@@ -22,7 +21,6 @@ import (
 type Relayer struct {
 	db               dal.DB
 	signReqFetcher   native.SignReqFetcher
-	nativeProcessor  *native2ika.Processor
 	btcProcessor     *ika2btc.Processor
 	shutdownChan     chan struct{}
 	processTxsTicker *time.Ticker
@@ -51,17 +49,13 @@ const (
 )
 
 // NewRelayer creates a new Relayer instance with the given configuration and processors.
+// TODO: need to add Ika signatures querier
 func NewRelayer(
 	relayerConfig RelayerConfig,
 	db dal.DB,
-	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
 	fetcher native.SignReqFetcher,
 ) (*Relayer, error) {
-	if nativeProcessor == nil {
-		return nil, fmt.Errorf("relayer: %w", native.ErrNoNativeProcessor)
-	}
-
 	if btcProcessor == nil {
 		return nil, fmt.Errorf("relayer: %w", bitcoin.ErrNoBtcProcessor)
 	}
@@ -84,7 +78,6 @@ func NewRelayer(
 
 	return &Relayer{
 		db:                db,
-		nativeProcessor:   nativeProcessor,
 		btcProcessor:      btcProcessor,
 		shutdownChan:      make(chan struct{}),
 		processTxsTicker:  time.NewTicker(relayerConfig.ProcessTxsInterval),
@@ -140,8 +133,8 @@ func (r *Relayer) handleError(err error, operation string) {
 }
 
 // processSignRequests processes signd requests from the Native chain.
-func (r *Relayer) processSignRequests(ctx context.Context) error {
-	return r.nativeProcessor.Run(ctx)
+func (r *Relayer) processSignRequests(_ context.Context) error {
+	panic("not implemented")
 }
 
 // processSignedTxs processes signed transactions and broadcasts them to Bitcoin.

@@ -2,7 +2,6 @@ package ika
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/models"
@@ -22,12 +21,15 @@ type Client interface {
 		lb *tmtypes.LightBlock,
 		logger zerolog.Logger,
 	) (models.SuiTransactionBlockResponse, error)
-	ApproveAndSign(
+	SignReq(
 		ctx context.Context,
 		dwalletCapID string,
 		signMessagesID string,
 		messages [][]byte,
-	) ([][]byte, TransactionDigest, error)
+	) (string, error)
+
+	// TODO: we need to find out how to query
+	QuerySign()
 }
 
 // client is a wrapper around the Sui client that provides functionality
@@ -74,33 +76,33 @@ func NewClient(
 
 // UpdateLC sends light blocks to the Native Light Client module in the Ika blockchain.
 // It returns the transaction response and an error if any occurred.
-func (p *client) UpdateLC(
+func (c *client) UpdateLC(
 	ctx context.Context,
 	lb *tmtypes.LightBlock,
 	logger zerolog.Logger,
 ) (models.SuiTransactionBlockResponse, error) {
 	req := models.MoveCallRequest{
-		Signer:          p.Signer.Address,
-		PackageObjectId: p.LcPackage,
-		Module:          p.LcModule,
-		Function:        p.LcFunction,
+		Signer:          c.Signer.Address,
+		PackageObjectId: c.LcPackage,
+		Module:          c.LcModule,
+		Function:        c.LcFunction,
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
 			lb,
 		},
-		Gas:       &p.GasAddr,
-		GasBudget: p.GasBudget,
+		Gas:       &c.GasAddr,
+		GasBudget: c.GasBudget,
 	}
-	resp, err := p.c.MoveCall(ctx, req)
+	resp, err := c.c.MoveCall(ctx, req)
 	if err != nil {
 		logger.Err(err).Msg("Error calling move function:")
 		return models.SuiTransactionBlockResponse{}, err // Return zero value for the response
 	}
 
 	// TODO: verify if we need to call this
-	return p.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+	return c.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
-		PriKey:      p.Signer.PriKey,
+		PriKey:      c.Signer.PriKey,
 		Options: models.SuiTransactionBlockOptions{
 			ShowInput:    true,
 			ShowRawInput: true,
@@ -110,32 +112,32 @@ func (p *client) UpdateLC(
 	})
 }
 
-// ApproveAndSign approves and signs a set of messages using the IKA network.
-// Returns its signatures and the IKA transaction digest (tx_id).
-func (p *client) ApproveAndSign(
+// SignReq issues Sui transaction to request signatues for the list of messages.
+// Returns transaction digest (ID).
+func (c *client) SignReq(
 	ctx context.Context,
 	dwalletCapID string,
 	signMessagesID string,
 	messages [][]byte,
-) ([][]byte, TransactionDigest, error) {
+) (string, error) {
 
 	// TODO: This function was only tested against dummy implementation of the dwallet module deployed locally.
 	// Once it is ready, test it again
 	req := models.MoveCallRequest{
-		Signer:          p.Signer.Address,
-		PackageObjectId: p.DWalletPackage,
-		Module:          p.DWalletModule,
+		Signer:          c.Signer.Address,
+		PackageObjectId: c.DWalletPackage,
+		Module:          c.DWalletModule,
 		Function:        "approve_messages",
 		TypeArguments:   []interface{}{},
 		Arguments: []interface{}{
 			dwalletCapID,
 			messages,
 		},
-		GasBudget: p.GasBudget,
+		GasBudget: c.GasBudget,
 	}
-	messageApprovals, err := p.c.MoveCall(ctx, req)
+	messageApprovals, err := c.c.MoveCall(ctx, req)
 	if err != nil {
-		return nil, "", fmt.Errorf("error calling approve_messages function: %w", err)
+		return "", fmt.Errorf("error calling approve_messages function: %w", err)
 	}
 	req.Function = "sign"
 	req.TypeArguments = []interface{}{}
@@ -143,13 +145,13 @@ func (p *client) ApproveAndSign(
 		signMessagesID,
 		messageApprovals,
 	}
-	resp, err := p.c.MoveCall(ctx, req)
+	resp, err := c.c.MoveCall(ctx, req)
 	if err != nil {
-		return nil, "", fmt.Errorf("error calling sign function: %w", err)
+		return "", fmt.Errorf("error calling sign function: %w", err)
 	}
-	response, err := p.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+	response, err := c.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
-		PriKey:      p.Signer.PriKey,
+		PriKey:      c.Signer.PriKey,
 		Options: models.SuiTransactionBlockOptions{
 			ShowInput:    true,
 			ShowRawInput: true,
@@ -158,18 +160,26 @@ func (p *client) ApproveAndSign(
 		RequestType: "WaitForLocalExecution",
 	})
 	if err != nil {
-		return nil, "", fmt.Errorf("error executing transaction block: %w", err)
+		return "", fmt.Errorf("error executing transaction block: %w", err)
 	}
-	txDigest := response.Effects.TransactionDigest
-	events, err := p.c.SuiGetEvents(ctx, models.SuiGetEventsRequest{
-		Digest: txDigest,
-	})
-	if err != nil {
-		return nil, txDigest, fmt.Errorf("ika: %w", errors.Join(err, ErrEventParsing))
-	}
+	return response.Digest, nil
 
-	return extractSignatures(events[0].ParsedJson["signatures"]), txDigest, nil
+	/*
+		TODO: we don't have signatures for the requested messages, we need to rework this code.
+
+		txDigest := response.Effects.TransactionDigest
+		events, err := p.c.SuiGetEvents(ctx, models.SuiGetEventsRequest{
+			Digest: txDigest,
+		})
+		if err != nil {
+			return nil, txDigest, fmt.Errorf("ika: %w", errors.Join(err, ErrEventParsing))
+		}
+
+		return extractSignatures(events[0].ParsedJson["signatures"]), txDigest, nil
+	*/
 }
+
+func (c *client) QuerySign() {}
 
 // extractSignatures extracts bytes from the `ParsedJson` structure
 func extractSignatures(data interface{}) [][]byte {
