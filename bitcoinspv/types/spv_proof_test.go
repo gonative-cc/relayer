@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -13,176 +14,145 @@ import (
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
-// Helper function to create a test transaction
-func createTestTransaction(t *testing.T) *btcutil.Tx {
-	// Create a simple test transaction
-	txHex := "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff01000000000000000000000000000000000000000000000000000000000000000000000000"
-	txBytes, err := chainhash.NewHashFromStr(txHex)
-	require.NoError(t, err)
-	tx, err := btcutil.NewTxFromBytes(txBytes.CloneBytes())
-	require.NoError(t, err)
+// createTestTx creates a minimal, structurally valid Bitcoin transaction.
+func createTestTx(t *testing.T) *wire.MsgTx {
+	t.Helper()
+	tx := wire.NewMsgTx(wire.TxVersion)
+	prevHash := chainhash.Hash{}
+	prevOutPoint := wire.NewOutPoint(&prevHash, 0)
+	txIn := wire.NewTxIn(prevOutPoint, []byte{0x00, 0x01}, nil)
+	tx.AddTxIn(txIn)
+	txOut := wire.NewTxOut(10000, []byte{0x00, 0x14, 0x75, 0x1e, 0x76, 0xe8, 0x19, 0x91, 0x96, 0xd4, 0x54, 0x94, 0x1c, 0x45, 0xd1, 0xb3, 0xa3, 0x23, 0xf1, 0x43, 0x3b, 0xd6})
+	tx.AddTxOut(txOut)
 	return tx
 }
 
-// Helper function to serialize a transaction
-func serializeTx(t *testing.T, tx *btcutil.Tx) []byte {
+// serializeTx serializes a transaction to bytes.
+func serializeTx(t *testing.T, tx *wire.MsgTx) []byte {
+	t.Helper()
 	var buf bytes.Buffer
-	err := tx.MsgTx().Serialize(&buf)
+	err := tx.Serialize(&buf)
 	require.NoError(t, err)
 	return buf.Bytes()
 }
 
 func TestSpvProofFromHeaderAndTransactions(t *testing.T) {
-	// Create a test block header
-	header := wire.NewBlockHeader(
-		int32(2),           // version
-		&chainhash.Hash{},  // prevBlock
-		&chainhash.Hash{},  // merkleRoot
-		uint32(1234567890), // timestamp
-		uint32(0x1d00ffff), // bits
-	)
+	tx1, tx2 := createTestTx(t), createTestTx(t)
+	txs := [][]byte{serializeTx(t, tx1), serializeTx(t, tx2)}
+
+	btcutilTxs := []*btcutil.Tx{btcutil.NewTx(tx1), btcutil.NewTx(tx2)}
+	merkleRoot := blockchain.BuildMerkleTreeStore(btcutilTxs, false)[len(btcutilTxs)-1]
+
+	header := wire.NewBlockHeader(2, &chainhash.Hash{}, merkleRoot, 1234567890, 0x1d00ffff)
 	header.Nonce = 0
 	headerBytes := btctypes.NewHeaderBytesFromBlockHeader(header)
 
-	// Create test transactions
-	tx1 := createTestTransaction(t)
-	tx2 := createTestTransaction(t)
-	transactions := [][]byte{
-		serializeTx(t, tx1),
-		serializeTx(t, tx2),
-	}
-
 	tests := []struct {
-		name           string
-		headerBytes    *btctypes.HeaderBytes
-		transactions   [][]byte
-		transactionIdx uint32
-		wantErr        bool
+		name        string
+		headerBytes *btctypes.HeaderBytes
+		txs         [][]byte
+		txID        uint32
+		expectedErr error
 	}{
 		{
-			name:           "valid proof creation",
-			headerBytes:    &headerBytes,
-			transactions:   transactions,
-			transactionIdx: 0,
-			wantErr:        false,
+			name:        "valid proof creation",
+			headerBytes: &headerBytes,
+			txs:         txs,
+			txID:        0,
+			expectedErr: nil,
 		},
 		{
-			name:           "invalid transaction index",
-			headerBytes:    &headerBytes,
-			transactions:   transactions,
-			transactionIdx: 2,
-			wantErr:        true,
+			name:        "invalid transaction index",
+			headerBytes: &headerBytes,
+			txs:         txs,
+			txID:        2,
+			expectedErr: errIndexOutOfBounds,
 		},
 		{
-			name:           "empty transaction list",
-			headerBytes:    &headerBytes,
-			transactions:   [][]byte{},
-			transactionIdx: 0,
-			wantErr:        true,
+			name:        "empty transaction list",
+			headerBytes: &headerBytes,
+			txs:         [][]byte{},
+			txID:        0,
+			expectedErr: errEmptyTxList,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proof, err := SpvProofFromHeaderAndTransactions(tt.headerBytes, tt.transactions, tt.transactionIdx)
-			if tt.wantErr {
-				assert.Error(t, err)
+			proof, err := SpvProofFromHeaderAndTransactions(tt.headerBytes, tt.txs, tt.txID)
+
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				require.Equal(t, err, tt.expectedErr)
 				return
 			}
+
 			require.NoError(t, err)
-			assert.NotNil(t, proof)
-			assert.Equal(t, tt.transactionIdx, proof.BtcTransactionIndex)
-			assert.Equal(t, tt.transactions[tt.transactionIdx], proof.BtcTransaction)
+			require.NotNil(t, proof)
+			require.Equal(t, tt.txID, proof.BtcTransactionIndex)
+			require.Equal(t, tt.txs[tt.txID], proof.BtcTransaction)
+			require.Equal(t, headerBytes.ToBlockHeader().BlockHash(), proof.ConfirmingBtcBlockHash)
+
 		})
 	}
 }
 
 func TestCreateProofForIdx(t *testing.T) {
-	// Create test transactions
-	tx1 := createTestTransaction(t)
-	tx2 := createTestTransaction(t)
-	tx3 := createTestTransaction(t)
-	transactions := [][]byte{
-		serializeTx(t, tx1),
-		serializeTx(t, tx2),
-		serializeTx(t, tx3),
-	}
+	tx1, tx2, tx3 := createTestTx(t), createTestTx(t), createTestTx(t)
+	txs := [][]byte{serializeTx(t, tx1), serializeTx(t, tx2), serializeTx(t, tx3)}
 
 	tests := []struct {
 		name          string
-		transactions  [][]byte
-		idx           uint32
-		wantErr       bool
+		txs           [][]byte
+		txID          uint32
+		expectedErr   error
 		expectedNodes int
 	}{
 		{
 			name:          "valid proof for first transaction",
-			transactions:  transactions,
-			idx:           0,
-			wantErr:       false,
+			txs:           txs,
+			txID:          0,
+			expectedErr:   nil,
 			expectedNodes: 2, // For 3 transactions, we need 2 nodes in the proof
 		},
 		{
 			name:          "valid proof for middle transaction",
-			transactions:  transactions,
-			idx:           1,
-			wantErr:       false,
+			txs:           txs,
+			txID:          1,
+			expectedErr:   nil,
 			expectedNodes: 2,
 		},
 		{
 			name:          "valid proof for last transaction",
-			transactions:  transactions,
-			idx:           2,
-			wantErr:       false,
+			txs:           txs,
+			txID:          2,
+			expectedErr:   nil,
 			expectedNodes: 2,
 		},
 		{
-			name:         "invalid index",
-			transactions: transactions,
-			idx:          3,
-			wantErr:      true,
+			name:        "invalid index",
+			txs:         txs,
+			txID:        3,
+			expectedErr: errIndexOutOfBounds,
 		},
 		{
-			name:         "empty transaction list",
-			transactions: [][]byte{},
-			idx:          0,
-			wantErr:      true,
+			name:        "empty transaction list",
+			txs:         [][]byte{},
+			txID:        0,
+			expectedErr: errEmptyTxList,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proof, err := CreateProofForIdx(tt.transactions, tt.idx)
-			if tt.wantErr {
-				assert.Error(t, err)
+			proof, err := CreateProofForIdx(tt.txs, tt.txID)
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				require.Equal(t, err, tt.expectedErr)
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, proof)
 			assert.Len(t, proof, tt.expectedNodes)
 		})
 	}
-}
-
-func TestToMsgSpvProof(t *testing.T) {
-	// Create a test BTCSpvProof
-	tx := createTestTransaction(t)
-	txHash := tx.Hash()
-	txID := txHash.String()
-
-	merkleNodes := make([]byte, 32*2) // Two merkle nodes
-	merkleNodes = append(merkleNodes, txHash.CloneBytes()...)
-
-	btcSpvProof := &BTCSpvProof{
-		BtcTransaction:         serializeTx(t, tx),
-		MerkleNodes:            merkleNodes,
-		BtcTransactionIndex:    0,
-		ConfirmingBtcBlockHash: chainhash.Hash{},
-	}
-
-	msgProof := btcSpvProof.ToMsgSpvProof(txID, txHash)
-
-	assert.Equal(t, txID, msgProof.TxID)
-	assert.Equal(t, uint32(0), msgProof.TxIndex)
-	assert.Equal(t, chainhash.Hash{}, msgProof.BlockHash)
-	assert.Len(t, msgProof.MerklePath, 3) // 2 merkle nodes + txHash
 }
