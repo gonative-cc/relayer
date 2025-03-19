@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Tx is a universal transaction type. Note: shoudl be udpated
+// Tx is a universal transaction type. Note: should be updated
 type Tx []byte
 
 // Block is a universal blockchain block type
