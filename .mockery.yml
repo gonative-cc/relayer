@@ -5,7 +5,8 @@ inpackage: True
 packages:
   github.com/gonative-cc/relayer/bitcoinspv/clients:
     config:
-      dir: "bitcoinspv/clients/"
+      dir: "bitcoinspv/clients/mocks"
+      outpkg: "clients/mocks"
     interfaces:
       BTCClient:
       BitcoinSPV:
