@@ -3,9 +3,11 @@ package bitcoinspv
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/btcsuite/btcd/btcutil"
 	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
@@ -146,9 +148,24 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
+	// TODO: instead of fetching whole blocks, we are just fetching headers, thy why its commented out
+	// blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// Fetch only headers
+	r.logger.Info("loading headers...")
+	headers, err := r.btcClient.GetBTCTailBlockHeadersByHeight(baseHeight)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get headers: %w", err)
+	}
+	// Create blocks from headers for compatibility
+	blocks := []*relayertypes.IndexedBlock{}
+	for _, h := range headers {
+		block := relayertypes.NewIndexedBlock(int64(baseHeight), h, []*btcutil.Tx{})
+		blocks = append(blocks, block)
+		baseHeight++
 	}
 
 	err = r.btcCache.Init(blocks)

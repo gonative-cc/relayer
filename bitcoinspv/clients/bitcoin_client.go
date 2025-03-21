@@ -20,4 +20,6 @@ type BTCClient interface {
 	GetBTCBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error)
 	GetBTCTailBlocksByHeight(height int64) ([]*types.IndexedBlock, error)
 	GetBTCBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error)
+	GetBTCTailBlockHeadersByHeight(baseHeight int64) ([]*wire.BlockHeader, error)
+	GetBTCBlockHeaderByHeight(height int64) (*wire.BlockHeader, error)
 }

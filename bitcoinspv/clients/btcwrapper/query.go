@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	btcwire "github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv"
+	"github.com/rs/zerolog/log"
 
 	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
 )
@@ -267,4 +268,50 @@ func (client *Client) GetBTCTailBlocksByHeight(
 	}
 
 	return blocks, nil
+}
+
+// GetBTCBlockHeaderByHeight retrieves only the block header for a given height.
+func (client *Client) GetBTCBlockHeaderByHeight(height int64) (*btcwire.BlockHeader, error) {
+	blockHash, err := client.getBlockHashRetries(height)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block hash for height %d: %w", height, err)
+	}
+
+	header, err := client.GetBlockHeader(blockHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block header for hash %s: %w", blockHash.String(), err)
+	}
+
+	return header, nil
+}
+
+// GetBTCTailBlockHeadersByHeight retrieves a sequence of block headers
+// from a given base height up to the current chain tip.
+func (client *Client) GetBTCTailBlockHeadersByHeight(baseHeight int64) ([]*btcwire.BlockHeader, error) {
+	// Get the current tip block header.  We need its height.
+	_, tipHeight, err := client.GetBTCTipBlock()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tip block: %w", err)
+	}
+
+	if baseHeight > tipHeight {
+		return nil, fmt.Errorf("base height %d exceeds current tip height %d", baseHeight, tipHeight)
+	}
+
+	totalHeaders := tipHeight - baseHeight + 1
+	headers := make([]*btcwire.BlockHeader, 0, totalHeaders)
+	for height := baseHeight; height <= tipHeight; height++ {
+		header, err := client.GetBTCBlockHeaderByHeight(height)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get block header at height %d: %w", height, err)
+		}
+		headers = append(headers, header)
+
+		// Log progress every 1000 headers
+		if (height-baseHeight+1)%1000 == 0 || height == tipHeight {
+			log.Info().Msgf("Fetched %d/%d block headers...", height-baseHeight+1, totalHeaders)
+		}
+	}
+
+	return headers, nil
 }
