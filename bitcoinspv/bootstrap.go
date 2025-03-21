@@ -163,7 +163,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// Create blocks from headers for compatibility
 	blocks := []*relayertypes.IndexedBlock{}
 	for _, h := range headers {
-		block := relayertypes.NewIndexedBlock(int64(baseHeight), h, []*btcutil.Tx{})
+		block := relayertypes.NewIndexedBlock(baseHeight, h, []*btcutil.Tx{})
 		blocks = append(blocks, block)
 		baseHeight++
 	}
