@@ -1,4 +1,4 @@
-package native2ika
+package remote2ika
 
 import (
 	"context"

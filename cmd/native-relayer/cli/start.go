@@ -8,15 +8,11 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/block-vision/sui-go-sdk/signer"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/env"
-	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/native"
-	"github.com/gonative-cc/relayer/native2ika"
 	"github.com/gonative-cc/relayer/nbtc"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -44,10 +40,6 @@ func startRelayer(ctx context.Context, config *Config) error {
 	if err != nil {
 		return fmt.Errorf("initialize database: %w", err)
 	}
-	nativeProcessor, err := createNativeProcessor(config.Ika, db)
-	if err != nil {
-		return fmt.Errorf("create Native Processor: %w", err)
-	}
 	btcProcessor, err := createBTCProcessor(config.Btc, db)
 	if err != nil {
 		return fmt.Errorf("create Bitcoin processor: %w", err)
@@ -59,7 +51,6 @@ func startRelayer(ctx context.Context, config *Config) error {
 	relayer, err := createRelayer(
 		config.Relayer,
 		db,
-		nativeProcessor,
 		btcProcessor,
 		fetcher,
 	)
@@ -124,37 +115,6 @@ func initDatabase(ctx context.Context, cfg DBCfg) (dal.DB, error) {
 	return db, nil
 }
 
-func createNativeProcessor(cfg IkaCfg, db dal.DB) (*native2ika.Processor, error) {
-	suiClient := sui.NewSuiClient(cfg.RPC).(*sui.Client)
-	if suiClient == nil {
-		return nil, fmt.Errorf("error creating Sui client")
-	}
-	signer, err := signer.NewSignertWithMnemonic(cfg.SignerMnemonic)
-	if err != nil {
-		return nil, fmt.Errorf("error creating signer with mnemonic: %w", err)
-	}
-	client, err := ika.NewClient(
-		suiClient,
-		signer,
-		ika.SuiCtrCall{
-			Package:  cfg.NativeLcPackage,
-			Module:   cfg.NativeLcModule,
-			Function: cfg.NativeLcFunction,
-		},
-		ika.SuiCtrCall{
-			Package:  cfg.NativeLcPackage,
-			Module:   cfg.NativeLcModule,
-			Function: cfg.NativeLcFunction,
-		},
-		cfg.GasAcc,
-		cfg.GasBudget,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating Ika client: %w", err)
-	}
-	nativeProcessor := native2ika.NewProcessor(client, db)
-	return nativeProcessor, nil
-}
 func createBTCProcessor(btcCfg BitcoinCfg, db dal.DB) (*ika2btc.Processor, error) {
 	cfg := rpcclient.ConnConfig{
 		Host:         btcCfg.RPCHost,
@@ -179,14 +139,12 @@ func createSignReqFetcher() (*native.APISignRequestFetcher, error) {
 func createRelayer(
 	relayerCfg RelayerCfg,
 	db dal.DB,
-	nativeProcessor *native2ika.Processor,
 	btcProcessor *ika2btc.Processor,
 	fetcher *native.APISignRequestFetcher,
 ) (*nbtc.Relayer, error) {
 	relayer, err := nbtc.NewRelayer(
 		nbtc.RelayerConfig(relayerCfg),
 		db,
-		nativeProcessor,
 		btcProcessor,
 		fetcher,
 	)
