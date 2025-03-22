@@ -168,79 +168,12 @@ func (client *Client) getBlockVerboseRetries(
 	return blockVerbose, nil
 }
 
-// getChainBlocks returns a chain of indexed blocks from the block at baseHeight to the tipBlock
-// note: the caller needs to ensure that tipBlock is on the blockchain
-func (client *Client) getChainBlocks(
-	baseHeight int64,
-	tipBlock *relayertypes.IndexedBlock,
-) ([]*relayertypes.IndexedBlock, error) {
-	tipHeight := tipBlock.BlockHeight
-	if err := validateBlockHeights(baseHeight, tipHeight); err != nil {
-		return nil, err
-	}
-
-	chainBlocks := initializeChainBlocks(baseHeight, tipHeight, tipBlock)
-
-	if tipHeight == baseHeight {
-		return chainBlocks, nil
-	}
-
-	if err := client.populateChainBlocks(chainBlocks, tipBlock); err != nil {
-		return nil, err
-	}
-
-	return chainBlocks, nil
-}
-
-func validateBlockHeights(baseHeight, tipHeight int64) error {
-	if tipHeight < baseHeight {
-		return fmt.Errorf(
-			"the tip block height %v is less than the base height %v",
-			tipHeight, baseHeight,
-		)
-	}
-	return nil
-}
-
 func initializeChainBlocks(
 	baseHeight, tipHeight int64, tipBlock *relayertypes.IndexedBlock,
 ) []*relayertypes.IndexedBlock {
 	blocks := make([]*relayertypes.IndexedBlock, tipHeight-baseHeight+1)
 	blocks[len(blocks)-1] = tipBlock
 	return blocks
-}
-
-func (client *Client) populateChainBlocks(
-	blocks []*relayertypes.IndexedBlock, tipBlock *relayertypes.IndexedBlock,
-) error {
-	// Start from the second to last block and work backwards
-	prevBlockHash := &tipBlock.BlockHeader.PrevBlock
-	for i := len(blocks) - 2; i >= 0; i-- {
-		// Get block info for the previous hash
-		indexedBlock, msgBlock, err := client.GetBTCBlockByHash(prevBlockHash)
-		if err != nil {
-			return fmt.Errorf("failed to get block by hash %x: %w", prevBlockHash, err)
-		}
-
-		// Store the indexed block and update prevBlockHash for next iteration
-		blocks[i] = indexedBlock
-		prevBlockHash = &msgBlock.Header.PrevBlock
-	}
-	return nil
-}
-
-func (client *Client) getBestIndexedBlock() (*relayertypes.IndexedBlock, error) {
-	tipHash, err := client.getBestBlockHashRetries()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get the best block: %w", err)
-	}
-
-	tipIndexedBlock, _, err := client.GetBTCBlockByHash(tipHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get the block by hash %x: %w", tipHash, err)
-	}
-
-	return tipIndexedBlock, nil
 }
 
 // GetBTCTailBlocksByHeight retrieves a sequence of blocks or block headers
