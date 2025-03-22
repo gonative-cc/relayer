@@ -1,5 +1,5 @@
 #!/bin/bash
-START_HEIGHT=870000
+START_HEIGHT=0
 
 echo "Starting Block Height: $START_HEIGHT"
 

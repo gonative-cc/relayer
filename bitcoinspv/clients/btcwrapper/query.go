@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	btcwire "github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv"
@@ -242,31 +243,54 @@ func (client *Client) getBestIndexedBlock() (*relayertypes.IndexedBlock, error) 
 	return tipIndexedBlock, nil
 }
 
-// GetBTCTailBlocksByHeight retrieves a sequence of blocks
-// from a given base height up to the current chain tip
+// GetBTCTailBlocksByHeight retrieves a sequence of blocks or block headers
+// from a given base height up to the current chain tip, based on the fullBlocks flag.
 func (client *Client) GetBTCTailBlocksByHeight(
 	baseHeight int64,
+	fullBlocks bool,
 ) ([]*relayertypes.IndexedBlock, error) {
 	// Get the current tip block
-	tipBlock, err := client.getBestIndexedBlock()
+	_, tipHeight, err := client.GetBTCTipBlock()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tip block: %w", err)
 	}
 
 	// Validate base height is not greater than tip
-	if baseHeight > tipBlock.BlockHeight {
+	if baseHeight > tipHeight {
 		return nil, fmt.Errorf(
 			"base height %d exceeds current tip height %d",
-			baseHeight, tipBlock.BlockHeight,
+			baseHeight, tipHeight,
 		)
 	}
 
-	// Get chain of blocks from base to tip
-	blocks, err := client.getChainBlocks(baseHeight, tipBlock)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get chain blocks: %w", err)
+	totalBlocks := tipHeight - baseHeight + 1
+	blocks := make([]*relayertypes.IndexedBlock, 0, totalBlocks)
+
+	for height := baseHeight; height <= tipHeight; height++ {
+		var indexedBlock *relayertypes.IndexedBlock
+		if fullBlocks {
+			block, _, err := client.GetBTCBlockByHeight(height)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get block at height %d: %w", height, err)
+			}
+			indexedBlock = block
+		} else {
+			header, err := client.GetBTCBlockHeaderByHeight(height)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get block header at height %d: %w", height, err)
+			}
+			indexedBlock = relayertypes.NewIndexedBlock(height, header, []*btcutil.Tx{})
+		}
+
+		blocks = append(blocks, indexedBlock)
+
+		// Log progress every 1000 blocks/headers.
+		if (height-baseHeight+1)%1000 == 0 || height == tipHeight {
+			log.Info().Msgf("Fetched %d/%d blocks/headers (fullBlocks: %t)...", height-baseHeight+1, totalBlocks, fullBlocks)
+		}
 	}
 
+	log.Info().Msgf("Successfully fetched %d blocks/headers.", totalBlocks)
 	return blocks, nil
 }
 
@@ -283,35 +307,4 @@ func (client *Client) GetBTCBlockHeaderByHeight(height int64) (*btcwire.BlockHea
 	}
 
 	return header, nil
-}
-
-// GetBTCTailBlockHeadersByHeight retrieves a sequence of block headers
-// from a given base height up to the current chain tip.
-func (client *Client) GetBTCTailBlockHeadersByHeight(baseHeight int64) ([]*btcwire.BlockHeader, error) {
-	// Get the current tip block header.  We need its height.
-	_, tipHeight, err := client.GetBTCTipBlock()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tip block: %w", err)
-	}
-
-	if baseHeight > tipHeight {
-		return nil, fmt.Errorf("base height %d exceeds current tip height %d", baseHeight, tipHeight)
-	}
-
-	totalHeaders := tipHeight - baseHeight + 1
-	headers := make([]*btcwire.BlockHeader, 0, totalHeaders)
-	for height := baseHeight; height <= tipHeight; height++ {
-		header, err := client.GetBTCBlockHeaderByHeight(height)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get block header at height %d: %w", height, err)
-		}
-		headers = append(headers, header)
-
-		// Log progress every 1000 headers
-		if (height-baseHeight+1)%1000 == 0 || height == tipHeight {
-			log.Info().Msgf("Fetched %d/%d block headers...", height-baseHeight+1, totalHeaders)
-		}
-	}
-
-	return headers, nil
 }

@@ -18,8 +18,7 @@ type BTCClient interface {
 	BlockEventChannel() <-chan *btctypes.BlockEvent
 	GetBTCTipBlock() (*chainhash.Hash, int64, error)
 	GetBTCBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error)
-	GetBTCTailBlocksByHeight(height int64) ([]*types.IndexedBlock, error)
+	GetBTCTailBlocksByHeight(height int64, fullBlocks bool) ([]*types.IndexedBlock, error)
 	GetBTCBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error)
-	GetBTCTailBlockHeadersByHeight(baseHeight int64) ([]*wire.BlockHeader, error)
 	GetBTCBlockHeaderByHeight(height int64) (*wire.BlockHeader, error)
 }
