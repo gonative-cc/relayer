@@ -168,14 +168,6 @@ func (client *Client) getBlockVerboseRetries(
 	return blockVerbose, nil
 }
 
-func initializeChainBlocks(
-	baseHeight, tipHeight int64, tipBlock *relayertypes.IndexedBlock,
-) []*relayertypes.IndexedBlock {
-	blocks := make([]*relayertypes.IndexedBlock, tipHeight-baseHeight+1)
-	blocks[len(blocks)-1] = tipBlock
-	return blocks
-}
-
 // GetBTCTailBlocksByHeight retrieves a sequence of blocks or block headers
 // from a given base height up to the current chain tip, based on the fullBlocks flag.
 func (client *Client) GetBTCTailBlocksByHeight(
