@@ -148,7 +148,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
-	// TODO: instead of fetching whole blocks, we are just fetching headers, thy why its commented out
+	// NOTE: instead of fetching whole blocks, we are just fetching headers, thy why its commented out
 	// blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
 	// if err != nil {
 	// 	return err
