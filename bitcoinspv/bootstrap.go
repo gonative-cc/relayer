@@ -3,6 +3,7 @@ package bitcoinspv
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -146,9 +147,11 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight)
+	// NOTE: here we are fetching only headers, if we want to fetch full blocks change the flag to true
+	r.logger.Info("loading headers...")
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, false)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get headers: %w", err)
 	}
 
 	err = r.btcCache.Init(blocks)

@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
+	"github.com/gonative-cc/relayer/ika2btc/bitcoin"
 	"gotest.tools/v3/assert"
 )
 

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/ika2btc"
+	"github.com/gonative-cc/relayer/ika2btc/bitcoin"
 	"github.com/gonative-cc/relayer/native"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"

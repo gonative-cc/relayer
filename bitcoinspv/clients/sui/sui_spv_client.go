@@ -21,7 +21,7 @@ const (
 	getChainTipFunc   = "latest_block_hash"
 	verifySPVFunc     = "verify_tx"
 	lcModule          = "light_client"
-	defaultGasBudget  = "100000000"
+	defaultGasBudget  = "10000000000"
 )
 
 // SPVClient implements the BitcoinSPV interface, interacting with a

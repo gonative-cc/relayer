@@ -9,8 +9,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gonative-cc/relayer/bitcoin"
 	"github.com/gonative-cc/relayer/dal"
+	"github.com/gonative-cc/relayer/ika2btc/bitcoin"
 	"github.com/rs/zerolog/log"
 )
 
