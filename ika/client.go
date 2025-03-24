@@ -182,6 +182,7 @@ func (c *client) SignReq(
 
 func (c *client) QuerySign() {}
 
+/*
 // extractSignatures extracts bytes from the `ParsedJson` structure
 func extractSignatures(data interface{}) [][]byte {
 	var byteArrays [][]byte
@@ -201,3 +202,4 @@ func extractSignatures(data interface{}) [][]byte {
 	}
 	return byteArrays
 }
+*/
