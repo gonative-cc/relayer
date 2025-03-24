@@ -113,7 +113,7 @@ func (c *client) UpdateLC(
 	})
 }
 
-// SignReq issues Sui transaction to request signatues for the list of messages.
+// SignReq issues Sui transaction to request signatures for the list of messages.
 // Returns transaction digest (ID).
 func (c *client) SignReq(
 	ctx context.Context,
