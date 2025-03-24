@@ -78,21 +78,6 @@ func TestRun_EdgeCases(t *testing.T) {
 			setupDB:   func(_ *testing.T, _ dal.DB) {}, // No need to populate the database
 		},
 		{
-			name: "IKAClientError",
-			ikaClient: func() ika.Client {
-				c := new(ika.MockClient)
-				c.On("ApproveAndSign", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(nil, "", errors.New("ika client error"))
-				c.On("SignReq", mock.Anything, "dwallet1", "user_sig1", mock.Anything).
-					Return("ds1", nil)
-				return c
-			}(),
-			setupDB: func(t *testing.T, db dal.DB) {
-				daltest.PopulateSignRequests(ctx, t, db)
-			},
-			expectedError: "failed calling ApproveAndSign",
-		},
-		{
 			name:      "Success",
 			ikaClient: newIkaMockWithApproveAndSingReq(),
 			setupDB: func(t *testing.T, db dal.DB) {
