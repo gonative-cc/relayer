@@ -127,7 +127,7 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			relayer, err := NewRelayer(relayerConfig, tc.db, tc.nativeProcessor, tc.btcProcessor, tc.fetcher)
+			relayer, err := NewRelayer(relayerConfig, tc.db, tc.btcProcessor, tc.fetcher)
 			assert.ErrorIs(t, err, tc.expectedError)
 			assert.Assert(t, relayer == nil)
 		})

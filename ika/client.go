@@ -36,7 +36,7 @@ type Client interface {
 // client is a wrapper around the Sui client that provides functionality
 // for interacting with Ika
 type client struct {
-	c              *sui.Client
+	suiCl          *sui.Client
 	Signer         *signer.Signer
 	LcPackage      string
 	LcModule       string
@@ -62,7 +62,7 @@ func NewClient(
 	gasAddr, gasBudget string,
 ) (Client, error) {
 	i := &client{
-		c:              c,
+		suiCl:          c,
 		Signer:         signer,
 		LcPackage:      ctr.Package,
 		LcModule:       ctr.Module,
@@ -94,14 +94,14 @@ func (c *client) UpdateLC(
 		Gas:       &c.GasAddr,
 		GasBudget: c.GasBudget,
 	}
-	resp, err := c.c.MoveCall(ctx, req)
+	resp, err := c.suiCl.MoveCall(ctx, req)
 	if err != nil {
 		logger.Err(err).Msg("Error calling move function:")
 		return models.SuiTransactionBlockResponse{}, err // Return zero value for the response
 	}
 
 	// TODO: verify if we need to call this
-	return c.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+	return c.suiCl.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
 		PriKey:      c.Signer.PriKey,
 		Options: models.SuiTransactionBlockOptions{
@@ -136,7 +136,7 @@ func (c *client) SignReq(
 		},
 		GasBudget: c.GasBudget,
 	}
-	messageApprovals, err := c.c.MoveCall(ctx, req)
+	messageApprovals, err := c.suiCl.MoveCall(ctx, req)
 	if err != nil {
 		return "", fmt.Errorf("error calling approve_messages function: %w", err)
 	}
@@ -146,11 +146,11 @@ func (c *client) SignReq(
 		signMessagesID,
 		messageApprovals,
 	}
-	resp, err := c.c.MoveCall(ctx, req)
+	resp, err := c.suiCl.MoveCall(ctx, req)
 	if err != nil {
 		return "", fmt.Errorf("error calling sign function: %w", err)
 	}
-	response, err := c.c.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+	response, err := c.suiCl.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: resp,
 		PriKey:      c.Signer.PriKey,
 		Options: models.SuiTransactionBlockOptions{
