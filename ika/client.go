@@ -54,19 +54,20 @@ type SignOutputEventData struct {
 }
 
 // NewClient creates a new Client instance
+// `lc` Bitcoin SPV Light Client
 func NewClient(
 	c *sui.Client,
 	signer *signer.Signer,
-	ctr SuiCtrCall,
+	spvLC SuiCtrCall,
 	dwallet SuiCtrCall,
 	gasAddr, gasBudget string,
 ) (Client, error) {
 	i := &client{
 		suiCl:          c,
 		Signer:         signer,
-		LcPackage:      ctr.Package,
-		LcModule:       ctr.Module,
-		LcFunction:     ctr.Function,
+		LcPackage:      spvLC.Package,
+		LcModule:       spvLC.Module,
+		LcFunction:     spvLC.Function,
 		DWalletPackage: dwallet.Package,
 		DWalletModule:  dwallet.Module,
 		GasAddr:        gasAddr,
