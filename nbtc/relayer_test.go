@@ -48,7 +48,7 @@ func setupTestSuite(t *testing.T) *testSuite {
 
 	ctx := context.Background()
 	db := daltest.InitTestDB(ctx, t)
-	ikaClient := ika.NewMockClient()
+	ikaClient := ika.NewMockClientWithApprove()
 	btcProcessor, _ := ika2btc.NewProcessor(btcClientConfig, 6, db)
 	btcProcessor.BtcClient = &bitcoin.MockClient{}
 	signReqFetcher, err := native.NewMockAPISignRequestFetcher()
