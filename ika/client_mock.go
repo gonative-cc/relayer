@@ -14,15 +14,6 @@ type MockClient struct {
 	mock.Mock
 }
 
-// NewMockClientWithApprove creates a new mock Client instance with predefined ApproveAndSign behavior.
-func NewMockClientWithApprove() *MockClient {
-	mockClient := new(MockClient)
-	mockClient.On("ApproveAndSign", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		// predefined signature and transaction digest.
-		Return([][]byte{{0x01, 0x02, 0x03}}, "txDigest", nil)
-	return mockClient
-}
-
 // UpdateLC is a mock implementation used in tests.
 func (m *MockClient) UpdateLC(
 	_ context.Context,

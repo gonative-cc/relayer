@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClient_ApproveAndSign(t *testing.T) {
+func TestClient(t *testing.T) {
 	t.Skip("Test to be run locally for debugging purposes only")
 	err := godotenv.Load("./../.env.test")
 	assert.Nil(t, err)
@@ -22,7 +22,7 @@ func TestClient_ApproveAndSign(t *testing.T) {
 	dWalletModule := os.Getenv("LC_MODULE")
 	gasAccount := os.Getenv("IKA_GAS_ACC")
 	gasBudget := os.Getenv("IKA_GAS_BUDGET")
-	lcFunction := "test"
+	spvLCFun := "test"
 
 	cl := sui.NewSuiClient(localRPC).(*sui.Client)
 	s, err := signer.NewSignertWithMnemonic(localMnemonic)
@@ -34,12 +34,12 @@ func TestClient_ApproveAndSign(t *testing.T) {
 		SuiCtrCall{
 			Package:  dwalletPackage,
 			Module:   dWalletModule,
-			Function: lcFunction,
+			Function: spvLCFun,
 		},
 		SuiCtrCall{
 			Package:  dwalletPackage,
 			Module:   dWalletModule,
-			Function: lcFunction,
+			Function: spvLCFun,
 		},
 		gasAccount,
 		gasBudget,

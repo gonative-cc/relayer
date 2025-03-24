@@ -2,7 +2,6 @@ package remote2ika
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
 }
 
 func newIkaMockWithApproveAndSingReq() ika.Client {
-	suiCl := ika.NewMockClientWithApprove()
+	suiCl := new(ika.MockClient)
 	// only signatures that don't have final sig
 	suiCl.On("SignReq", mock.Anything, "dwallet1", "user_sig1", mock.Anything).
 		Return("ds1", nil)
