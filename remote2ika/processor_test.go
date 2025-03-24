@@ -24,7 +24,6 @@ func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
 }
 
 func TestRun(t *testing.T) {
-	t.SkipNow()
 	ctx := context.Background()
 	suiCl := ika.NewMockClient()
 
@@ -38,12 +37,21 @@ func TestRun(t *testing.T) {
 	assert.Equal(t, 1, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
 
-	err = processor.Run(context.Background())
+	// only signatures that don't have final sig
+	suiCl.On("SignReq", mock.Anything, "dwallet1", "user_sig1", mock.Anything).
+		Return("ds1", nil)
+	suiCl.On("SignReq", mock.Anything, "dwallet3", "user_sig3", mock.Anything).
+		Return("ds3", nil)
+
+	err = processor.Run(ctx)
 	assert.Nil(t, err)
 
 	// after signing
 	retrievedSignRequests, err = processor.db.GetBitcoinTxsToBroadcast(ctx)
 	assert.Nil(t, err)
+
+	// TODO
+	t.Skip("Fetching Ika Tx is not ready - see TODO in ika/client.SignReq")
 	assert.Equal(t, 3, len(retrievedSignRequests))
 	assert.NotNil(t, retrievedSignRequests[0].FinalSig)
 }
