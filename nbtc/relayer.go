@@ -134,6 +134,7 @@ func (r *Relayer) handleError(err error, operation string) {
 
 // processSignRequests processes signd requests from the Native chain.
 func (r *Relayer) processSignRequests(_ context.Context) error {
+	// TODO: implement this
 	panic("not implemented")
 }
 

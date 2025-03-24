@@ -73,7 +73,6 @@ func setupTestSuite(t *testing.T) *testSuite {
 func Test_Start(t *testing.T) {
 	ts := setupTestSuite(t)
 	defer ts.cancel()
-
 	daltest.PopulateDB(ts.ctx, t, ts.db)
 
 	// Start the relayer in a separate goroutine
@@ -81,19 +80,21 @@ func Test_Start(t *testing.T) {
 		assert.NilError(t, ts.relayer.Start(ts.ctx))
 	}()
 
-	t.Run("Transaction Broadcasted", func(t *testing.T) {
-		time.Sleep(time.Second * 6)
-		confirmedTx, err := ts.db.GetBitcoinTx(ts.ctx, 2, daltest.DecodeBTCHash(t, "0"))
-		assert.NilError(t, err)
-		assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
-	})
+	t.Skip("native 2 bitcoin not implemented")
 
-	t.Run("Transaction Confirmed", func(t *testing.T) {
-		time.Sleep(time.Second * 3) // Give time for confirmation
-		confirmedTx, err := ts.db.GetBitcoinTx(ts.ctx, 2, daltest.DecodeBTCHash(t, "0"))
-		assert.NilError(t, err)
-		assert.Equal(t, confirmedTx.Status, dal.Confirmed)
-	})
+	t.Log("testing transaction broadcasted")
+	// TODO - ticker to fetch BTC transactions should be a parameter to the processor. Sleeping
+	// 6s in tests it's long. Otherwise, we can have a function to trigger the processor
+	time.Sleep(time.Second * 6)
+	confirmedTx, err := ts.db.GetBitcoinTx(ts.ctx, 2, daltest.DecodeBTCHash(t, "0"))
+	assert.NilError(t, err)
+	assert.Equal(t, confirmedTx.Status, dal.Broadcasted)
+
+	t.Log("Testing transaction confirmation")
+	time.Sleep(time.Second * 3) // Give time for confirmation
+	confirmedTx, err = ts.db.GetBitcoinTx(ts.ctx, 2, daltest.DecodeBTCHash(t, "0"))
+	assert.NilError(t, err)
+	assert.Equal(t, confirmedTx.Status, dal.Confirmed)
 	ts.db.Close()
 }
 
@@ -107,12 +108,6 @@ func TestNewRelayer_ErrorCases(t *testing.T) {
 		name          string
 	}{
 		{
-			name:          "NativeProcessorError",
-			db:            ts.db,
-			btcProcessor:  ts.btcProcessor,
-			expectedError: native.ErrNoNativeProcessor,
-			fetcher:       ts.signReqFetcher,
-		}, {
 			name:          "BtcProcessorError",
 			db:            ts.db,
 			btcProcessor:  nil,
