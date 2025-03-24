@@ -11,7 +11,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/cometbft/cometbft v1.0.0
 	github.com/joho/godotenv v1.5.1
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.2.5
 	github.com/vektra/mockery/v2 v2.53.3
