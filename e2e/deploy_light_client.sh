@@ -11,7 +11,6 @@ BTC_NETWORK=2  # regtest (0: mainnet, 1: testnet, 2: regtest)
 START_HEIGHT=190
 
 
-
 echo "Downloading and extracting light client inside the container..."
 docker exec "$CONTAINER_ID" /bin/bash -c \
   "apt-get update && \
@@ -23,7 +22,7 @@ docker exec "$CONTAINER_ID" /bin/bash -c \
 echo "Deploying light client to Sui network..."
 PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' && sui client publish --skip-dependency-verification --gas-budget 100000000 --json")
 
-PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
+export PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
 
 if [ -z "$PACKAGE_ID" ]; then
   echo "Failed to extract Package ID!"
@@ -38,7 +37,7 @@ echo "Package ID: $PACKAGE_ID"
 echo "Initializing light client..."
 INIT_OUTPUT="$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function new_light_client --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $BTC_NETWORK $START_HEIGHT \"$INIT_HEADERS\" 0 --json")"
 
-LIGHT_CLIENT_ID=$(echo "$INIT_OUTPUT" | jq -r '.events[] | select(.type | contains("::light_client::NewLightClientEvent")) | .parsedJson.light_client_id')
+export LIGHT_CLIENT_ID=$(echo "$INIT_OUTPUT" | jq -r '.events[] | select(.type | contains("::light_client::NewLightClientEvent")) | .parsedJson.light_client_id')
 
 
 if [ -z "$LIGHT_CLIENT_ID" ]; then
@@ -54,6 +53,7 @@ echo "Updating $CONFIG_FILE with Package ID and Light Client ID..."
 
 sed -i "s|lc_object_id:.*|lc_object_id: $LIGHT_CLIENT_ID|" "$CONFIG_FILE"
 sed -i "s|lc_package_id:.*|lc_package_id: $PACKAGE_ID|" "$CONFIG_FILE"
+
 
 echo "Configuration file updated successfully."
 echo "Light client deployment and initialization complete."
