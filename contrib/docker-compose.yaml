@@ -22,6 +22,7 @@ services:
       -zmqpubrawtx=tcp://0.0.0.0:28333
       -zmqpubhashblock=tcp://0.0.0.0:28334
       -zmqpubhashtx=tcp://0.0.0.0:28335
+      # Create prod level credentials if exposing node externally
       -rpcuser=user
       -rpcpassword=password
       -regtest
@@ -29,6 +30,7 @@ services:
       -rpcbind=0.0.0.0:18443
       -rpcallowip=0.0.0.0/0
 
+  # we use bitcoind rather than btcd, because btcd lacks the proof generation endpoints
   btcd:
     profiles:
       - donotstart
@@ -41,16 +43,12 @@ services:
       - 18333:18333
       - 18334:18334
     # https://github.com/btcsuite/btcd/blob/master/docs/configuration.md
-    command:
-      [
-        "--simnet",
-        "--rpcuser=[CHOOSE_A_USERNAME]",
-        "--rpcpass=[CREATE_A_VERY_HARD_PASSWORD]",
-      ]
+    # Create prod level credentials if exposing node externally
+    command: ["--simnet", "--rpcuser=user", "--rpcpass=password"]
 
   sui-node:
     container_name: sui-node
-    image: mysten/sui-tools:devnet
+    image: mysten/sui-tools:testnet-v1.46.0
     volumes:
       - ./sui_config:/root/.sui/sui_config
     ports:
