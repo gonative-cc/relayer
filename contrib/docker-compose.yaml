@@ -17,6 +17,7 @@ services:
       - 127.0.0.1:18444:18444
       - 127.0.0.1:18445:18445
     # Create prod level credentials if exposing node externally
+    # use https://docs.docker.com/compose/how-tos/use-secrets/
     command: -printtoconsole
       -zmqpubsequence=tcp://0.0.0.0:28331
       -zmqpubrawblock=tcp://0.0.0.0:28332
