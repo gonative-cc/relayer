@@ -16,13 +16,13 @@ services:
       - 127.0.0.1:18443:18443 # json-rpc
       - 127.0.0.1:18444:18444
       - 127.0.0.1:18445:18445
+    # Create prod level credentials if exposing node externally
     command: -printtoconsole
       -zmqpubsequence=tcp://0.0.0.0:28331
       -zmqpubrawblock=tcp://0.0.0.0:28332
       -zmqpubrawtx=tcp://0.0.0.0:28333
       -zmqpubhashblock=tcp://0.0.0.0:28334
       -zmqpubhashtx=tcp://0.0.0.0:28335
-      # Create prod level credentials if exposing node externally
       -rpcuser=user
       -rpcpassword=password
       -regtest
@@ -48,7 +48,7 @@ services:
 
   sui-node:
     container_name: sui-node
-    image: mysten/sui-tools:testnet-v1.46.0
+    image: mysten/sui-node:testnet-v1.46.0
     volumes:
       - ./sui_config:/root/.sui/sui_config
     ports:
