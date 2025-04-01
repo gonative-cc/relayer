@@ -48,7 +48,7 @@ services:
 
   sui-node:
     container_name: sui-node
-    image: mysten/sui-node:testnet-v1.46.0
+    image: mysten/sui-tools:testnet-v1.46.0-arm64
     volumes:
       - ./sui_config:/root/.sui/sui_config
     ports:
