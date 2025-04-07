@@ -5,30 +5,14 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/wire"
+
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
-func breakIntoChunks[T any](v []T, chunkSize int) [][]T {
-	if len(v) == 0 {
-		return nil
-	}
-
-	chunks := make([][]T, 0, (len(v)+chunkSize-1)/chunkSize)
-	for i := 0; i < len(v); i += chunkSize {
-		end := i + chunkSize
-		if end > len(v) {
-			end = len(v)
-		}
-		chunks = append(chunks, v[i:end])
-	}
-	return chunks
-}
-
-// getHeaderMessages takes a set of indexed blocks and generates MsgInsertHeaders messages
-// containing block headers that need to be sent to the light client.
-func (r *Relayer) getHeaderMessages(ctx context.Context,
-	indexedBlocks []*types.IndexedBlock,
-) ([][]wire.BlockHeader, error) {
+// createChunks takes a set of indexed blocks and breaks them into chunks of headers to be sent
+// to the light client.
+func (r *Relayer) createChunks(ctx context.Context, indexedBlocks []*types.IndexedBlock,
+) ([]Chunk, error) {
 	startPoint, err := r.findFirstNewHeader(ctx, indexedBlocks)
 	if err != nil {
 		return nil, err
@@ -39,11 +23,9 @@ func (r *Relayer) getHeaderMessages(ctx context.Context,
 		return nil, nil
 	}
 
-	// Get subset of blocks starting from first new header
 	blocksToSubmit := indexedBlocks[startPoint:]
-
-	// Split into chunks and convert to header messages
-	return r.createHeaderMessages(blocksToSubmit), nil
+	blockChunks := breakIntoChunks(blocksToSubmit, int(r.Config.HeadersChunkSize))
+	return blockChunks, nil
 }
 
 // findFirstNewHeader finds the index of the first header not in the light client.
@@ -66,27 +48,17 @@ func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types
 	return -1, nil
 }
 
-// createHeaderMessages splits blocks into chunks and creates header messages
-func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]wire.BlockHeader {
-	blockChunks := breakIntoChunks(indexedBlocks, int(r.Config.HeadersChunkSize))
-	headerMsgs := make([][]wire.BlockHeader, 0, len(blockChunks))
-
-	for _, chunk := range blockChunks {
-		headerMsgs = append(headerMsgs, types.NewMsgInsertHeaders(chunk))
-	}
-
-	return headerMsgs
-}
-
-func (r *Relayer) submitHeaderMessages(ctx context.Context, headers []wire.BlockHeader) error {
+func (r *Relayer) submitHeaderMessages(ctx context.Context, chunk Chunk) error {
 	err := RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
-		if err := r.lcClient.InsertHeaders(ctx, headers); err != nil {
+		if err := r.lcClient.InsertHeaders(ctx, chunk.Headers); err != nil {
 			return err
 		}
-		first := headers[0].BlockHash().String()
-		last := headers[len(headers)-1].BlockHash().String()
+		hs := chunk.Headers
+		firstHash := hs[0].BlockHash().String()
+		lastHash := hs[len(hs)-1].BlockHash().String()
 		r.logger.Infof(
-			"Submitted %d headers [%s ... %s] to light client", len(headers), first, last)
+			"Submitted %d headers=[%s ... %s] heights=[%d ... %d] to light client",
+			len(hs), firstHash, lastHash, chunk.From, chunk.To)
 		return nil
 	})
 	if err != nil {
@@ -99,20 +71,20 @@ func (r *Relayer) submitHeaderMessages(ctx context.Context, headers []wire.Block
 // and submits them to the light client.
 // Returns the count of unique headers that were submitted.
 func (r *Relayer) ProcessHeaders(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
-	headerMessages, err := r.getHeaderMessages(ctx, indexedBlocks)
+	chunks, err := r.createChunks(ctx, indexedBlocks)
 	if err != nil {
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
-	if len(headerMessages) == 0 {
+	if len(chunks) == 0 {
 		r.logger.Info("No new headers to submit")
 	}
 
 	headersSubmitted := 0
-	for _, msgs := range headerMessages {
-		if err := r.submitHeaderMessages(ctx, msgs); err != nil {
+	for _, chunk := range chunks {
+		if err := r.submitHeaderMessages(ctx, chunk); err != nil {
 			return 0, fmt.Errorf("failed to submit headers: %w", err)
 		}
-		headersSubmitted += len(msgs)
+		headersSubmitted += len(chunk.Headers)
 	}
 
 	return headersSubmitted, nil
