@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/wire"
-
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 )
 
