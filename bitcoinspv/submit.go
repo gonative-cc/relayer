@@ -78,19 +78,20 @@ func (r *Relayer) createHeaderMessages(indexedBlocks []*types.IndexedBlock) [][]
 	return headerMsgs
 }
 
-func (r *Relayer) submitHeaderMessages(ctx context.Context, msg []wire.BlockHeader) error {
-	if err := RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
-		if err := r.lcClient.InsertHeaders(ctx, msg); err != nil {
+func (r *Relayer) submitHeaderMessages(ctx context.Context, headers []wire.BlockHeader) error {
+	err := RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
+		if err := r.lcClient.InsertHeaders(ctx, headers); err != nil {
 			return err
 		}
+		first := headers[0].BlockHash().String()
+		last := headers[len(headers)-1].BlockHash().String()
 		r.logger.Infof(
-			"Submitted %d headers to light client", len(msg),
-		)
+			"Submitted %d headers [%s ... %s] to light client", len(headers), first, last)
 		return nil
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("failed to submit headers: %w", err)
 	}
-
 	return nil
 }
 
