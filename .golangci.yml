@@ -1,29 +1,16 @@
+version: "2"
 run:
   tests: false
-
 linters:
   enable:
-    # - dupl
-    # - nestif
-    # - rowserrcheck -- enable when it will support generics
-    # - whitespace
-    # - wsl
     - asciicheck
     - bodyclose
-    # TODO; we need re-enable this linter once golangci-lint or .depguard.yaml is done
-    # - depguard
-    - dogsled
-    - errcheck
     - copyloopvar
+    - dogsled
     - goconst
     - gocritic
-    - gofmt
-    - goimports
     - gosec
-    - gosimple
-    - govet
     - grouper
-    - ineffassign
     - lll
     - misspell
     - nakedret
@@ -31,94 +18,106 @@ linters:
     - prealloc
     - revive
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unparam
-    - unused
     - usestdlibvars
-
-issues:
-  exclude-dirs:
-    - tests/e2e
-    - tests/simulation
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gosec
-    - linters:
-        - lll
-      source: "https://"
-  max-same-issues: 50
-
-linters-settings:
-  govet:
-    # Enable analyzers by name (in addition to default).
-    # Run `go tool vet help` to see all analyzers.
-    # Default: []
-    enable:
-      - fieldalignment
-  dogsled:
-    max-blank-identifiers: 3
-  misspell:
-    locale: US
-  nolintlint:
-    allow-unused: false
-    require-explanation: false
-  revive:
-    confidence: 0.8
-    severity: error
-    # List of rules to enable explicitly should be a subset of .revive.toml
-    # so only critical rules cause CI to fail instead of just generating annotations.
+  settings:
+    dogsled:
+      max-blank-identifiers: 3
+    govet:
+      enable:
+        - fieldalignment
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: false
+      allow-unused: false
+    revive:
+      confidence: 0.8
+      severity: error
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+        - name: unreachable-code
+        - name: redefines-builtin-id
+        - name: if-return
+        - name: early-return
+        - name: identical-branches
+        - name: unconditional-recursion
+        - name: confusing-results
+        - name: duplicated-imports
+        - name: unnecessary-stmt
+        - name: atomic
+        - name: bool-literal-in-expr
+        - name: datarace
+        - name: range-val-address
+        - name: range-val-in-closure
+        - name: string-of-int
+        - name: struct-tag
+        - name: time-equal
+        - name: waitgroup-by-value
+        - name: defer
+        - name: argument-limit
+          arguments:
+            - 6
+        - name: cyclomatic
+          arguments:
+            - 10
+        - name: function-result-limit
+          arguments:
+            - 3
+        - name: max-control-nesting
+          arguments:
+            - 4
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: blank-imports
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: exported
-      - name: increment-decrement
-      - name: var-naming
-      - name: var-declaration
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: indent-error-flow
-      - name: errorf
-      - name: empty-block
-      - name: superfluous-else
-      - name: unused-parameter
-      - name: unreachable-code
-      - name: redefines-builtin-id
-
-      - name: if-return
-      - name: early-return
-      - name: identical-branches
-      - name: unconditional-recursion
-      - name: confusing-results
-      - name: duplicated-imports
-      - name: unnecessary-stmt
-
-      - name: atomic
-      - name: bool-literal-in-expr
-      - name: datarace
-
-      - name: range-val-address
-      - name: range-val-in-closure
-      - name: string-of-int
-      - name: struct-tag
-      - name: time-equal
-      - name: waitgroup-by-value
-      - name: defer
-
-      - name: argument-limit
-        arguments: [6]
-      - name: cyclomatic
-        arguments: [10]
-      - name: function-result-limit
-        arguments: [3]
-      - name: max-control-nesting
-        arguments: [4]
+      - linters:
+          - gosec
+        path: _test\.go
+      - linters:
+          - lll
+        source: https://
+    paths:
+      - tests/e2e
+      - tests/simulation
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 50
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - tests/e2e
+      - tests/simulation
+      - third_party$
+      - builtin$
+      - examples$
