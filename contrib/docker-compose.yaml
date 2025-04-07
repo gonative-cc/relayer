@@ -7,6 +7,7 @@ services:
     volumes:
       - ${BITCOIND_DATA:-./bitcoind-data}:/bitcoin/.bitcoin
     ports:
+      # "[host:]container[/protocol]"
       # regtest ports
       - 127.0.0.1:28331:28331 # zmq sequence
       - 127.0.0.1:28332:28332 # zmq raw blocks

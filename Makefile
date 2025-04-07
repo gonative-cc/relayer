@@ -78,3 +78,17 @@ bitcoind-init:
 
 bitcoind-load-wallet:
 	@docker exec -it bitcoind-node bitcoin-cli -regtest loadwallet $(WALLET)
+
+
+# if you want to start all containers that we defined in the docker-compose, then just run
+# docker compose up
+docker-sui-start:
+	@cd ./contrib; docker compose up sui-node
+
+# make sure you start docker container is started
+docker-sui-connect:
+	@cd ./contrib; docker compose exec sui-node bash
+# or: docker exec -it sui-node bash
+
+docker-bitcoind-connect:
+	@cd ./contrib; docker compose exec bitcoind bash
