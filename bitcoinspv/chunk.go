@@ -36,8 +36,9 @@ func toBlockHeaders(blocks []*types.IndexedBlock) []wire.BlockHeader {
 	return headers
 }
 
+// Chunk represents a batch of block headers to be sent to the light client.
 type Chunk struct {
+	Headers []wire.BlockHeader
 	From    int64
 	To      int64
-	Headers []wire.BlockHeader
 }
