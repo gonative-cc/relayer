@@ -4,7 +4,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	// btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 )
 
 func breakIntoChunks(blocks []*types.IndexedBlock, chunkSize int) []Chunk {

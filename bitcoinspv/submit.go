@@ -53,10 +53,15 @@ func (r *Relayer) submitHeaderMessages(ctx context.Context, chunk Chunk) error {
 		}
 		hs := chunk.Headers
 		firstHash := hs[0].BlockHash().String()
-		lastHash := hs[len(hs)-1].BlockHash().String()
-		r.logger.Infof(
-			"Submitted %d headers=[%s ... %s] heights=[%d ... %d] to light client",
-			len(hs), firstHash, lastHash, chunk.From, chunk.To)
+		var headersStr string
+		if len(hs) > 1 {
+			lastHash := hs[len(hs)-1].BlockHash().String()
+			headersStr = fmt.Sprint("headers=[", firstHash, "...", lastHash, "]",
+				" heights=[", chunk.From, "...", chunk.To, "]")
+		} else {
+			headersStr = fmt.Sprint("header=", firstHash, " height=", chunk.From)
+		}
+		r.logger.Infof("Submitted %d %s to light client", len(hs), headersStr)
 		return nil
 	})
 	if err != nil {
