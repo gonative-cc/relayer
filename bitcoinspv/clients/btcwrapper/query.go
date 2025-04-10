@@ -210,7 +210,9 @@ func (c *Client) GetBTCTailBlocksByHeight(
 
 		// Log progress every 1000 blocks/headers.
 		if (height-baseHeight+1)%1000 == 0 || height == tipHeight {
-			c.logger.Info().Msgf("Fetched %d/%d blocks/headers (fullBlocks: %t)...", height-baseHeight+1, totalBlocks, fullBlocks)
+			c.logger.Info().Msgf(
+				"Fetched %d/%d blocks/headers (fullBlocks: %t)...", height-baseHeight+1, totalBlocks, fullBlocks,
+			)
 		}
 	}
 
