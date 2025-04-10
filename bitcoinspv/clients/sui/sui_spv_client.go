@@ -27,11 +27,11 @@ const (
 // SPVClient implements the BitcoinSPV interface, interacting with a
 // Bitcoin SPV light client deployed as a smart contract on Sui.
 type SPVClient struct {
-	suiClient   *sui.Client
-	signer      *signer.Signer
+	logger      zerolog.Logger
 	lcObjectID  string
 	lcPackageID string
-	logger      zerolog.Logger
+	suiClient   *sui.Client
+	signer      *signer.Signer
 }
 
 // NewSPVClient creates a new SPVClient instance.
