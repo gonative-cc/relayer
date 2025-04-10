@@ -10,8 +10,8 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"
 	suiClient "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 var (
@@ -40,7 +40,7 @@ func CmdStart() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cfg, rootLogger := initConfig(cfgFile)
 			btcClient := initBTCClient(cfg, rootLogger)
-			nativeClient := initNativeClient(cfg)
+			nativeClient := initNativeClient(cfg, rootLogger)
 
 			logTipBlock(btcClient, rootLogger)
 
@@ -50,14 +50,14 @@ func CmdStart() *cobra.Command {
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
 
 			<-interruptDone
-			rootLogger.Info("Shutdown complete")
+			rootLogger.Info().Msg("Shutdown complete")
 		},
 	}
 	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultCfgFile(), "config file")
 	return cmd
 }
 
-func initConfig(cfgFile string) (*config.Config, *zap.Logger) {
+func initConfig(cfgFile string) (*config.Config, zerolog.Logger) {
 	cfg, err := config.New(cfgFile)
 	if err != nil {
 		panic(fmt.Errorf("failed to load config: %w", err))
@@ -69,7 +69,7 @@ func initConfig(cfgFile string) (*config.Config, *zap.Logger) {
 	return &cfg, rootLogger
 }
 
-func initBTCClient(cfg *config.Config, rootLogger *zap.Logger) *btcwrapper.Client {
+func initBTCClient(cfg *config.Config, rootLogger zerolog.Logger) *btcwrapper.Client {
 	btcClient, err := btcwrapper.NewClientWithBlockSubscriber(
 		&cfg.BTC,
 		cfg.Relayer.RetrySleepDuration,
@@ -82,19 +82,20 @@ func initBTCClient(cfg *config.Config, rootLogger *zap.Logger) *btcwrapper.Clien
 	return btcClient
 }
 
-func logTipBlock(btcClient *btcwrapper.Client, rootLogger *zap.Logger) {
+func logTipBlock(btcClient *btcwrapper.Client, rootLogger zerolog.Logger) {
 	latestBTCBlock, err := btcClient.GetTipBlock()
 	if err != nil {
 		panic(fmt.Errorf("failed to get chain tip block: %w", err))
 	}
 
-	rootLogger.Info("Got tip block",
-		zap.String("hash", latestBTCBlock.Hash),
-		zap.Int64("height", latestBTCBlock.Height),
-		zap.Int64("time", latestBTCBlock.Time))
+	rootLogger.Info().
+		Str("hash", latestBTCBlock.Hash).
+		Int64("height", latestBTCBlock.Height).
+		Int64("time", latestBTCBlock.Time).
+		Msg("Got tip block")
 }
 
-func initNativeClient(cfg *config.Config) clients.BitcoinSPV {
+func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.BitcoinSPV {
 	c := sui.NewSuiClient(cfg.Sui.Endpoint).(*sui.Client)
 
 	signer, err := signer.NewSignertWithMnemonic(cfg.Sui.Mnemonic)
@@ -102,7 +103,7 @@ func initNativeClient(cfg *config.Config) clients.BitcoinSPV {
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	client, err := suiClient.NewSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID)
+	client, err := suiClient.NewSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))
@@ -113,7 +114,7 @@ func initNativeClient(cfg *config.Config) clients.BitcoinSPV {
 
 func initSPVRelayer(
 	cfg *config.Config,
-	rootLogger *zap.Logger,
+	rootLogger zerolog.Logger,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
 ) *bitcoinspv.Relayer {
@@ -130,25 +131,25 @@ func initSPVRelayer(
 }
 
 func setupShutdown(
-	rootLogger *zap.Logger,
+	rootLogger zerolog.Logger,
 	spvRelayer *bitcoinspv.Relayer,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
 ) {
 	registerHandler(func() {
-		rootLogger.Info("Stopping relayer...")
+		rootLogger.Info().Msg("Stopping relayer...")
 		spvRelayer.Stop()
-		rootLogger.Info("Relayer shutdown")
+		rootLogger.Info().Msg("Relayer shutdown")
 	})
 	registerHandler(func() {
-		rootLogger.Info("Stopping BTC client...")
+		rootLogger.Info().Msg("Stopping BTC client...")
 		btcClient.Stop()
 		btcClient.WaitForShutdown()
-		rootLogger.Info("BTC client shutdown")
+		rootLogger.Info().Msg("BTC client shutdown")
 	})
 	registerHandler(func() {
-		rootLogger.Info("Stopping Native client...")
+		rootLogger.Info().Msg("Stopping Native client...")
 		nativeClient.Stop()
-		rootLogger.Info("Native client shutdown")
+		rootLogger.Info().Msg("Native client shutdown")
 	})
 }

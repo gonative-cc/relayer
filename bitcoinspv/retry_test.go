@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,14 +14,14 @@ const (
 )
 
 func TestUnrecoverableError(t *testing.T) {
-	err := RetryDo(retryInterval, retryTimeout, func() error {
+	err := RetryDo(zerolog.Logger{}, retryInterval, retryTimeout, func() error {
 		return unrecoverableErrors[0]
 	})
 	require.Error(t, err)
 }
 
 func TestExpectedError(t *testing.T) {
-	err := RetryDo(retryInterval, retryTimeout, func() error {
+	err := RetryDo(zerolog.Logger{}, retryInterval, retryTimeout, func() error {
 		return expectedErrors[0]
 	})
 	require.NoError(t, err)

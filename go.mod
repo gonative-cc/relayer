@@ -1,6 +1,7 @@
 module github.com/gonative-cc/relayer
 
 go 1.23.4
+
 toolchain go1.24.1
 
 require (
@@ -14,7 +15,6 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.2.5
 	github.com/vektra/mockery/v2 v2.53.3
-	go.uber.org/zap v1.27.0
 )
 
 require (
@@ -44,10 +44,9 @@ require (
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
-	github.com/jsternberg/zap-logfmt v1.3.0
 	github.com/leodido/go-urn v1.2.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.27
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

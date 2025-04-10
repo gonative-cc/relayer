@@ -11,7 +11,7 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
 	"github.com/pebbe/zmq4"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 type Client struct {
 	// RPC connection
 	rpcClient *rpcclient.Client
-	logger    *zap.SugaredLogger
+	logger    zerolog.Logger
 
 	// Lifecycle management
 	isClosed int32 // Set atomically
@@ -46,7 +46,7 @@ type Client struct {
 
 // New creates a new zmq client
 func New(
-	parentLogger *zap.Logger,
+	parentLogger zerolog.Logger,
 	zeromqEndpoint string,
 	blockEventsChannel chan *btctypes.BlockEvent,
 	rpcClient *rpcclient.Client,
@@ -55,7 +55,7 @@ func New(
 		quitChan:           make(chan struct{}),
 		rpcClient:          rpcClient,
 		zeromqEndpoint:     zeromqEndpoint,
-		logger:             parentLogger.With(zap.String("module", "zmq")).Sugar(),
+		logger:             parentLogger.With().Str("module", "zmq").Logger(),
 		blockEventsChannel: blockEventsChannel,
 	}
 
@@ -107,6 +107,8 @@ func (c *Client) initZMQ() error {
 
 	c.subscriptions.exitedChannel = make(chan struct{})
 	c.subscriptions.zfront = zfront
+
+	c.logger.Info().Msg("ZMQ initialization complete")
 
 	return nil
 }
