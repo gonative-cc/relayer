@@ -28,10 +28,10 @@ const (
 // Bitcoin SPV light client deployed as a smart contract on Sui.
 type SPVClient struct {
 	logger      zerolog.Logger
-	lcObjectID  string
-	lcPackageID string
 	suiClient   *sui.Client
 	signer      *signer.Signer
+	lcObjectID  string
+	lcPackageID string
 }
 
 // NewSPVClient creates a new SPVClient instance.
