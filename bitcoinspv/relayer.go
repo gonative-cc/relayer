@@ -6,7 +6,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 )
 
 // Relayer manages the Bitcoin SPV relayer functionality
@@ -15,7 +15,7 @@ import (
 type Relayer struct {
 	// Configuration
 	Config *config.RelayerConfig
-	logger *zap.SugaredLogger
+	logger zerolog.Logger
 
 	// Clients
 	btcClient clients.BTCClient
@@ -35,11 +35,11 @@ type Relayer struct {
 // New creates and returns a new relayer object
 func New(
 	config *config.RelayerConfig,
-	parentLogger *zap.Logger,
+	parentLogger zerolog.Logger,
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
 ) (*Relayer, error) {
-	logger := parentLogger.With(zap.String("module", "bitcoinspv")).Sugar()
+	logger := parentLogger.With().Str("module", "bitcoinspv").Logger()
 	relayer := &Relayer{
 		Config:               config,
 		logger:               logger,
@@ -94,7 +94,7 @@ func (r *Relayer) initializeRelayer() {
 	r.wg.Add(1)
 	go r.onBlockEvent()
 
-	r.logger.Infof("Successfully started the spv relayer")
+	r.logger.Info().Msg("Successfully started the spv relayer")
 }
 
 // quitChan returns the quit channel in a thread-safe manner.

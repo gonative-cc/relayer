@@ -5,7 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	zeromq "github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper/zmq"
@@ -22,7 +22,7 @@ type Client struct {
 	zeromqClient          *zeromq.Client
 	chainParams           *chaincfg.Params
 	config                *relayerconfig.BTCConfig
-	logger                *zap.SugaredLogger
+	logger                zerolog.Logger
 	blockEventsChannel    chan *btctypes.BlockEvent
 	retrySleepDuration    time.Duration
 	maxRetrySleepDuration time.Duration

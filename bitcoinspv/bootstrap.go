@@ -29,8 +29,8 @@ func (r *Relayer) bootstrapRelayer(ctx context.Context, skipSubscription bool) e
 		return err
 	}
 
-	r.logger.Infof("BTC cache size: %d", r.btcCache.Size())
-	r.logger.Info("Successfully bootstrapped")
+	r.logger.Info().Msgf("BTC cache size: %d", r.btcCache.Size())
+	r.logger.Info().Msg("Successfully bootstrapped")
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (r *Relayer) processHeaders(ctx context.Context) error {
 	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
 		// occurs when multiple competing spv relayers exist
 		// or when our btc node is not fully synchronized
-		r.logger.Errorf("Failed to submit headers: %v", err)
+		r.logger.Error().Msgf("Failed to submit headers: %v", err)
 		return err
 	}
 	return nil
@@ -108,7 +108,7 @@ func (r *Relayer) multitryBootstrap(skipSubscription bool) {
 		if errors.Is(err, context.Canceled) {
 			return
 		}
-		r.logger.Fatalf("Failed to bootstrap relayer: %v after %d attempts", err, bootstrapRetryAttempts)
+		r.logger.Fatal().Msgf("Failed to bootstrap relayer: %v after %d attempts", err, bootstrapRetryAttempts)
 	}
 }
 
@@ -120,7 +120,7 @@ func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
 		retry.DelayType(retry.FixedDelay),
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(n uint, err error) {
-			r.logger.Warnf(
+			r.logger.Warn().Msgf(
 				"Error bootstrapping relayer: %v. Attempts: %d, Max attempts: %d",
 				err, n+1, bootstrapRetryAttempts,
 			)
@@ -148,7 +148,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	// NOTE: here we are fetching only headers, if we want to fetch full blocks change the flag to true
-	r.logger.Info("loading headers...")
+	r.logger.Info().Msg("loading headers...")
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, false)
 	if err != nil {
 		return fmt.Errorf("failed to get headers: %w", err)
@@ -185,7 +185,7 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 		return 0, err
 	}
 
-	r.logger.Infof(
+	r.logger.Info().Msgf(
 		"BTC latest block height: (%d)",
 		btcLatestBlockHeight,
 	)
@@ -199,7 +199,7 @@ func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 
-	r.logger.Infof(
+	r.logger.Info().Msgf(
 		"Light client header chain latest block height: (%d)",
 		block.Height,
 	)
@@ -208,7 +208,7 @@ func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 }
 
 func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeight int64) error {
-	r.logger.Infof(
+	r.logger.Info().Msgf(
 		"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
 		btcHeight, lcHeight,
 	)
@@ -228,14 +228,14 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 		}
 
 		if isBTCCaughtUp(btcLatestBlockHeight, lcLatestBlockHeight) {
-			r.logger.Infof(
+			r.logger.Info().Msgf(
 				"BTC (height %d) has synchronized with light client header (height %d), proceeding with bootstrap",
 				btcLatestBlockHeight, lcLatestBlockHeight,
 			)
 			return nil
 		}
 
-		r.logger.Infof(
+		r.logger.Info().Msgf(
 			"BTC (height %d) is not yet synchronized with light client header (height %d), continuing to wait",
 			btcLatestBlockHeight, lcLatestBlockHeight,
 		)

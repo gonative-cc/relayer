@@ -12,7 +12,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -31,6 +31,7 @@ type SPVClient struct {
 	signer      *signer.Signer
 	lcObjectID  string
 	lcPackageID string
+	logger      zerolog.Logger
 }
 
 // NewSPVClient creates a new SPVClient instance.
@@ -39,6 +40,7 @@ func NewSPVClient(
 	signer *signer.Signer,
 	lightClientObjectID string,
 	lightClientPackageID string,
+	parentLogger zerolog.Logger,
 ) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
 		return nil, ErrSuiClientNil
@@ -55,7 +57,12 @@ func NewSPVClient(
 		signer:      signer,
 		lcObjectID:  lightClientObjectID,
 		lcPackageID: lightClientPackageID,
+		logger:      configureClientLogger(parentLogger),
 	}, nil
+}
+
+func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
+	return parentLogger.With().Str("module", "spv_client").Logger()
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
@@ -78,10 +85,9 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		rawHeaders,
 	}
 
-	log.Debug().Msgf("SuiSPVClient: calling insert headers with the following arguemts: %v", arguments...)
+	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
 
-	resp, err := c.moveCall(ctx, insertHeadersFunc, arguments)
-	log.Debug().Msgf("\nresults :%+v\n", resp)
+	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
 	return err
 }
 

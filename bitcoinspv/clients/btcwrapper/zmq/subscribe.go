@@ -88,11 +88,11 @@ func (c *Client) zmqPoll() {
 		// Wait forever until a message can be received or the context was canceled.
 		polled, err := zmqPoller.Poll(-1)
 		if err != nil {
-			c.logger.Error("polling zmq data", err)
+			c.logger.Err(err).Msg("polling zmq data")
 			break
 		}
 		if err = c.zmqHandlePolled(polled); err != nil {
-			c.logger.Error("can't handle zmq polled data", err)
+			c.logger.Err(err).Msg("can't handle zmq polled data")
 			break
 		}
 	}
@@ -100,14 +100,14 @@ func (c *Client) zmqPoll() {
 	c.subscriptions.Lock()
 	close(c.subscriptions.exitedChannel)
 	if err := c.subscriptions.zfront.Close(); err != nil {
-		c.logger.Errorf("Error closing zfront: %v", err)
+		c.logger.Error().Msgf("Error closing zfront: %v", err)
 		return
 	}
 	// Close all subscriber channels.
 	if c.subscriptions.isActive {
 		err := c.zsubscriber.SetUnsubscribe("sequence")
 		if err != nil {
-			c.logger.Errorf("Error unsubscribing from sequence: %v", err)
+			c.logger.Error().Msgf("Error unsubscribing from sequence: %v", err)
 			return
 		}
 	}
@@ -157,10 +157,10 @@ func handleBackendMessage(c *Client) error {
 func (c *Client) cleanup() {
 	c.wg.Done()
 	if err := c.zsubscriber.Close(); err != nil {
-		c.logger.Errorf("Error closing ZMQ socket: %v", err)
+		c.logger.Error().Msgf("Error closing ZMQ socket: %v", err)
 	}
 	if err := c.zbackendsocket.Close(); err != nil {
-		c.logger.Errorf("Error closing ZMQ socket: %v", err)
+		c.logger.Error().Msgf("Error closing ZMQ socket: %v", err)
 	}
 }
 
@@ -168,15 +168,15 @@ func (c *Client) sendBlockEventToChannel(hashBytes []byte, event btctypes.EventT
 	blockHashString := hex.EncodeToString(hashBytes)
 	blockHash, err := chainhash.NewHashFromStr(blockHashString)
 	if err != nil {
-		c.logger.Errorf("Failed to parse block hash %v: %v", blockHashString, err)
+		c.logger.Error().Msgf("Failed to parse block hash %v: %v", blockHashString, err)
 		return
 	}
 
-	c.logger.Infof("Received zmq sequence message for block %v", blockHashString)
+	c.logger.Info().Msgf("Received zmq sequence message for block %v", blockHashString)
 
 	indexedBlock, err := c.getBlockByHash(blockHash)
 	if err != nil {
-		c.logger.Errorf("Failed to get block %v from BTC client: %v", blockHash, err)
+		c.logger.Error().Msgf("Failed to get block %v from BTC client: %v", blockHash, err)
 		return
 	}
 

@@ -3,12 +3,16 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/mattn/go-isatty"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 const (
@@ -50,8 +54,50 @@ func (c *Config) Validate() error {
 }
 
 // CreateLogger creates a new logger instance using the relayer configuration
-func (c *Config) CreateLogger() (*zap.Logger, error) {
-	return NewRootLogger(c.Relayer.Format, c.Relayer.Level)
+func (c *Config) CreateLogger() (zerolog.Logger, error) {
+	format := c.Relayer.Format
+	logLevel := c.Relayer.Level
+
+	level, err := zerolog.ParseLevel(strings.ToLower(logLevel))
+	if err != nil {
+		log.Error().Err(err).Str("level", logLevel).Msg("Invalid log level encountered after validation")
+		return zerolog.Nop(), fmt.Errorf("invalid log level %q: %w", logLevel, err)
+	}
+
+	var writer io.Writer
+	outputTarget := os.Stderr
+
+	switch strings.ToLower(format) {
+	case "json":
+		writer = outputTarget
+	case "console":
+		writer = zerolog.ConsoleWriter{
+			Out:        outputTarget,
+			TimeFormat: "15:04:05",
+		}
+	case "auto":
+		if isatty.IsTerminal(outputTarget.Fd()) || isatty.IsCygwinTerminal(outputTarget.Fd()) {
+			writer = zerolog.ConsoleWriter{
+				Out:        outputTarget,
+				TimeFormat: "15:04:05",
+			}
+		} else {
+			writer = outputTarget
+		}
+	default:
+		log.Error().Str("format", format).Msg("Unrecognized log format requested after validation")
+		return zerolog.Nop(), fmt.Errorf("unrecognized log format: %q", format)
+	}
+
+	logger := zerolog.New(writer).Level(level).With().Timestamp().Logger()
+
+	if level <= zerolog.DebugLevel {
+		logger = logger.With().Caller().Logger()
+	}
+
+	logger.Info().Str("format", format).Str("level", level.String()).Msg("Logger instance created")
+
+	return logger, nil
 }
 
 // DefaultCfgFile returns the default path to the configuration file

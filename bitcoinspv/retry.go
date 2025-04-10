@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 var (
@@ -47,18 +47,23 @@ func isExpectedErr(err error) bool {
 }
 
 // RetryDo executes a func with retry
-func RetryDo(sleep time.Duration, maxSleepDuration time.Duration, retryableFunc func() error) error {
+func RetryDo(
+	logger zerolog.Logger,
+	sleep time.Duration,
+	maxSleepDuration time.Duration,
+	retryableFunc func() error,
+) error {
 	err := retryableFunc()
 	if err == nil {
 		return nil
 	}
 
 	if isUnrecoverableErr(err) {
-		log.Err(err).Msg("Skip retry, error unrecoverable")
+		logger.Warn().Err(err).Msg("Skip retry, error unrecoverable")
 		return err
 	}
 	if isExpectedErr(err) {
-		log.Err(err).Msg("Skip retry, error expected")
+		logger.Info().Err(err).Msg("Skip retry, error expected")
 		return nil
 	}
 
@@ -70,14 +75,14 @@ func RetryDo(sleep time.Duration, maxSleepDuration time.Duration, retryableFunc 
 	sleep += r / 2
 
 	if sleep > maxSleepDuration {
-		log.Info().Msg("Retry timed out")
+		logger.Err(err).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
 		return err
 	}
 
-	log.Debug().Err(err).Dur("sleep", sleep).Msg("Starting exponential backoff")
+	logger.Debug().Err(err).Dur("sleep", sleep).Msg("Starting exponential backoff")
 	time.Sleep(sleep)
 
-	return RetryDo(2*sleep, maxSleepDuration, retryableFunc)
+	return RetryDo(logger, 2*sleep, maxSleepDuration, retryableFunc)
 }
 
 func randDuration(maxNumber int64) (time.Duration, error) {

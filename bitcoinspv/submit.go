@@ -17,7 +17,7 @@ func (r *Relayer) createChunks(ctx context.Context, indexedBlocks []*types.Index
 	}
 
 	if startPoint == -1 {
-		r.logger.Info("All headers are duplicated, no need to submit")
+		r.logger.Info().Msg("All headers are duplicated, no need to submit")
 		return nil, nil
 	}
 
@@ -32,7 +32,7 @@ func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types
 		blockHash := header.BlockHash()
 		var res bool
 		var err error
-		err = RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
+		err = RetryDo(r.logger, r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
 			res, err = r.lcClient.ContainsBlock(ctx, blockHash)
 			return err
 		})
@@ -47,7 +47,7 @@ func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types
 }
 
 func (r *Relayer) submitHeaderMessages(ctx context.Context, chunk Chunk) error {
-	err := RetryDo(r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
+	err := RetryDo(r.logger, r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
 		if err := r.lcClient.InsertHeaders(ctx, chunk.Headers); err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func (r *Relayer) submitHeaderMessages(ctx context.Context, chunk Chunk) error {
 		} else {
 			headersStr = fmt.Sprint("header=", firstHash, " height=", chunk.From)
 		}
-		r.logger.Infof("Submitted %d %s to light client", len(hs), headersStr)
+		r.logger.Info().Msgf("Submitted %d %s to light client", len(hs), headersStr)
 		return nil
 	})
 	if err != nil {
@@ -79,7 +79,7 @@ func (r *Relayer) ProcessHeaders(ctx context.Context, indexedBlocks []*types.Ind
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
 	if len(chunks) == 0 {
-		r.logger.Info("No new headers to submit")
+		r.logger.Info().Msg("No new headers to submit")
 	}
 
 	headersSubmitted := 0
