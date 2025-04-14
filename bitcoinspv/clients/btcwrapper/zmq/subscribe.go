@@ -187,6 +187,7 @@ func (c *Client) sendBlockEventToChannel(hashBytes []byte, event btctypes.EventT
 func (c *Client) getBlockByHash(
 	blockHash *chainhash.Hash,
 ) (*relayertypes.IndexedBlock, error) {
+	//TODO: Check why we query get_block twice, we probably dont need to do it.
 	blockVerbose, err := c.rpcClient.GetBlockVerbose(blockHash)
 	if err != nil {
 		return nil, err

@@ -18,6 +18,7 @@ import (
 
 // NewClientWithBlockSubscriber creates a new BTC client that subscribes
 // to newly connected/disconnected blocks used by spv relayer
+// TODO: consider renaming it to a different name because we only listen (maybe client is not the best name).
 func NewClientWithBlockSubscriber(
 	config *relayerconfig.BTCConfig,
 	retrySleepDuration,
@@ -52,6 +53,7 @@ func initializeClient(
 		maxRetrySleepDuration: maxRetrySleepDuration,
 	}
 
+	//TODO: This looks like its only for btcd.
 	params, err := GetBTCNodeParams(config.NetParams)
 	if err != nil {
 		return nil, err
@@ -65,6 +67,7 @@ func configureClientLogger(client *Client, parentLogger zerolog.Logger) {
 	client.logger = parentLogger.With().Str("module", "btcwrapper").Logger()
 }
 
+// TODO: we dont need the default, we already check it in config validate; lets use if;else
 func setupBackendConnection(client *Client) error {
 	switch client.config.BtcBackend {
 	case btctypes.Bitcoind:
@@ -76,6 +79,7 @@ func setupBackendConnection(client *Client) error {
 	}
 }
 
+// TODO: consider returning the client?
 func setupBitcoindConnection(client *Client) error {
 	connectionCfg := &rpcclient.ConnConfig{
 		Host:         client.config.Endpoint,
@@ -91,6 +95,8 @@ func setupBitcoindConnection(client *Client) error {
 	}
 	client.Client = rpcClient
 
+	// TODO: what is happening here; Check what backend version we need and implement a correct assertion for it.
+	// Find out why do we set the backendVersoin to BitcoindPost25
 	backendVersion := rpcclient.BitcoindPost25
 	if backendVersion != rpcclient.BitcoindPre19 && backendVersion != rpcclient.BitcoindPre22 &&
 		backendVersion != rpcclient.BitcoindPre24 && backendVersion != rpcclient.BitcoindPre25 &&
@@ -150,6 +156,7 @@ func setupBtcdConnection(client *Client) error {
 	if err != nil {
 		return fmt.Errorf("failed to get BTC backend: %v", err)
 	}
+	// TODO: check the if statement. We should discuss and consider dorpping support for btcd
 	if backendVersion != rpcclient.BtcdPre2401 && backendVersion != rpcclient.BtcdPost2401 {
 		return fmt.Errorf("websocket is only supported by btcd, but got %v", backendVersion)
 	}
@@ -158,6 +165,7 @@ func setupBtcdConnection(client *Client) error {
 }
 
 // SubscribeNewBlocks create subscription to new block events
+// TODO: panic, lets return error instead, add logger to bitcoind case
 func (client *Client) SubscribeNewBlocks() {
 	switch client.config.BtcBackend {
 	case btctypes.Btcd:

@@ -56,6 +56,7 @@ func (r *Relayer) processAndTrimCache(ctx context.Context) error {
 
 func (r *Relayer) processHeaders(ctx context.Context) error {
 	headersToProcess := r.btcCache.GetAllBlocks()
+	// TODO: we have to functions called processHeaders and ProcessHeaders, we dont need to have it doubled. Lets just have one
 	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
 		// occurs when multiple competing spv relayers exist
 		// or when our btc node is not fully synchronized
@@ -93,6 +94,7 @@ func (r *Relayer) createRelayerContext() (context.Context, func()) {
 	return ctx, cancel
 }
 
+// TODO: what is skip subsciprion (do we need it since is hardcoded anyways).
 func (r *Relayer) multitryBootstrap(skipSubscription bool) {
 	ctx, cancel := r.createRelayerContext()
 	defer cancel()
@@ -154,6 +156,9 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 		return fmt.Errorf("failed to get headers: %w", err)
 	}
 
+	//TODO: what happens if we have cache size 2000, and the light client is 5000 headers behind?
+	// We cannot fit all the headers in cache. We should consider this scenario
+
 	err = r.btcCache.Init(blocks)
 	return err
 }
@@ -172,6 +177,7 @@ func (r *Relayer) waitForBitcoinNode(ctx context.Context) error {
 		return err
 	}
 
+	// TODO: use is btcCaughtup here
 	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < lcLatestBlockHeight {
 		return r.waitForBTCCatchup(ctx, btcLatestBlockHeight, lcLatestBlockHeight)
 	}

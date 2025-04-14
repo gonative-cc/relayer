@@ -30,6 +30,7 @@ type RelayerConfig struct {
 	MaxRetrySleepDuration time.Duration `mapstructure:"max-retry-sleep-duration"`
 	// BTCCacheSize is size of the BTC cache
 	BTCCacheSize int64 `mapstructure:"cache-size"`
+	//TODO: can confirmation depth be bigger than btcCache size? if so what happens then?
 	// BTCConfirmationDepth is the number of recent block headers the
 	// relayer keeps in its cache and attempts to re-send to the light client.
 	BTCConfirmationDepth int64 `mapstructure:"confirmation_depth"`

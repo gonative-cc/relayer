@@ -220,6 +220,8 @@ func (cache *BTCCache) FindBlock(height int64) *IndexedBlock {
 	return nil
 }
 
+// TODO: lets merge those two functions and call it resize_and_trim
+
 // Resize updates the maximum number of entries allowed in the cache
 func (cache *BTCCache) Resize(maxEntries int64) error {
 	cache.Lock()

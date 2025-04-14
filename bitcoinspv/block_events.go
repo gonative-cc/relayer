@@ -27,6 +27,8 @@ func (r *Relayer) onBlockEvent() {
 					"Error in event processing: %v, restarting bootstrap",
 					err,
 				)
+				// TODO: think about a better name for it, since here we dont do the full bootstarp (only confirmations depth here)
+				// Also add more information about why here we skip the block subscirpitons and why we dont skip it in inital bootstrap.
 				r.multitryBootstrap(true)
 			}
 		case <-r.quitChan():

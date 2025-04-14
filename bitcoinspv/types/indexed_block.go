@@ -16,6 +16,7 @@ type IndexedBlock struct {
 
 // NewIndexedBlock creates a new IndexedBlock instance with the given block height,
 // header and transactions
+// TODO: think about renaming it (maybe light block?)
 func NewIndexedBlock(
 	blockHeight int64,
 	blockHeader *wire.BlockHeader,

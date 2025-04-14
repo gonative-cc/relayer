@@ -33,7 +33,7 @@ type Config struct {
 	Relayer RelayerConfig `mapstructure:"relayer"`
 }
 
-// Validate checks if the configuration is valid by running validation on all components
+// Validate checks if the configuration file is valid by running validation on all components
 func (c *Config) Validate() error {
 	validators := []struct {
 		validator func() error
@@ -116,7 +116,7 @@ func DefaultConfig() *Config {
 
 // New creates a new Config instance from the specified configuration file
 func New(cfgFile string) (Config, error) {
-	if err := validateConfigFile(cfgFile); err != nil {
+	if err := validateConfigFileExists(cfgFile); err != nil {
 		return Config{}, err
 	}
 
@@ -139,7 +139,7 @@ func New(cfgFile string) (Config, error) {
 	return cfg, nil
 }
 
-func validateConfigFile(path string) error {
+func validateConfigFileExists(path string) error {
 	if _, err := os.Stat(path); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("no config file found at %s", path)

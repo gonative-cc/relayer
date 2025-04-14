@@ -40,14 +40,15 @@ func CmdStart() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cfg, rootLogger := initConfig(cfgFile)
 			btcClient := initBTCClient(cfg, rootLogger)
-			nativeClient := initNativeClient(cfg, rootLogger)
+			spvClient := initSPVClient(cfg, rootLogger)
 
+			// TODO: do we need to log it here? Why we panic inside of it
 			logTipBlock(btcClient, rootLogger)
 
-			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient)
+			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, spvClient)
 			spvRelayer.Start()
 
-			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
+			setupShutdown(rootLogger, spvRelayer, btcClient, spvClient)
 
 			<-interruptDone
 			rootLogger.Info().Msg("Shutdown complete")
@@ -57,6 +58,7 @@ func CmdStart() *cobra.Command {
 	return cmd
 }
 
+// TODO: rename to mustInitConfig or return the error and handle it in the CmdStart
 func initConfig(cfgFile string) (*config.Config, zerolog.Logger) {
 	cfg, err := config.New(cfgFile)
 	if err != nil {
@@ -69,6 +71,7 @@ func initConfig(cfgFile string) (*config.Config, zerolog.Logger) {
 	return &cfg, rootLogger
 }
 
+// TODO: same as above
 func initBTCClient(cfg *config.Config, rootLogger zerolog.Logger) *btcwrapper.Client {
 	btcClient, err := btcwrapper.NewClientWithBlockSubscriber(
 		&cfg.BTC,
@@ -95,7 +98,8 @@ func logTipBlock(btcClient *btcwrapper.Client, rootLogger zerolog.Logger) {
 		Msg("Got tip block")
 }
 
-func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.BitcoinSPV {
+// TODO: consider rename or return error
+func initSPVClient(cfg *config.Config, rootLogger zerolog.Logger) clients.BitcoinSPV {
 	c := sui.NewSuiClient(cfg.Sui.Endpoint).(*sui.Client)
 
 	signer, err := signer.NewSignertWithMnemonic(cfg.Sui.Mnemonic)
@@ -112,12 +116,13 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.Bit
 	return client
 }
 
+// TODO: consider returning error
 func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger zerolog.Logger,
-	btcClient *btcwrapper.Client,
+	btcClient *btcwrapper.Client, //TODO: consider converting this to clients.BTCClient interface
 	nativeClient clients.BitcoinSPV,
-) *bitcoinspv.Relayer {
+) *bitcoinspv.Relayer { //TODO: consider interface
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
 		rootLogger,
@@ -130,10 +135,11 @@ func initSPVRelayer(
 	return spvRelayer
 }
 
+// TODO: do we need to shutdown spvClient (sui)
 func setupShutdown(
 	rootLogger zerolog.Logger,
-	spvRelayer *bitcoinspv.Relayer,
-	btcClient *btcwrapper.Client,
+	spvRelayer *bitcoinspv.Relayer, //TODO: consider converting this to interface
+	btcClient *btcwrapper.Client, //TODO: consider converting this to clients.BTCClient interface
 	nativeClient clients.BitcoinSPV,
 ) {
 	registerHandler(func() {

@@ -55,6 +55,7 @@ func New(
 // Start initializes and launches the SPV relayer goroutines
 // for Bitcoin header verification and relay
 func (r *Relayer) Start() {
+	// TODO: do we need the mutex here. Why is it used and probably doubled with the is running.
 	r.quitMu.Lock()
 	defer r.quitMu.Unlock()
 
@@ -70,6 +71,7 @@ func (r *Relayer) Start() {
 	r.initializeRelayer()
 }
 
+// TODO: check if this is needed since we also have a mutex here
 func (r *Relayer) isRunning() bool {
 	return r.isStarted
 }
@@ -94,6 +96,7 @@ func (r *Relayer) initializeRelayer() {
 	r.wg.Add(1)
 	go r.onBlockEvent()
 
+	// TODO: succefully bootrstaped the spv realayer, now listening for new blocks throught ZMQ.
 	r.logger.Info().Msg("Successfully started the spv relayer")
 }
 

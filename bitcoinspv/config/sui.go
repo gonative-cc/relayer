@@ -7,3 +7,5 @@ type SuiConfig struct {
 	LCObjectID  string `mapstructure:"lc_object_id"`
 	LCPackageID string `mapstructure:"lc_package_id"`
 }
+
+// TODO: add Validate() function and invoke it it in `func (c *Config) Validate()`

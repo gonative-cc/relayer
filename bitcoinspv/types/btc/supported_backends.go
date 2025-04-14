@@ -31,6 +31,7 @@ func (b SupportedBackend) String() string {
 }
 
 // GetValidNetParams returns a map of valid Bitcoin network parameters
+// TODO: Simplify this function !!!
 func GetValidNetParams() map[string]bool {
 	return map[string]bool{
 		Mainnet.String(): true,
@@ -41,6 +42,7 @@ func GetValidNetParams() map[string]bool {
 	}
 }
 
+// TODO: Simplify this function !!!
 // GetValidBackends returns a map of supported Bitcoin backend types
 func GetValidBackends() map[SupportedBackend]bool {
 	return map[SupportedBackend]bool{
