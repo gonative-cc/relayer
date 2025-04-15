@@ -28,7 +28,7 @@ func (r *Relayer) onBlockEvent() {
 					err,
 				)
 				// We call the bootstrap here, every time there is an error when processing evetns.
-				// This usually happens when there is a reorg and the new blocks that are recived
+				// This usually happens when there is a reorg and the new blocks that are received
 				// through ZMQ do not extend the chain known to the lgiht client.
 				// Then we need to re-send all the blocks starting from the latest common ancestor.
 				r.multitryBootstrap(true)
