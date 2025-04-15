@@ -3,10 +3,10 @@ relayer:
   log-level: "debug" # (debug|warn|error|panic|fatal)
   retry-sleep-duration: 5s
   max-retry-sleep-duration: 5m
-  netparams: simnet
+  netparams: regtest
   cache-size: 2000
   headers-chunk-size: 10
-  confirmation_depth: 6
+  confirmation_depth: 1
   process-block-timeout: 20s
 btc:
   no-client-tls: true
@@ -22,5 +22,5 @@ native:
 sui:
   endpoint: http://127.0.0.1:9000
   mnemonic: "bachelor domain magic seat income pledge now trip lumber rigid empower lesson"
-  lc_object_id: 0x747d8b46b49139d075132d412765f64480fcd1184e81a64610d180d8e7c48722
-  lc_package_id: 0x4848c512ef2fb3d66c8fcd9b7209a35c8e432b5dfe3e922fcd1827e356229065
+  lc_object_id: 0xcf31e5bd6dc24d55a20058ac60e44758d32f7794ab319fc343dfaa8b7138cb10
+  lc_package_id: 0x4512f86eb69bcfe907a7baf1f510baae5a70b45b8f262d736906197d9b4afdcd
