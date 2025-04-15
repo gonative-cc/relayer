@@ -4,10 +4,9 @@ import (
 	"crypto/rand"
 	"errors"
 	"math/big"
-	"os"
 	"time"
 
-	"cosmossdk.io/log"
+	"github.com/rs/zerolog"
 )
 
 var (
@@ -15,8 +14,6 @@ var (
 	errParentNotFound  = errors.New("parent header cannot be found")
 	errDuplicateHeader = errors.New("header was already submitted")
 )
-
-var logger = log.NewLogger(os.Stdout)
 
 // unrecoverableErrors is a list of errors which are unsafe and should not be retried.
 var unrecoverableErrors = []error{
@@ -50,38 +47,42 @@ func isExpectedErr(err error) bool {
 }
 
 // RetryDo executes a func with retry
-func RetryDo(sleep time.Duration, maxSleepDuration time.Duration, retryableFunc func() error) error {
+func RetryDo(
+	logger zerolog.Logger,
+	sleep time.Duration,
+	maxSleepDuration time.Duration,
+	retryableFunc func() error,
+) error {
 	err := retryableFunc()
 	if err == nil {
 		return nil
 	}
 
 	if isUnrecoverableErr(err) {
-		logger.Error("Skip retry, error unrecoverable", "err", err)
+		logger.Warn().Err(err).Msg("Skip retry, error unrecoverable")
 		return err
 	}
-
 	if isExpectedErr(err) {
-		logger.Error("Skip retry, error expected", "err", err)
+		logger.Info().Err(err).Msg("Skip retry, error expected")
 		return nil
 	}
 
 	// Add some randomness to prevent thrashing
-	jitter, err := randDuration(int64(sleep))
+	r, err := randDuration(int64(sleep))
 	if err != nil {
 		return err
 	}
-	sleep += jitter / 2
+	sleep += r / 2
 
 	if sleep > maxSleepDuration {
-		logger.Info("Retry timed out")
+		logger.Err(err).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
 		return err
 	}
 
-	logger.Info("Starting exponential backoff", "sleep", sleep, "err", err)
+	logger.Debug().Err(err).Dur("sleep", sleep).Msg("Starting exponential backoff")
 	time.Sleep(sleep)
 
-	return RetryDo(2*sleep, maxSleepDuration, retryableFunc)
+	return RetryDo(logger, 2*sleep, maxSleepDuration, retryableFunc)
 }
 
 func randDuration(maxNumber int64) (time.Duration, error) {

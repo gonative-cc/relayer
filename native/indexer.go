@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog"
 )
@@ -82,17 +81,19 @@ func (i *Indexer) IndexOldBlocks(ctx context.Context) {
 	}
 
 	blockHeight := i.lowestBlock
-	blk, minimumNodeBlkHeight, err := i.b.Block(ctx, int64(blockHeight))
+	blk, err := i.b.Block(ctx, int64(blockHeight))
 	if err != nil {
 		i.logger.Err(err).Int("blockHeight", blockHeight).Msg("error getting old block from blockchain")
 		return
 	}
 
-	if blk == nil && minimumNodeBlkHeight != 0 {
-		i.logger.Info().Int("blockHeight", blockHeight).Int("minimumNodeBlkHeight", minimumNodeBlkHeight).Msg(
+	// TODO: err not found
+	if blk == nil {
+		i.logger.Info().Int("blockHeight", blockHeight).Msg(
 			"initial block height not available on node")
 		// in this case we should continue to index from the given height.
-		i.lowestBlock = minimumNodeBlkHeight
+		// TODO find letest block
+		// i.lowestBlock = latest block
 		i.IndexOldBlocks(ctx)
 		return
 	}
@@ -106,7 +107,7 @@ func (i *Indexer) IndexOldBlocks(ctx context.Context) {
 // IndexBlocksFromTo index blocks from specific heights.
 func (i *Indexer) IndexBlocksFromTo(ctx context.Context, from, to int) {
 	var wg sync.WaitGroup
-	mapBlockByHeight := make(map[int]*tmtypes.Block)
+	mapBlockByHeight := make(map[int]Block)
 
 	for blockHeight := from; blockHeight < to; blockHeight++ {
 		// TODO - check if there is anything to index, if not - early return
@@ -115,7 +116,7 @@ func (i *Indexer) IndexBlocksFromTo(ctx context.Context, from, to int) {
 		wg.Add(1) // what takes a lot of time is querying blocks from node
 		go func(blockHeight int) {
 			defer wg.Done()
-			blk, _, err := i.b.Block(ctx, int64(blockHeight))
+			blk, err := i.b.Block(ctx, int64(blockHeight))
 			if err != nil {
 				i.logger.Err(err).Int("blockHeight", blockHeight).Msg("error getting old block from blockchain")
 				return

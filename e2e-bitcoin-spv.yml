@@ -6,6 +6,7 @@ relayer:
   netparams: simnet
   cache-size: 2000
   headers-chunk-size: 10
+  confirmation_depth: 6
   process-block-timeout: 20s
 btc:
   no-client-tls: true

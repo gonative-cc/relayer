@@ -1,8 +1,6 @@
 package types
 
 import (
-	"errors"
-
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -16,6 +14,19 @@ type BTCSpvProof struct {
 	MerkleNodes            []byte
 	BtcTransactionIndex    uint32
 	ConfirmingBtcBlockHash chainhash.Hash
+}
+
+// MsgInsertBTCSpvProof represents a message containing BTC SPV proofs
+type MsgInsertBTCSpvProof struct {
+	Proofs []*BTCSpvProof
+}
+
+// SPVProof represents a simplified payment verification proof
+type SPVProof struct {
+	TxID       string // 32bytes hash value in string hex format
+	MerklePath []chainhash.Hash
+	TxIndex    uint32 // index of transaction in block
+	BlockHash  chainhash.Hash
 }
 
 // ToMsgSpvProof converts a BTCSpvProof to an SPVProof message
@@ -43,19 +54,6 @@ func (btcSpvProof *BTCSpvProof) ToMsgSpvProof(txID string, txHash *chainhash.Has
 	}
 }
 
-// MsgInsertBTCSpvProof represents a message containing BTC SPV proofs
-type MsgInsertBTCSpvProof struct {
-	Proofs []*BTCSpvProof
-}
-
-// SPVProof represents a simplified payment verification proof
-type SPVProof struct {
-	TxID       string // 32bytes hash value in string hex format
-	MerklePath []chainhash.Hash
-	TxIndex    uint32 // index of transaction in block
-	BlockHash  chainhash.Hash
-}
-
 // SpvProofFromHeaderAndTransactions creates a simplified payment verification proof
 // for a transaction at the given index using the block header and transaction list
 func SpvProofFromHeaderAndTransactions(
@@ -81,24 +79,16 @@ func SpvProofFromHeaderAndTransactions(
 	}, nil
 }
 
-func flattenMerkleProof(proof []*chainhash.Hash) []byte {
-	var flatProof []byte
-	for _, h := range proof {
-		flatProof = append(flatProof, h.CloneBytes()...)
-	}
-	return flatProof
-}
-
 // CreateProofForIdx generates a Merkle proof for a transaction at the given index
 // Returns the proof as a slice of hashes and any error encountered
 func CreateProofForIdx(transactions [][]byte, idx uint32) ([]*chainhash.Hash, error) {
 	// Validate inputs
 	if len(transactions) == 0 {
-		return nil, errors.New("can't calculate proof for empty transaction list")
+		return nil, errEmptyTxList
 	}
 
 	if int(idx) >= len(transactions) {
-		return nil, errors.New("provided index should be smaller that length of transaction list")
+		return nil, errIndexOutOfBounds
 	}
 
 	// Convert transaction bytes to btcutil.Tx objects
@@ -127,6 +117,14 @@ func CreateProofForIdx(transactions [][]byte, idx uint32) ([]*chainhash.Hash, er
 	proof := createBranch(validNodes, uint(len(transactions)), uint(idx))
 
 	return proof, nil
+}
+
+func flattenMerkleProof(proof []*chainhash.Hash) []byte {
+	var flatProof []byte
+	for _, h := range proof {
+		flatProof = append(flatProof, h.CloneBytes()...)
+	}
+	return flatProof
 }
 
 func createBranch(nodes []*chainhash.Hash, numLeafs uint, idx uint) []*chainhash.Hash {

@@ -12,7 +12,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -21,12 +21,13 @@ const (
 	getChainTipFunc   = "latest_block_hash"
 	verifySPVFunc     = "verify_tx"
 	lcModule          = "light_client"
-	defaultGasBudget  = "100000000"
+	defaultGasBudget  = "10000000000"
 )
 
 // SPVClient implements the BitcoinSPV interface, interacting with a
 // Bitcoin SPV light client deployed as a smart contract on Sui.
 type SPVClient struct {
+	logger      zerolog.Logger
 	suiClient   *sui.Client
 	signer      *signer.Signer
 	lcObjectID  string
@@ -39,6 +40,7 @@ func NewSPVClient(
 	signer *signer.Signer,
 	lightClientObjectID string,
 	lightClientPackageID string,
+	parentLogger zerolog.Logger,
 ) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
 		return nil, ErrSuiClientNil
@@ -55,7 +57,12 @@ func NewSPVClient(
 		signer:      signer,
 		lcObjectID:  lightClientObjectID,
 		lcPackageID: lightClientPackageID,
+		logger:      configureClientLogger(parentLogger),
 	}, nil
+}
+
+func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
+	return parentLogger.With().Str("module", "spv_client").Logger()
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
@@ -78,8 +85,9 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		rawHeaders,
 	}
 
-	resp, err := c.moveCall(ctx, insertHeadersFunc, arguments)
-	log.Debug().Msgf("\nresults :%+v\n", resp)
+	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
+
+	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
 	return err
 }
 
@@ -143,6 +151,23 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		return nil, fmt.Errorf("%w: %s", ErrHeightInvalidValue, err.Error())
 	}
 
+	hashBytes, err := extractHashBytes(lightBlockHashData)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHash, err := chainhash.NewHash(hashBytes)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrBlockHashInvalid, err)
+	}
+
+	return &clients.BlockInfo{
+		Hash:   blockHash,
+		Height: height,
+	}, nil
+}
+
+func extractHashBytes(lightBlockHashData []interface{}) ([]byte, error) {
 	hashBytes := make([]byte, len(lightBlockHashData))
 	for i, v := range lightBlockHashData {
 		byteVal, ok := v.(float64) // JSON numbers come as float64.
@@ -155,16 +180,7 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		}
 		hashBytes[i] = byte(byteVal)
 	}
-
-	blockHash, err := chainhash.NewHash(hashBytes)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrBlockHashInvalid, err)
-	}
-
-	return &clients.BlockInfo{
-		Hash:   blockHash,
-		Height: height,
-	}, nil
+	return hashBytes, nil
 }
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
@@ -198,6 +214,7 @@ func (c *SPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (in
 	return 1, nil
 }
 
+// Stop performs any necessary cleanup and shutdown operations.
 func (c SPVClient) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
@@ -218,8 +235,6 @@ func (c *SPVClient) moveCall(
 		Arguments:       arguments,
 		GasBudget:       defaultGasBudget,
 	}
-
-	log.Debug().Msgf("SuiSPVClient: calling insert headers with the following arguemts: %v", arguments...)
 
 	resp, err := c.suiClient.MoveCall(ctx, req)
 	if err != nil {

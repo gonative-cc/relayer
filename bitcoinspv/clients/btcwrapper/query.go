@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	btcwire "github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv"
@@ -12,13 +13,13 @@ import (
 )
 
 // GetTipBlock retrieves the most recent block in the chain with verbose details
-func (client *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
-	tipBTCBlockHash, err := client.GetBestBlockHash()
+func (c *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
+	tipBTCBlockHash, err := c.GetBestBlockHash()
 	if err != nil {
 		return nil, err
 	}
 
-	tipBTCBlock, err := client.GetBlockVerbose(tipBTCBlockHash)
+	tipBTCBlock, err := c.GetBlockVerbose(tipBTCBlockHash)
 	if err != nil {
 		return nil, err
 	}
@@ -28,13 +29,13 @@ func (client *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
 
 // GetBTCTipBlock returns the latest block hash and height from the Bitcoin network
 // This provides similar functionality to btcd.rpcclient.GetBTCTipBlock
-func (client *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
-	hash, err := client.getBestBlockHashRetries()
+func (c *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
+	hash, err := c.getBestBlockHashRetries()
 	if err != nil {
 		return nil, 0, err
 	}
 
-	block, err := client.getBlockVerboseRetries(hash)
+	block, err := c.getBlockVerboseRetries(hash)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -43,7 +44,7 @@ func (client *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
 }
 
 // GetBTCBlockByHash returns the block of given block hash
-func (client *Client) GetBTCBlockByHash(
+func (c *Client) GetBTCBlockByHash(
 	blockHash *chainhash.Hash,
 ) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error) {
 	// Get block info and raw block data in parallel using goroutines
@@ -57,12 +58,12 @@ func (client *Client) GetBTCBlockByHash(
 	blockDataChan := make(chan blockResult)
 
 	go func() {
-		info, err := client.getBlockVerboseRetries(blockHash)
+		info, err := c.getBlockVerboseRetries(blockHash)
 		blockInfoChan <- blockResult{info: info, err: err}
 	}()
 
 	go func() {
-		block, err := client.getBlockRetries(blockHash)
+		block, err := c.getBlockRetries(blockHash)
 		blockDataChan <- blockResult{block: block, err: err}
 	}()
 
@@ -90,17 +91,17 @@ func (client *Client) GetBTCBlockByHash(
 }
 
 // GetBTCBlockByHeight returns a block with the given height
-func (client *Client) GetBTCBlockByHeight(
+func (c *Client) GetBTCBlockByHeight(
 	height int64,
 ) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error) {
 	// Get block hash for the height
-	blockHash, err := client.getBlockHashRetries(height)
+	blockHash, err := c.getBlockHashRetries(height)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get block by height %d: %w", height, err)
 	}
 
 	// Get the full block data
-	indexedBlock, msgBlock, err := client.GetBTCBlockByHash(blockHash)
+	indexedBlock, msgBlock, err := c.GetBTCBlockByHash(blockHash)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get block by hash %s: %w", blockHash.String(), err)
 	}
@@ -108,12 +109,12 @@ func (client *Client) GetBTCBlockByHeight(
 	return indexedBlock, msgBlock, nil
 }
 
-func (client *Client) getBestBlockHashRetries() (*chainhash.Hash, error) {
+func (c *Client) getBestBlockHashRetries() (*chainhash.Hash, error) {
 	var blockHash *chainhash.Hash
 
-	if err := bitcoinspv.RetryDo(client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
+	if err := bitcoinspv.RetryDo(c.logger, c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		var err error
-		blockHash, err = client.GetBestBlockHash()
+		blockHash, err = c.GetBestBlockHash()
 		return err
 	}); err != nil {
 		return nil, err
@@ -122,12 +123,12 @@ func (client *Client) getBestBlockHashRetries() (*chainhash.Hash, error) {
 	return blockHash, nil
 }
 
-func (client *Client) getBlockHashRetries(height int64) (*chainhash.Hash, error) {
+func (c *Client) getBlockHashRetries(height int64) (*chainhash.Hash, error) {
 	var blockHash *chainhash.Hash
 
-	if err := bitcoinspv.RetryDo(client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
+	if err := bitcoinspv.RetryDo(c.logger, c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		var err error
-		blockHash, err = client.GetBlockHash(height)
+		blockHash, err = c.GetBlockHash(height)
 		return err
 	}); err != nil {
 		return nil, err
@@ -136,12 +137,12 @@ func (client *Client) getBlockHashRetries(height int64) (*chainhash.Hash, error)
 	return blockHash, nil
 }
 
-func (client *Client) getBlockRetries(hash *chainhash.Hash) (*btcwire.MsgBlock, error) {
+func (c *Client) getBlockRetries(hash *chainhash.Hash) (*btcwire.MsgBlock, error) {
 	var block *btcwire.MsgBlock
 
-	if err := bitcoinspv.RetryDo(client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
+	if err := bitcoinspv.RetryDo(c.logger, c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		var err error
-		block, err = client.GetBlock(hash)
+		block, err = c.GetBlock(hash)
 		return err
 	}); err != nil {
 		return nil, err
@@ -150,14 +151,14 @@ func (client *Client) getBlockRetries(hash *chainhash.Hash) (*btcwire.MsgBlock, 
 	return block, nil
 }
 
-func (client *Client) getBlockVerboseRetries(
+func (c *Client) getBlockVerboseRetries(
 	hash *chainhash.Hash,
 ) (*btcjson.GetBlockVerboseResult, error) {
 	var blockVerbose *btcjson.GetBlockVerboseResult
 
-	if err := bitcoinspv.RetryDo(client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
+	if err := bitcoinspv.RetryDo(c.logger, c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		var err error
-		blockVerbose, err = client.GetBlockVerbose(hash)
+		blockVerbose, err = c.GetBlockVerbose(hash)
 		return err
 	}); err != nil {
 		return nil, err
@@ -166,105 +167,70 @@ func (client *Client) getBlockVerboseRetries(
 	return blockVerbose, nil
 }
 
-// getChainBlocks returns a chain of indexed blocks from the block at baseHeight to the tipBlock
-// note: the caller needs to ensure that tipBlock is on the blockchain
-func (client *Client) getChainBlocks(
+// GetBTCTailBlocksByHeight retrieves a sequence of blocks or block headers
+// from a given base height up to the current chain tip, based on the fullBlocks flag.
+func (c *Client) GetBTCTailBlocksByHeight(
 	baseHeight int64,
-	tipBlock *relayertypes.IndexedBlock,
-) ([]*relayertypes.IndexedBlock, error) {
-	tipHeight := tipBlock.BlockHeight
-	if err := validateBlockHeights(baseHeight, tipHeight); err != nil {
-		return nil, err
-	}
-
-	chainBlocks := initializeChainBlocks(baseHeight, tipHeight, tipBlock)
-
-	if tipHeight == baseHeight {
-		return chainBlocks, nil
-	}
-
-	if err := client.populateChainBlocks(chainBlocks, tipBlock); err != nil {
-		return nil, err
-	}
-
-	return chainBlocks, nil
-}
-
-func validateBlockHeights(baseHeight, tipHeight int64) error {
-	if tipHeight < baseHeight {
-		return fmt.Errorf(
-			"the tip block height %v is less than the base height %v",
-			tipHeight, baseHeight,
-		)
-	}
-	return nil
-}
-
-func initializeChainBlocks(
-	baseHeight, tipHeight int64, tipBlock *relayertypes.IndexedBlock,
-) []*relayertypes.IndexedBlock {
-	blocks := make([]*relayertypes.IndexedBlock, tipHeight-baseHeight+1)
-	blocks[len(blocks)-1] = tipBlock
-	return blocks
-}
-
-func (client *Client) populateChainBlocks(
-	blocks []*relayertypes.IndexedBlock, tipBlock *relayertypes.IndexedBlock,
-) error {
-	// Start from the second to last block and work backwards
-	prevBlockHash := &tipBlock.BlockHeader.PrevBlock
-	for i := len(blocks) - 2; i >= 0; i-- {
-		// Get block info for the previous hash
-		indexedBlock, msgBlock, err := client.GetBTCBlockByHash(prevBlockHash)
-		if err != nil {
-			return fmt.Errorf("failed to get block by hash %x: %w", prevBlockHash, err)
-		}
-
-		// Store the indexed block and update prevBlockHash for next iteration
-		blocks[i] = indexedBlock
-		prevBlockHash = &msgBlock.Header.PrevBlock
-	}
-	return nil
-}
-
-func (client *Client) getBestIndexedBlock() (*relayertypes.IndexedBlock, error) {
-	tipHash, err := client.getBestBlockHashRetries()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get the best block: %w", err)
-	}
-
-	tipIndexedBlock, _, err := client.GetBTCBlockByHash(tipHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get the block by hash %x: %w", tipHash, err)
-	}
-
-	return tipIndexedBlock, nil
-}
-
-// GetBTCTailBlocksByHeight retrieves a sequence of blocks
-// from a given base height up to the current chain tip
-func (client *Client) GetBTCTailBlocksByHeight(
-	baseHeight int64,
+	fullBlocks bool,
 ) ([]*relayertypes.IndexedBlock, error) {
 	// Get the current tip block
-	tipBlock, err := client.getBestIndexedBlock()
+	_, tipHeight, err := c.GetBTCTipBlock()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tip block: %w", err)
 	}
 
 	// Validate base height is not greater than tip
-	if baseHeight > tipBlock.BlockHeight {
+	if baseHeight > tipHeight {
 		return nil, fmt.Errorf(
 			"base height %d exceeds current tip height %d",
-			baseHeight, tipBlock.BlockHeight,
+			baseHeight, tipHeight,
 		)
 	}
 
-	// Get chain of blocks from base to tip
-	blocks, err := client.getChainBlocks(baseHeight, tipBlock)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get chain blocks: %w", err)
+	totalBlocks := tipHeight - baseHeight + 1
+	blocks := make([]*relayertypes.IndexedBlock, 0, totalBlocks)
+
+	for height := baseHeight; height <= tipHeight; height++ {
+		var indexedBlock *relayertypes.IndexedBlock
+		if fullBlocks {
+			block, _, err := c.GetBTCBlockByHeight(height)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get block at height %d: %w", height, err)
+			}
+			indexedBlock = block
+		} else {
+			header, err := c.GetBTCBlockHeaderByHeight(height)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get block header at height %d: %w", height, err)
+			}
+			indexedBlock = relayertypes.NewIndexedBlock(height, header, []*btcutil.Tx{})
+		}
+
+		blocks = append(blocks, indexedBlock)
+
+		// Log progress every 1000 blocks/headers.
+		if (height-baseHeight+1)%1000 == 0 || height == tipHeight {
+			c.logger.Info().Msgf(
+				"Fetched %d/%d blocks/headers (fullBlocks: %t)...", height-baseHeight+1, totalBlocks, fullBlocks,
+			)
+		}
 	}
 
+	c.logger.Info().Msgf("Successfully fetched %d blocks/headers.", totalBlocks)
 	return blocks, nil
+}
+
+// GetBTCBlockHeaderByHeight retrieves only the block header for a given height.
+func (c *Client) GetBTCBlockHeaderByHeight(height int64) (*btcwire.BlockHeader, error) {
+	blockHash, err := c.getBlockHashRetries(height)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block hash for height %d: %w", height, err)
+	}
+
+	header, err := c.GetBlockHeader(blockHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block header for hash %s: %w", blockHash.String(), err)
+	}
+
+	return header, nil
 }

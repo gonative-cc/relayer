@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +32,7 @@ func setupIntegrationTest(t *testing.T) (context.Context, clients.BitcoinSPV) {
 		s,
 		lightClientObjectID,
 		lcPackage,
+		zerolog.Logger{},
 	)
 	assert.Nil(t, err)
 

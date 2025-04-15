@@ -2,21 +2,21 @@ package native
 
 import (
 	"context"
-
-	provtypes "github.com/cometbft/cometbft/light/provider"
-	tmtypes "github.com/cometbft/cometbft/types"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
+
+// Tx is a universal transaction type. Note: should be updated
+type Tx []byte
+
+// Block is a universal blockchain block type
+type Block interface {
+	Transactions() []Tx
+}
 
 // Blockchain is the expected blockchain interface the indexer needs to store data in the database.
 type Blockchain interface {
 	Close(ctx context.Context) error
 	ChainID() string
-	ChainHeader() (chainID string, height uint64, err error)
-	SetChainHeader(*tmtypes.Block)
-	DecodeTx(tx tmtypes.Tx) (sdktypes.Tx, error)
-	SubscribeNewBlock(ctx context.Context) (<-chan *tmtypes.Block, error)
-	Block(ctx context.Context, height int64) (blk *tmtypes.Block, minimumBlkHeight int, err error)
-	CheckTx(ctx context.Context, tx tmtypes.Tx) error
-	LightProvider() provtypes.Provider
+	ChainHeader() (chainID string, latestBlock uint64, err error)
+	SubscribeNewBlock(ctx context.Context) (<-chan Block, error)
+	Block(ctx context.Context, height int64) (blk Block, err error)
 }
