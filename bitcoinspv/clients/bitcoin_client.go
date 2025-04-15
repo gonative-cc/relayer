@@ -16,9 +16,11 @@ type BTCClient interface {
 	WaitForShutdown()
 	SubscribeNewBlocks()
 	BlockEventChannel() <-chan *btctypes.BlockEvent
-	GetBTCTipBlock() (*chainhash.Hash, int64, error)
+	GetBTCTipBlock() (*chainhash.Hash, uint64, error)
+	// TODO: lets consider removing the wire.MsgBlock;
+	// instead lets remove transactions from IndexedBlocks, rename it to: lightBLock and use just this
 	GetBTCBlockByHash(blockHash *chainhash.Hash) (*types.IndexedBlock, *wire.MsgBlock, error)
-	GetBTCTailBlocksByHeight(height int64, fullBlocks bool) ([]*types.IndexedBlock, error)
-	GetBTCBlockByHeight(height int64) (*types.IndexedBlock, *wire.MsgBlock, error)
-	GetBTCBlockHeaderByHeight(height int64) (*wire.BlockHeader, error)
+	GetBTCTailBlocksByHeight(height uint64, fullBlocks bool) ([]*types.IndexedBlock, error)
+	GetBTCBlockByHeight(height uint64) (*types.IndexedBlock, *wire.MsgBlock, error)
+	GetBTCBlockHeaderByHeight(height uint64) (*wire.BlockHeader, error)
 }

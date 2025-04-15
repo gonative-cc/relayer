@@ -8,6 +8,7 @@ import (
 
 // IndexedBlock represents a BTC block with additional metadata including block height
 // and transaction details needed for Merkle proof generation
+// TODO: probably we dont need Transactions here, lets remove it.
 type IndexedBlock struct {
 	BlockHeader  *wire.BlockHeader
 	Transactions []*btcutil.Tx

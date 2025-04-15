@@ -14,7 +14,7 @@ import (
 func (r *Relayer) onBlockEvent() {
 	defer r.wg.Done()
 
-	for {
+	for { // TODO: do we need the for loop when we alrady have the select?
 		select {
 		case blockEvent, openChan := <-r.btcClient.BlockEventChannel():
 			if !openChan {
@@ -70,24 +70,27 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	return r.processBlock(ib)
 }
 
+// TODO: probably we should rename it because we only return error on the empty cache, if the block height is wrong we only log a warning.
 func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
+	//TODO: the name is confusing, we call it lastCachedBlock but we retrive the first block from hash.
 	latestCachedBlock := r.btcCache.First()
 	if latestCachedBlock == nil {
 		err := fmt.Errorf("cache is empty, restart bootstrap process")
 		return err
 	}
 	if blockEvent.Height < latestCachedBlock.BlockHeight {
-		r.logger.Debug().Msgf(
+		r.logger.Warn().Msgf(
 			"Connecting block (height: %d, hash: %s) too early, skipping",
 			blockEvent.Height,
 			blockEvent.BlockHeader.BlockHash().String(),
 		)
-		return nil
 	}
 
 	return nil
 }
 
+// TODO: maybe we should rename the blockEvent to conntectedBlock?
+// TODO: lets refactor it and merge this with validate blockHeight
 func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) error {
 	// verify if block is already in cache and check for consistency
 	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
@@ -124,10 +127,12 @@ func (r *Relayer) getAndValidateBlock(
 	}
 
 	// if parent block != cache tip, cache needs update - restart bootstrap
+	// TODO: the comment should be: If the recived block does not extend the chain in the cache -> restart bootstrap
 	parentHash := msgBlock.Header.PrevBlock
 	tipCacheBlock := r.btcCache.Tip()
 	if parentHash != tipCacheBlock.BlockHash() {
 		return nil, nil, fmt.Errorf(
+			// TODO: lets return in the error the block hash instead, more info. Height is not enough.
 			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
 			tipCacheBlock.BlockHeight, indexedBlock.BlockHeight,
 		)
@@ -136,6 +141,8 @@ func (r *Relayer) getAndValidateBlock(
 	return indexedBlock, msgBlock, nil
 }
 
+// TODO: consider adding small comments on top of the crucial functions to explain what they do.
+// TODO: we return an error here but we dont return an error.
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.Config.ProcessBlockTimeout)
 	defer cancel()
@@ -147,6 +154,8 @@ func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 
 	headersToProcess := []*types.IndexedBlock{indexedBlock}
 
+	// TODO: maybe we should rename the processBlock to a different name?
+	//  also we have the same name processHeaders in multiple places in the code
 	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
 		r.logger.Warn().Msgf("Error submitting header: %v", err)
 	}
@@ -173,8 +182,10 @@ func (r *Relayer) onDisconnectedBlock(blockEvent *btctypes.BlockEvent) error {
 }
 
 func (r *Relayer) checkDisonnected(blockEvent *btctypes.BlockEvent) error {
-	tipCacheBlock := r.btcCache.Tip()
+	tipCacheBlock := r.btcCache.Tip() //TODO: consider renaming the tip to a different name maybe: last, latest?
 	if tipCacheBlock == nil {
+		// TODO: wrong error message, no tip block found in cache? WE should reutn the error from
+		// Tip(), here just check the error != nil and then propagate it.
 		return fmt.Errorf("no blocks found in cache, bootstrap process must be restarted")
 	}
 

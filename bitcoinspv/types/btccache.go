@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 )
@@ -12,11 +11,11 @@ import (
 type BTCCache struct {
 	sync.RWMutex
 	blocks     []*IndexedBlock
-	maxEntries int64
+	maxEntries uint64
 }
 
 // NewBTCCache creates a new BTCCache with the specified max entries
-func NewBTCCache(maxEntries int64) (*BTCCache, error) {
+func NewBTCCache(maxEntries uint64) (*BTCCache, error) {
 	if maxEntries <= 0 {
 		return nil, errCacheIncorrectMaxEntries
 	}
@@ -32,7 +31,7 @@ func (cache *BTCCache) Init(blocks []*IndexedBlock) error {
 	cache.Lock()
 	defer cache.Unlock()
 
-	if int64(len(blocks)) > cache.maxEntries {
+	if uint64(len(blocks)) > cache.maxEntries {
 		return errBlockEntriesExceeded
 	}
 
@@ -56,6 +55,7 @@ func (cache *BTCCache) Add(block *IndexedBlock) {
 	cache.add(block)
 }
 
+// TODO: return the error rather than panicing.
 func (cache *BTCCache) add(block *IndexedBlock) {
 	if cache.size() > cache.maxEntries {
 		panic(errBlockEntriesExceeded)
@@ -114,51 +114,15 @@ func (cache *BTCCache) RemoveAll() {
 }
 
 // Size returns the current number of blocks in the cache
-func (cache *BTCCache) Size() int64 {
+func (cache *BTCCache) Size() uint64 {
+	// TODO: do we need mutex just for read?
 	cache.RLock()
 	defer cache.RUnlock()
 	return cache.size()
 }
 
-func (cache *BTCCache) size() int64 {
-	return int64(len(cache.blocks))
-}
-
-// GetLastBlocks returns blocks from the given height to the tip
-func (cache *BTCCache) GetLastBlocks(height int64) ([]*IndexedBlock, error) {
-	cache.RLock()
-	defer cache.RUnlock()
-
-	if len(cache.blocks) == 0 {
-		return []*IndexedBlock{}, nil
-	}
-
-	first := cache.blocks[0].BlockHeight
-	last := cache.blocks[len(cache.blocks)-1].BlockHeight
-
-	if height < first || last < height {
-		return nil, fmt.Errorf(
-			"height %d is out of range [%d, %d] of BTC cache",
-			height, first, last,
-		)
-	}
-
-	// Use FindBlock to get the block at target height
-	block := cache.FindBlock(height)
-	if block == nil {
-		return nil, fmt.Errorf("block at height %d not found", height)
-	}
-
-	// Find index of block
-	idx := 0
-	for i, b := range cache.blocks {
-		if b == block {
-			idx = i
-			break
-		}
-	}
-
-	return cache.blocks[idx:], nil
+func (cache *BTCCache) size() uint64 {
+	return uint64(len(cache.blocks))
 }
 
 // GetAllBlocks returns all blocks in the cache
@@ -223,7 +187,7 @@ func (cache *BTCCache) FindBlock(height int64) *IndexedBlock {
 // TODO: lets merge those two functions and call it resize_and_trim
 
 // Resize updates the maximum number of entries allowed in the cache
-func (cache *BTCCache) Resize(maxEntries int64) error {
+func (cache *BTCCache) Resize(maxEntries uint64) error {
 	cache.Lock()
 	defer cache.Unlock()
 
@@ -243,7 +207,7 @@ func (cache *BTCCache) Trim() {
 		return
 	}
 
-	trimAt := int64(len(cache.blocks)) - cache.maxEntries
+	trimAt := uint64(len(cache.blocks)) - cache.maxEntries
 
 	for i := range cache.blocks[:trimAt] {
 		cache.blocks[i] = nil

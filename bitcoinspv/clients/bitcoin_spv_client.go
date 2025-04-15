@@ -11,7 +11,7 @@ import (
 // BlockInfo represents a simplified Bitcoin block with containing only essential information.
 type BlockInfo struct {
 	Hash   *chainhash.Hash
-	Height int64
+	Height uint64
 }
 
 // BitcoinSPV defines the interface for interacting

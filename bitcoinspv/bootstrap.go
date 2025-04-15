@@ -185,7 +185,7 @@ func (r *Relayer) waitForBitcoinNode(ctx context.Context) error {
 	return nil
 }
 
-func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
+func (r *Relayer) getBTCLatestBlockHeight() (uint64, error) {
 	_, btcLatestBlockHeight, err := r.btcClient.GetBTCTipBlock()
 	if err != nil {
 		return 0, err
@@ -196,10 +196,10 @@ func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 		btcLatestBlockHeight,
 	)
 
-	return btcLatestBlockHeight, nil
+	return uint64(btcLatestBlockHeight), nil
 }
 
-func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
+func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (uint64, error) {
 	block, err := r.lcClient.GetLatestBlockInfo(ctx)
 	if err != nil {
 		return 0, err
@@ -213,7 +213,7 @@ func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 	return block.Height, nil
 }
 
-func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeight int64) error {
+func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight uint64, lcHeight uint64) error {
 	r.logger.Info().Msgf(
 		"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
 		btcHeight, lcHeight,
@@ -250,6 +250,6 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 	}
 }
 
-func isBTCCaughtUp(btcHeight int64, lcHeight int64) bool {
+func isBTCCaughtUp(btcHeight uint64, lcHeight uint64) bool {
 	return btcHeight > 0 && btcHeight >= lcHeight
 }

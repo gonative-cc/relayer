@@ -23,7 +23,7 @@ type Relayer struct {
 
 	// Cache and state
 	btcCache             *types.BTCCache
-	btcConfirmationDepth int64
+	btcConfirmationDepth uint64
 
 	// Control
 	wg          sync.WaitGroup
@@ -93,6 +93,7 @@ func (r *Relayer) restartAfterShutdown() {
 func (r *Relayer) initializeRelayer() {
 	r.multitryBootstrap(false)
 
+	// TODO: analyze properly the needs and whys of the wg.Add(1)
 	r.wg.Add(1)
 	go r.onBlockEvent()
 

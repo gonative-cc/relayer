@@ -29,7 +29,7 @@ func (c *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
 
 // GetBTCTipBlock returns the latest block hash and height from the Bitcoin network
 // This provides similar functionality to btcd.rpcclient.GetBTCTipBlock
-func (c *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
+func (c *Client) GetBTCTipBlock() (*chainhash.Hash, uint64, error) {
 	hash, err := c.getBestBlockHashRetries()
 	if err != nil {
 		return nil, 0, err

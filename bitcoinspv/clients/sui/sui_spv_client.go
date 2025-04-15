@@ -146,7 +146,7 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		return nil, fmt.Errorf("%w: got %T", ErrHeightInvalidType, heightData)
 	}
 
-	height, err := strconv.ParseInt(heightStr, 10, 64)
+	height, err := strconv.ParseUint(heightStr, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrHeightInvalidValue, err.Error())
 	}
