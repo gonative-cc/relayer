@@ -148,7 +148,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	// NOTE: here we are fetching only headers, if we want to fetch full blocks change the flag to true
-	r.logger.Info().Msg("loading headers...")
+	r.logger.Info().Msg("Fetching headers...")
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, false)
 	if err != nil {
 		return fmt.Errorf("failed to get headers: %w", err)

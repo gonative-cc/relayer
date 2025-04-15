@@ -94,7 +94,7 @@ func (r *Relayer) initializeRelayer() {
 	r.wg.Add(1)
 	go r.onBlockEvent()
 
-	r.logger.Info().Msg("Successfully started the spv relayer")
+	r.logger.Info().Msg("Successfully started the spv relayer (listening for new blocks throught ZMQ)")
 }
 
 // quitChan returns the quit channel in a thread-safe manner.
