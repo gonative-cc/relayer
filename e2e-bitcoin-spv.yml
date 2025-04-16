@@ -22,5 +22,5 @@ native:
 sui:
   endpoint: http://127.0.0.1:9000
   mnemonic: "bachelor domain magic seat income pledge now trip lumber rigid empower lesson"
-  lc_object_id: 0x30d08bbf4d1aa0247ae9df9c0a26fd9833f59ed9853d9afbcfc5f6dc9ffe1efa
-  lc_package_id: 0xd1ddacc1ac7bc86baa44b4bdf6aeddcab8c6c1854c9d98eb56ff27386b2bb571
+  lc_object_id: "0x17a6ff9a5b7ca0fe64edaabc51b082da1d27cfbeedc87e3f994eda06e01e5aed"
+  lc_package_id: "0xd54c7b986b567809eb977cc866c096bc26102d13b2ff9c461452336a963e0312"

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 CONTAINER_ID="sui-node"
+E2E_YAML_CONFIG=./e2e-bitcoin-spv.yml
+LIGHT_CLIENT_ID="$(yq -r '.sui.lc_object_id' $E2E_YAML_CONFIG)"
+PACKAGE_ID="$(yq -r '.sui.lc_package_id' $E2E_YAML_CONFIG)"
+
 
 echo "Running E2E tests..."
 
