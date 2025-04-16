@@ -18,8 +18,9 @@ function get_btc_height() {
 
 # Start relayer
 ./out/bitcoin-spv start  --config $E2E_YAML_CONFIG  > /dev/null 2>&1 &
-sleep 30
 relayer_pid=$!
+
+sleep 30
 kill $relayer_pid
 
 lc_height=$(get_latest_block_height_lc)
