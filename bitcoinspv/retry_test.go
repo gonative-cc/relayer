@@ -30,6 +30,7 @@ func TestNonRecoverableError(t *testing.T) {
 		assert.Error(t, err, "RetryDo should return an error")
 		assert.Equal(t, 1, callCount, "Function should be called only once")
 	})
+
 	t.Run("OutOfGas", func(t *testing.T) {
 		simulatedOutOfGasErr := fmt.Errorf("%w: function 'test_gas' status: failure, error: OutOfGas",
 			sui_errors.ErrSuiTransactionFailed)
@@ -42,6 +43,7 @@ func TestNonRecoverableError(t *testing.T) {
 		assert.Error(t, err, "RetryDo should return an error")
 		assert.Equal(t, 1, callCount, "Function should be called only once")
 	})
+
 	t.Run("OtherExecutionFailure", func(t *testing.T) {
 		simulatedOtherFailureErr := fmt.Errorf("%w: function 'test_other' status: failure, error: SomeOtherExecutionError",
 			sui_errors.ErrSuiTransactionFailed)
