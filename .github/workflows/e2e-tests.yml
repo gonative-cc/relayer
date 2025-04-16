@@ -16,6 +16,9 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
+      - name: Build spv relayer
+        run: make build
+
       - name: Start Services
         run: ./e2e/start_services.sh
 

@@ -13,15 +13,13 @@ function get_btc_height() {
 }
 
 # Start relayer
-go build ./cmd/bitcoin-spv/
-./bitcoin-spv start --config ./e2e-bitcoin-spv.yml > /dev/null 2>&1
+./out/bitcoin-spv start --config ./e2e-bitcoin-spv.yml > /dev/null 2>&1 &
 sleep 30
 relayer_pid=$!
 kill $relayer_pid
 
 lc_height=$(get_latest_block_height_lc)
 btc_height=$(get_btc_height)
-
 if [[ $((lc_height - btc_height)) != 0 ]]; then
     echo "Relayer not sync the btc node and lc"
     exit 1
