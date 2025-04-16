@@ -17,7 +17,7 @@ function get_btc_height() {
 }
 
 # Start relayer
-./out/bitcoin-spv start  --config $E2E_YAML_CONFIG  > /dev/null 2>&1 &
+nohup ./out/bitcoin-spv start  --config $E2E_YAML_CONFIG  > /dev/null 2>&1 &
 relayer_pid=$!
 
 sleep 30
