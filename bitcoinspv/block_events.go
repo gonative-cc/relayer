@@ -27,6 +27,10 @@ func (r *Relayer) onBlockEvent() {
 					"Error in event processing: %v, restarting bootstrap",
 					err,
 				)
+				// We call the bootstrap here, every time there is an error when processing evetns.
+				// This usually happens when there is a reorg and the new blocks that are received
+				// through ZMQ do not extend the chain known to the lgiht client.
+				// Then we need to re-send all the blocks starting from the latest common ancestor.
 				r.multitryBootstrap(true)
 			}
 		case <-r.quitChan():
@@ -146,7 +150,7 @@ func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 	headersToProcess := []*types.IndexedBlock{indexedBlock}
 
 	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
-		r.logger.Warn().Msgf("Error submitting header: %v", err)
+		return err
 	}
 
 	return nil
