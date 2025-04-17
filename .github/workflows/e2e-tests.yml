@@ -21,8 +21,8 @@ jobs:
             go.sum
       - id: check
         run: |
-          echo "status=${env.GIT_DIFF}"
-          echo "status=${env.GIT_DIFF}" >> "$GITHUB_OUTPUT"
+          echo "status=${{env.GIT_DIFF}}"
+          echo "status=${{env.GIT_DIFF}}" >> "$GITHUB_OUTPUT"
 
   e2e-tests:
     runs-on: ubuntu-latest
