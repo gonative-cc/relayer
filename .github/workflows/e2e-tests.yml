@@ -11,7 +11,6 @@ jobs:
     outputs:
       - status: ${{ steps.check.outputs.status }}
     steps:
-      - id: check
       - uses: actions/checkout@v4
       - uses: technote-space/get-diff-action@v6.1.2
         with:
@@ -20,7 +19,8 @@ jobs:
           FILES: |
             go.mod
             go.sum
-      - run: echo "status=${ env.GIT_DIFF}" >> "$GITHUB_OUTPUT"
+      - id: check
+        run: echo "status=${ env.GIT_DIFF}" >> "$GITHUB_OUTPUT"
 
   e2e-tests:
     runs-on: ubuntu-latest
