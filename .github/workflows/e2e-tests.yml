@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: technote-space/get-diff-action@v6.1.2
-        with:
-          PATTERNS: |
-            **/**.go
-          FILES: |
-            go.mod
-            go.sum
+      # - uses: technote-space/get-diff-action@v6.1.2
+      #   with:
+      #     PATTERNS: |
+      #       **/**.go
+      #     FILES: |
+      #       go.mod
+      #       go.sum
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libzmq3-dev pkg-config
       - name: Compile
-        if: env.GIT_DIFF
+        # if: env.GIT_DIFF
         run: |
           go mod download
           make build

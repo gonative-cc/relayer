@@ -16,17 +16,18 @@ function get_btc_height() {
     docker exec -it bitcoind-node bitcoin-cli getblockchaininfo | jq ".headers"
 }
 
+echo "No error" > stderr.log
+
 # Start relayer
 ./out/bitcoin-spv start --config $E2E_YAML_CONFIG  > /dev/null 2>stderr.log &
 relayer_pid=$!
-
 sleep 30
+
 cat stderr.log
 kill $relayer_pid
 
 lc_height=$(get_latest_block_height_lc)
 btc_height=$(get_btc_height)
-
 if [[ $((lc_height - btc_height)) != 0 ]]; then
     echo "Relayer not sync the btc node and lc"
     exit 1
