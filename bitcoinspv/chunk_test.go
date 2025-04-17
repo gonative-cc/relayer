@@ -36,9 +36,9 @@ func TestToBlockHeaders(t *testing.T) {
 		headers := toBlockHeaders(inputBlocks)
 		assert.NotNil(t, headers)
 		assert.Len(t, headers, 3)
-		assert.Equal(t, inputBlocks[0].BlockHeader.Version, headers[0].Version)
-		assert.Equal(t, inputBlocks[1].BlockHeader.Version, headers[1].Version)
-		assert.Equal(t, inputBlocks[2].BlockHeader.Version, headers[2].Version)
+		for i := 0; i < 3; i++ {
+			assert.Equal(t, inputBlocks[i].BlockHeader.Version, headers[i].Version)
+		}
 	})
 }
 
