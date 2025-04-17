@@ -18,7 +18,7 @@ echo "==============================="
 
 echo "Other party update light client"
 echo "Insert one header to lc"
-docker exec -it bitcoind-node bitcoin-cli -generate 1 > /dev/null 2>&1
+docker exec -i bitcoind-node bitcoin-cli -generate 1 > /dev/null 2>&1
 sleep 2
 new_block_header=$(docker exec bitcoind-node  /bin/bash -c "bitcoin-cli getblockheader $(docker exec bitcoind-node  /bin/bash -c "bitcoin-cli getbestblockhash") false")
 docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function insert_headers --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID '[0x${new_block_header}]' --json" > /dev/null 2>&1
@@ -27,7 +27,7 @@ echo "Inserted header"
 
 echo "==============================="
 echo "Create more 10 block"
-docker exec -it bitcoind-node bitcoin-cli -generate 10 > /dev/null 2>&1
+docker exec -i bitcoind-node bitcoin-cli -generate 10 > /dev/null 2>&1
 sleep 2
 echo "=============================="
 echo "Start relayer to sync second time"

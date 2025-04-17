@@ -13,7 +13,7 @@ function get_latest_block_height_lc() {
 }
 
 function get_btc_height() {
-    docker exec -it bitcoind-node bitcoin-cli getblockchaininfo | jq ".headers"
+    docker exec -i bitcoind-node bitcoin-cli getblockchaininfo | jq ".headers"
 }
 
 echo "No error" > stderr.log
