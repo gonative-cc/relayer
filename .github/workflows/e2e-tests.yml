@@ -53,8 +53,8 @@ jobs:
         run: ./e2e/deploy_light_client_alpha.sh
 
       - name: Run E2E Tests
-        # run: ./e2e/run_e2e_tests.sh
-        run: echo "E2E can't run on CI/CD yet"
+        run: ./e2e/run_e2e_tests.sh
+        # run: echo "E2E can't run on CI/CD yet"
 
       - name: Stop Services (Docker Compose)
         if: always()
