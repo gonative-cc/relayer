@@ -10,6 +10,8 @@ echo "Running E2E tests..."
 
 echo "Start relayer to sync first time"
 
+docker exec -i bitcoind-node bitcoin-cli -generate 100 > /dev/null 2>&1
+sleep 5
 ./e2e/sync_and_validate_status.sh
 
 echo "Finished first sync and stopped the relayer"
@@ -19,7 +21,7 @@ echo "==============================="
 echo "Other party updates light client"
 echo "Attempt Inserting one header to lc"
 docker exec -i bitcoind-node bitcoin-cli -generate 1 > /dev/null 2>&1
-sleep 2
+sleep 5
 new_block_header=$(docker exec bitcoind-node  /bin/bash -c "bitcoin-cli getblockheader $(docker exec bitcoind-node  /bin/bash -c "bitcoin-cli getbestblockhash") false")
 docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function insert_headers --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID '[0x${new_block_header}]' --json" > /dev/null 2>&1
 sleep 10
