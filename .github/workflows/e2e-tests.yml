@@ -9,7 +9,7 @@ jobs:
   check-repo-status:
     runs-on: ubuntu-latest
     outputs:
-      - status: ${{ steps.check.outputs.status }}
+      status: ${{ steps.check.outputs.status }}
     steps:
       - uses: actions/checkout@v4
       - uses: technote-space/get-diff-action@v6.1.2
@@ -20,7 +20,9 @@ jobs:
             go.mod
             go.sum
       - id: check
-        run: echo "status=${ env.GIT_DIFF}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "status=${env.GIT_DIFF}"
+          echo "status=${env.GIT_DIFF}" >> "$GITHUB_OUTPUT"
 
   e2e-tests:
     runs-on: ubuntu-latest
