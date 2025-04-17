@@ -7,6 +7,9 @@ import (
 )
 
 func breakIntoChunks(blocks []*types.IndexedBlock, chunkSize int) []Chunk {
+	if chunkSize < 1 {
+		return nil
+	}
 	if len(blocks) == 0 {
 		return nil
 	}
