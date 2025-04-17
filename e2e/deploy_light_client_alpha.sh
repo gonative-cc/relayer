@@ -11,20 +11,15 @@ BTC_NETWORK=2  # regtest (0: mainnet, 1: testnet, 2: regtest)
 START_HEIGHT=0
 
 
-echo "Downloading and extracting light client inside the container..."
+echo "Installing git"
 docker exec "$CONTAINER_ID" /bin/bash -c \
   "apt-get update && \
    apt-get install -y wget git"
 
 
-echo "Funding to active address"
-docker exec "$CONTAINER_ID" /bin/bash -c \
-       "sui client faucet"
-docker exec "$CONTAINER_ID" sui client faucet --address 0x9a5779d1f633d365652efcbe3a90abf0789e6890b880af66710db5e3e3e907e1
-sleep 5
 
 
-echo "Download Bitcoin SPV repo"
+echo "Cloning light client repo"
 docker exec "$CONTAINER_ID" /bin/bash -c \
        "rm -rf $PACKAGE_PATH && \
         git clone -b release/alpha $REPO_URL "

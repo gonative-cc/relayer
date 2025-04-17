@@ -12,12 +12,12 @@ echo "Start relayer to sync first time"
 
 ./e2e/sync_and_validate_status.sh
 
-echo "Finished first sync and stop relayer"
+echo "Finished first sync and stopped the relayer"
 
 echo "==============================="
 
-echo "Other party update light client"
-echo "Insert one header to lc"
+echo "Other party updates light client"
+echo "Attempt Inserting one header to lc"
 docker exec -i bitcoind-node bitcoin-cli -generate 1 > /dev/null 2>&1
 sleep 2
 new_block_header=$(docker exec bitcoind-node  /bin/bash -c "bitcoin-cli getblockheader $(docker exec bitcoind-node  /bin/bash -c "bitcoin-cli getbestblockhash") false")
@@ -26,14 +26,14 @@ sleep 10
 echo "Inserted header"
 
 echo "==============================="
-echo "Create more 10 block"
+echo "Generate 10 more blocks"
 docker exec -i bitcoind-node bitcoin-cli -generate 10 > /dev/null 2>&1
 sleep 2
 echo "=============================="
 echo "Start relayer to sync second time"
 ./e2e/sync_and_validate_status.sh
-echo "Finished second sync and stop relayer"
-echo "Everything work well"
+echo "Finished second sync and stopped relayer"
+echo "Everything worked well"
 
 echo "E2E Gap handler tests completed."
 

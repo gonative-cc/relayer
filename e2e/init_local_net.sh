@@ -15,7 +15,7 @@ docker exec "$CONTAINER" sui client faucet
 docker exec "$CONTAINER" sui client faucet --address 0x9a5779d1f633d365652efcbe3a90abf0789e6890b880af66710db5e3e3e907e1
 
 
-sleep 10  # Wait for faucet
+sleep 5  # Wait for faucet
 
 
 docker exec "$CONTAINER" sui client gas
