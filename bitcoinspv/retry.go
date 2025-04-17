@@ -4,46 +4,41 @@ import (
 	"crypto/rand"
 	"errors"
 	"math/big"
+	"strings"
 	"time"
 
+	sui_errors "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/rs/zerolog"
 )
 
-var (
-	errHeaderInvalid   = errors.New("header is not valid")
-	errParentNotFound  = errors.New("parent header cannot be found")
-	errDuplicateHeader = errors.New("header was already submitted")
+// ErrorCategory classifies errors for retry logic.
+type ErrorCategory int
+
+const (
+	categoryRetryable      ErrorCategory = iota // Network/infra errors
+	categoryNonRecoverable                      // Stop retrying (MoveAbort, OutOfGas)
+	categoryUnknown
 )
 
-// unrecoverableErrors is a list of errors which are unsafe and should not be retried.
-var unrecoverableErrors = []error{
-	errHeaderInvalid,
-	errParentNotFound,
-}
-
-// expectedErrors is a list of errors which can safely be ignored and should not be retried.
-var expectedErrors = []error{
-	errDuplicateHeader,
-}
-
-func isUnrecoverableErr(err error) bool {
-	for _, e := range unrecoverableErrors {
-		if errors.Is(err, e) {
-			return true
-		}
+func classifyError(logger zerolog.Logger, err error) ErrorCategory {
+	if !errors.Is(err, sui_errors.ErrSuiTransactionFailed) {
+		return categoryRetryable
 	}
 
-	return false
-}
-
-func isExpectedErr(err error) bool {
-	for _, e := range expectedErrors {
-		if errors.Is(err, e) {
-			return true
-		}
+	// ELSE it is `ErrSuiTransactionFailed``, meaning execution completed but failed.
+	if strings.Contains(err.Error(), "MoveAbort(") {
+		return categoryNonRecoverable
 	}
 
-	return false
+	if strings.Contains(err.Error(), "OutOfGas") {
+		return categoryNonRecoverable
+	}
+
+	// IF ErrSuiTransactionFailed occurred, and the status was 'failure',
+	// but we didn't specifically identify MoveAbort/OutOfGas,
+	// it's still an execution failure. Treat as NonRetryable.
+	logger.Warn().Msgf("Unidentified execution failure status within ErrSuiTransactionFailed: %s", err.Error())
+	return categoryNonRecoverable
 }
 
 // RetryDo executes a func with retry
@@ -58,31 +53,37 @@ func RetryDo(
 		return nil
 	}
 
-	if isUnrecoverableErr(err) {
-		logger.Warn().Err(err).Msg("Skip retry, error unrecoverable")
+	category := classifyError(logger, err)
+
+	switch category {
+	case categoryNonRecoverable:
+		logger.Warn().Err(err).Msg("Skip retry, error classified as non-retryable")
+		return err
+	case categoryUnknown:
+		logger.Error().Err(err).Msg("Skip retry, error classification failed or unknown type")
+		return err
+	case categoryRetryable:
+		// Add some randomness to prevent thrashing
+		jitter, randErr := randDuration(int64(sleep))
+		if randErr != nil {
+			logger.Error().Err(randErr).Msg("Failed to generate random jitter during retry")
+			return randErr
+		}
+		sleep += jitter / 2
+
+		if sleep > maxSleepDuration {
+			logger.Err(randErr).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
+			return randErr
+		}
+
+		logger.Debug().Err(randErr).Dur("sleep", sleep).Msg("Starting exponential backoff")
+		time.Sleep(sleep)
+
+		return RetryDo(logger, 2*sleep, maxSleepDuration, retryableFunc)
+	default:
+		logger.Error().Err(err).Int("category", int(category)).Msg("Unhandled error category in RetryDo")
 		return err
 	}
-	if isExpectedErr(err) {
-		logger.Info().Err(err).Msg("Skip retry, error expected")
-		return nil
-	}
-
-	// Add some randomness to prevent thrashing
-	r, err := randDuration(int64(sleep))
-	if err != nil {
-		return err
-	}
-	sleep += r / 2
-
-	if sleep > maxSleepDuration {
-		logger.Err(err).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
-		return err
-	}
-
-	logger.Debug().Err(err).Dur("sleep", sleep).Msg("Starting exponential backoff")
-	time.Sleep(sleep)
-
-	return RetryDo(logger, 2*sleep, maxSleepDuration, retryableFunc)
 }
 
 func randDuration(maxNumber int64) (time.Duration, error) {
