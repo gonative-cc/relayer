@@ -130,7 +130,7 @@ func initSPVRelayer(
 	return spvRelayer
 }
 
-// Shutdown
+// Shutdown relayer
 func setupShutdown(
 	rootLogger zerolog.Logger,
 	spvRelayer *bitcoinspv.Relayer,
