@@ -8,7 +8,7 @@ cd ../
 
 echo "Starting bitcoin-spv relayer..."
 go build ./cmd/bitcoin-spv/
-./bitcoin-spv start --config ./sample-bitcoin-relayer.yml 2>stderr.log &
+./bitcoin-spv start --config ./e2e-bitcoin-spv.yml 2>stderr.log &
 RELAYER_PID=$! # gets pid of last background process
 echo "Started bitcoin-spv relayer with PID $RELAYER_PID"
 

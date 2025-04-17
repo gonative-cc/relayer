@@ -6,15 +6,37 @@ on:
       - master
 
 jobs:
+  check-repo-status:
+    runs-on: ubuntu-latest
+    outputs:
+      updated: ${{ steps.check.outputs.updated }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: technote-space/get-diff-action@v6.1.2
+        with:
+          PATTERNS: |
+            **/**.go
+          FILES: |
+            go.mod
+            go.sum
+      - id: check
+        run: |
+          echo "updated=${{env.GIT_DIFF}}" >> "$GITHUB_OUTPUT"
+
   e2e-tests:
     runs-on: ubuntu-latest
-
+    needs: check-repo-status
+    if: ${{ needs.check-repo-status.outputs.updated }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libzmq3-dev pkg-config
+      - name: Compile
+        run: |
+          go mod download
+          make build
 
       - name: Start Services
         run: ./e2e/start_services.sh
@@ -39,10 +61,13 @@ jobs:
         run: ./e2e/init_local_net.sh
 
       - name: Publish and Initalize Light Client
-        run: ./e2e/deploy_light_client.sh
+        run: ./e2e/deploy_light_client_alpha.sh
 
       - name: Run E2E Tests
         run: ./e2e/run_e2e_tests.sh
+
+      - name: Run E2E gap handling test
+        run: ./e2e/run_e2e_gap_handling.sh
 
       - name: Stop Services (Docker Compose)
         if: always()
