@@ -9,7 +9,7 @@ jobs:
   check-repo-status:
     runs-on: ubuntu-latest
     outputs:
-      updated: ${{ steps.check.outputs.status }}
+      updated: ${{ steps.check.outputs.updated }}
     steps:
       - uses: actions/checkout@v4
       - uses: technote-space/get-diff-action@v6.1.2
