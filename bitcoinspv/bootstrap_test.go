@@ -83,7 +83,7 @@ func TestWaitForBTCCatchup(t *testing.T) {
 			Height: 95,
 		}, nil)
 
-		err := r.waitForBTCCatchup(ctx, 90, 95)
+		err := r.waitForBitcoinCatchup(ctx)
 		assert.NoError(t, err)
 	})
 }
