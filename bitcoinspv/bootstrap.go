@@ -12,7 +12,6 @@ import (
 
 var (
 	bootstrapRetryAttempts = uint(60)
-	bootstrapSyncTicker    = 10 * time.Second
 	bootstrapRetryInterval = retry.Delay(30 * time.Second)
 )
 
@@ -213,10 +212,9 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 		btcHeight, lcHeight,
 	)
 
-	ticker := time.NewTicker(bootstrapSyncTicker)
-	defer ticker.Stop()
-
 	for {
+		// TODO: support ctx cancellation
+
 		btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 		if err != nil {
 			return err
@@ -240,7 +238,7 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 			btcLatestBlockHeight, lcLatestBlockHeight,
 		)
 
-		<-ticker.C
+		time.Sleep(r.catchupLoopWait)
 	}
 }
 
