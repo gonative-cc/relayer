@@ -93,7 +93,8 @@ func (r *Relayer) restartAfterShutdown() {
 }
 
 func (r *Relayer) initializeRelayer() {
-	r.logger.Debug().Msg("Running bootstrap...")
+	debug := r.logger.Debug()
+	debug.Msg("Running bootstrap...")
 	r.multitryBootstrap(false)
 	r.logger.Debug().Msg("Bootstrap finished.")
 

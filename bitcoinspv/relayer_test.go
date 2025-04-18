@@ -17,9 +17,11 @@ import (
 
 func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoinSPV) {
 	t.Helper()
-	logger := zerolog.Nop()
-	btcClient := mocks.NewMockBTCClient(t)
-	lcClient := mocks.NewMockBitcoinSPV(t)
+        var (
+	     logger = zerolog.Nop()
+	     btcClient = mocks.NewMockBTCClient(t)
+	     lcClient = mocks.NewMockBitcoinSPV(t)
+	)
 
 	cfg := &config.RelayerConfig{
 		Format:                "auto",
