@@ -22,14 +22,14 @@ jobs:
       - uses: actions/setup-go@v5
         if: env.GIT_DIFF
         with:
-          go-version: "1.23"
+          go-version: "1.24"
           cache: true
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libzmq3-dev pkg-config
       - name: golangci-lint main
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         if: env.GIT_DIFF
         with:
           version: latest
@@ -43,7 +43,7 @@ jobs:
         with:
           fetch-depth: 0
       # lint only changed files
-      - uses: tj-actions/changed-files@v45
+      - uses: tj-actions/changed-files@v46
         id: changed-files
         with:
           files: "**/*.md"

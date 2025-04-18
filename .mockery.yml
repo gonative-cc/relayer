@@ -1,11 +1,11 @@
 with-expecter: True
 filename: "mock_{{.InterfaceName}}.go"
 mockname: "Mock{{.InterfaceName}}"
-inpackage: True
 packages:
   github.com/gonative-cc/relayer/bitcoinspv/clients:
     config:
-      dir: "bitcoinspv/clients/"
+      dir: "bitcoinspv/clients/mocks"
+      outpkg: "mocks"
     interfaces:
       BTCClient:
       BitcoinSPV:

@@ -1,4 +1,4 @@
-package native2ika
+package remote2ika
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func (p *Processor) Run(ctx context.Context) error {
 
 	for _, sr := range ikaSignRequests {
 		payloads := [][]byte{sr.Payload} // TODO: this wont be needed in the future when we support singing in batches
-		signatures, txDigest, err := p.ikaClient.ApproveAndSign(ctx, sr.DWalletID, sr.UserSig, payloads)
+		txDigest, err := p.ikaClient.SignReq(ctx, sr.DWalletID, sr.UserSig, payloads)
 		if err != nil {
 			if errors.Is(err, ika.ErrEventParsing) {
 				ikaTx := dal.IkaTx{
@@ -57,13 +57,14 @@ func (p *Processor) Run(ctx context.Context) error {
 					return fmt.Errorf("failed inserting IkaTx: %w", insertErr)
 				}
 			}
-			return fmt.Errorf("failed calling ApproveAndSign for srID %d: %w", sr.ID, err)
+			return fmt.Errorf("failed calling SignReq for srID %d: %w", sr.ID, err)
 		}
-		log.Info().Msgf("SUCCESS: IKA signed the sign request")
-		err = p.db.UpdateIkaSignRequestFinalSig(ctx, sr.ID, signatures[0])
-		if err != nil {
-			return fmt.Errorf("failed to update the signature in db: %w", err)
-		}
+		log.Info().Msgf("SUCCESS: IKA sign request submitted")
+		// TODO fix status updates - should be sign request pending / or ika pending
+		// err = p.db.UpdateIkaSignRequestFinalSig(ctx, sr.ID, signatures[0])
+		// if err != nil {
+		// 	return fmt.Errorf("failed to update the signature in db: %w", err)
+		// }
 
 		ikaTx := dal.IkaTx{
 			SrID:      sr.ID,

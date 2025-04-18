@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcutil"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	zmqclient "github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper/zmq"
@@ -22,7 +22,7 @@ func NewClientWithBlockSubscriber(
 	config *relayerconfig.BTCConfig,
 	retrySleepDuration,
 	maxRetrySleepDuration time.Duration,
-	parentLogger *zap.Logger,
+	parentLogger zerolog.Logger,
 ) (*Client, error) {
 	client, err := initializeClient(config, retrySleepDuration, maxRetrySleepDuration)
 	if err != nil {
@@ -35,7 +35,7 @@ func NewClientWithBlockSubscriber(
 		return nil, err
 	}
 
-	client.logger.Info("Successfully created the BTC client and connected to the BTC server")
+	client.logger.Info().Msg("Successfully created the BTC client and connected to the BTC server")
 
 	return client, nil
 }
@@ -61,8 +61,8 @@ func initializeClient(
 	return client, nil
 }
 
-func configureClientLogger(client *Client, parentLogger *zap.Logger) {
-	client.logger = parentLogger.With(zap.String("module", "btcwrapper")).Sugar()
+func configureClientLogger(client *Client, parentLogger zerolog.Logger) {
+	client.logger = parentLogger.With().Str("module", "btcwrapper").Logger()
 }
 
 func setupBackendConnection(client *Client) error {
@@ -99,7 +99,7 @@ func setupBitcoindConnection(client *Client) error {
 	}
 
 	zeromqClient, err := zmqclient.New(
-		client.logger.Desugar(), client.config.ZmqSeqEndpoint, client.blockEventsChannel, rpcClient,
+		client.logger, client.config.ZmqSeqEndpoint, client.blockEventsChannel, rpcClient,
 	)
 	if err != nil {
 		return err
@@ -111,8 +111,8 @@ func setupBitcoindConnection(client *Client) error {
 
 func setupBtcdConnection(client *Client) error {
 	notificationHandlers := rpcclient.NotificationHandlers{
-		OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
-			client.logger.Debugf(
+		OnFilteredBlockConnected: func(height int32, header *wire.BlockHeader, _ []*btcutil.Tx) {
+			client.logger.Debug().Msgf(
 				"Block %v at height %d has been connected at time %v",
 				header.BlockHash(), height, header.Timestamp,
 			)
@@ -121,7 +121,7 @@ func setupBtcdConnection(client *Client) error {
 			)
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
-			client.logger.Debugf(
+			client.logger.Debug().Msgf(
 				"Block %v at height %d has been disconnected at time %v",
 				header.BlockHash(), height, header.Timestamp,
 			)
@@ -161,12 +161,12 @@ func setupBtcdConnection(client *Client) error {
 func (client *Client) SubscribeNewBlocks() {
 	switch client.config.BtcBackend {
 	case btctypes.Btcd:
-		if err := bitcoinspv.RetryDo(client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
+		if err := bitcoinspv.RetryDo(client.logger, client.retrySleepDuration, client.maxRetrySleepDuration, func() error {
 			err := client.NotifyBlocks()
 			if err != nil {
 				return err
 			}
-			client.logger.Info("Successfully subscribed to newly connected/disconnected blocks via WebSocket")
+			client.logger.Info().Msg("Successfully subscribed to newly connected/disconnected blocks via WebSocket")
 			return nil
 		}); err != nil {
 			panic(err)

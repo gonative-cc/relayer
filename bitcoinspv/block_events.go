@@ -18,15 +18,19 @@ func (r *Relayer) onBlockEvent() {
 		select {
 		case blockEvent, openChan := <-r.btcClient.BlockEventChannel():
 			if !openChan {
-				r.logger.Errorf("BTC Block event channel is now closed")
+				r.logger.Error().Msg("BTC Block event channel is now closed")
 				return
 			}
 
 			if err := r.handleBlockEvent(blockEvent); err != nil {
-				r.logger.Warnf(
+				r.logger.Warn().Msgf(
 					"Error in event processing: %v, restarting bootstrap",
 					err,
 				)
+				// We call the bootstrap here, every time there is an error when processing evetns.
+				// This usually happens when there is a reorg and the new blocks that are received
+				// through ZMQ do not extend the chain known to the lgiht client.
+				// Then we need to re-send all the blocks starting from the latest common ancestor.
 				r.multitryBootstrap(true)
 			}
 		case <-r.quitChan():
@@ -75,7 +79,7 @@ func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 	if blockEvent.Height < latestCachedBlock.BlockHeight {
-		r.logger.Debugf(
+		r.logger.Debug().Msgf(
 			"Connecting block (height: %d, hash: %s) too early, skipping",
 			blockEvent.Height,
 			blockEvent.BlockHeader.BlockHash().String(),
@@ -91,7 +95,7 @@ func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) erro
 	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
 	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
 		if block.BlockHash() == blockEvent.BlockHeader.BlockHash() {
-			r.logger.Debugf(
+			r.logger.Debug().Msgf(
 				"Connecting block (height: %d, hash: %s) already in cache, skipping",
 				block.BlockHeight,
 				block.BlockHash().String(),
@@ -135,18 +139,18 @@ func (r *Relayer) getAndValidateBlock(
 }
 
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.processBlockTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), r.Config.ProcessBlockTimeout)
 	defer cancel()
 
 	if indexedBlock == nil {
-		r.logger.Debug("No new headers to submit")
+		r.logger.Debug().Msg("No new headers to submit")
 		return nil
 	}
 
 	headersToProcess := []*types.IndexedBlock{indexedBlock}
 
 	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
-		r.logger.Warnf("Error submitting header: %v", err)
+		return err
 	}
 
 	return nil
@@ -160,7 +164,7 @@ func (r *Relayer) onDisconnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	}
 
 	if err := r.btcCache.RemoveLast(); err != nil {
-		r.logger.Warnf(
+		r.logger.Warn().Msgf(
 			"Unable to delete last block from cache: %v, bootstrap process must be restarted",
 			err,
 		)

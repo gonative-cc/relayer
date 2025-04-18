@@ -7,6 +7,7 @@ services:
     volumes:
       - ${BITCOIND_DATA:-./bitcoind-data}:/bitcoin/.bitcoin
     ports:
+      # "[host:]container[/protocol]"
       # regtest ports
       - 127.0.0.1:28331:28331 # zmq sequence
       - 127.0.0.1:28332:28332 # zmq raw blocks
@@ -16,6 +17,8 @@ services:
       - 127.0.0.1:18443:18443 # json-rpc
       - 127.0.0.1:18444:18444
       - 127.0.0.1:18445:18445
+    # Create prod level credentials if exposing node externally
+    # use https://docs.docker.com/compose/how-tos/use-secrets/
     command: -printtoconsole
       -zmqpubsequence=tcp://0.0.0.0:28331
       -zmqpubrawblock=tcp://0.0.0.0:28332
@@ -29,6 +32,7 @@ services:
       -rpcbind=0.0.0.0:18443
       -rpcallowip=0.0.0.0/0
 
+  # we use bitcoind rather than btcd, because btcd lacks the proof generation endpoints
   btcd:
     profiles:
       - donotstart
@@ -41,16 +45,12 @@ services:
       - 18333:18333
       - 18334:18334
     # https://github.com/btcsuite/btcd/blob/master/docs/configuration.md
-    command:
-      [
-        "--simnet",
-        "--rpcuser=[CHOOSE_A_USERNAME]",
-        "--rpcpass=[CREATE_A_VERY_HARD_PASSWORD]",
-      ]
+    # Create prod level credentials if exposing node externally
+    command: ["--simnet", "--rpcuser=user", "--rpcpass=password"]
 
   sui-node:
     container_name: sui-node
-    image: mysten/sui-tools:devnet
+    image: mysten/sui-tools:testnet-v1.46.0
     volumes:
       - ./sui_config:/root/.sui/sui_config
     ports:
