@@ -15,6 +15,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.2.5
 	github.com/vektra/mockery/v2 v2.53.3
+	go.uber.org/zap v1.27.0
 )
 
 require (

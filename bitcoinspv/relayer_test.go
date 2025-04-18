@@ -6,29 +6,30 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/mocks"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"go.uber.org/zap"
 )
 
-func setupTest(t *testing.T) (*Relayer, *clients.MockBTCClient, *clients.MockBitcoinSPV) {
-	logger, _ := zap.NewDevelopment()
-	btcClient := clients.NewMockBTCClient(t)
-	lcClient := clients.NewMockBitcoinSPV(t)
+func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoinSPV) {
+	t.Helper()
+	logger := zerolog.Nop()
+	btcClient := mocks.NewMockBTCClient(t)
+	lcClient := mocks.NewMockBitcoinSPV(t)
 
 	cfg := &config.RelayerConfig{
-		// Add any necessary config values for testing
-		Format:              "auto",
-		Level:               "debug",
-		NetParams:           "regtest",
-		SleepDuration:       1 * time.Second,
-		MaxSleepDuration:    10 * time.Second,
-		BTCCacheSize:        1000,
-		HeadersChunkSize:    10,
-		ProcessBlockTimeout: 5 * time.Second,
+		Format:                "auto",
+		Level:                 "debug",
+		NetParams:             "regtest",
+		RetrySleepDuration:    1 * time.Second,
+		MaxRetrySleepDuration: 10 * time.Second,
+		BTCCacheSize:          1000,
+		HeadersChunkSize:      10,
+		ProcessBlockTimeout:   5 * time.Second,
 	}
 
 	relayer, err := New(
@@ -36,15 +37,44 @@ func setupTest(t *testing.T) (*Relayer, *clients.MockBTCClient, *clients.MockBit
 		logger,
 		btcClient,
 		lcClient,
-		1*time.Second,  // retrySleepDuration
-		10*time.Second, // maxRetrySleepDuration
-		5*time.Second,  // processBlockTimeout
 	)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, relayer)
 
 	return relayer, btcClient, lcClient
+}
+
+func setupMocks(t *testing.T, btcClient *mocks.MockBTCClient, lcClient *mocks.MockBitcoinSPV) {
+	t.Helper()
+	firstBlockHash, _ := chainhash.NewHashFromStr("4a8cb347715524caa17d43987d527d0c11c0510f3e3c44a85035038a9b36e338")
+	firstBlockInfo := &clients.BlockInfo{
+		Hash:   firstBlockHash,
+		Height: int64(1),
+	}
+
+	btcClient.On("GetBTCTipBlock").Return(firstBlockHash, int64(1), nil)
+	lcClient.On("GetLatestBlockInfo", mock.Anything).Return(firstBlockInfo, nil)
+	btcClient.On("GetBTCTailBlocksByHeight", mock.Anything, mock.Anything).Return([]*types.IndexedBlock{}, nil)
+	btcClient.On("SubscribeNewBlocks").Return()
+	btcClient.On("BlockEventChannel").Maybe().Return(make(<-chan *btctypes.BlockEvent))
+}
+
+func cleanupRelayer(t *testing.T, relayer *Relayer) {
+	t.Helper()
+	assert.NotPanics(t, func() { relayer.Stop() })
+	assert.True(t, relayer.isShutdown())
+	assert.False(t, relayer.isRunning())
+	waitDone := make(chan struct{})
+	go func() {
+		relayer.WaitForShutdown()
+		close(waitDone)
+	}()
+	select {
+	case <-waitDone:
+	case <-time.After(2 * time.Second):
+		t.Error("Timeout waiting for WaitForShutdown")
+	}
 }
 
 func TestNew(t *testing.T) {
@@ -54,80 +84,109 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, relayer.logger)
 	assert.NotNil(t, relayer.btcClient)
 	assert.NotNil(t, relayer.lcClient)
-	assert.Equal(t, time.Second, relayer.retrySleepDuration)
-	assert.Equal(t, 10*time.Second, relayer.maxRetrySleepDuration)
-	assert.Equal(t, 5*time.Second, relayer.processBlockTimeout)
+	assert.Equal(t, time.Second, relayer.Config.RetrySleepDuration)
+	assert.Equal(t, 10*time.Second, relayer.Config.MaxRetrySleepDuration)
+	assert.Equal(t, 5*time.Second, relayer.Config.ProcessBlockTimeout)
 	assert.NotNil(t, relayer.quitChannel)
 	assert.False(t, relayer.isStarted)
 }
 
-func TestStartStop(t *testing.T) {
-	relayer, btcClient, lcClient := setupTest(t)
+func TestIsRunning(t *testing.T) {
+	relayer, _, _ := setupTest(t)
+	assert.False(t, relayer.isRunning())
 
-	// Mock necessary method calls
-	btcClient.On("SubscribeNewBlocks").Return()
-	btcClient.On("BlockEventChannel").Maybe().Return(make(<-chan *btctypes.BlockEvent))
-	btcClient.On("GetBTCTailBlocksByHeight", mock.Anything).Return([]*types.IndexedBlock{}, nil)
+	relayer.isStarted = true
+	assert.True(t, relayer.isRunning())
 
-	firstBlockHash, _ := chainhash.NewHashFromStr("4a8cb347715524caa17d43987d527d0c11c0510f3e3c44a85035038a9b36e338")
-	btcClient.On("GetBTCTipBlock").Return(firstBlockHash, int64(1), nil)
+	relayer.isStarted = false
+	assert.False(t, relayer.isRunning())
+}
 
-	firstBlockInfo := &clients.BlockInfo{
-		Hash:   firstBlockHash,
-		Height: int64(1),
-	}
-	lcClient.On("GetLatestBlockInfo", mock.Anything).Return(firstBlockInfo, nil)
-
-	// Test Start
-	relayer.Start()
-	assert.True(t, relayer.isStarted)
+func TestIsShutdown(t *testing.T) {
+	relayer, _, _ := setupTest(t)
 	assert.False(t, relayer.isShutdown())
 
-	// Test double start (should be no-op)
-	relayer.Start()
-	assert.True(t, relayer.isStarted)
-
-	// Test Stop
-	relayer.Stop()
+	// simulate shutdown
+	close(relayer.quitChannel)
 	assert.True(t, relayer.isShutdown())
 
-	// Test double stop (should be no-op)
-	relayer.Stop()
-	assert.True(t, relayer.isShutdown())
+	// simulate restart
+	relayer.quitChannel = make(chan struct{})
+	assert.False(t, relayer.isShutdown())
+}
 
-	// Cleanup
+func TestStop(t *testing.T) {
+	relayer, _, _ := setupTest(t)
+	initialChan := relayer.quitChan()
+
+	// initial state
+	assert.False(t, relayer.isShutdown())
+	relayer.isStarted = true
+	assert.True(t, relayer.isRunning())
+
+	relayer.Stop()
+
+	// after calling stop
+	assert.True(t, relayer.isShutdown())
+	assert.False(t, relayer.isRunning())
+	_, chanOpen := <-initialChan
+	assert.False(t, chanOpen)
+
+	// call stop again
+	assert.NotPanics(t, func() { relayer.Stop() })
+	assert.True(t, relayer.isShutdown())
+	assert.False(t, relayer.isRunning())
+}
+
+func TestStart(t *testing.T) {
+	relayer, btcClient, lcClient := setupTest(t)
+	setupMocks(t, btcClient, lcClient)
+	t.Cleanup(func() {
+		cleanupRelayer(t, relayer)
+	})
+	assert.False(t, relayer.isRunning())
+
+	go relayer.Start()
+	time.Sleep(10 * time.Millisecond)
+
+	assert.False(t, relayer.isShutdown())
+	assert.True(t, relayer.isRunning())
+
+	// call start again
+	assert.NotPanics(t, func() { relayer.Start() })
+
+	assert.False(t, relayer.isShutdown())
+	assert.True(t, relayer.isRunning())
+
 	btcClient.AssertExpectations(t)
 	lcClient.AssertExpectations(t)
 }
 
 func TestRestartAfterShutdown(t *testing.T) {
 	relayer, btcClient, lcClient := setupTest(t)
+	setupMocks(t, btcClient, lcClient)
+	t.Cleanup(func() {
+		cleanupRelayer(t, relayer)
+	})
+	assert.False(t, relayer.isRunning())
 
-	// Mock necessary method calls
-	btcClient.On("SubscribeNewBlocks").Return()
-	btcClient.On("BlockEventChannel").Maybe().Return(make(<-chan *btctypes.BlockEvent))
-	btcClient.On("GetBTCTailBlocksByHeight", mock.Anything).Return([]*types.IndexedBlock{}, nil)
+	go relayer.Start()
+	time.Sleep(10 * time.Millisecond)
 
-	firstBlockHash, _ := chainhash.NewHashFromStr("4a8cb347715524caa17d43987d527d0c11c0510f3e3c44a85035038a9b36e338")
-	btcClient.On("GetBTCTipBlock").Return(firstBlockHash, int64(1), nil)
+	assert.True(t, relayer.isRunning())
+	assert.False(t, relayer.isShutdown())
 
-	firstBlockInfo := &clients.BlockInfo{
-		Hash:   firstBlockHash,
-		Height: int64(1),
-	}
-	lcClient.On("GetLatestBlockInfo", mock.Anything).Return(firstBlockInfo, nil)
-
-	// Start and stop the relayer
-	relayer.Start()
-	assert.True(t, relayer.isStarted)
-	relayer.Stop()
+	assert.NotPanics(t, func() { relayer.Stop() })
 	assert.True(t, relayer.isShutdown())
+	assert.False(t, relayer.isRunning())
 
 	// Start again after shutdown
-	relayer.Start()
-	assert.True(t, relayer.isStarted)
+	go relayer.Start()
+	time.Sleep(10 * time.Millisecond)
 
-	// Cleanup
+	assert.True(t, relayer.isRunning())
+	assert.False(t, relayer.isShutdown())
+
 	btcClient.AssertExpectations(t)
 	lcClient.AssertExpectations(t)
 }
