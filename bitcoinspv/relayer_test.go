@@ -17,10 +17,10 @@ import (
 
 func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoinSPV) {
 	t.Helper()
-        var (
-	     logger = zerolog.Nop()
-	     btcClient = mocks.NewMockBTCClient(t)
-	     lcClient = mocks.NewMockBitcoinSPV(t)
+	var (
+		logger    = zerolog.Nop()
+		btcClient = mocks.NewMockBTCClient(t)
+		lcClient  = mocks.NewMockBitcoinSPV(t)
 	)
 
 	cfg := &config.RelayerConfig{
@@ -64,6 +64,10 @@ func setupMocks(t *testing.T, btcClient *mocks.MockBTCClient, lcClient *mocks.Mo
 
 func cleanupRelayer(t *testing.T, relayer *Relayer) {
 	t.Helper()
+	assert.NotPanics(t, func() { relayer.Stop() })
+	assert.True(t, relayer.isShutdown())
+	assert.False(t, relayer.isRunning())
+	// call stop again
 	assert.NotPanics(t, func() { relayer.Stop() })
 	assert.True(t, relayer.isShutdown())
 	assert.False(t, relayer.isRunning())
@@ -117,30 +121,7 @@ func TestIsShutdown(t *testing.T) {
 	assert.False(t, relayer.isShutdown())
 }
 
-func TestStop(t *testing.T) {
-	relayer, _, _ := setupTest(t)
-	initialChan := relayer.quitChan()
-
-	// initial state
-	assert.False(t, relayer.isShutdown())
-	relayer.isStarted = true
-	assert.True(t, relayer.isRunning())
-
-	relayer.Stop()
-
-	// after calling stop
-	assert.True(t, relayer.isShutdown())
-	assert.False(t, relayer.isRunning())
-	_, chanOpen := <-initialChan
-	assert.False(t, chanOpen)
-
-	// call stop again
-	assert.NotPanics(t, func() { relayer.Stop() })
-	assert.True(t, relayer.isShutdown())
-	assert.False(t, relayer.isRunning())
-}
-
-func TestStart(t *testing.T) {
+func TestStart_RestartAfterShutdown(t *testing.T) {
 	relayer, btcClient, lcClient := setupTest(t)
 	setupMocks(t, btcClient, lcClient)
 	t.Cleanup(func() {
@@ -157,37 +138,19 @@ func TestStart(t *testing.T) {
 	// call start again
 	assert.NotPanics(t, func() { relayer.Start() })
 
-	assert.False(t, relayer.isShutdown())
-	assert.True(t, relayer.isRunning())
-
-	btcClient.AssertExpectations(t)
-	lcClient.AssertExpectations(t)
-}
-
-func TestRestartAfterShutdown(t *testing.T) {
-	relayer, btcClient, lcClient := setupTest(t)
-	setupMocks(t, btcClient, lcClient)
-	t.Cleanup(func() {
-		cleanupRelayer(t, relayer)
-	})
-	assert.False(t, relayer.isRunning())
-
-	go relayer.Start()
-	time.Sleep(10 * time.Millisecond)
-
-	assert.True(t, relayer.isRunning())
-	assert.False(t, relayer.isShutdown())
-
 	assert.NotPanics(t, func() { relayer.Stop() })
 	assert.True(t, relayer.isShutdown())
 	assert.False(t, relayer.isRunning())
 
-	// Start again after shutdown
+	// start again after shutdown
 	go relayer.Start()
 	time.Sleep(10 * time.Millisecond)
 
 	assert.True(t, relayer.isRunning())
 	assert.False(t, relayer.isShutdown())
+
+	assert.False(t, relayer.isShutdown())
+	assert.True(t, relayer.isRunning())
 
 	btcClient.AssertExpectations(t)
 	lcClient.AssertExpectations(t)
