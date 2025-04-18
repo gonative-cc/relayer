@@ -27,7 +27,7 @@ var testSubmitConfig = &config.RelayerConfig{
 	ProcessBlockTimeout:   5 * time.Second,
 }
 
-func TestFindFirstNewHeader(t *testing.T) {
+func TestFindFirstUnknownHeaderIndex(t *testing.T) {
 	ctx := context.Background()
 	testBlocks := createTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
 
@@ -36,6 +36,7 @@ func TestFindFirstNewHeader(t *testing.T) {
 		mockSetup     func(mockLC *mocks.MockBitcoinSPV)
 		expectedIndex int
 		expectedCalls int
+		expectedErr   error
 	}{
 		{
 			name: "all headers exist",
@@ -77,6 +78,16 @@ func TestFindFirstNewHeader(t *testing.T) {
 			expectedIndex: 2,
 			expectedCalls: 4,
 		},
+		{
+			name: "ContainsBlock abort error",
+			mockSetup: func(mockLC *mocks.MockBitcoinSPV) {
+				abortErr := fmt.Errorf("%w: ... MoveAbort(...)", sui_errors.ErrSuiTransactionFailed)
+				mockLC.On("ContainsBlock", ctx, testBlocks[0].BlockHash()).Return(false, abortErr).Once()
+			},
+			expectedIndex: -1,
+			expectedCalls: 1,
+			expectedErr:   fmt.Errorf("%w: ... MoveAbort(...)", sui_errors.ErrSuiTransactionFailed),
+		},
 	}
 
 	for _, tt := range tests {
@@ -88,9 +99,15 @@ func TestFindFirstNewHeader(t *testing.T) {
 				logger:   zerolog.Nop(),
 				Config:   testSubmitConfig,
 			}
-			idx, err := r.findFirstNewHeader(ctx, testBlocks)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedIndex, idx)
+			idx, err := r.FindFirstUnknownHeaderIndex(ctx, testBlocks)
+			if tt.expectedErr != nil {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, tt.expectedErr.Error())
+				assert.Equal(t, tt.expectedIndex, idx, "Index should be -1 on error")
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedIndex, idx)
+			}
 			mockLC.AssertExpectations(t)
 			mockLC.AssertNumberOfCalls(t, "ContainsBlock", tt.expectedCalls)
 		})

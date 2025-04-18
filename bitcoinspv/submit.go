@@ -11,7 +11,7 @@ import (
 // to the light client.
 func (r *Relayer) createChunks(ctx context.Context, indexedBlocks []*types.IndexedBlock,
 ) ([]Chunk, error) {
-	startPoint, err := r.findFirstNewHeader(ctx, indexedBlocks)
+	startPoint, err := r.FindFirstUnknownHeaderIndex(ctx, indexedBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +26,8 @@ func (r *Relayer) createChunks(ctx context.Context, indexedBlocks []*types.Index
 	return blockChunks, nil
 }
 
-// findFirstNewHeader finds the index of the first header not in the light client.
-func (r *Relayer) findFirstNewHeader(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
+// FindFirstUnknownHeaderIndex finds the index of the first header not present in the light client.
+func (r *Relayer) FindFirstUnknownHeaderIndex(ctx context.Context, indexedBlocks []*types.IndexedBlock) (int, error) {
 	for i, header := range indexedBlocks {
 		blockHash := header.BlockHash()
 		var res bool
