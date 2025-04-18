@@ -47,6 +47,7 @@ func New(
 		lcClient:             lcClient,
 		btcConfirmationDepth: config.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
+		isStarted:            false,
 	}
 
 	return relayer, nil
@@ -56,9 +57,9 @@ func New(
 // for Bitcoin header verification and relay
 func (r *Relayer) Start() {
 	r.quitMu.Lock()
-	defer r.quitMu.Unlock()
 
 	if r.isRunning() {
+		r.quitMu.Unlock()
 		return
 	}
 
@@ -67,7 +68,10 @@ func (r *Relayer) Start() {
 	}
 
 	r.isStarted = true
+	r.quitMu.Unlock() // Unlock before the init so it doesn't block the Stop()
+	r.logger.Debug().Msg("Initializing Relayer...")
 	r.initializeRelayer()
+	r.logger.Info().Msg("Relayer initialization complete and started (listening for new blocks through ZMQ)")
 }
 
 func (r *Relayer) isRunning() bool {
@@ -89,12 +93,15 @@ func (r *Relayer) restartAfterShutdown() {
 }
 
 func (r *Relayer) initializeRelayer() {
+	debug := r.logger.Debug()
+	debug.Msg("Running bootstrap...")
 	r.multitryBootstrap(false)
+	r.logger.Debug().Msg("Bootstrap finished.")
 
+	r.logger.Debug().Msg("Launching background goroutines...")
 	r.wg.Add(1)
 	go r.onBlockEvent()
-
-	r.logger.Info().Msg("Successfully started the spv relayer (listening for new blocks through ZMQ)")
+	r.logger.Debug().Msg("Background goroutines launched.")
 }
 
 // quitChan returns the quit channel in a thread-safe manner.
@@ -116,6 +123,8 @@ func (r *Relayer) Stop() {
 		return
 	default:
 		close(r.quitChannel)
+		r.isStarted = false
+		r.logger.Info().Msg("Relayer stop signal sent.")
 	}
 }
 
