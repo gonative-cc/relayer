@@ -7,13 +7,12 @@ import (
 
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
-	"github.com/gonative-cc/relayer/ika"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 // newIkaProcessor creates a new Processor instance with a mocked IKA client and populated database.
-func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
+func newIkaProcessor(t *testing.T, ikaClient Client) *Processor {
 	ctx := context.Background()
 	db := daltest.InitTestDB(ctx, t)
 	return &Processor{
@@ -22,8 +21,8 @@ func newIkaProcessor(t *testing.T, ikaClient ika.Client) *Processor {
 	}
 }
 
-func newIkaMockWithApproveAndSingReq() ika.Client {
-	suiCl := new(ika.MockClient)
+func newIkaMockWithApproveAndSingReq() Client {
+	suiCl := new(MockClient)
 	// only signatures that don't have final sig
 	suiCl.On("SignReq", mock.Anything, "dwallet1", "user_sig1", mock.Anything).
 		Return("ds1", nil)
@@ -60,7 +59,7 @@ func TestRun(t *testing.T) {
 }
 
 type testRunCase struct {
-	ikaClient     ika.Client
+	ikaClient     Client
 	setupDB       func(t *testing.T, db dal.DB)
 	assertions    func(t *testing.T, processor *Processor)
 	name          string
@@ -73,7 +72,7 @@ func TestRun_EdgeCases(t *testing.T) {
 	testCases := []testRunCase{
 		{
 			name:      "NoPendingRequests",
-			ikaClient: new(ika.MockClient),
+			ikaClient: new(MockClient),
 			setupDB:   func(_ *testing.T, _ dal.DB) {}, // No need to populate the database
 		},
 		{

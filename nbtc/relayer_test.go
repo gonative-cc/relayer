@@ -10,16 +10,16 @@ import (
 
 	"github.com/gonative-cc/relayer/dal"
 	"github.com/gonative-cc/relayer/dal/daltest"
-	"github.com/gonative-cc/relayer/ika"
 	"github.com/gonative-cc/relayer/ika2btc"
 	"github.com/gonative-cc/relayer/ika2btc/bitcoin"
 	"github.com/gonative-cc/relayer/native"
+	"github.com/gonative-cc/relayer/remote2ika"
 )
 
 // testSuite holds the common dependencies
 type testSuite struct {
 	db             dal.DB
-	ikaClient      *ika.MockClient
+	ikaClient      *remote2ika.MockClient
 	btcProcessor   *ika2btc.Processor
 	signReqFetcher *native.APISignRequestFetcher
 	relayer        *Relayer
@@ -60,7 +60,7 @@ func setupTestSuite(t *testing.T) *testSuite {
 
 	return &testSuite{
 		db:             db,
-		ikaClient:      new(ika.MockClient),
+		ikaClient:      new(remote2ika.MockClient),
 		btcProcessor:   btcProcessor,
 		signReqFetcher: signReqFetcher,
 		relayer:        relayer,

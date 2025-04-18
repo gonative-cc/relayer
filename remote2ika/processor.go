@@ -8,18 +8,17 @@ import (
 	"time"
 
 	"github.com/gonative-cc/relayer/dal"
-	"github.com/gonative-cc/relayer/ika"
 	"github.com/rs/zerolog/log"
 )
 
 // Processor handles processing transactions from the Native chain to IKA for signing.
 type Processor struct {
-	ikaClient ika.Client
+	ikaClient Client
 	db        dal.DB
 }
 
 // NewProcessor creates a new Processor instance.
-func NewProcessor(ikaClient ika.Client, db dal.DB) *Processor {
+func NewProcessor(ikaClient Client, db dal.DB) *Processor {
 	return &Processor{
 		ikaClient: ikaClient,
 		db:        db,
@@ -43,7 +42,7 @@ func (p *Processor) Run(ctx context.Context) error {
 		payloads := [][]byte{sr.Payload} // TODO: this wont be needed in the future when we support singing in batches
 		txDigest, err := p.ikaClient.SignReq(ctx, sr.DWalletID, sr.UserSig, payloads)
 		if err != nil {
-			if errors.Is(err, ika.ErrEventParsing) {
+			if errors.Is(err, ErrEventParsing) {
 				ikaTx := dal.IkaTx{
 					SrID:      sr.ID,
 					Status:    dal.Failed,
