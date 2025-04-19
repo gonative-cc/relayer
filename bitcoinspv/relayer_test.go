@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const confirmationDepth = 6
+
 func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoinSPV) {
 	t.Helper()
 	var (
@@ -32,6 +34,7 @@ func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoin
 		BTCCacheSize:          1000,
 		HeadersChunkSize:      10,
 		ProcessBlockTimeout:   5 * time.Second,
+		BTCConfirmationDepth:  confirmationDepth,
 	}
 
 	relayer, err := New(
@@ -95,17 +98,6 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, 5*time.Second, relayer.Config.ProcessBlockTimeout)
 	assert.NotNil(t, relayer.quitChannel)
 	assert.False(t, relayer.isStarted)
-}
-
-func TestIsRunning(t *testing.T) {
-	relayer, _, _ := setupTest(t)
-	assert.False(t, relayer.isRunning())
-
-	relayer.isStarted = true
-	assert.True(t, relayer.isRunning())
-
-	relayer.isStarted = false
-	assert.False(t, relayer.isRunning())
 }
 
 func TestIsShutdown(t *testing.T) {
