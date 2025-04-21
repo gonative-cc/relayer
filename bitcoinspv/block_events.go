@@ -127,7 +127,7 @@ func (r *Relayer) getAndValidateBlock(
 
 	// if parent block != cache tip, cache needs update - restart bootstrap
 	parentHash := msgBlock.Header.PrevBlock
-	tipCacheBlock := r.btcCache.Tip()
+	tipCacheBlock := r.btcCache.Last()
 	if parentHash != tipCacheBlock.BlockHash() {
 		return nil, nil, fmt.Errorf(
 			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
@@ -175,7 +175,7 @@ func (r *Relayer) onDisconnectedBlock(blockEvent *btctypes.BlockEvent) error {
 }
 
 func (r *Relayer) checkDisonnected(blockEvent *btctypes.BlockEvent) error {
-	tipCacheBlock := r.btcCache.Tip()
+	tipCacheBlock := r.btcCache.Last()
 	if tipCacheBlock == nil {
 		return fmt.Errorf("no blocks found in cache, bootstrap process must be restarted")
 	}
