@@ -17,7 +17,7 @@ func (r *Relayer) createChunks(ctx context.Context, indexedBlocks []*types.Index
 	}
 
 	if startPoint == -1 {
-		r.logger.Info().Msg("All headers are duplicated, no need to submit")
+		r.logger.Info().Msg("Headers are synced, no need to submit")
 		return nil, nil
 	}
 
@@ -79,7 +79,7 @@ func (r *Relayer) ProcessHeaders(ctx context.Context, indexedBlocks []*types.Ind
 		return 0, fmt.Errorf("failed to find headers to submit: %w", err)
 	}
 	if len(chunks) == 0 {
-		r.logger.Info().Msg("No new headers to submit")
+		r.logger.Debug().Msg("No new headers to submit")
 	}
 
 	headersSubmitted := 0
