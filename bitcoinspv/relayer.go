@@ -2,6 +2,7 @@ package bitcoinspv
 
 import (
 	"sync"
+	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -26,10 +27,11 @@ type Relayer struct {
 	btcConfirmationDepth int64
 
 	// Control
-	wg          sync.WaitGroup
-	isStarted   bool
-	quitChannel chan struct{}
-	quitMu      sync.Mutex
+	wg              sync.WaitGroup
+	isStarted       bool
+	quitChannel     chan struct{}
+	quitMu          sync.Mutex
+	catchupLoopWait time.Duration
 }
 
 // New creates and returns a new relayer object
@@ -48,6 +50,7 @@ func New(
 		btcConfirmationDepth: config.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,
+		catchupLoopWait:      10 * time.Second,
 	}
 
 	return relayer, nil
@@ -96,12 +99,11 @@ func (r *Relayer) initializeRelayer() {
 	debug := r.logger.Debug()
 	debug.Msg("Running bootstrap...")
 	r.multitryBootstrap(false)
-	r.logger.Debug().Msg("Bootstrap finished.")
 
-	r.logger.Debug().Msg("Launching background goroutines...")
+	debug.Msg("Bootstrap finished. Launching background goroutines...")
 	r.wg.Add(1)
 	go r.onBlockEvent()
-	r.logger.Debug().Msg("Background goroutines launched.")
+	debug.Msg("Background goroutines launched.")
 }
 
 // quitChan returns the quit channel in a thread-safe manner.
