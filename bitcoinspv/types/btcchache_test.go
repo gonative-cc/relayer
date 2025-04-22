@@ -2,25 +2,9 @@ package types
 
 import (
 	"testing"
-	"time"
 
-	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/assert"
 )
-
-// TODO: refactor to reuse this function in other tests rather than copying
-func createTestIndexedBlocks(t *testing.T, count int64, startHeight int64) []*IndexedBlock {
-	t.Helper()
-	blocks := make([]*IndexedBlock, count)
-	for i := int64(0); i < count; i++ {
-		hdr := wire.BlockHeader{Version: int32(i + 1), Timestamp: time.Now().Add(time.Duration(i) * time.Minute)}
-		blocks[i] = &IndexedBlock{
-			BlockHeight: startHeight + i,
-			BlockHeader: &hdr,
-		}
-	}
-	return blocks
-}
 
 func TestNewBTCCache(t *testing.T) {
 	t.Run("valid size", func(t *testing.T) {
@@ -51,7 +35,7 @@ func TestBTCCache_Init(t *testing.T) {
 
 	t.Run("empty input", func(t *testing.T) {
 		cache, _ := NewBTCCache(maxSize)
-		blocks := createTestIndexedBlocks(t, 0, 0)
+		blocks := CreateTestIndexedBlocks(t, 0, 0)
 		err := cache.Init(blocks)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(0), cache.Size())
@@ -66,7 +50,7 @@ func TestBTCCache_Init(t *testing.T) {
 
 	t.Run("valid input less than max", func(t *testing.T) {
 		cache, _ := NewBTCCache(maxSize)
-		blocks := createTestIndexedBlocks(t, 3, 100) // 100, 101, 102
+		blocks := CreateTestIndexedBlocks(t, 3, 100) // 100, 101, 102
 		err := cache.Init(blocks)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(3), cache.Size())
@@ -76,7 +60,7 @@ func TestBTCCache_Init(t *testing.T) {
 
 	t.Run("valid input equal to max", func(t *testing.T) {
 		cache, _ := NewBTCCache(maxSize)
-		blocks := createTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
+		blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
 		err := cache.Init(blocks)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(5), cache.Size())
@@ -86,7 +70,7 @@ func TestBTCCache_Init(t *testing.T) {
 
 	t.Run("input exceeds max", func(t *testing.T) {
 		cache, _ := NewBTCCache(maxSize)
-		blocks := createTestIndexedBlocks(t, 6, 100) // 100, 101, 102, 103, 104, 105
+		blocks := CreateTestIndexedBlocks(t, 6, 100) // 100, 101, 102, 103, 104, 105
 		err := cache.Init(blocks)
 		assert.ErrorIs(t, err, errBlockEntriesExceeded)
 		assert.Equal(t, int64(0), cache.Size())
@@ -94,7 +78,7 @@ func TestBTCCache_Init(t *testing.T) {
 
 	t.Run("unsorted input", func(t *testing.T) {
 		cache, _ := NewBTCCache(maxSize)
-		blocks := createTestIndexedBlocks(t, 3, 100) // 100, 101, 102
+		blocks := CreateTestIndexedBlocks(t, 3, 100) // 100, 101, 102
 		blocks[0], blocks[1] = blocks[1], blocks[0]
 		err := cache.Init(blocks)
 		assert.ErrorIs(t, err, errUnorderedBlocks)
@@ -103,11 +87,11 @@ func TestBTCCache_Init(t *testing.T) {
 
 	t.Run("re-init cache", func(t *testing.T) {
 		cache, _ := NewBTCCache(maxSize)
-		initialBlocks := createTestIndexedBlocks(t, 2, 50) // 50, 51
+		initialBlocks := CreateTestIndexedBlocks(t, 2, 50) // 50, 51
 		_ = cache.Init(initialBlocks)
 		assert.Equal(t, int64(2), cache.Size())
 
-		newBlocks := createTestIndexedBlocks(t, 3, 100) // 100, 101, 102
+		newBlocks := CreateTestIndexedBlocks(t, 3, 100) // 100, 101, 102
 		err := cache.Init(newBlocks)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(3), cache.Size())
@@ -119,7 +103,7 @@ func TestBTCCache_Init(t *testing.T) {
 func TestBTCCache_Add(t *testing.T) {
 	maxSize := int64(3)
 	cache, _ := NewBTCCache(maxSize)
-	blocks := createTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
+	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
 
 	cache.Add(blocks[0])
 	assert.Equal(t, int64(1), cache.Size())
@@ -153,7 +137,7 @@ func TestBTCCache_Add(t *testing.T) {
 func TestBTCCache_First_Last(t *testing.T) {
 	maxSize := int64(3)
 	cache, _ := NewBTCCache(maxSize)
-	blocks := createTestIndexedBlocks(t, 3, 100) // 100, 101, 102
+	blocks := CreateTestIndexedBlocks(t, 3, 100) // 100, 101, 102
 
 	assert.Equal(t, int64(0), cache.Size())
 	assert.Nil(t, cache.First())
@@ -177,7 +161,7 @@ func TestBTCCache_First_Last(t *testing.T) {
 func TestBTCCache_RemoveLast(t *testing.T) {
 	maxSize := int64(3)
 	cache, _ := NewBTCCache(maxSize)
-	blocks := createTestIndexedBlocks(t, 3, 100) // 100, 101, 102
+	blocks := CreateTestIndexedBlocks(t, 3, 100) // 100, 101, 102
 	_ = cache.Init(blocks)
 
 	// 102
@@ -214,7 +198,7 @@ func TestBTCCache_RemoveAll(t *testing.T) {
 	cache.RemoveAll()
 	assert.Equal(t, int64(0), cache.Size())
 
-	blocks := createTestIndexedBlocks(t, 3, 100)
+	blocks := CreateTestIndexedBlocks(t, 3, 100)
 	_ = cache.Init(blocks)
 	assert.Equal(t, int64(3), cache.Size())
 	cache.RemoveAll()
@@ -227,7 +211,7 @@ func TestBTCCache_RemoveAll(t *testing.T) {
 func TestBTCCache_GetBlocksFrom(t *testing.T) {
 	maxSize := int64(5)
 	cache, _ := NewBTCCache(maxSize)
-	blocks := createTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
+	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
 	_ = cache.Init(blocks)
 
 	tests := []struct {
@@ -278,7 +262,7 @@ func TestBTCCache_GetAllBlocks(t *testing.T) {
 	assert.Empty(t, all)
 
 	// populated
-	blocks := createTestIndexedBlocks(t, 3, 100)
+	blocks := CreateTestIndexedBlocks(t, 3, 100)
 	_ = cache.Init(blocks)
 	all = cache.GetAllBlocks()
 	assert.Len(t, all, 3)
@@ -287,7 +271,7 @@ func TestBTCCache_GetAllBlocks(t *testing.T) {
 }
 
 func TestBTCCache_TrimConfirmedBlocks(t *testing.T) {
-	blocks := createTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
+	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
 
 	tests := []struct {
 		name                string
@@ -379,7 +363,7 @@ func TestBTCCache_TrimConfirmedBlocks(t *testing.T) {
 
 func TestBTCCache_FindBlock(t *testing.T) {
 	cache, _ := NewBTCCache(10)
-	blocks := createTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
+	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
 	_ = cache.Init(blocks)
 
 	tests := []struct {
@@ -437,7 +421,7 @@ func TestBTCCache_Resize(t *testing.T) {
 func TestBTCCache_Trim(t *testing.T) {
 	t.Run("no trim", func(t *testing.T) {
 		cache, _ := NewBTCCache(5)
-		cache.Init(createTestIndexedBlocks(t, 3, 100))
+		cache.Init(CreateTestIndexedBlocks(t, 3, 100))
 		cache.Trim()
 		assert.Equal(t, int64(3), cache.Size())
 		assert.Equal(t, int64(100), cache.First().BlockHeight)
@@ -445,7 +429,7 @@ func TestBTCCache_Trim(t *testing.T) {
 
 	t.Run("trim", func(t *testing.T) {
 		cache, _ := NewBTCCache(5)
-		cache.Init(createTestIndexedBlocks(t, 5, 100)) // 100, 101, 102, 103, 104
+		cache.Init(CreateTestIndexedBlocks(t, 5, 100)) // 100, 101, 102, 103, 104
 
 		err := cache.Resize(3)
 		assert.NoError(t, err)
@@ -460,7 +444,7 @@ func TestBTCCache_Trim(t *testing.T) {
 
 	t.Run("trim already correct size", func(t *testing.T) {
 		cache, _ := NewBTCCache(3)
-	cache.Init(createTestIndexedBlocks(t, 3, 100))
+		cache.Init(CreateTestIndexedBlocks(t, 3, 100))
 		cache.Trim()
 		assert.Equal(t, int64(3), cache.Size())
 		assert.Equal(t, int64(100), cache.First().BlockHeight)
