@@ -43,6 +43,7 @@ func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoin
 		btcClient,
 		lcClient,
 	)
+	relayer.catchupLoopWait = 10 * time.Millisecond
 
 	assert.NoError(t, err)
 	assert.NotNil(t, relayer)

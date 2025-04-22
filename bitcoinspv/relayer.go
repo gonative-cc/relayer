@@ -2,6 +2,7 @@ package bitcoinspv
 
 import (
 	"sync"
+	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -26,10 +27,11 @@ type Relayer struct {
 	btcConfirmationDepth int64
 
 	// Control
-	wg          sync.WaitGroup
-	isStarted   bool
-	quitChannel chan struct{}
-	quitMu      sync.Mutex
+	wg              sync.WaitGroup
+	isStarted       bool
+	quitChannel     chan struct{}
+	quitMu          sync.Mutex
+	catchupLoopWait time.Duration
 }
 
 // New creates and returns a new relayer object
@@ -48,6 +50,7 @@ func New(
 		btcConfirmationDepth: config.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,
+		catchupLoopWait:      10 * time.Second,
 	}
 
 	return relayer, nil

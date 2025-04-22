@@ -12,7 +12,6 @@ import (
 
 var (
 	bootstrapRetryAttempts = uint(60)
-	bootstrapSyncTicker    = 10 * time.Second
 	bootstrapRetryInterval = retry.Delay(30 * time.Second)
 )
 
@@ -179,8 +178,6 @@ func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 // that its height is equal or more than the Light Client's height.
 // This synchronization is required before proceeding with relayer operations.
 func (r *Relayer) waitForBitcoinCatchup(ctx context.Context) error {
-	ticker := time.NewTicker(bootstrapSyncTicker)
-	defer ticker.Stop()
 	firstRun := true
 	for {
 		btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
@@ -211,7 +208,12 @@ func (r *Relayer) waitForBitcoinCatchup(ctx context.Context) error {
 			btcLatestBlockHeight, lcLatestBlockHeight,
 		)
 
-		<-ticker.C
+		select {
+		case <-time.After(r.catchupLoopWait):
+			// Continue the loop after the timeout
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -64,26 +63,24 @@ func TestBootstrapRelayer(t *testing.T) {
 }
 
 func TestWaitForBTCCatchup(t *testing.T) {
-	t.Run("successful catchup", func(t *testing.T) {
-		r, btcClient, lcClient := setupTest(t)
-		ctx := context.Background()
+	r, btcClient, lcClient := setupTest(t)
+	ctx := context.Background()
 
-		// Set shorter ticker for test
-		originalTicker := bootstrapSyncTicker
-		bootstrapSyncTicker = 100 * time.Millisecond
-		defer func() { bootstrapSyncTicker = originalTicker }()
+	// First call: BTC behind
+	btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(90), nil).Twice()
+	// Second call: BTC caught up
+	btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(95), nil).Once()
 
-		// First call: BTC behind
-		btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(90), nil).Twice()
-		// Second call: BTC caught up
-		btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(95), nil).Once()
+	// LC height stays constant
+	lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{
+		Height: 95,
+	}, nil)
 
-		// LC height stays constant
-		lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{
-			Height: 95,
-		}, nil)
+	// LC height stays constant
+	lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{
+		Height: 95,
+	}, nil)
 
-		err := r.waitForBitcoinCatchup(ctx)
-		assert.NoError(t, err)
-	})
+	err := r.waitForBitcoinCatchup(ctx)
+	assert.NoError(t, err)
 }
