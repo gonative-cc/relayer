@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gonative-cc/relayer/ika"
+	"github.com/gonative-cc/relayer/remote2ika"
 	"github.com/rs/zerolog"
 )
 
@@ -18,7 +18,7 @@ const (
 type Indexer struct {
 	logger zerolog.Logger
 	b      Blockchain
-	ika    ika.Client
+	ika    remote2ika.Client
 	// defines the lowest block that the node has available in store.
 	// Usually nodes prun blocks after 2 weeks.
 	lowestBlock int
@@ -26,7 +26,7 @@ type Indexer struct {
 
 // NewIndexer returns a new indexer struct with open connections.
 func NewIndexer(ctx context.Context, b Blockchain, logger zerolog.Logger,
-	startBlockHeight int, ika ika.Client) (*Indexer, error) {
+	startBlockHeight int, ika remote2ika.Client) (*Indexer, error) {
 	i := &Indexer{
 		b:           b,
 		logger:      logger.With().Str("package", "indexer").Logger(),

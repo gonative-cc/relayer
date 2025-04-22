@@ -67,7 +67,7 @@ func TestWaitForBTCCatchup(t *testing.T) {
 	ctx := context.Background()
 
 	// First call: BTC behind
-	btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(90), nil).Once()
+	btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(90), nil).Twice()
 	// Second call: BTC caught up
 	btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(95), nil).Once()
 
