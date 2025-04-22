@@ -1,4 +1,4 @@
-package ika
+package remote2ika
 
 import (
 	"context"
