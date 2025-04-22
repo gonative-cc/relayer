@@ -437,7 +437,7 @@ func TestBTCCache_Resize(t *testing.T) {
 func TestBTCCache_Trim(t *testing.T) {
 	t.Run("no trim", func(t *testing.T) {
 		cache, _ := NewBTCCache(5)
-		_ = cache.Init(createTestIndexedBlocks(t, 3, 100))
+		cache.Init(createTestIndexedBlocks(t, 3, 100))
 		cache.Trim()
 		assert.Equal(t, int64(3), cache.Size())
 		assert.Equal(t, int64(100), cache.First().BlockHeight)
@@ -445,7 +445,7 @@ func TestBTCCache_Trim(t *testing.T) {
 
 	t.Run("trim", func(t *testing.T) {
 		cache, _ := NewBTCCache(5)
-		_ = cache.Init(createTestIndexedBlocks(t, 5, 100)) // 100, 101, 102, 103, 104
+		cache.Init(createTestIndexedBlocks(t, 5, 100)) // 100, 101, 102, 103, 104
 
 		err := cache.Resize(3)
 		assert.NoError(t, err)
@@ -460,7 +460,7 @@ func TestBTCCache_Trim(t *testing.T) {
 
 	t.Run("trim already correct size", func(t *testing.T) {
 		cache, _ := NewBTCCache(3)
-		_ = cache.Init(createTestIndexedBlocks(t, 3, 100))
+	cache.Init(createTestIndexedBlocks(t, 3, 100))
 		cache.Trim()
 		assert.Equal(t, int64(3), cache.Size())
 		assert.Equal(t, int64(100), cache.First().BlockHeight)

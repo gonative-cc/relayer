@@ -132,8 +132,8 @@ func (cache *BTCCache) GetBlocksFrom(height int64) ([]*IndexedBlock, error) {
 		return []*IndexedBlock{}, nil
 	}
 
-	firstHeight := cache.blocks[0].BlockHeight
-	lastHeight := cache.blocks[len(cache.blocks)-1].BlockHeight
+	firstHeight := cache.First().BlockHeight
+	lastHeight := cache.Last().BlockHeight
 
 	if height < firstHeight || height > lastHeight {
 		return nil, fmt.Errorf(
