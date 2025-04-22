@@ -61,7 +61,7 @@ func RetryDo(
 	case categoryUnknown:
 		logger.Error().Err(err).Msg("Skip retry, error classification failed or unknown type")
 	case categoryRetryable:
-		logger.Debug().Err(err).Msg("retryable error, trying to repeate request")
+		logger.Debug().Err(err).Msg("Retryable error, trying to repeat the request")
 		// Add some randomness to prevent thrashing
 		jitter, randErr := randDuration(int64(sleep))
 		if randErr != nil {
