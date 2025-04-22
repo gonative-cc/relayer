@@ -99,12 +99,11 @@ func (r *Relayer) initializeRelayer() {
 	debug := r.logger.Debug()
 	debug.Msg("Running bootstrap...")
 	r.multitryBootstrap(false)
-	r.logger.Debug().Msg("Bootstrap finished.")
 
-	r.logger.Debug().Msg("Launching background goroutines...")
+	debug.Msg("Bootstrap finished. Launching background goroutines...")
 	r.wg.Add(1)
 	go r.onBlockEvent()
-	r.logger.Debug().Msg("Background goroutines launched.")
+	debug.Msg("Background goroutines launched.")
 }
 
 // quitChan returns the quit channel in a thread-safe manner.

@@ -76,6 +76,11 @@ func TestWaitForBTCCatchup(t *testing.T) {
 		Height: 95,
 	}, nil)
 
-	err := r.waitForBTCCatchup(ctx, 90, 95)
+	// LC height stays constant
+	lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{
+		Height: 95,
+	}, nil)
+
+	err := r.waitForBitcoinCatchup(ctx)
 	assert.NoError(t, err)
 }

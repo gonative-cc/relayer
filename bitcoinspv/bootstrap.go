@@ -16,7 +16,7 @@ var (
 )
 
 func (r *Relayer) bootstrapRelayer(ctx context.Context, skipSubscription bool) error {
-	if err := r.waitForBitcoinNode(ctx); err != nil {
+	if err := r.waitForBitcoinCatchup(ctx); err != nil {
 		return err
 	}
 
@@ -84,7 +84,6 @@ func (r *Relayer) createRelayerContext() (context.Context, func()) {
 
 		select {
 		case <-r.quitChan():
-
 		case <-ctx.Done():
 		}
 	}()
@@ -157,37 +156,11 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	return err
 }
 
-// waitForBitcoinNode ensures that the bitcoin node is synchronized by checking
-// that its height is equal or more than the Light Client's height.
-// This synchronization is required before proceeding with relayer operations.
-func (r *Relayer) waitForBitcoinNode(ctx context.Context) error {
-	btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
-	if err != nil {
-		return err
-	}
-
-	lcLatestBlockHeight, err := r.getLCLatestBlockHeight(ctx)
-	if err != nil {
-		return err
-	}
-
-	if btcLatestBlockHeight == 0 || btcLatestBlockHeight < lcLatestBlockHeight {
-		return r.waitForBTCCatchup(ctx, btcLatestBlockHeight, lcLatestBlockHeight)
-	}
-
-	return nil
-}
-
 func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
 	_, btcLatestBlockHeight, err := r.btcClient.GetBTCTipBlock()
 	if err != nil {
 		return 0, err
 	}
-
-	r.logger.Info().Msgf(
-		"BTC latest block height: (%d)",
-		btcLatestBlockHeight,
-	)
 
 	return btcLatestBlockHeight, nil
 }
@@ -198,20 +171,16 @@ func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 
-	r.logger.Info().Msgf(
-		"Light client header chain latest block height: (%d)",
-		block.Height,
-	)
-
 	return block.Height, nil
 }
 
-func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeight int64) error {
-	r.logger.Info().Msgf(
-		"BTC chain (length %d) falls behind light client header chain (length %d), wait until BTC catches up",
-		btcHeight, lcHeight,
-	)
-
+// waitForBitcoinCatchup ensures that the bitcoin node is synchronized by checking
+// that its height is equal or more than the Light Client's height.
+// This synchronization is required before proceeding with relayer operations.
+func (r *Relayer) waitForBitcoinCatchup(ctx context.Context) error {
+	ticker := time.NewTicker(bootstrapSyncTicker)
+	defer ticker.Stop()
+	firstRun := true
 	for {
 		// TODO: support ctx cancellation
 
@@ -227,14 +196,19 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 
 		if isBTCCaughtUp(btcLatestBlockHeight, lcLatestBlockHeight) {
 			r.logger.Info().Msgf(
-				"BTC (height %d) has synchronized with light client header (height %d), proceeding with bootstrap",
+				"BTC (height %d) has synchronized, latest block matches the light client header (height %d)",
 				btcLatestBlockHeight, lcLatestBlockHeight,
 			)
 			return nil
 		}
 
-		r.logger.Info().Msgf(
-			"BTC (height %d) is not yet synchronized with light client header (height %d), continuing to wait",
+		logger := r.logger.Debug()
+		if firstRun {
+			logger = r.logger.Info()
+			firstRun = false
+		}
+		logger.Msgf(
+			"BTC chain (length %d) falls behind light client header chain (length %d). Waiting until BTC catches up...",
 			btcLatestBlockHeight, lcLatestBlockHeight,
 		)
 
