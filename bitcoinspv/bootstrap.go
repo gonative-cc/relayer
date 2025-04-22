@@ -238,8 +238,13 @@ func (r *Relayer) waitForBTCCatchup(ctx context.Context, btcHeight int64, lcHeig
 			btcLatestBlockHeight, lcLatestBlockHeight,
 		)
 
-		time.Sleep(r.catchupLoopWait)
-	}
+		select {
+		case <-time.After(r.catchupLoopWait):
+			// Continue the loop after the timeout
+		case <-ctx.Done():
+			// Exit the loop if the context is canceled
+			return ctx.Err()
+		}
 }
 
 func isBTCCaughtUp(btcHeight int64, lcHeight int64) bool {
