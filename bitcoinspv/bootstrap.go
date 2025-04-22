@@ -178,12 +178,8 @@ func (r *Relayer) getLCLatestBlockHeight(ctx context.Context) (int64, error) {
 // that its height is equal or more than the Light Client's height.
 // This synchronization is required before proceeding with relayer operations.
 func (r *Relayer) waitForBitcoinCatchup(ctx context.Context) error {
-	ticker := time.NewTicker(bootstrapSyncTicker)
-	defer ticker.Stop()
 	firstRun := true
 	for {
-		// TODO: support ctx cancellation
-
 		btcLatestBlockHeight, err := r.getBTCLatestBlockHeight()
 		if err != nil {
 			return err
