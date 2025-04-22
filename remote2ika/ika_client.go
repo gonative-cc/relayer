@@ -1,4 +1,4 @@
-package ika
+package remote2ika
 
 import (
 	"context"
@@ -7,8 +7,6 @@ import (
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
-	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/rs/zerolog"
 )
 
 // TransactionDigest is a hash of transaction encoded to a string
@@ -16,12 +14,6 @@ type TransactionDigest = string
 
 // Client defines the methods required for interacting with the Ika network.
 type Client interface {
-	// TODO: move to remote2ika as a proof of concept
-	UpdateLC(
-		ctx context.Context,
-		lb *tmtypes.LightBlock,
-		logger zerolog.Logger,
-	) (models.SuiTransactionBlockResponse, error)
 	SignReq(
 		ctx context.Context,
 		dwalletCapID string,
@@ -74,44 +66,6 @@ func NewClient(
 		GasBudget:      gasBudget,
 	}
 	return i, nil
-}
-
-// UpdateLC sends light blocks to the Native Light Client module in the Ika blockchain.
-// It returns the transaction response and an error if any occurred.
-func (c *client) UpdateLC(
-	ctx context.Context,
-	lb *tmtypes.LightBlock,
-	logger zerolog.Logger,
-) (models.SuiTransactionBlockResponse, error) {
-	req := models.MoveCallRequest{
-		Signer:          c.Signer.Address,
-		PackageObjectId: c.LcPackage,
-		Module:          c.LcModule,
-		Function:        c.LcFunction,
-		TypeArguments:   []interface{}{},
-		Arguments: []interface{}{
-			lb,
-		},
-		Gas:       &c.GasAddr,
-		GasBudget: c.GasBudget,
-	}
-	resp, err := c.suiCl.MoveCall(ctx, req)
-	if err != nil {
-		logger.Err(err).Msg("Error calling move function:")
-		return models.SuiTransactionBlockResponse{}, err // Return zero value for the response
-	}
-
-	// TODO: verify if we need to call this
-	return c.suiCl.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
-		TxnMetaData: resp,
-		PriKey:      c.Signer.PriKey,
-		Options: models.SuiTransactionBlockOptions{
-			ShowInput:    true,
-			ShowRawInput: true,
-			ShowEffects:  true,
-		},
-		RequestType: "WaitForLocalExecution",
-	})
 }
 
 // SignReq issues Sui transaction to request signatures for the list of messages.
