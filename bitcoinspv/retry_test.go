@@ -59,6 +59,16 @@ func TestRetryableError(t *testing.T) {
 	assert.Equal(t, maxCalls, callCount, "Function should be called multiple times")
 }
 
+func TestRetryableErrorTimeout(t *testing.T) {
+	simulatedRetryableErr := errors.New("temporary network issue")
+	err := RetryDo(zerolog.Nop(), retryInterval, 4*time.Millisecond, func() error {
+		return simulatedRetryableErr
+	})
+
+	assert.ErrorIs(t, err, ErrRetryTimeout)
+	assert.ErrorIs(t, err, simulatedRetryableErr)
+}
+
 func testRetryDo(t *testing.T, mockErr error) {
 	callCount := 0
 	err := RetryDo(zerolog.Nop(), retryInterval, retryTimeout, func() error {

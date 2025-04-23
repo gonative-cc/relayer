@@ -3,6 +3,7 @@ package bitcoinspv
 import (
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -10,6 +11,9 @@ import (
 	sui_errors "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/rs/zerolog"
 )
+
+// ErrRetryTimeout indicates that the operation failed after all retry attempts.
+var ErrRetryTimeout = errors.New("retry timed out after maximum duration")
 
 // ErrorCategory classifies errors for retry logic.
 type ErrorCategory int
@@ -72,7 +76,7 @@ func RetryDo(
 
 		if sleep > maxSleepDuration {
 			logger.Error().Err(err).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
-			return nil // TODO: err
+			return fmt.Errorf("%w: last error was %w", ErrRetryTimeout, err)
 		}
 
 		logger.Debug().Dur("sleep", sleep).Msg("Exponential backoff")
@@ -81,6 +85,7 @@ func RetryDo(
 		return RetryDo(logger, 2*sleep, maxSleepDuration, retryableFunc)
 	default:
 		logger.Error().Err(err).Int("category", int(category)).Msg("Unhandled error category in RetryDo")
+		return err
 	}
 	return err
 }
