@@ -162,7 +162,7 @@ func TestBTCCache_RemoveLast(t *testing.T) {
 	maxSize := int64(3)
 	cache, _ := NewBTCCache(maxSize)
 	blocks := CreateTestIndexedBlocks(t, 3, 100) // 100, 101, 102
-	_ = cache.Init(blocks)
+	cache.Init(blocks)
 
 	// 102
 	err := cache.RemoveLast()
@@ -199,7 +199,7 @@ func TestBTCCache_RemoveAll(t *testing.T) {
 	assert.Equal(t, int64(0), cache.Size())
 
 	blocks := CreateTestIndexedBlocks(t, 3, 100)
-	_ = cache.Init(blocks)
+	cache.Init(blocks)
 	assert.Equal(t, int64(3), cache.Size())
 	cache.RemoveAll()
 	assert.Equal(t, int64(0), cache.Size())
@@ -212,7 +212,7 @@ func TestBTCCache_GetBlocksFrom(t *testing.T) {
 	maxSize := int64(5)
 	cache, _ := NewBTCCache(maxSize)
 	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
-	_ = cache.Init(blocks)
+	cache.Init(blocks)
 
 	tests := []struct {
 		name          string
@@ -263,7 +263,7 @@ func TestBTCCache_GetAllBlocks(t *testing.T) {
 
 	// populated
 	blocks := CreateTestIndexedBlocks(t, 3, 100)
-	_ = cache.Init(blocks)
+	cache.Init(blocks)
 	all = cache.GetAllBlocks()
 	assert.Len(t, all, 3)
 	assert.Equal(t, int64(100), all[0].BlockHeight)
@@ -338,7 +338,7 @@ func TestBTCCache_TrimConfirmedBlocks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cache, _ := NewBTCCache(10)
 			if tt.initialSize > 0 {
-				_ = cache.Init(blocks[:tt.initialSize])
+				cache.Init(blocks[:tt.initialSize])
 			}
 
 			trimmed := cache.TrimConfirmedBlocks(tt.keepNMostRecent)
@@ -364,7 +364,7 @@ func TestBTCCache_TrimConfirmedBlocks(t *testing.T) {
 func TestBTCCache_FindBlock(t *testing.T) {
 	cache, _ := NewBTCCache(10)
 	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
-	_ = cache.Init(blocks)
+	cache.Init(blocks)
 
 	tests := []struct {
 		name        string
