@@ -236,7 +236,7 @@ func TestSubmitHeaderMessages(t *testing.T) {
 				// This simulates RetryDo hitting timeout
 				mockLC.On("InsertHeaders", ctx, testChunk.Headers).Return(retryableErr)
 			},
-			expectedErr:   false, // TODO: decide if we should return error here?
+			expectedErr:   true,
 			expectedCalls: -1,
 		},
 	}
