@@ -69,6 +69,7 @@ func (cache *BTCCache) add(block *IndexedBlock) {
 }
 
 // First returns the oldest block in the cache (first in the queue).
+// Returns nil when cache is empty.
 func (cache *BTCCache) First() *IndexedBlock {
 	cache.RLock()
 	defer cache.RUnlock()
@@ -80,6 +81,7 @@ func (cache *BTCCache) First() *IndexedBlock {
 }
 
 // Last returns the most recent block in the cache (last in the queue).
+// Returns nil when cache is empty.
 func (cache *BTCCache) Last() *IndexedBlock {
 	cache.RLock()
 	defer cache.RUnlock()
