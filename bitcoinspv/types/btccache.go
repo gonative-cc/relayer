@@ -42,6 +42,9 @@ func (cache *BTCCache) Init(blocks []*IndexedBlock) error {
 		return errUnorderedBlocks
 	}
 
+	// clear cache
+	cache.blocks = make([]*IndexedBlock, 0)
+
 	for _, block := range blocks {
 		cache.add(block)
 	}
@@ -57,10 +60,6 @@ func (cache *BTCCache) Add(block *IndexedBlock) {
 }
 
 func (cache *BTCCache) add(block *IndexedBlock) {
-	if cache.size() > cache.maxEntries {
-		panic(errBlockEntriesExceeded)
-	}
-
 	if cache.size() == cache.maxEntries {
 		cache.blocks[0] = nil
 		cache.blocks = cache.blocks[1:]
@@ -69,7 +68,8 @@ func (cache *BTCCache) add(block *IndexedBlock) {
 	cache.blocks = append(cache.blocks, block)
 }
 
-// First returns the first block in the cache
+// First returns the oldest block in the cache (first in the queue).
+// Returns nil when cache is empty.
 func (cache *BTCCache) First() *IndexedBlock {
 	cache.RLock()
 	defer cache.RUnlock()
@@ -80,8 +80,9 @@ func (cache *BTCCache) First() *IndexedBlock {
 	return cache.blocks[0]
 }
 
-// Tip returns the most recent block in the cache
-func (cache *BTCCache) Tip() *IndexedBlock {
+// Last returns the most recent block in the cache (last in the queue).
+// Returns nil when cache is empty.
+func (cache *BTCCache) Last() *IndexedBlock {
 	cache.RLock()
 	defer cache.RUnlock()
 
@@ -91,7 +92,7 @@ func (cache *BTCCache) Tip() *IndexedBlock {
 	return cache.blocks[len(cache.blocks)-1]
 }
 
-// RemoveLast removes the most recent block from the cache
+// RemoveLast removes the most recent block from the cache (last in the queue).
 func (cache *BTCCache) RemoveLast() error {
 	cache.Lock()
 	defer cache.Unlock()
@@ -124,8 +125,8 @@ func (cache *BTCCache) size() int64 {
 	return int64(len(cache.blocks))
 }
 
-// GetLastBlocks returns blocks from the given height to the tip
-func (cache *BTCCache) GetLastBlocks(height int64) ([]*IndexedBlock, error) {
+// GetBlocksFrom returns blocks from the given height to the tip
+func (cache *BTCCache) GetBlocksFrom(height int64) ([]*IndexedBlock, error) {
 	cache.RLock()
 	defer cache.RUnlock()
 
@@ -133,32 +134,25 @@ func (cache *BTCCache) GetLastBlocks(height int64) ([]*IndexedBlock, error) {
 		return []*IndexedBlock{}, nil
 	}
 
-	first := cache.blocks[0].BlockHeight
-	last := cache.blocks[len(cache.blocks)-1].BlockHeight
+	firstHeight := cache.First().BlockHeight
+	lastHeight := cache.Last().BlockHeight
 
-	if height < first || last < height {
+	if height < firstHeight || height > lastHeight {
 		return nil, fmt.Errorf(
 			"height %d is out of range [%d, %d] of BTC cache",
-			height, first, last,
+			height, firstHeight, lastHeight,
 		)
 	}
 
-	// Use FindBlock to get the block at target height
-	block := cache.FindBlock(height)
-	if block == nil {
-		return nil, fmt.Errorf("block at height %d not found", height)
+	idx := sort.Search(len(cache.blocks), func(i int) bool {
+		return cache.blocks[i].BlockHeight >= height
+	})
+
+	if idx < len(cache.blocks) && cache.blocks[idx].BlockHeight == height {
+		return cache.blocks[idx:], nil
 	}
 
-	// Find index of block
-	idx := 0
-	for i, b := range cache.blocks {
-		if b == block {
-			idx = i
-			break
-		}
-	}
-
-	return cache.blocks[idx:], nil
+	return nil, fmt.Errorf("block at height %d not found", height)
 }
 
 // GetAllBlocks returns all blocks in the cache

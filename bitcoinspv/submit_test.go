@@ -11,6 +11,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/mocks"
 	sui_errors "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,7 +30,7 @@ var testSubmitConfig = &config.RelayerConfig{
 
 func TestFindFirstUnknownHeaderIndex(t *testing.T) {
 	ctx := context.Background()
-	testBlocks := createTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
+	testBlocks := types.CreateTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
 
 	tests := []struct {
 		name          string
@@ -116,7 +117,7 @@ func TestFindFirstUnknownHeaderIndex(t *testing.T) {
 
 func TestCreateChunks(t *testing.T) {
 	ctx := context.Background()
-	testBlocks := createTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
+	testBlocks := types.CreateTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
 
 	tests := []struct {
 		name             string
@@ -264,7 +265,7 @@ func TestSubmitHeaderMessages(t *testing.T) {
 }
 func TestProcessHeaders(t *testing.T) {
 	ctx := context.Background()
-	testBlocks := createTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
+	testBlocks := types.CreateTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
 
 	expectedHeadersChunk1 := []wire.BlockHeader{*testBlocks[0].BlockHeader, *testBlocks[1].BlockHeader} // 100, 101
 	expectedHeadersChunk2 := []wire.BlockHeader{*testBlocks[2].BlockHeader, *testBlocks[3].BlockHeader} // 102, 103
