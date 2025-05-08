@@ -16,6 +16,8 @@ require (
 	github.com/vektra/mockery/v2 v2.53.3
 )
 
+require github.com/pattonkan/sui-go v0.1.0 // indirect
+
 require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
