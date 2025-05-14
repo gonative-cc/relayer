@@ -21,32 +21,76 @@ import (
 type LCClient struct {
 	*suiclient.ClientImpl
 	*suisigner.Signer
-	logger      zerolog.Logger
-	lcPackageID *sui.PackageId
-	lcObject    *suiptb.CallArg
+	logger    zerolog.Logger
+	PackageID *sui.PackageId
+	LcObject  *suiclient.SuiObjectData
 }
 
 var _ clients.BitcoinSPV = &LCClient{}
 
 // New LC client
-func New(suiClient *suiclient.ClientImpl, signer *suisigner.Signer, lightClientObjectID string, lightClientPackageID string, parentLogger zerolog.Logger) (clients.BitcoinSPV, error) {
+func New(suiClient *suiclient.ClientImpl, signer *suisigner.Signer, lightClientObjectIDHex string, lightClientPackageIDHex string, parentLogger zerolog.Logger) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
 		return nil, ErrSuiClientNil
 	}
 	if signer == nil {
 		return nil, ErrSignerNill
 	}
-	if lightClientObjectID == "" || lightClientPackageID == "" {
-		return nil, ErrEmptyObjectID
+
+	lcPackageID, err := sui.PackageIdFromHex(lightClientPackageIDHex)
+	if err != nil {
+		return nil, err
+	}
+
+	lcObjectID, err := sui.ObjectIdFromHex(lightClientObjectIDHex)
+	if err != nil {
+		return nil, err
+	}
+
+	// tmp ctx
+	// TODO: handle this in other PR
+	ctx := context.TODO()
+	lcObjectResp, err := suiClient.GetObject(ctx, &suiclient.GetObjectRequest{
+		ObjectId: lcObjectID,
+		Options: &suiclient.SuiObjectDataOptions{
+			ShowOwner: true,
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &LCClient{
-		ClientImpl:  suiClient,
-		Signer:      signer,
-		logger:      configureClientLogger(parentLogger),
-		lcPackageID: nil,
-		lcObject:    nil,
+		ClientImpl: suiClient,
+		Signer:     signer,
+		logger:     configureClientLogger(parentLogger),
+		PackageID:  lcPackageID,
+		LcObject:   lcObjectResp.Data,
 	}, nil
+}
+
+func (c *LCClient) lcObjMut() suiptb.CallArg {
+	return suiptb.CallArg{
+		Object: &suiptb.ObjectArg{
+			SharedObject: &suiptb.SharedObjectArg{
+				Id:                   c.LcObject.ObjectId,
+				InitialSharedVersion: *c.LcObject.Owner.Shared.InitialSharedVersion,
+				Mutable:              true,
+			},
+		},
+	}
+}
+
+func (c *LCClient) lcObjImmu() suiptb.CallArg {
+	return suiptb.CallArg{
+		Object: &suiptb.ObjectArg{
+			SharedObject: &suiptb.SharedObjectArg{
+				Id:                   c.LcObject.ObjectId,
+				InitialSharedVersion: *c.LcObject.Owner.Shared.InitialSharedVersion,
+				Mutable:              false,
+			},
+		},
+	}
 }
 
 func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
@@ -81,11 +125,11 @@ func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) 
 	}
 
 	ptb.MoveCall(
-		c.lcPackageID,
+		c.PackageID,
 		"light_client",
 		"exist",
 		[]sui.TypeTag{},
-		[]suiptb.CallArg{*c.lcObject, {Pure: &b}},
+		[]suiptb.CallArg{c.lcObjImmu(), {Pure: &b}},
 	)
 
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
@@ -114,11 +158,11 @@ func (c *LCClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, 
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
 	ptb.MoveCall(
-		c.lcPackageID,
+		c.PackageID,
 		"light_client",
 		"head",
 		[]sui.TypeTag{},
-		[]suiptb.CallArg{*c.lcObject},
+		[]suiptb.CallArg{c.lcObjImmu()},
 	)
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
 
@@ -170,7 +214,7 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 		return err
 	}
 
-	ptb.MoveCall(c.lcPackageID, "light_client", "insert_headers", []sui.TypeTag{}, []suiptb.CallArg{*c.lcObject, {Pure: &headers}})
+	ptb.MoveCall(c.PackageID, "light_client", "insert_headers", []sui.TypeTag{}, []suiptb.CallArg{c.lcObjMut(), {Pure: &headers}})
 	pt := ptb.Finish()
 
 	txData := suiptb.NewTransactionData(c.Signer.Address, pt, nil, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
@@ -188,11 +232,14 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 			ShowObjectChanges: true,
 		},
 	)
-
-	if err != nil || !txnResponse.Effects.Data.IsSuccess() {
+	if err != nil {
 		return err
 	}
 
+	if !txnResponse.Effects.Data.IsSuccess() {
+		return fmt.Errorf("%w: function '%s' status: %s, error: %s",
+			ErrSuiTransactionFailed, "insert_headers", txnResponse.Effects.Data.V1.Status.Status, txnResponse.Errors)
+	}
 	return nil
 }
 
