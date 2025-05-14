@@ -22,52 +22,45 @@ type LCClient struct {
 	*suisigner.Signer
 	logger      zerolog.Logger
 	lcPackageID *sui.PackageId
-	lcObject    *suiclient.SuiObjectData
+	lcObject    *suiptb.CallArg
 }
 
-// ContainsBlock check block hash exist in light client
-func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
-	ptb := suiptb.NewTransactionDataTransactionBuilder()
-	lcObj, err := ptb.Obj(
-		suiptb.ObjectArg{
-			SharedObject: &suiptb.SharedObjectArg{
-				Id:                   c.lcObject.ObjectId,
-				InitialSharedVersion: *c.lcObject.Owner.Shared.InitialSharedVersion,
-				Mutable:              false,
-			},
-		},
-	)
-	if err != nil {
-		return false, err
+func (c *LCClient) devInspectTransactionBlock(ctx context.Context, ptb *suiptb.ProgrammableTransactionBuilder) (*suiclient.DevInspectTransactionBlockResponse, error) {
+	pt := ptb.Finish()
+	kind := suiptb.TransactionKind{
+		ProgrammableTransaction: &pt,
 	}
 
-	b, err := ptb.Pure(blockHash[:])
+	txBytes, err := bcs.Marshal(kind)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	ptb.Command(suiptb.Command{
-		MoveCall: &suiptb.ProgrammableMoveCall{
-			Package:       c.lcPackageID,
-			Module:        "light_client",
-			Function:      "exist",
-			TypeArguments: []sui.TypeTag{},
-			Arguments:     []suiptb.Argument{lcObj, b},
-		},
-	})
-
-	tx := suiptb.NewTransactionData(c.Address, ptb.Finish(), nil, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
-
-	txBytes, err := bcs.Marshal(tx.V1.Kind)
-	if err != nil {
-		return false, err
-	}
-
 	r := suiclient.DevInspectTransactionBlockRequest{
 		SenderAddress: c.Address,
 		TxKindBytes:   txBytes,
 	}
 
-	resp, err := c.DevInspectTransactionBlock(ctx, &r)
+	return c.DevInspectTransactionBlock(ctx, &r)
+}
+
+// ContainsBlock check block hash exist in light client
+func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
+	ptb := suiptb.NewTransactionDataTransactionBuilder()
+
+	b, err := bcs.Marshal(blockHash[:])
+	if err != nil {
+		return false, err
+	}
+
+	ptb.MoveCall(
+		c.lcPackageID,
+		"light_client",
+		"exist",
+		[]sui.TypeTag{},
+		[]suiptb.CallArg{*c.lcObject, {Pure: &b}},
+	)
+
+	resp, err := c.devInspectTransactionBlock(ctx, ptb)
 
 	if resp.Error != "" {
 		return false, errors.New(resp.Error)
@@ -91,47 +84,17 @@ func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) 
 // GetLatestBlockInfo check block hash exist in light client
 func (c *LCClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
-	lcObj, err := ptb.Obj(
-		suiptb.ObjectArg{
-			SharedObject: &suiptb.SharedObjectArg{
-				Id:                   c.lcObject.ObjectId,
-				InitialSharedVersion: *c.lcObject.Owner.Shared.InitialSharedVersion,
-				Mutable:              false,
-			},
-		},
+
+	ptb.MoveCall(
+		c.lcPackageID,
+		"light_client",
+		"head",
+		[]sui.TypeTag{},
+		[]suiptb.CallArg{*c.lcObject},
 	)
-	if err != nil {
-		return nil, err
-	}
+	resp, err := c.devInspectTransactionBlock(ctx, ptb)
 
-	if err != nil {
-		return nil, err
-	}
-	ptb.Command(suiptb.Command{
-		MoveCall: &suiptb.ProgrammableMoveCall{
-			Package:       c.lcPackageID,
-			Module:        "light_client",
-			Function:      "head",
-			TypeArguments: []sui.TypeTag{},
-			Arguments:     []suiptb.Argument{lcObj},
-		},
-	})
-
-	tx := suiptb.NewTransactionData(c.Address, ptb.Finish(), nil, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
-
-	txBytes, err := bcs.Marshal(tx.V1.Kind)
-	if err != nil {
-		return nil, err
-	}
-
-	r := suiclient.DevInspectTransactionBlockRequest{
-		SenderAddress: c.Address,
-		TxKindBytes:   txBytes,
-	}
-
-	resp, err := c.DevInspectTransactionBlock(ctx, &r)
-
-	if resp.Error != "" {
+	if !resp.Effects.Data.IsSuccess() {
 		return nil, errors.New(resp.Error)
 	}
 
@@ -174,30 +137,12 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
-	lcObj, err := ptb.Obj(
-		suiptb.ObjectArg{
-			SharedObject: &suiptb.SharedObjectArg{
-				Id:                   c.lcObject.ObjectId,
-				InitialSharedVersion: *c.lcObject.Owner.Shared.InitialSharedVersion,
-				Mutable:              false,
-			},
-		},
-	)
+	headers, err := bcs.Marshal(rawHeaders)
 	if err != nil {
 		return err
 	}
 
-	headers, err := ptb.Pure(rawHeaders)
-
-	ptb.Command(suiptb.Command{
-		MoveCall: &suiptb.ProgrammableMoveCall{
-			Package:       c.lcPackageID,
-			Module:        "light_client",
-			Function:      "insert_headers",
-			TypeArguments: []sui.TypeTag{},
-			Arguments:     []suiptb.Argument{lcObj, headers},
-		},
-	})
+	ptb.MoveCall(c.lcPackageID, "light_client", "insert_headers", []sui.TypeTag{}, []suiptb.CallArg{*c.lcObject, {Pure: &headers}})
 
 	pt := ptb.Finish()
 
