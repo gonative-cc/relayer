@@ -29,7 +29,13 @@ type LCClient struct {
 var _ clients.BitcoinSPV = &LCClient{}
 
 // New LC client
-func New(suiClient *suiclient.ClientImpl, signer *suisigner.Signer, lightClientObjectIDHex string, lightClientPackageIDHex string, parentLogger zerolog.Logger) (clients.BitcoinSPV, error) {
+func New(
+	suiClient *suiclient.ClientImpl,
+	signer *suisigner.Signer,
+	lightClientObjectIDHex string,
+	lightClientPackageIDHex string,
+	parentLogger zerolog.Logger,
+) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
 		return nil, ErrSuiClientNil
 	}
@@ -83,7 +89,10 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 	return parentLogger.With().Str("module", "spv_client").Logger()
 }
 
-func (c *LCClient) devInspectTransactionBlock(ctx context.Context, ptb *suiptb.ProgrammableTransactionBuilder) (*suiclient.DevInspectTransactionBlockResponse, error) {
+func (c *LCClient) devInspectTransactionBlock(
+	ctx context.Context,
+	ptb *suiptb.ProgrammableTransactionBuilder,
+) (*suiclient.DevInspectTransactionBlockResponse, error) {
 	pt := ptb.Finish()
 	kind := suiptb.TransactionKind{
 		ProgrammableTransaction: &pt,
@@ -223,7 +232,7 @@ func (c *LCClient) moveCall(
 	arguments []any,
 ) (*suiclient.SuiTransactionBlockResponse, error) {
 	req := &suiclient.MoveCallRequest{
-		Signer:    c.Signer.Address,
+		Signer:    c.Address,
 		PackageId: c.PackageID,
 		Module:    "light_client",
 		Function:  function,
