@@ -2,6 +2,7 @@ package suigoclient
 
 import (
 	"bytes"
+	"encoding/hex"
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/pattonkan/sui-go/suiclient"
@@ -36,4 +37,14 @@ func toBytes(header wire.BlockHeader) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// BlockHeaderToHex transforms header to hex encoded string
+func BlockHeaderToHex(header wire.BlockHeader) (string, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, btcHeaderSize))
+	err := header.Serialize(buf)
+	if err != nil {
+		return "", err
+	}
+	return "0x" + hex.EncodeToString(buf.Bytes()), nil
 }

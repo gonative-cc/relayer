@@ -197,50 +197,24 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 		return ErrNoBlockHeaders
 	}
 
-	rawHeaders := make([][]byte, 0, len(blockHeaders))
-
+	rawHeaders := make([]string, 0, len(blockHeaders))
 	for _, header := range blockHeaders {
-		rawHeader, err := toBytes(header)
+		rawHeader, err := BlockHeaderToHex(header)
 		if err != nil {
 			return fmt.Errorf("error serializing block header: %w", err)
 		}
 		rawHeaders = append(rawHeaders, rawHeader)
 	}
 
-	ptb := suiptb.NewTransactionDataTransactionBuilder()
-
-	headers, err := bcs.Marshal(rawHeaders)
-	if err != nil {
-		return err
+	arguments := []any{
+		c.lcObjImmu().Object.SharedObject.Id,
+		rawHeaders,
 	}
 
-	ptb.MoveCall(c.PackageID, "light_client", "insert_headers", []sui.TypeTag{}, []suiptb.CallArg{c.lcObjMut(), {Pure: &headers}})
-	pt := ptb.Finish()
+	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
 
-	txData := suiptb.NewTransactionData(c.Signer.Address, pt, nil, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
-	txBytes, err := bcs.Marshal(txData)
-	if err != nil {
-		return err
-	}
-
-	txnResponse, err := c.SignAndExecuteTransaction(
-		ctx,
-		c.Signer,
-		txBytes,
-		&suiclient.SuiTransactionBlockResponseOptions{
-			ShowEffects:       true,
-			ShowObjectChanges: true,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	if !txnResponse.Effects.Data.IsSuccess() {
-		return fmt.Errorf("%w: function '%s' status: %s, error: %s",
-			ErrSuiTransactionFailed, "insert_headers", txnResponse.Effects.Data.V1.Status.Status, txnResponse.Errors)
-	}
-	return nil
+	_, err := c.moveCall(ctx, "insert_headers", arguments)
+	return err
 }
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
@@ -253,4 +227,49 @@ func (c *LCClient) VerifySPV(_ context.Context, _ *types.SPVProof) (int, error) 
 func (c *LCClient) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
+}
+
+// moveCall is a helper function to construct and execute a Move call on the Sui blockchain.
+func (c *LCClient) moveCall(
+	ctx context.Context,
+	function string,
+	arguments []any,
+) (*suiclient.SuiTransactionBlockResponse, error) {
+	req := &suiclient.MoveCallRequest{
+		Signer:    c.Signer.Address,
+		PackageId: c.PackageID,
+		Module:    "light_client",
+		Function:  function,
+		TypeArgs:  []string{},
+		Arguments: arguments,
+		GasBudget: sui.NewBigInt(suiclient.DefaultGasBudget),
+	}
+
+	resp, err := c.MoveCall(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("sui move call to '%s' failed: %w", function, err)
+	}
+
+	options := &suiclient.SuiTransactionBlockResponseOptions{
+		ShowEffects:       true,
+		ShowObjectChanges: true,
+	}
+
+	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, resp.TxBytes, options)
+	if err != nil {
+		return nil,
+			fmt.Errorf("sui transaction submission for '%s' failed: %w", function, err)
+	}
+
+	// The error returned by SignAndExecuteTransactionBlock only indicates
+	// whether the transaction was successfully submitted to the network.
+	// It does NOT guarantee that the transaction succeeded  during execution.
+	// Thats why we MUST inspect the `Effects.Status` field.
+	// It will tell us about execution errors like: Abort, OutOfGas etc.
+	if !signedResp.Effects.Data.IsSuccess() {
+		return signedResp, fmt.Errorf("%w: function '%s' status: %s, error: %s",
+			ErrSuiTransactionFailed, function, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
+	}
+
+	return signedResp, nil
 }
