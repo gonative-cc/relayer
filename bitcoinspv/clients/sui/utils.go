@@ -74,7 +74,8 @@ type BlockHeader struct {
 
 // LightBlock is light block
 // TODO: fix lint
-// nolint:fieldalignment
+//
+//nolint:fieldalignment
 type LightBlock struct {
 	Height    uint64
 	ChainWork [32]uint8
