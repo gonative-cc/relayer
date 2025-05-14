@@ -12,7 +12,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
-	github.com/tinylib/msgp v1.2.5
+	github.com/tinylib/msgp v1.3.0
 	github.com/vektra/mockery/v2 v2.53.3
 )
 
