@@ -2,16 +2,18 @@ package sui
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
 
-	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/signer"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/fardream/go-bcs/bcs"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
+	"github.com/pattonkan/sui-go/sui"
+	"github.com/pattonkan/sui-go/sui/suiptb"
+	"github.com/pattonkan/sui-go/suiclient"
+	"github.com/pattonkan/sui-go/suisigner"
 	"github.com/rs/zerolog"
 )
 
@@ -25,21 +27,23 @@ const (
 )
 
 // SPVClient implements the BitcoinSPV interface, interacting with a
-// Bitcoin SPV light client deployed as a smart contract on Sui.
-type SPVClient struct {
-	logger      zerolog.Logger
-	suiClient   *sui.Client
-	signer      *signer.Signer
-	lcObjectID  string
-	lcPackageID string
+// Bitcoin SPV light client deployed as a smart contract on Sui.logger
+type LCClient struct {
+	*suiclient.ClientImpl
+	*suisigner.Signer
+	PackageID *sui.PackageId
+	LcObjArg  suiptb.CallArg
+	logger    zerolog.Logger
 }
 
+var _ clients.BitcoinSPV = &LCClient{}
+
 // NewSPVClient creates a new SPVClient instance.
-func NewSPVClient(
-	suiClient *sui.Client,
-	signer *signer.Signer,
-	lightClientObjectID string,
-	lightClientPackageID string,
+func New(
+	suiClient *suiclient.ClientImpl,
+	signer *suisigner.Signer,
+	lightClientObjectIDHex string,
+	lightClientPackageIDHex string,
 	parentLogger zerolog.Logger,
 ) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
@@ -48,16 +52,46 @@ func NewSPVClient(
 	if signer == nil {
 		return nil, ErrSignerNill
 	}
-	if lightClientObjectID == "" || lightClientPackageID == "" {
-		return nil, ErrEmptyObjectID
+
+	lcPackageID, err := sui.PackageIdFromHex(lightClientPackageIDHex)
+	if err != nil {
+		return nil, err
 	}
 
-	return &SPVClient{
-		suiClient:   suiClient,
-		signer:      signer,
-		lcObjectID:  lightClientObjectID,
-		lcPackageID: lightClientPackageID,
-		logger:      configureClientLogger(parentLogger),
+	lcObjectID, err := sui.ObjectIdFromHex(lightClientObjectIDHex)
+	if err != nil {
+		return nil, err
+	}
+
+	// tmp ctx
+	// TODO: handle this in other PR
+	ctx := context.TODO()
+	lcObjectResp, err := suiClient.GetObject(ctx, &suiclient.GetObjectRequest{
+		ObjectId: lcObjectID,
+		Options: &suiclient.SuiObjectDataOptions{
+			ShowOwner: true,
+		},
+	})
+
+	lcObjArg := suiptb.CallArg{
+		Object: &suiptb.ObjectArg{
+			SharedObject: &suiptb.SharedObjectArg{
+				Id:                   lcObjectResp.Data.ObjectId,
+				InitialSharedVersion: *lcObjectResp.Data.Owner.Shared.InitialSharedVersion,
+				Mutable:              false,
+			},
+		},
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &LCClient{
+		ClientImpl: suiClient,
+		Signer:     signer,
+		logger:     configureClientLogger(parentLogger),
+		PackageID:  lcPackageID,
+		LcObjArg:   lcObjArg,
 	}, nil
 }
 
@@ -66,7 +100,7 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
-func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
+func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
@@ -80,179 +114,138 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		rawHeaders = append(rawHeaders, rawHeader)
 	}
 
-	arguments := []interface{}{
-		c.lcObjectID,
+	arguments := []any{
+		c.LcObjArg.Object.SharedObject.Id,
 		rawHeaders,
 	}
 
 	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
 
-	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
+	_, err := c.moveCall(ctx, "insert_headers", arguments)
 	return err
 }
 
 // ContainsBlock checks if the light client's chain includes a block with the given hash.
-func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
-	arguments := []interface{}{
-		c.lcObjectID,
-		BlockHashToHex(blockHash),
-	}
+func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
+	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
-	response, err := c.moveCall(ctx, containsBlockFunc, arguments)
+	b, err := bcs.Marshal(blockHash[:])
 	if err != nil {
 		return false, err
 	}
 
-	eventData, err := c.extractFirstEvent(ctx, response.Effects.TransactionDigest)
+	err = ptb.MoveCall(
+		c.PackageID,
+		"light_client",
+		"exist",
+		[]sui.TypeTag{},
+		[]suiptb.CallArg{c.LcObjArg, {Pure: &b}},
+	)
 	if err != nil {
 		return false, err
 	}
-	exist, ok := eventData["exist"].(bool)
-	if !ok {
-		return false, fmt.Errorf("unexpected event data format: 'exist' field not found or not a boolean")
+
+	resp, err := c.devInspectTransactionBlock(ctx, ptb)
+
+	if resp.Error != "" {
+		return false, errors.New(resp.Error)
 	}
 
-	return exist, nil
+	resultEncoded, err := getBCSResult(resp)
+	if err != nil {
+		return false, err
+	}
+
+	var result bool
+
+	err = bcs.UnmarshalAll(resultEncoded[0], &result)
+	if err != nil {
+		return false, err
+	}
+
+	return result, nil
 }
 
 // GetLatestBlockInfo returns the block hash and height of the best block header.
-func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
-	arguments := []interface{}{
-		c.lcObjectID,
+func (c *LCClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
+	ptb := suiptb.NewTransactionDataTransactionBuilder()
+
+	ptb.MoveCall(
+		c.PackageID,
+		"light_client",
+		"head",
+		[]sui.TypeTag{},
+		[]suiptb.CallArg{c.LcObjArg},
+	)
+
+	resp, err := c.devInspectTransactionBlock(ctx, ptb)
+
+	if !resp.Effects.Data.IsSuccess() {
+		return nil, errors.New(resp.Error)
 	}
 
-	response, err := c.moveCall(ctx, getChainTipFunc, arguments)
+	resultEncoded, err := getBCSResult(resp)
 	if err != nil {
 		return nil, err
 	}
 
-	eventData, err := c.extractFirstEvent(ctx, response.Effects.TransactionDigest)
+	var result LightBlock
+
+	err = bcs.UnmarshalAll(resultEncoded[0], &result)
 	if err != nil {
 		return nil, err
 	}
 
-	lightBlockHashData, ok := eventData["light_block_hash"].([]interface{})
-	if !ok {
-		return nil, ErrLightBlockHashNotFound
+	hash := result.BlockHash()
+	blockInfo := &clients.BlockInfo{
+		Hash:   &hash,
+		Height: int64(result.Height),
 	}
 
-	heightData, ok := eventData["height"]
-	if !ok {
-		return nil, ErrHeightNotFound
-	}
-
-	heightStr, ok := heightData.(string)
-	if !ok {
-		return nil, fmt.Errorf("%w: got %T", ErrHeightInvalidType, heightData)
-	}
-
-	height, err := strconv.ParseInt(heightStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrHeightInvalidValue, err.Error())
-	}
-
-	hashBytes, err := extractHashBytes(lightBlockHashData)
-	if err != nil {
-		return nil, err
-	}
-
-	blockHash, err := chainhash.NewHash(hashBytes)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrBlockHashInvalid, err)
-	}
-
-	return &clients.BlockInfo{
-		Hash:   blockHash,
-		Height: height,
-	}, nil
-}
-
-func extractHashBytes(lightBlockHashData []interface{}) ([]byte, error) {
-	hashBytes := make([]byte, len(lightBlockHashData))
-	for i, v := range lightBlockHashData {
-		byteVal, ok := v.(float64) // JSON numbers come as float64.
-		if !ok {
-			return nil,
-				fmt.Errorf("%w: got %T at index %d", ErrBlockHashInvalidType, v, i)
-		}
-		if byteVal < 0 || byteVal > 255 {
-			return nil, fmt.Errorf("%w: %f at index %d", ErrBlockHashInvalidByte, byteVal, i)
-		}
-		hashBytes[i] = byte(byteVal)
-	}
-	return hashBytes, nil
+	return blockInfo, nil
 }
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
 // TODO: finish implementation
-func (c *SPVClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (int, error) {
-	arguments := []interface{}{
-		c.lcObjectID,
-		spvProof.TxID,
-		spvProof.MerklePath,
-		spvProof.TxIndex,
-	}
-
-	response, err := c.moveCall(ctx, verifySPVFunc, arguments)
-	if err != nil {
-		return -1, err
-	}
-	eventData, err := c.extractFirstEvent(ctx, response.Effects.TransactionDigest)
-	if err != nil {
-		return -1, err
-	}
-
-	// TODO: Define constants for the different verification states.
-	result, ok := eventData["result"].(bool)
-	if !ok {
-		return -1, fmt.Errorf("unexpected event data format: 'result' field not found or not a boolean")
-	}
-
-	if result {
-		return 2, nil
-	}
-	return 1, nil
+func (c *LCClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (int, error) {
+	return 0, nil
 }
 
 // Stop performs any necessary cleanup and shutdown operations.
-func (c SPVClient) Stop() {
+func (c *LCClient) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
 }
 
 // moveCall is a helper function to construct and execute a Move call on the Sui blockchain.
-func (c *SPVClient) moveCall(
+func (c *LCClient) moveCall(
 	ctx context.Context,
 	function string,
-	arguments []interface{},
-) (models.SuiTransactionBlockResponse, error) {
-	req := models.MoveCallRequest{
-		Signer:          c.signer.Address,
-		PackageObjectId: c.lcPackageID,
-		Module:          lcModule,
-		Function:        function,
-		TypeArguments:   []interface{}{},
-		Arguments:       arguments,
-		GasBudget:       defaultGasBudget,
+	arguments []any,
+) (*suiclient.SuiTransactionBlockResponse, error) {
+	req := &suiclient.MoveCallRequest{
+		Signer:    c.Address,
+		PackageId: c.PackageID,
+		Module:    "light_client",
+		Function:  function,
+		TypeArgs:  []string{},
+		Arguments: arguments,
+		GasBudget: sui.NewBigInt(10000000000),
 	}
 
-	resp, err := c.suiClient.MoveCall(ctx, req)
+	resp, err := c.MoveCall(ctx, req)
 	if err != nil {
-		return models.SuiTransactionBlockResponse{}, fmt.Errorf("sui move call to '%s' failed: %w", function, err)
+		return nil, fmt.Errorf("sui move call to '%s' failed: %w", function, err)
 	}
 
-	signedResp, err := c.suiClient.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
-		TxnMetaData: resp,
-		PriKey:      c.signer.PriKey,
-		Options: models.SuiTransactionBlockOptions{
-			ShowInput:    true,
-			ShowRawInput: true,
-			ShowEffects:  true,
-		},
-		RequestType: "WaitForLocalExecution",
-	})
+	options := &suiclient.SuiTransactionBlockResponseOptions{
+		ShowEffects:       true,
+		ShowObjectChanges: true,
+	}
+
+	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, resp.TxBytes, options)
 	if err != nil {
-		return models.SuiTransactionBlockResponse{},
+		return nil,
 			fmt.Errorf("sui transaction submission for '%s' failed: %w", function, err)
 	}
 
@@ -261,28 +254,31 @@ func (c *SPVClient) moveCall(
 	// It does NOT guarantee that the transaction succeeded  during execution.
 	// Thats why we MUST inspect the `Effects.Status` field.
 	// It will tell us about execution errors like: Abort, OutOfGas etc.
-	if signedResp.Effects.Status.Status != "success" {
+	if !signedResp.Effects.Data.IsSuccess() {
 		return signedResp, fmt.Errorf("%w: function '%s' status: %s, error: %s",
-			ErrSuiTransactionFailed, function, signedResp.Effects.Status.Status, signedResp.Effects.Status.Error)
+			ErrSuiTransactionFailed, function, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
 	}
 
 	return signedResp, nil
 }
 
-// extractFirstEvent is a helper function to extract data from the first event in a transaction.
-//
-//	It returns error if there is no events.
-func (c *SPVClient) extractFirstEvent(ctx context.Context, txDigest string) (map[string]interface{}, error) {
-	events, err := c.suiClient.SuiGetEvents(ctx, models.SuiGetEventsRequest{
-		Digest: txDigest,
-	})
+func (c *LCClient) devInspectTransactionBlock(
+	ctx context.Context,
+	ptb *suiptb.ProgrammableTransactionBuilder,
+) (*suiclient.DevInspectTransactionBlockResponse, error) {
+	pt := ptb.Finish()
+	kind := suiptb.TransactionKind{
+		ProgrammableTransaction: &pt,
+	}
+
+	txBytes, err := bcs.Marshal(kind)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrEventDataFormat, err)
+		return nil, err
+	}
+	r := suiclient.DevInspectTransactionBlockRequest{
+		SenderAddress: c.Address,
+		TxKindBytes:   txBytes,
 	}
 
-	if len(events) == 0 {
-		return nil, fmt.Errorf("%w: %s", ErrNoEventsFound, txDigest)
-	}
-
-	return events[0].ParsedJson, nil
+	return c.DevInspectTransactionBlock(ctx, &r)
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"
-	suigoclient "github.com/gonative-cc/relayer/bitcoinspv/clients/sui-go-client"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/pattonkan/sui-go/suiclient"
 	"github.com/pattonkan/sui-go/suisigner"
@@ -105,7 +105,7 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.Bit
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	client, err := suigoclient.New(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
+	client, err := sui.New(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))

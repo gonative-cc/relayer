@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/pattonkan/sui-go/suiclient"
 )
 
 // BTCHeaderSize is the size in bytes of a Bitcoin block header.
@@ -45,4 +46,43 @@ func BlockHeaderToHex(header wire.BlockHeader) (string, error) {
 // BlockHashToHex transforms Hash to a natural order hex endoed string
 func BlockHashToHex(hash chainhash.Hash) string {
 	return "0x" + hex.EncodeToString(hash.CloneBytes())
+}
+
+type bcsEncode []byte
+
+func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) ([]bcsEncode, error) {
+	bcsEncode := make([]bcsEncode, len(res.Results[0].ReturnValues))
+
+	for i, item := range res.Results[0].ReturnValues {
+		var b []byte
+		// TODO: Breakdown to simple term
+		c := item.([]interface{})[0].([]interface{})
+		b = make([]byte, len(c))
+
+		for i, v := range c {
+			b[i] = byte(v.(float64))
+		}
+		bcsEncode[i] = b
+	}
+	return bcsEncode, nil
+}
+
+// BlockHeader is block header
+type BlockHeader struct {
+	Internal []uint8
+}
+
+// LightBlock is light block
+type LightBlock struct {
+	Height    uint64
+	ChainWork [32]uint8
+	Header    *BlockHeader
+}
+
+// BlockHash return block hash
+func (lb LightBlock) BlockHash() chainhash.Hash {
+	r := bytes.NewReader(lb.Header.Internal)
+	var header wire.BlockHeader
+	header.Deserialize(r)
+	return header.BlockHash()
 }

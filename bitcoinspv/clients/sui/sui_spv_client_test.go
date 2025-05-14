@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/block-vision/sui-go-sdk/signer"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/pattonkan/sui-go/suiclient"
+	"github.com/pattonkan/sui-go/suisigner"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,10 +24,10 @@ var (
 func setupIntegrationTest(t *testing.T) (context.Context, clients.BitcoinSPV) {
 	t.Helper()
 
-	cl := sui.NewSuiClient(localRPC).(*sui.Client)
-	s, err := signer.NewSignertWithMnemonic(localMnemonic)
+	cl := suiclient.NewClient(localRPC)
+	s, err := suisigner.NewSignerWithMnemonic(localMnemonic, suisigner.KeySchemeFlagDefault)
 	assert.Nil(t, err)
-	client, err := NewSPVClient(
+	client, err := New(
 		cl,
 		s,
 		lightClientObjectID,
