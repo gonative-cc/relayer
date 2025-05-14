@@ -147,11 +147,15 @@ func (c *BTCLightClientObject) ContainsBlock(ctx context.Context, blockHash chai
 
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
 
+	if err != nil {
+		return false, err
+	}
+
 	if resp.Error != "" {
 		return false, errors.New(resp.Error)
 	}
 
-	resultEncoded, err := getBCSResult(resp)
+	resultEncoded := getBCSResult(resp)
 	if err != nil {
 		return false, err
 	}
@@ -170,21 +174,26 @@ func (c *BTCLightClientObject) ContainsBlock(ctx context.Context, blockHash chai
 func (c *BTCLightClientObject) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
-	ptb.MoveCall(
+	err := ptb.MoveCall(
 		c.PackageID,
 		lcModule,
 		headFunc,
 		[]sui.TypeTag{},
 		[]suiptb.CallArg{c.LcObjArg},
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
-
+	if err != nil {
+		return nil, err
+	}
 	if !resp.Effects.Data.IsSuccess() {
 		return nil, errors.New(resp.Error)
 	}
 
-	resultEncoded, err := getBCSResult(resp)
+	resultEncoded := getBCSResult(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +205,15 @@ func (c *BTCLightClientObject) GetLatestBlockInfo(ctx context.Context) (*clients
 		return nil, err
 	}
 
-	hash := result.BlockHash()
+	hash, err := result.BlockHash()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: fix lint
 	blockInfo := &clients.BlockInfo{
-		Hash:   &hash,
+		Hash: &hash,
+		// #nosec G115
 		Height: int64(result.Height),
 	}
 

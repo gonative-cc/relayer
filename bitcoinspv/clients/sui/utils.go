@@ -50,7 +50,7 @@ func BlockHashToHex(hash chainhash.Hash) string {
 
 type bcsEncode []byte
 
-func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) ([]bcsEncode, error) {
+func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) []bcsEncode {
 	bcsEncode := make([]bcsEncode, len(res.Results[0].ReturnValues))
 
 	for i, item := range res.Results[0].ReturnValues {
@@ -64,7 +64,7 @@ func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) ([]bcsEncod
 		}
 		bcsEncode[i] = b
 	}
-	return bcsEncode, nil
+	return bcsEncode
 }
 
 // BlockHeader is block header
@@ -73,6 +73,8 @@ type BlockHeader struct {
 }
 
 // LightBlock is light block
+// TODO: fix lint
+// nolint:fieldalignment
 type LightBlock struct {
 	Height    uint64
 	ChainWork [32]uint8
@@ -80,9 +82,12 @@ type LightBlock struct {
 }
 
 // BlockHash return block hash
-func (lb LightBlock) BlockHash() chainhash.Hash {
+func (lb LightBlock) BlockHash() (chainhash.Hash, error) {
 	r := bytes.NewReader(lb.Header.Internal)
 	var header wire.BlockHeader
-	header.Deserialize(r)
-	return header.BlockHash()
+	err := header.Deserialize(r)
+	if err != nil {
+		return header.BlockHash(), err
+	}
+	return header.BlockHash(), nil
 }
