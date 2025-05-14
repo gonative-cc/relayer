@@ -20,15 +20,16 @@ import (
 const (
 	insertHeadersFunc = "insert_headers"
 	containsBlockFunc = "exist"
-	getChainTipFunc   = "latest_block_hash"
+	headFunc          = "head"
 	verifySPVFunc     = "verify_tx"
 	lcModule          = "light_client"
-	defaultGasBudget  = "10000000000"
+	// TODO: Use better defaultGasBudget
+	defaultGasBudget = 10000000000
 )
 
-// SPVClient implements the BitcoinSPV interface, interacting with a
+// BTCLightClientObject implements the BitcoinSPV interface, interacting with a
 // Bitcoin SPV light client deployed as a smart contract on Sui.logger
-type LCClient struct {
+type BTCLightClientObject struct {
 	*suiclient.ClientImpl
 	*suisigner.Signer
 	PackageID *sui.PackageId
@@ -36,9 +37,9 @@ type LCClient struct {
 	logger    zerolog.Logger
 }
 
-var _ clients.BitcoinSPV = &LCClient{}
+var _ clients.BitcoinSPV = &BTCLightClientObject{}
 
-// NewSPVClient creates a new SPVClient instance.
+// New BTCLIghtClientObject creates a new SPVClient instance.
 func New(
 	suiClient *suiclient.ClientImpl,
 	signer *suisigner.Signer,
@@ -63,7 +64,6 @@ func New(
 		return nil, err
 	}
 
-	// tmp ctx
 	// TODO: handle this in other PR
 	ctx := context.TODO()
 	lcObjectResp, err := suiClient.GetObject(ctx, &suiclient.GetObjectRequest{
@@ -86,7 +86,7 @@ func New(
 		return nil, err
 	}
 
-	return &LCClient{
+	return &BTCLightClientObject{
 		ClientImpl: suiClient,
 		Signer:     signer,
 		logger:     configureClientLogger(parentLogger),
@@ -100,7 +100,7 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
-func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
+func (c *BTCLightClientObject) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
@@ -121,12 +121,12 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 
 	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
 
-	_, err := c.moveCall(ctx, "insert_headers", arguments)
+	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
 	return err
 }
 
 // ContainsBlock checks if the light client's chain includes a block with the given hash.
-func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
+func (c *BTCLightClientObject) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
 	b, err := bcs.Marshal(blockHash[:])
@@ -136,8 +136,8 @@ func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) 
 
 	err = ptb.MoveCall(
 		c.PackageID,
-		"light_client",
-		"exist",
+		lcModule,
+		containsBlockFunc,
 		[]sui.TypeTag{},
 		[]suiptb.CallArg{c.LcObjArg, {Pure: &b}},
 	)
@@ -167,13 +167,13 @@ func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) 
 }
 
 // GetLatestBlockInfo returns the block hash and height of the best block header.
-func (c *LCClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
+func (c *BTCLightClientObject) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
 	ptb.MoveCall(
 		c.PackageID,
-		"light_client",
-		"head",
+		lcModule,
+		headFunc,
 		[]sui.TypeTag{},
 		[]suiptb.CallArg{c.LcObjArg},
 	)
@@ -207,18 +207,18 @@ func (c *LCClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, 
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
 // TODO: finish implementation
-func (c *LCClient) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (int, error) {
+func (c *BTCLightClientObject) VerifySPV(_ context.Context, _ *types.SPVProof) (int, error) {
 	return 0, nil
 }
 
 // Stop performs any necessary cleanup and shutdown operations.
-func (c *LCClient) Stop() {
+func (c *BTCLightClientObject) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
 	fmt.Println("Stop called")
 }
 
 // moveCall is a helper function to construct and execute a Move call on the Sui blockchain.
-func (c *LCClient) moveCall(
+func (c *BTCLightClientObject) moveCall(
 	ctx context.Context,
 	function string,
 	arguments []any,
@@ -226,11 +226,11 @@ func (c *LCClient) moveCall(
 	req := &suiclient.MoveCallRequest{
 		Signer:    c.Address,
 		PackageId: c.PackageID,
-		Module:    "light_client",
+		Module:    lcModule,
 		Function:  function,
 		TypeArgs:  []string{},
 		Arguments: arguments,
-		GasBudget: sui.NewBigInt(10000000000),
+		GasBudget: sui.NewBigInt(defaultGasBudget),
 	}
 
 	resp, err := c.MoveCall(ctx, req)
@@ -262,7 +262,7 @@ func (c *LCClient) moveCall(
 	return signedResp, nil
 }
 
-func (c *LCClient) devInspectTransactionBlock(
+func (c *BTCLightClientObject) devInspectTransactionBlock(
 	ctx context.Context,
 	ptb *suiptb.ProgrammableTransactionBuilder,
 ) (*suiclient.DevInspectTransactionBlockResponse, error) {
