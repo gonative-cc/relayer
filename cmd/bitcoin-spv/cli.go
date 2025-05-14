@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/block-vision/sui-go-sdk/signer"
-	"github.com/block-vision/sui-go-sdk/sui"
+	// "github.com/block-vision/sui-go-sdk/signer"
+	// "github.com/block-vision/sui-go-sdk/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"
-	suiClient "github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
+	suigoclient "github.com/gonative-cc/relayer/bitcoinspv/clients/sui-go-client"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
+	"github.com/pattonkan/sui-go/suiclient"
+	"github.com/pattonkan/sui-go/suisigner"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -96,14 +98,14 @@ func logTipBlock(btcClient *btcwrapper.Client, rootLogger zerolog.Logger) {
 }
 
 func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.BitcoinSPV {
-	c := sui.NewSuiClient(cfg.Sui.Endpoint).(*sui.Client)
+	c := suiclient.NewClient(cfg.Sui.Endpoint)
 
-	signer, err := signer.NewSignertWithMnemonic(cfg.Sui.Mnemonic)
+	signer, err := suisigner.NewSignerWithMnemonic(cfg.Sui.Mnemonic, suisigner.KeySchemeFlagDefault)
 	if err != nil {
 		panic(fmt.Errorf("failed to create new signer: %w", err))
 	}
 
-	client, err := suiClient.NewSPVClient(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
+	client, err := suigoclient.New(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
 
 	if err != nil {
 		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))
