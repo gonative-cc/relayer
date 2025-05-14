@@ -242,7 +242,7 @@ func (c *LCClient) moveCall(
 		Function:  function,
 		TypeArgs:  []string{},
 		Arguments: arguments,
-		GasBudget: sui.NewBigInt(suiclient.DefaultGasBudget),
+		GasBudget: sui.NewBigInt(10000000000),
 	}
 
 	resp, err := c.MoveCall(ctx, req)
