@@ -21,9 +21,9 @@ import (
 type LCClient struct {
 	*suiclient.ClientImpl
 	*suisigner.Signer
-	logger    zerolog.Logger
 	PackageID *sui.PackageId
-	LcObject  *suiclient.SuiObjectData
+	LcObjArg  suiptb.CallArg
+	logger    zerolog.Logger
 }
 
 var _ clients.BitcoinSPV = &LCClient{}
@@ -56,6 +56,16 @@ func New(suiClient *suiclient.ClientImpl, signer *suisigner.Signer, lightClientO
 			ShowOwner: true,
 		},
 	})
+
+	lcObjArg := suiptb.CallArg{
+		Object: &suiptb.ObjectArg{
+			SharedObject: &suiptb.SharedObjectArg{
+				Id:                   lcObjectResp.Data.ObjectId,
+				InitialSharedVersion: *lcObjectResp.Data.Owner.Shared.InitialSharedVersion,
+				Mutable:              false,
+			},
+		},
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -65,32 +75,8 @@ func New(suiClient *suiclient.ClientImpl, signer *suisigner.Signer, lightClientO
 		Signer:     signer,
 		logger:     configureClientLogger(parentLogger),
 		PackageID:  lcPackageID,
-		LcObject:   lcObjectResp.Data,
+		LcObjArg:   lcObjArg,
 	}, nil
-}
-
-func (c *LCClient) lcObjMut() suiptb.CallArg {
-	return suiptb.CallArg{
-		Object: &suiptb.ObjectArg{
-			SharedObject: &suiptb.SharedObjectArg{
-				Id:                   c.LcObject.ObjectId,
-				InitialSharedVersion: *c.LcObject.Owner.Shared.InitialSharedVersion,
-				Mutable:              true,
-			},
-		},
-	}
-}
-
-func (c *LCClient) lcObjImmu() suiptb.CallArg {
-	return suiptb.CallArg{
-		Object: &suiptb.ObjectArg{
-			SharedObject: &suiptb.SharedObjectArg{
-				Id:                   c.LcObject.ObjectId,
-				InitialSharedVersion: *c.LcObject.Owner.Shared.InitialSharedVersion,
-				Mutable:              false,
-			},
-		},
-	}
 }
 
 func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
@@ -129,7 +115,7 @@ func (c *LCClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) 
 		"light_client",
 		"exist",
 		[]sui.TypeTag{},
-		[]suiptb.CallArg{c.lcObjImmu(), {Pure: &b}},
+		[]suiptb.CallArg{c.LcObjArg, {Pure: &b}},
 	)
 
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
@@ -162,8 +148,9 @@ func (c *LCClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, 
 		"light_client",
 		"head",
 		[]sui.TypeTag{},
-		[]suiptb.CallArg{c.lcObjImmu()},
+		[]suiptb.CallArg{c.LcObjArg},
 	)
+
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
 
 	if !resp.Effects.Data.IsSuccess() {
@@ -207,7 +194,7 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 	}
 
 	arguments := []any{
-		c.lcObjImmu().Object.SharedObject.Id,
+		c.LcObjArg.Object.SharedObject.Id,
 		rawHeaders,
 	}
 
