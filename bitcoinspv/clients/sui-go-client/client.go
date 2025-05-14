@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/fardream/go-bcs/bcs"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/pattonkan/sui-go/sui"
 	"github.com/pattonkan/sui-go/sui/suiptb"
 	"github.com/pattonkan/sui-go/suiclient"
@@ -23,6 +24,33 @@ type LCClient struct {
 	logger      zerolog.Logger
 	lcPackageID *sui.PackageId
 	lcObject    *suiptb.CallArg
+}
+
+var _ clients.BitcoinSPV = &LCClient{}
+
+// New LC client
+func New(suiClient *suiclient.ClientImpl, signer *suisigner.Signer, lightClientObjectID string, lightClientPackageID string, parentLogger zerolog.Logger) (clients.BitcoinSPV, error) {
+	if suiClient == nil {
+		return nil, ErrSuiClientNil
+	}
+	if signer == nil {
+		return nil, ErrSignerNill
+	}
+	if lightClientObjectID == "" || lightClientPackageID == "" {
+		return nil, ErrEmptyObjectID
+	}
+
+	return &LCClient{
+		ClientImpl:  suiClient,
+		Signer:      signer,
+		logger:      configureClientLogger(parentLogger),
+		lcPackageID: nil,
+		lcObject:    nil,
+	}, nil
+}
+
+func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
+	return parentLogger.With().Str("module", "spv_client").Logger()
 }
 
 func (c *LCClient) devInspectTransactionBlock(ctx context.Context, ptb *suiptb.ProgrammableTransactionBuilder) (*suiclient.DevInspectTransactionBlockResponse, error) {
@@ -143,13 +171,10 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 	}
 
 	ptb.MoveCall(c.lcPackageID, "light_client", "insert_headers", []sui.TypeTag{}, []suiptb.CallArg{*c.lcObject, {Pure: &headers}})
-
 	pt := ptb.Finish()
 
 	txData := suiptb.NewTransactionData(c.Signer.Address, pt, nil, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
-
 	txBytes, err := bcs.Marshal(txData)
-
 	if err != nil {
 		return err
 	}
@@ -169,4 +194,16 @@ func (c *LCClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockH
 	}
 
 	return nil
+}
+
+// VerifySPV verifies an SPV proof against the light client's stored headers.
+// TODO: finish implementation
+func (c *LCClient) VerifySPV(_ context.Context, _ *types.SPVProof) (int, error) {
+	return 0, nil
+}
+
+// Stop performs any necessary cleanup and shutdown operations.
+func (c *LCClient) Stop() {
+	// TODO: Implement any necessary cleanup or shutdown logic
+	fmt.Println("Stop called")
 }
