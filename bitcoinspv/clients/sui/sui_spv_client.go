@@ -153,7 +153,7 @@ func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash)
 	}
 
 	if !resp.Effects.Data.IsSuccess() {
-		return false, fmt.Errorf("sui transaction submission for '%s' failed: %w", containsBlockFunc, resp.Error)
+		return false, fmt.Errorf("sui transaction submission for '%s' failed: %s", containsBlockFunc, resp.Error)
 	}
 
 	resultEncoded := getBCSResult(resp)
@@ -191,7 +191,7 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		return nil, err
 	}
 	if !resp.Effects.Data.IsSuccess() {
-		return nil, fmt.Errorf("sui transaction submission for '%s' failed: %w", getChainTipFunc, resp.Error)
+		return nil, fmt.Errorf("sui transaction submission for '%s' failed: %s", getChainTipFunc, resp.Error)
 	}
 
 	resultEncoded := getBCSResult(resp)
