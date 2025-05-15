@@ -81,7 +81,7 @@ func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) []bcsEncode
 	return bcsEncode
 }
 
-// BlockHash return block hash
+// BlockHash returns block hash
 func (lb LightBlock) BlockHash() (chainhash.Hash, error) {
 	r := bytes.NewReader(lb.Header.Internal)
 	var header wire.BlockHeader
