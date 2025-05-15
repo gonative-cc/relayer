@@ -9,11 +9,18 @@ require (
 	github.com/block-vision/sui-go-sdk v1.0.7
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
+	github.com/fardream/go-bcs v0.8.7
 	github.com/joho/godotenv v1.5.1
+	github.com/pattonkan/sui-go v0.1.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.3.0
 	github.com/vektra/mockery/v2 v2.53.3
+)
+
+require (
+	github.com/btcsuite/btcutil v1.0.2 // indirect
+	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 )
 
 require (
