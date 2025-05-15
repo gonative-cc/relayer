@@ -22,7 +22,6 @@ type BlockHeader struct {
 }
 
 // LightBlock is light block
-// TODO: fix lint
 //
 //nolint:govet
 type LightBlock struct {
