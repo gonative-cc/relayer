@@ -14,6 +14,23 @@ import (
 // BTCHeaderSize is the size in bytes of a Bitcoin block header.
 const BTCHeaderSize = 80
 
+type bcsEncode []byte
+
+// BlockHeader is block header
+type BlockHeader struct {
+	Internal []uint8
+}
+
+// LightBlock is light block
+// TODO: fix lint
+//
+//nolint:govet
+type LightBlock struct {
+	Height    uint64
+	ChainWork [32]uint8
+	Header    *BlockHeader
+}
+
 // BlockHeaderFromHex converts a hexadecimal string representation of a Bitcoin
 // block header into a wire.BlockHeader struct.
 // The input must be 80 bytes hex string type.
@@ -48,8 +65,6 @@ func BlockHashToHex(hash chainhash.Hash) string {
 	return "0x" + hex.EncodeToString(hash.CloneBytes())
 }
 
-type bcsEncode []byte
-
 func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) []bcsEncode {
 	bcsEncode := make([]bcsEncode, len(res.Results[0].ReturnValues))
 
@@ -65,21 +80,6 @@ func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) []bcsEncode
 		bcsEncode[i] = b
 	}
 	return bcsEncode
-}
-
-// BlockHeader is block header
-type BlockHeader struct {
-	Internal []uint8
-}
-
-// LightBlock is light block
-// TODO: fix lint
-//
-//nolint:govet
-type LightBlock struct {
-	Height    uint64
-	ChainWork [32]uint8
-	Header    *BlockHeader
 }
 
 // BlockHash return block hash

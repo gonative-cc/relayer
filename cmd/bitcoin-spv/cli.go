@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 
-	// "github.com/block-vision/sui-go-sdk/signer"
-	// "github.com/block-vision/sui-go-sdk/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"

@@ -20,16 +20,16 @@ import (
 const (
 	insertHeadersFunc = "insert_headers"
 	containsBlockFunc = "exist"
-	headFunc          = "head"
+	getChainTipFunc   = "head"
 	verifySPVFunc     = "verify_tx"
 	lcModule          = "light_client"
 	// TODO: Use better defaultGasBudget
 	defaultGasBudget = 10000000000
 )
 
-// BTCLightClientObject implements the BitcoinSPV interface, interacting with a
-// Bitcoin SPV light client deployed as a smart contract on Sui.logger
-type BTCLightClientObject struct {
+// SPVClient implements the BitcoinSPV interface, interacting with a
+// Bitcoin SPV light client deployed as a smart contract on Sui
+type SPVClient struct {
 	*suiclient.ClientImpl
 	*suisigner.Signer
 	PackageID *sui.PackageId
@@ -37,7 +37,7 @@ type BTCLightClientObject struct {
 	logger    zerolog.Logger
 }
 
-var _ clients.BitcoinSPV = &BTCLightClientObject{}
+var _ clients.BitcoinSPV = &SPVClient{}
 
 // New BTCLIghtClientObject creates a new SPVClient instance.
 func New(
@@ -72,7 +72,13 @@ func New(
 			ShowOwner: true,
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
+	if lcObjectResp.Data.Owner.Shared == nil {
+		return nil, fmt.Errorf("error init spv client")
+	}
 	lcObjArg := suiptb.CallArg{
 		Object: &suiptb.ObjectArg{
 			SharedObject: &suiptb.SharedObjectArg{
@@ -82,11 +88,8 @@ func New(
 			},
 		},
 	}
-	if err != nil {
-		return nil, err
-	}
 
-	return &BTCLightClientObject{
+	return &SPVClient{
 		ClientImpl: suiClient,
 		Signer:     signer,
 		logger:     configureClientLogger(parentLogger),
@@ -100,7 +103,7 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 }
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
-func (c *BTCLightClientObject) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
+func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
@@ -121,12 +124,12 @@ func (c *BTCLightClientObject) InsertHeaders(ctx context.Context, blockHeaders [
 
 	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
 
-	_, err := c.moveCall(ctx, insertHeadersFunc, arguments)
+	_, err := c.executeTx(ctx, insertHeadersFunc, arguments)
 	return err
 }
 
 // ContainsBlock checks if the light client's chain includes a block with the given hash.
-func (c *BTCLightClientObject) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
+func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash) (bool, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
 	b, err := bcs.Marshal(blockHash[:])
@@ -146,13 +149,12 @@ func (c *BTCLightClientObject) ContainsBlock(ctx context.Context, blockHash chai
 	}
 
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
-
 	if err != nil {
 		return false, err
 	}
 
-	if resp.Error != "" {
-		return false, errors.New(resp.Error)
+	if !resp.Effects.Data.IsSuccess() {
+		return false, fmt.Errorf("sui transaction submission for '%s' failed: %w", containsBlockFunc, resp.Error)
 	}
 
 	resultEncoded := getBCSResult(resp)
@@ -171,13 +173,13 @@ func (c *BTCLightClientObject) ContainsBlock(ctx context.Context, blockHash chai
 }
 
 // GetLatestBlockInfo returns the block hash and height of the best block header.
-func (c *BTCLightClientObject) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
+func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
 	err := ptb.MoveCall(
 		c.PackageID,
 		lcModule,
-		headFunc,
+		getChainTipFunc,
 		[]sui.TypeTag{},
 		[]suiptb.CallArg{c.LcObjArg},
 	)
@@ -190,7 +192,7 @@ func (c *BTCLightClientObject) GetLatestBlockInfo(ctx context.Context) (*clients
 		return nil, err
 	}
 	if !resp.Effects.Data.IsSuccess() {
-		return nil, errors.New(resp.Error)
+		return nil, fmt.Errorf("sui transaction submission for '%s' failed: %w", getChainTipFunc, resp.Error)
 	}
 
 	resultEncoded := getBCSResult(resp)
@@ -222,18 +224,18 @@ func (c *BTCLightClientObject) GetLatestBlockInfo(ctx context.Context) (*clients
 
 // VerifySPV verifies an SPV proof against the light client's stored headers.
 // TODO: finish implementation
-func (c *BTCLightClientObject) VerifySPV(_ context.Context, _ *types.SPVProof) (int, error) {
+func (c *SPVClient) VerifySPV(_ context.Context, _ *types.SPVProof) (int, error) {
 	return 0, nil
 }
 
 // Stop performs any necessary cleanup and shutdown operations.
-func (c *BTCLightClientObject) Stop() {
+func (c *SPVClient) Stop() {
 	// TODO: Implement any necessary cleanup or shutdown logic
-	fmt.Println("Stop called")
+	c.logger.Info().Msg("Stop called")
 }
 
-// moveCall is a helper function to construct and execute a Move call on the Sui blockchain.
-func (c *BTCLightClientObject) moveCall(
+// executionTx is a helper function to construct and execute a Move call on the Sui blockchain.
+func (c *SPVClient) executeTx(
 	ctx context.Context,
 	function string,
 	arguments []any,
@@ -277,7 +279,7 @@ func (c *BTCLightClientObject) moveCall(
 	return signedResp, nil
 }
 
-func (c *BTCLightClientObject) devInspectTransactionBlock(
+func (c *SPVClient) devInspectTransactionBlock(
 	ctx context.Context,
 	ptb *suiptb.ProgrammableTransactionBuilder,
 ) (*suiclient.DevInspectTransactionBlockResponse, error) {
