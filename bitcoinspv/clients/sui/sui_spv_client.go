@@ -2,7 +2,6 @@ package sui
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
