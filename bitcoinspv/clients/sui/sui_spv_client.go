@@ -153,14 +153,11 @@ func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash)
 	}
 
 	if !resp.Effects.Data.IsSuccess() {
-		return false, fmt.Errorf("sui transaction submission for '%s' failed: %s", containsBlockFunc, resp.Error)
+		return false, fmt.Errorf("%w: function '%s' status: %s, error: %s",
+			ErrSuiTransactionFailed, containsBlockFunc, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
 	}
 
 	resultEncoded := getBCSResult(resp)
-	if err != nil {
-		return false, err
-	}
-
 	var result bool
 
 	err = bcs.UnmarshalAll(resultEncoded[0], &result)
@@ -191,13 +188,11 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		return nil, err
 	}
 	if !resp.Effects.Data.IsSuccess() {
-		return nil, fmt.Errorf("sui transaction submission for '%s' failed: %s", getChainTipFunc, resp.Error)
+		return nil, fmt.Errorf("%w: function '%s' status: %s, error: %s",
+			ErrSuiTransactionFailed, getChainTipFunc, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
 	}
 
 	resultEncoded := getBCSResult(resp)
-	if err != nil {
-		return nil, err
-	}
 
 	var result LightBlock
 

@@ -119,7 +119,7 @@ func (r *Relayer) getBootstrapRetryOptions(ctx context.Context) []retry.Option {
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(n uint, err error) {
 			r.logger.Warn().Msgf(
-				"Error bootstrapping relayer: %v. Attempts: %d, Max attempts: %d",
+				"Failed bootstrapping relayer: %v. Attempts: %d, Max attempts: %d",
 				err, n+1, bootstrapRetryAttempts,
 			)
 		}),
