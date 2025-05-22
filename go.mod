@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/avast/retry-go/v4 v4.6.1
-	github.com/block-vision/sui-go-sdk v1.0.7
+	github.com/block-vision/sui-go-sdk v1.0.8
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.8.7

@@ -1,8 +1,8 @@
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/avast/retry-go/v4 v4.6.1 h1:VkOLRubHdisGrHnTu89g08aQEWEgRU7LVEop3GbIcMk=
 github.com/avast/retry-go/v4 v4.6.1/go.mod h1:V6oF8njAwxJ5gRo1Q7Cxab24xs5NCWZBeaHHBklR8mA=
-github.com/block-vision/sui-go-sdk v1.0.7 h1:xFF5hydk9Mdkv71+BuR8DsHCRMiIKdBAXFwHu9yeUrM=
-github.com/block-vision/sui-go-sdk v1.0.7/go.mod h1:tf1o9oSxBa8h+CaUyPDW8LbqfW4YPjd4fL22yO4QXMo=
+github.com/block-vision/sui-go-sdk v1.0.8 h1:2EJ4TuBSg77NnZXf7JAdWdXf3mA1Yiz+BAccBRZub2U=
+github.com/block-vision/sui-go-sdk v1.0.8/go.mod h1:tf1o9oSxBa8h+CaUyPDW8LbqfW4YPjd4fL22yO4QXMo=
 github.com/btcsuite/btcd v0.20.1-beta/go.mod h1:wVuoA8VJLEcwgqHBwHmzLRazpKxTv13Px/pDuV7OomQ=
 github.com/btcsuite/btcd v0.22.0-beta.0.20220111032746-97732e52810c/go.mod h1:tjmYdS6MLJ5/s0Fj4DbLgSbDHbEqLJrtnHecBFkdz5M=
 github.com/btcsuite/btcd v0.23.5-0.20231215221805-96c9fd8078fd/go.mod h1:nm3Bko6zh6bWP60UxwoT5LzdGJsQJaPo6HjduXq9p6A=
