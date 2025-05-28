@@ -11,7 +11,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.8.7
 	github.com/joho/godotenv v1.5.1
-	github.com/pattonkan/sui-go v0.1.0
+	github.com/pattonkan/sui-go v0.1.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.3.0
