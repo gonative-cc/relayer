@@ -42,6 +42,7 @@ func setupTest(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoin
 		logger,
 		btcClient,
 		lcClient,
+		nil,
 	)
 	relayer.catchupLoopWait = 10 * time.Millisecond
 

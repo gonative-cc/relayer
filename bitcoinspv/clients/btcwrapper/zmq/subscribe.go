@@ -198,7 +198,7 @@ func (c *Client) getBlockByHash(
 	}
 
 	btcTxs := relayertypes.GetWrappedTxs(block)
-	indexedBlock := relayertypes.NewIndexedBlock(blockVerbose.Height, &block.Header, btcTxs)
+	indexedBlock := relayertypes.NewIndexedBlock(blockVerbose.Height, &block.Header, btcTxs, block)
 
 	return indexedBlock, nil
 }

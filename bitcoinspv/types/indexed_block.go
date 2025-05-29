@@ -12,6 +12,7 @@ type IndexedBlock struct {
 	BlockHeader  *wire.BlockHeader
 	Transactions []*btcutil.Tx
 	BlockHeight  int64
+	RawMsgBlock  *wire.MsgBlock
 }
 
 // NewIndexedBlock creates a new IndexedBlock instance with the given block height,
@@ -20,11 +21,13 @@ func NewIndexedBlock(
 	blockHeight int64,
 	blockHeader *wire.BlockHeader,
 	transactions []*btcutil.Tx,
+	rawMsgBlock *wire.MsgBlock,
 ) *IndexedBlock {
 	return &IndexedBlock{
 		BlockHeight:  blockHeight,
 		BlockHeader:  blockHeader,
 		Transactions: transactions,
+		RawMsgBlock:  rawMsgBlock,
 	}
 }
 

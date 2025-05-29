@@ -29,3 +29,4 @@ contrib/bitcoind-data
 contrib/fork-*
 e2e-bitcoin-spv.yml
 bitcoin-spv
+!cmd/bitcoin-spv/

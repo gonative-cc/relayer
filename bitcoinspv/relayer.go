@@ -22,6 +22,9 @@ type Relayer struct {
 	btcClient clients.BTCClient
 	lcClient  clients.BitcoinSPV
 
+	// Walrus
+	walrusHandler *WalrusHandler
+
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
@@ -36,18 +39,20 @@ type Relayer struct {
 
 // New creates and returns a new relayer object
 func New(
-	config *config.RelayerConfig,
+	cfg *config.RelayerConfig,
 	parentLogger zerolog.Logger,
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
+	walrusHandler *WalrusHandler,
 ) (*Relayer, error) {
 	logger := parentLogger.With().Str("module", "bitcoinspv").Logger()
 	relayer := &Relayer{
-		Config:               config,
+		Config:               cfg,
 		logger:               logger,
 		btcClient:            btcClient,
 		lcClient:             lcClient,
-		btcConfirmationDepth: config.BTCConfirmationDepth,
+		walrusHandler:        walrusHandler,
+		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,
 		catchupLoopWait:      10 * time.Second,

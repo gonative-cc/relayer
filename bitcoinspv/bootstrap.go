@@ -1,6 +1,7 @@
 package bitcoinspv
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -146,10 +147,40 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	// NOTE: here we are fetching only headers, if we want to fetch full blocks change the flag to true
-	r.logger.Info().Msg("Fetching headers...")
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, false)
+	fetchFullBlocks := r.Config.StoreBlocksInWalrus && r.walrusHandler != nil
+
+	if fetchFullBlocks {
+		r.logger.Info().Msg("Fetching FULL BLOCKS for cache and Walrus storage...")
+	} else {
+		r.logger.Info().Msg("Fetching HEADERS ONLY for cache...")
+	}
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
 	if err != nil {
-		return fmt.Errorf("failed to get headers: %w", err)
+		return fmt.Errorf("failed to get blocks/headers: %w", err)
+	}
+
+	// Store full blocks in Walrus
+	if fetchFullBlocks {
+		r.logger.Info().Msgf("Attempting to store %d full blocks to Walrus", len(blocks))
+		for _, ib := range blocks {
+			if ib.RawMsgBlock != nil {
+				var blockBuffer bytes.Buffer
+				if err := ib.RawMsgBlock.Serialize(&blockBuffer); err != nil {
+					r.logger.Error().Err(err).Msgf(
+						"failed to serialize block %d (%s) for Walrus",
+						ib.BlockHeight, ib.BlockHash().String(),
+					)
+					continue
+				}
+				_, walrusErr := r.walrusHandler.StoreBlock(blockBuffer.Bytes(), ib.BlockHeight, ib.BlockHash().String())
+				if walrusErr != nil {
+					r.logger.Warn().Err(walrusErr).Msgf(
+						"Walrus store failed for block %d (%s), continuing bootstrap.",
+						ib.BlockHeight, ib.BlockHash().String(),
+					)
+				}
+			}
+		}
 	}
 
 	err = r.btcCache.Init(blocks)

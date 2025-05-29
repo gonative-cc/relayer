@@ -33,18 +33,25 @@ func CmdExecute() error {
 // CmdStart returns the CLI commands for the bitcoin-spv
 func CmdStart() *cobra.Command {
 	var cfgFile = ""
+	var storeInWalrus = false
 
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Runs the bitcoin-spv relayer",
 		Run: func(_ *cobra.Command, _ []string) {
 			cfg, rootLogger := initConfig(cfgFile)
+			var walrusHandler *bitcoinspv.WalrusHandler
+			if storeInWalrus {
+				cfg.Relayer.StoreBlocksInWalrus = true
+			}
+
 			btcClient := initBTCClient(cfg, rootLogger)
 			nativeClient := initNativeClient(cfg, rootLogger)
+			walrusHandler = initWalrusHandler(&cfg.Relayer, rootLogger) // will return nil if flag not set
 
 			logTipBlock(btcClient, rootLogger)
 
-			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient)
+			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, walrusHandler)
 			spvRelayer.Start()
 
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
@@ -54,6 +61,7 @@ func CmdStart() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&cfgFile, "config", config.DefaultCfgFile(), "config file")
+	cmd.Flags().BoolVar(&storeInWalrus, "walrus", false, "enable storing full blocks in Walrus")
 	return cmd
 }
 
@@ -112,17 +120,27 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.Bit
 	return client
 }
 
+func initWalrusHandler(cfg *config.RelayerConfig, rootLogger zerolog.Logger) *bitcoinspv.WalrusHandler {
+	wh, err := bitcoinspv.NewWalrusHandler(cfg, rootLogger)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize WalrusHandler: %w", err))
+	}
+	return wh
+}
+
 func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger zerolog.Logger,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
+	walrusHandler *bitcoinspv.WalrusHandler,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
 		rootLogger,
 		btcClient,
 		nativeClient,
+		walrusHandler,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))
