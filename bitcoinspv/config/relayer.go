@@ -17,6 +17,8 @@ const (
 )
 
 // RelayerConfig defines configuration for the spv relayer.
+//
+//nolint:govet
 type RelayerConfig struct {
 	// Format is the format of the log (json|auto|console|logfmt)
 	Format string `mapstructure:"log-format"`

@@ -1,7 +1,6 @@
 package bitcoinspv
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -157,23 +156,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	if fetchFullBlocks {
 		r.logger.Info().Msgf("Attempting to store %d blocks to Walrus", len(blocks))
 		for _, ib := range blocks {
-			if ib.RawMsgBlock != nil {
-				var blockBuffer bytes.Buffer
-				if err := ib.RawMsgBlock.Serialize(&blockBuffer); err != nil {
-					r.logger.Error().Err(err).Msgf(
-						"failed to serialize block %d (%s) for Walrus",
-						ib.BlockHeight, ib.BlockHash().String(),
-					)
-					continue
-				}
-				_, walrusErr := r.walrusHandler.StoreBlock(blockBuffer.Bytes(), ib.BlockHeight, ib.BlockHash().String())
-				if walrusErr != nil {
-					r.logger.Warn().Err(walrusErr).Msgf(
-						"Walrus store failed for block %d (%s), continuing bootstrap.",
-						ib.BlockHeight, ib.BlockHash().String(),
-					)
-				}
-			}
+			r.UploadToWalrus(ib.RawMsgBlock, ib.BlockHeight, ib.BlockHash().String())
 		}
 	}
 

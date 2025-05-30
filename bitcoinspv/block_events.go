@@ -1,7 +1,6 @@
 package bitcoinspv
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 
@@ -68,25 +67,9 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	// walrus
+	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
-		var blockBuffer bytes.Buffer
-		if err := msgBlock.Serialize(&blockBuffer); err != nil {
-			r.logger.Error().Err(err).Msgf(
-				"Failed to serialize block %d (%s) for Walrus",
-				ib.BlockHeight, ib.BlockHash().String(),
-			)
-		} else {
-			rawBlockData := blockBuffer.Bytes()
-			_, walrusErr := r.walrusHandler.StoreBlock(rawBlockData, ib.BlockHeight, ib.BlockHash().String())
-			if walrusErr != nil {
-				r.logger.Warn().Err(walrusErr).Msgf(
-					"Walrus store failed for block %d (%s)",
-					ib.BlockHeight, ib.BlockHash().String(),
-				)
-
-			}
-		}
+		r.UploadToWalrus(msgBlock, ib.BlockHeight, ib.BlockHash().String())
 	}
 
 	r.btcCache.Add(ib)

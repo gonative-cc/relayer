@@ -54,7 +54,7 @@ func (wh *WalrusHandler) StoreBlock(
 ) (*string, error) {
 	rawBlockHex := hex.EncodeToString(rawBlockData)
 	// only for debug (block can be very long)
-	wh.logger.Debug().Msgf("Storing block: {\n heigh:%d,\n hash:%s,\n raw_block:%s\n} in Walrus...", 
+	wh.logger.Debug().Msgf("Storing block: {\n heigh:%d,\n hash:%s,\n raw_block:%s\n} in Walrus...",
 		blockHeight, blockHashStr, rawBlockHex)
 
 	epochs := wh.config.WalrusStorageEpochs
@@ -67,19 +67,20 @@ func (wh *WalrusHandler) StoreBlock(
 	}
 
 	var blobID string
-	if resp.NewlyCreated != nil {
+	switch {
+	case resp.NewlyCreated != nil:
 		blobID = resp.NewlyCreated.BlobObject.BlobID
 		wh.logger.Info().Msgf(
 			"Block %d (%s) newly stored in Walrus. Blob ID: %s, Cost: %d",
 			blockHeight, blockHashStr, blobID, resp.NewlyCreated.Cost,
 		)
-	} else if resp.AlreadyCertified != nil {
+	case resp.AlreadyCertified != nil:
 		blobID = resp.AlreadyCertified.BlobID
 		wh.logger.Info().Msgf(
 			"Block %d (%s) data already stored in Walrus. Blob ID: %s, End Epoch: %d",
 			blockHeight, blockHashStr, blobID, resp.AlreadyCertified.EndEpoch,
 		)
-	} else {
+	default:
 		return nil, fmt.Errorf("unexpected Walrus store response for block %d (%s)", blockHeight, blockHashStr)
 	}
 	return &blobID, nil

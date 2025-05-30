@@ -10,9 +10,9 @@ import (
 // and transaction details needed for Merkle proof generation
 type IndexedBlock struct {
 	BlockHeader  *wire.BlockHeader
+	RawMsgBlock  *wire.MsgBlock
 	Transactions []*btcutil.Tx
 	BlockHeight  int64
-	RawMsgBlock  *wire.MsgBlock
 }
 
 // NewIndexedBlock creates a new IndexedBlock instance with the given block height,
