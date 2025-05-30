@@ -146,14 +146,8 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
-	// NOTE: here we are fetching only headers, if we want to fetch full blocks change the flag to true
+	r.logger.Info().Msg("Fetching blocks/headers for cache and Walrus storage...")
 	fetchFullBlocks := r.Config.StoreBlocksInWalrus && r.walrusHandler != nil
-
-	if fetchFullBlocks {
-		r.logger.Info().Msg("Fetching FULL BLOCKS for cache and Walrus storage...")
-	} else {
-		r.logger.Info().Msg("Fetching HEADERS ONLY for cache...")
-	}
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
 	if err != nil {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
@@ -161,7 +155,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 
 	// Store full blocks in Walrus
 	if fetchFullBlocks {
-		r.logger.Info().Msgf("Attempting to store %d full blocks to Walrus", len(blocks))
+		r.logger.Info().Msgf("Attempting to store %d blocks to Walrus", len(blocks))
 		for _, ib := range blocks {
 			if ib.RawMsgBlock != nil {
 				var blockBuffer bytes.Buffer
