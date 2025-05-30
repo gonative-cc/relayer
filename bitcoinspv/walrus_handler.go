@@ -38,7 +38,7 @@ func NewWalrusHandler(cfg *config.RelayerConfig, parentLogger zerolog.Logger) (*
 		return nil, fmt.Errorf("failed to init Walrus")
 	}
 
-	logger.Info().Msg("Walrus client init successfull")
+	logger.Info().Msg("Walrus client init successful")
 	return &WalrusHandler{
 		client: walrusClient,
 		logger: logger,
@@ -54,7 +54,8 @@ func (wh *WalrusHandler) StoreBlock(
 ) (*string, error) {
 	rawBlockHex := hex.EncodeToString(rawBlockData)
 	// only for debug (block can be very long)
-	wh.logger.Debug().Msgf("Storing block: {\n heigh:%d,\n hash:%s,\n raw_block:%s\n} in Walrus...", blockHeight, blockHashStr, rawBlockHex)
+	wh.logger.Debug().Msgf("Storing block: {\n heigh:%d,\n hash:%s,\n raw_block:%s\n} in Walrus...", 
+		blockHeight, blockHashStr, rawBlockHex)
 
 	epochs := wh.config.WalrusStorageEpochs
 	storeOpts := &walrus.StoreOptions{Epochs: epochs}

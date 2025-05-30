@@ -146,7 +146,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
-	r.logger.Info().Msg("Fetching blocks/headers for cache and Walrus storage...")
+	r.logger.Info().Msg("Fetching blocks to internal cache and sending to Walrus storage...")
 	fetchFullBlocks := r.Config.StoreBlocksInWalrus && r.walrusHandler != nil
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
 	if err != nil {
