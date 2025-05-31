@@ -9,7 +9,7 @@ MODULE_NAME="bitcoin_executor"
 FUNCTION="execute_block"
 GAS_BUDGET="100000000"
 
-echo "Submiting blocks for execution from height $START_HEIGHT to $END_HEIGHT..."
+echo "Submitting blocks for execution from height $START_HEIGHT to $END_HEIGHT..."
 
 for (( HEIGHT=START_HEIGHT; HEIGHT<=END_HEIGHT; HEIGHT++ )); do
     echo "Processing block at height: $HEIGHT"
