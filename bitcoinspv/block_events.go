@@ -62,9 +62,14 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	ib, _, err := r.getAndValidateBlock(blockEvent)
+	ib, msgBlock, err := r.getAndValidateBlock(blockEvent)
 	if err != nil {
 		return err
+	}
+
+	// Store full block in Walrus
+	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
+		r.UploadToWalrus(msgBlock, ib.BlockHeight, ib.BlockHash().String())
 	}
 
 	r.btcCache.Add(ib)

@@ -86,7 +86,7 @@ func (c *Client) GetBTCBlockByHash(
 
 	btcTxs := relayertypes.GetWrappedTxs(blockDataRes.block)
 	return relayertypes.NewIndexedBlock(
-		blockInfoRes.info.Height, &blockDataRes.block.Header, btcTxs,
+		blockInfoRes.info.Height, &blockDataRes.block.Header, btcTxs, blockDataRes.block,
 	), blockDataRes.block, nil
 }
 
@@ -203,7 +203,7 @@ func (c *Client) GetBTCTailBlocksByHeight(
 			if err != nil {
 				return nil, fmt.Errorf("failed to get block header at height %d: %w", height, err)
 			}
-			indexedBlock = relayertypes.NewIndexedBlock(height, header, []*btcutil.Tx{})
+			indexedBlock = relayertypes.NewIndexedBlock(height, header, []*btcutil.Tx{}, nil)
 		}
 
 		blocks = append(blocks, indexedBlock)

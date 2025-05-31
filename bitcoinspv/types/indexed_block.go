@@ -10,6 +10,7 @@ import (
 // and transaction details needed for Merkle proof generation
 type IndexedBlock struct {
 	BlockHeader  *wire.BlockHeader
+	RawMsgBlock  *wire.MsgBlock
 	Transactions []*btcutil.Tx
 	BlockHeight  int64
 }
@@ -20,11 +21,13 @@ func NewIndexedBlock(
 	blockHeight int64,
 	blockHeader *wire.BlockHeader,
 	transactions []*btcutil.Tx,
+	rawMsgBlock *wire.MsgBlock,
 ) *IndexedBlock {
 	return &IndexedBlock{
 		BlockHeight:  blockHeight,
 		BlockHeader:  blockHeader,
 		Transactions: transactions,
+		RawMsgBlock:  rawMsgBlock,
 	}
 }
 

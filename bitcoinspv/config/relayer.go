@@ -17,6 +17,8 @@ const (
 )
 
 // RelayerConfig defines configuration for the spv relayer.
+//
+//nolint:govet
 type RelayerConfig struct {
 	// Format is the format of the log (json|auto|console|logfmt)
 	Format string `mapstructure:"log-format"`
@@ -37,6 +39,12 @@ type RelayerConfig struct {
 	HeadersChunkSize uint32 `mapstructure:"headers-chunk-size"`
 	// ProcessBlockTimeout is the timeout duration for processing a single block.
 	ProcessBlockTimeout time.Duration `mapstructure:"process-block-timeout"`
+
+	// Walrus config
+	StoreBlocksInWalrus  bool     `mapstructure:"store-in-walrus"`
+	WalrusStorageEpochs  int      `mapstructure:"walrus-storage-epochs"`
+	WalrusPublisherURLs  []string `mapstructure:"walrus-publisher-urls"`
+	WalrusAggregatorURLs []string `mapstructure:"walrus-aggregator-urls"`
 }
 
 func isPresent(v string, list []string) bool {
@@ -130,5 +138,9 @@ func DefaultRelayerConfig() RelayerConfig {
 		BTCCacheSize:          minBTCCacheSize,
 		HeadersChunkSize:      minheadersChunkSize,
 		BTCConfirmationDepth:  defaultConfirmationDepth,
+		StoreBlocksInWalrus:   false,
+		WalrusPublisherURLs:   []string{},
+		WalrusAggregatorURLs:  []string{},
+		WalrusStorageEpochs:   1,
 	}
 }
