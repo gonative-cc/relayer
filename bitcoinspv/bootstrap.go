@@ -58,7 +58,7 @@ func (r *Relayer) processHeaders(ctx context.Context) error {
 	if _, err := r.ProcessHeaders(ctx, headersToProcess); err != nil {
 		// occurs when multiple competing spv relayers exist
 		// or when our btc node is not fully synchronized
-		r.logger.Error().Msgf("Failed to submit headers: %v", err)
+		r.logger.Err(err).Msg("Failed to submit headers")
 		return err
 	}
 	return nil
