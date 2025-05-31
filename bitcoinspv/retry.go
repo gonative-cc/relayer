@@ -63,19 +63,19 @@ func RetryDo(
 	case categoryNonRecoverable:
 		logger.Warn().Err(err).Msg("Skip retry, error classified as non-retryable")
 	case categoryUnknown:
-		logger.Error().Err(err).Msg("Skip retry, error classification failed or unknown type")
+		logger.Err(err).Msg("Skip retry, error classification failed or unknown type")
 	case categoryRetryable:
 		logger.Debug().Err(err).Msg("Retryable error, trying to repeat the request")
 		// Add some randomness to prevent thrashing
 		jitter, randErr := randDuration(int64(sleep))
 		if randErr != nil {
-			logger.Error().Err(randErr).Msg("Failed to generate random jitter during retry")
+			logger.Err(randErr).Msg("Failed to generate random jitter during retry")
 			return randErr
 		}
 		sleep += jitter / 2
 
 		if sleep > maxSleepDuration {
-			logger.Error().Err(err).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
+			logger.Err(err).Dur("sleep_limit", maxSleepDuration).Msg("Retry timed out")
 			return fmt.Errorf("%w: last error was %w", ErrRetryTimeout, err)
 		}
 
@@ -84,7 +84,7 @@ func RetryDo(
 
 		return RetryDo(logger, 2*sleep, maxSleepDuration, retryableFunc)
 	default:
-		logger.Error().Err(err).Int("category", int(category)).Msg("Unhandled error category in RetryDo")
+		logger.Err(err).Int("category", int(category)).Msg("Unhandled error category in RetryDo")
 		return err
 	}
 	return err
