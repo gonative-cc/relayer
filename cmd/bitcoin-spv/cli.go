@@ -39,13 +39,22 @@ func CmdStart() *cobra.Command {
 		Use:   "start",
 		Short: "Runs the bitcoin-spv relayer",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			cfg, rootLogger := initConfig(cfgFile)
+			cfg, rootLogger, err := initConfig(cfgFile)
+			if err != nil {
+				return err
+			}
 			if storeInWalrus {
 				cfg.Relayer.StoreBlocksInWalrus = true
 			}
 
-			btcClient := initBTCClient(cfg, rootLogger)
-			nativeClient := initNativeClient(cfg, rootLogger)
+			btcClient, err := initBTCClient(cfg, rootLogger)
+			if err != nil {
+				return err
+			}
+			nativeClient, err := initNativeClient(cfg, rootLogger)
+			if err != nil {
+				return err
+			}
 			walrusHandler, err := initWalrusHandler(&cfg.Relayer, rootLogger) // will return nil if flag not set
 			if err != nil {
 				return err
@@ -68,19 +77,19 @@ func CmdStart() *cobra.Command {
 	return cmd
 }
 
-func initConfig(cfgFile string) (*config.Config, zerolog.Logger) {
+func initConfig(cfgFile string) (*config.Config, zerolog.Logger, error) {
 	cfg, err := config.New(cfgFile)
 	if err != nil {
-		panic(fmt.Errorf("failed to load config: %w", err))
+		return nil, zerolog.Logger{}, fmt.Errorf("failed to load config: %w", err)
 	}
 	rootLogger, err := cfg.CreateLogger()
 	if err != nil {
-		panic(fmt.Errorf("failed to create logger: %w", err))
+		return nil, rootLogger, fmt.Errorf("failed to create logger: %w", err)
 	}
-	return &cfg, rootLogger
+	return &cfg, rootLogger, nil
 }
 
-func initBTCClient(cfg *config.Config, rootLogger zerolog.Logger) *btcwrapper.Client {
+func initBTCClient(cfg *config.Config, rootLogger zerolog.Logger) (*btcwrapper.Client, error) {
 	btcClient, err := btcwrapper.NewClientWithBlockSubscriber(
 		&cfg.BTC,
 		cfg.Relayer.RetrySleepDuration,
@@ -88,9 +97,9 @@ func initBTCClient(cfg *config.Config, rootLogger zerolog.Logger) *btcwrapper.Cl
 		rootLogger,
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to open BTC client: %w", err))
+		return nil, fmt.Errorf("failed to open BTC client: %w", err)
 	}
-	return btcClient
+	return btcClient, nil
 }
 
 func logTipBlock(btcClient *btcwrapper.Client, rootLogger zerolog.Logger) {
@@ -106,21 +115,20 @@ func logTipBlock(btcClient *btcwrapper.Client, rootLogger zerolog.Logger) {
 		Msg("Got tip block")
 }
 
-func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) clients.BitcoinSPV {
+func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.BitcoinSPV, error) {
 	c := suiclient.NewClient(cfg.Sui.Endpoint)
 
 	signer, err := suisigner.NewSignerWithMnemonic(cfg.Sui.Mnemonic, suisigner.KeySchemeFlagDefault)
 	if err != nil {
-		panic(fmt.Errorf("failed to create new signer: %w", err))
+		return nil, fmt.Errorf("failed to create new signer: %w", err)
 	}
 
 	client, err := sui.New(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
-
 	if err != nil {
-		panic(fmt.Errorf("failed to create new bitcoinSPVClient: %w", err))
+		return nil, fmt.Errorf("failed to create new bitcoinSPVClient: %w", err)
 	}
 
-	return client
+	return client, nil
 }
 
 func initWalrusHandler(cfg *config.RelayerConfig, rootLogger zerolog.Logger) (*bitcoinspv.WalrusHandler, error) {
