@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/block-vision/sui-go-sdk/signer"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/joho/godotenv"
+	"github.com/pattonkan/sui-go/suiclient"
+	"github.com/pattonkan/sui-go/suisigner"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,8 +24,8 @@ func TestClient(t *testing.T) {
 	gasBudget := os.Getenv("IKA_GAS_BUDGET")
 	spvLCFun := "test"
 
-	cl := sui.NewSuiClient(localRPC).(*sui.Client)
-	s, err := signer.NewSignertWithMnemonic(localMnemonic)
+	cl := suiclient.NewClient(localRPC)
+	s, err := suisigner.NewSignerWithMnemonic(localMnemonic, suisigner.KeySchemeFlagDefault)
 	assert.Nil(t, err)
 
 	client, err := NewClient(
