@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is a DEMO of the Trustless Bitcoin Execution Node, documented in:
+# https://github.com/gonative-cc/sui-native/tree/master/bitcoin_executor
+
 #running bitcoind in regtest mode required for the scirpt to work. If the wallets already exist load them instead.
 bitcoin-cli -regtest createwallet "alice"
 bitcoin-cli -regtest createwallet "bob"
@@ -20,7 +23,6 @@ TX_HEX=$(bitcoin-cli -regtest getrawtransaction "$TXID_ALICE_TO_BOB")
 echo "Tx hex: $TX_HEX"
 
 bitcoin-cli -regtest decoderawtransaction "$TX_HEX"
-
 
 # Mine one block to include the tx
 bitcoin-cli -regtest generatetoaddress 1 "$ALICE_ADDRESS"
