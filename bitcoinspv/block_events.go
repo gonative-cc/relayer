@@ -98,15 +98,13 @@ func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
 func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) error {
 	// verify if block is already in cache and check for consistency
 	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
-	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
-		if block.BlockHash() == blockEvent.BlockHeader.BlockHash() {
-			r.logger.Debug().Msgf(
-				"Connecting block (height: %d, hash: %s) already in cache, skipping",
-				block.BlockHeight,
-				block.BlockHash().String(),
-			)
-			return nil
-		}
+	block, err := r.btcCache.FindBlock(blockEvent.Height)
+	if err != nil {
+		return err
+	}
+
+	if block.BlockHash() != blockEvent.BlockHeader.BlockHash() {
+
 		return fmt.Errorf(
 			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
 			blockEvent.Height,
@@ -115,7 +113,13 @@ func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) erro
 		)
 	}
 
+	r.logger.Debug().Msgf(
+		"Connecting block (height: %d, hash: %s) already in cache, skipping",
+		block.BlockHeight,
+		block.BlockHash().String(),
+	)
 	return nil
+
 }
 
 func (r *Relayer) getAndValidateBlock(
