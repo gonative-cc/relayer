@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -46,26 +47,36 @@ func (cache *BTCCache) Init(blocks []*IndexedBlock) error {
 	cache.blocks = make([]*IndexedBlock, 0)
 
 	for _, block := range blocks {
-		cache.add(block)
+		err := cache.add(block)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 // Add adds a new block to the cache
-func (cache *BTCCache) Add(block *IndexedBlock) {
+func (cache *BTCCache) Add(block *IndexedBlock) error {
 	cache.Lock()
 	defer cache.Unlock()
-	cache.add(block)
+	return cache.add(block)
 }
 
-func (cache *BTCCache) add(block *IndexedBlock) {
+func (cache *BTCCache) add(block *IndexedBlock) error {
+	if lastBlock := cache.last(); lastBlock != nil {
+		if lastBlock.BlockHeight == block.BlockHeight+1 {
+			return errors.New("invalid block when insert to cache")
+		}
+	}
+
 	if cache.size() == cache.maxEntries {
 		cache.blocks[0] = nil
 		cache.blocks = cache.blocks[1:]
 	}
 
 	cache.blocks = append(cache.blocks, block)
+	return nil
 }
 
 // First returns the oldest block in the cache (first in the queue).
@@ -80,16 +91,19 @@ func (cache *BTCCache) First() *IndexedBlock {
 	return cache.blocks[0]
 }
 
+func (cache *BTCCache) last() *IndexedBlock {
+	if len(cache.blocks) == 0 {
+		return nil
+	}
+	return cache.blocks[len(cache.blocks)-1]
+}
+
 // Last returns the most recent block in the cache (last in the queue).
 // Returns nil when cache is empty.
 func (cache *BTCCache) Last() *IndexedBlock {
 	cache.RLock()
 	defer cache.RUnlock()
-
-	if len(cache.blocks) == 0 {
-		return nil
-	}
-	return cache.blocks[len(cache.blocks)-1]
+	return cache.last()
 }
 
 // RemoveLast removes the most recent block from the cache (last in the queue).
