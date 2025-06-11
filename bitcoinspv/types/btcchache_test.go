@@ -209,52 +209,6 @@ func TestBTCCache_RemoveAll(t *testing.T) {
 	assert.Empty(t, cache.blocks)
 }
 
-func TestBTCCache_GetBlocksFrom(t *testing.T) {
-	maxSize := int64(5)
-	cache, _ := NewBTCCache(maxSize)
-	blocks := CreateTestIndexedBlocks(t, 5, 100) // 100, 101, 102, 103, 104
-	cache.Init(blocks)
-
-	tests := []struct {
-		name          string
-		height        int64
-		expectedLen   int
-		expectedFirst int64
-		expectedLast  int64
-		expectErr     bool
-	}{
-		{name: "from middle", height: 102, expectedLen: 3, expectedFirst: 102, expectedLast: 104, expectErr: false},
-		{name: "from start", height: 100, expectedLen: 5, expectedFirst: 100, expectedLast: 104, expectErr: false},
-		{name: "from end", height: 104, expectedLen: 1, expectedFirst: 104, expectedLast: 104, expectErr: false},
-		{name: "height below range", height: 99, expectErr: true},
-		{name: "height above range", height: 105, expectErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resultBlocks, err := cache.GetBlocksFrom(tt.height)
-
-			if tt.expectErr {
-				assert.Error(t, err)
-				assert.Nil(t, resultBlocks)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, resultBlocks)
-				assert.Len(t, resultBlocks, tt.expectedLen)
-				assert.Equal(t, tt.expectedFirst, resultBlocks[0].BlockHeight)
-				assert.Equal(t, tt.expectedLast, resultBlocks[len(resultBlocks)-1].BlockHeight)
-			}
-		})
-	}
-
-	t.Run("on empty cache", func(t *testing.T) {
-		emptyCache, _ := NewBTCCache(5)
-		resultBlocks, err := emptyCache.GetBlocksFrom(100)
-		assert.NoError(t, err)
-		assert.Empty(t, resultBlocks)
-	})
-}
-
 func TestBTCCache_GetAllBlocks(t *testing.T) {
 	cache, _ := NewBTCCache(5)
 

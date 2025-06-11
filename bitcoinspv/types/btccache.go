@@ -139,37 +139,6 @@ func (cache *BTCCache) size() int64 {
 	return int64(len(cache.blocks))
 }
 
-// GetBlocksFrom returns blocks from the given height to the tip
-func (cache *BTCCache) GetBlocksFrom(height int64) ([]*IndexedBlock, error) {
-	// TODO: Check if we need this API
-	cache.RLock()
-	defer cache.RUnlock()
-
-	if len(cache.blocks) == 0 {
-		return []*IndexedBlock{}, nil
-	}
-
-	firstHeight := cache.First().BlockHeight
-	lastHeight := cache.Last().BlockHeight
-
-	if height < firstHeight || height > lastHeight {
-		return nil, fmt.Errorf(
-			"height %d is out of range [%d, %d] of BTC cache",
-			height, firstHeight, lastHeight,
-		)
-	}
-
-	idx := sort.Search(len(cache.blocks), func(i int) bool {
-		return cache.blocks[i].BlockHeight >= height
-	})
-
-	if idx < len(cache.blocks) && cache.blocks[idx].BlockHeight == height {
-		return cache.blocks[idx:], nil
-	}
-
-	return nil, fmt.Errorf("block at height %d not found", height)
-}
-
 // GetAllBlocks returns all blocks in the cache
 func (cache *BTCCache) GetAllBlocks() []*IndexedBlock {
 	cache.RLock()
