@@ -207,11 +207,9 @@ func (cache *BTCCache) FindBlock(height int64) (*IndexedBlock, error) {
 	idx := sort.Search(len(cache.blocks), func(i int) bool {
 		return cache.blocks[i].BlockHeight >= height
 	})
-
 	if idx < len(cache.blocks) && cache.blocks[idx].BlockHeight == height {
 		return cache.blocks[idx], nil
 	}
-
 	return nil, fmt.Errorf("block at height %d not found", height)
 }
 
