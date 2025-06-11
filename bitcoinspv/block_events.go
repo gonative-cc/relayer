@@ -72,7 +72,10 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		r.UploadToWalrus(msgBlock, ib.BlockHeight, ib.BlockHash().String())
 	}
 
-	r.btcCache.Add(ib)
+	err = r.btcCache.Add(ib)
+	if err != nil {
+		return err
+	}
 
 	return r.processBlock(ib)
 }
