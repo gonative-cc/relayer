@@ -204,16 +204,6 @@ func (cache *BTCCache) FindBlock(height int64) (*IndexedBlock, error) {
 		return nil, fmt.Errorf("cache is empty")
 	}
 
-	firstHeight := cache.First().BlockHeight
-	lastHeight := cache.Last().BlockHeight
-
-	if height < firstHeight || height > lastHeight {
-		return nil, fmt.Errorf(
-			"height %d is out of range [%d, %d] of BTC cache",
-			height, firstHeight, lastHeight,
-		)
-	}
-
 	idx := sort.Search(len(cache.blocks), func(i int) bool {
 		return cache.blocks[i].BlockHeight >= height
 	})

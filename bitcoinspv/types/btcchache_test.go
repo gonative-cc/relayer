@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -367,33 +368,33 @@ func TestBTCCache_FindBlock(t *testing.T) {
 	cache.Init(blocks)
 
 	tests := []struct {
-		name        string
-		height      int64
-		expectFound bool
+		name   string
+		height int64
+		err    error
 	}{
-		{name: "find first", height: 100, expectFound: true},
-		{name: "find middle", height: 102, expectFound: true},
-		{name: "find last", height: 104, expectFound: true},
-		{name: "find missing", height: 99, expectFound: false},
-		{name: "find missing", height: 105, expectFound: false},
+		{name: "find first", height: 100, err: nil},
+		{name: "find middle", height: 102, err: nil},
+		{name: "find last", height: 104, err: nil},
+		{name: "find miss 1", height: 99, err: errors.New("block at height 99 not found")},
+		{name: "find miss 2", height: 105, err: errors.New("block at height 105 not found")},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			foundBlock := cache.FindBlock(tt.height)
-			if tt.expectFound {
-				assert.NotNil(t, foundBlock)
-				assert.Equal(t, tt.height, foundBlock.BlockHeight)
+			foundBlock, err := cache.FindBlock(tt.height)
+			if tt.err != nil {
+				assert.EqualError(t, err, tt.err.Error())
 			} else {
-				assert.Nil(t, foundBlock)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.height, foundBlock.BlockHeight)
 			}
 		})
 	}
 
 	t.Run("find in empty cache", func(t *testing.T) {
 		emptyCache, _ := NewBTCCache(5)
-		foundBlock := emptyCache.FindBlock(100)
-		assert.Nil(t, foundBlock)
+		_, err := emptyCache.FindBlock(100)
+		assert.EqualError(t, err, "cache is empty")
 	})
 }
 
