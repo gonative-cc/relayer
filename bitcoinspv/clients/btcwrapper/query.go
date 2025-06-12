@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	btcwire "github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv"
-
+	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	relayertypes "github.com/gonative-cc/relayer/bitcoinspv/types"
 )
+
+var _ clients.BTCClient = (*Client)(nil)
 
 // GetTipBlock retrieves the most recent block in the chain with verbose details
 func (c *Client) GetTipBlock() (*btcjson.GetBlockVerboseResult, error) {
@@ -46,11 +47,11 @@ func (c *Client) GetBTCTipBlock() (*chainhash.Hash, int64, error) {
 // GetBTCBlockByHash returns the block of given block hash
 func (c *Client) GetBTCBlockByHash(
 	blockHash *chainhash.Hash,
-) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error) {
+) (*relayertypes.IndexedBlock, error) {
 	// Get block info and raw block data in parallel using goroutines
 	type blockResult struct {
 		info  *btcjson.GetBlockVerboseResult
-		block *btcwire.MsgBlock
+		block *wire.MsgBlock
 		err   error
 	}
 
@@ -70,7 +71,7 @@ func (c *Client) GetBTCBlockByHash(
 	// Wait for both goroutines to complete
 	blockInfoRes := <-blockInfoChan
 	if blockInfoRes.err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to get block verbose by hash %s: %w",
 			blockHash.String(), blockInfoRes.err,
 		)
@@ -78,35 +79,34 @@ func (c *Client) GetBTCBlockByHash(
 
 	blockDataRes := <-blockDataChan
 	if blockDataRes.err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to get block by hash %s: %w",
 			blockHash.String(), blockDataRes.err,
 		)
 	}
 
-	btcTxs := relayertypes.GetWrappedTxs(blockDataRes.block)
 	return relayertypes.NewIndexedBlock(
-		blockInfoRes.info.Height, &blockDataRes.block.Header, btcTxs, blockDataRes.block,
-	), blockDataRes.block, nil
+		blockInfoRes.info.Height, blockDataRes.block,
+	), nil
 }
 
 // GetBTCBlockByHeight returns a block with the given height
 func (c *Client) GetBTCBlockByHeight(
 	height int64,
-) (*relayertypes.IndexedBlock, *btcwire.MsgBlock, error) {
+) (*relayertypes.IndexedBlock, error) {
 	// Get block hash for the height
 	blockHash, err := c.getBlockHashRetries(height)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get block by height %d: %w", height, err)
+		return nil, fmt.Errorf("failed to get block by height %d: %w", height, err)
 	}
 
 	// Get the full block data
-	indexedBlock, msgBlock, err := c.GetBTCBlockByHash(blockHash)
+	indexedBlock, err := c.GetBTCBlockByHash(blockHash)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get block by hash %s: %w", blockHash.String(), err)
+		return nil, fmt.Errorf("failed to get block by hash %s: %w", blockHash.String(), err)
 	}
 
-	return indexedBlock, msgBlock, nil
+	return indexedBlock, nil
 }
 
 func (c *Client) getBestBlockHashRetries() (*chainhash.Hash, error) {
@@ -137,8 +137,8 @@ func (c *Client) getBlockHashRetries(height int64) (*chainhash.Hash, error) {
 	return blockHash, nil
 }
 
-func (c *Client) getBlockRetries(hash *chainhash.Hash) (*btcwire.MsgBlock, error) {
-	var block *btcwire.MsgBlock
+func (c *Client) getBlockRetries(hash *chainhash.Hash) (*wire.MsgBlock, error) {
+	var block *wire.MsgBlock
 
 	if err := bitcoinspv.RetryDo(c.logger, c.retrySleepDuration, c.maxRetrySleepDuration, func() error {
 		var err error
@@ -193,7 +193,7 @@ func (c *Client) GetBTCTailBlocksByHeight(
 	for height := baseHeight; height <= tipHeight; height++ {
 		var indexedBlock *relayertypes.IndexedBlock
 		if fullBlocks {
-			block, _, err := c.GetBTCBlockByHeight(height)
+			block, err := c.GetBTCBlockByHeight(height)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get block at height %d: %w", height, err)
 			}
@@ -203,7 +203,7 @@ func (c *Client) GetBTCTailBlocksByHeight(
 			if err != nil {
 				return nil, fmt.Errorf("failed to get block header at height %d: %w", height, err)
 			}
-			indexedBlock = relayertypes.NewIndexedBlock(height, header, []*btcutil.Tx{}, nil)
+			indexedBlock = relayertypes.NewIndexedBlock(height, wire.NewMsgBlock(header))
 		}
 
 		blocks = append(blocks, indexedBlock)
@@ -221,7 +221,7 @@ func (c *Client) GetBTCTailBlocksByHeight(
 }
 
 // GetBTCBlockHeaderByHeight retrieves only the block header for a given height.
-func (c *Client) GetBTCBlockHeaderByHeight(height int64) (*btcwire.BlockHeader, error) {
+func (c *Client) GetBTCBlockHeaderByHeight(height int64) (*wire.BlockHeader, error) {
 	blockHash, err := c.getBlockHashRetries(height)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get block hash for height %d: %w", height, err)

@@ -33,7 +33,7 @@ func breakIntoChunks(blocks []*types.IndexedBlock, chunkSize int) []Chunk {
 func toBlockHeaders(blocks []*types.IndexedBlock) []wire.BlockHeader {
 	headers := make([]wire.BlockHeader, 0, len(blocks))
 	for _, block := range blocks {
-		headers = append(headers, *block.BlockHeader)
+		headers = append(headers, block.RawMsgBlock.Header)
 	}
 	return headers
 }

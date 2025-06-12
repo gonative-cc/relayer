@@ -267,9 +267,9 @@ func TestProcessHeaders(t *testing.T) {
 	ctx := context.Background()
 	testBlocks := types.CreateTestIndexedBlocks(t, 5, 100) // heights 100, 101, 102, 103, 104
 
-	expectedHeadersChunk1 := []wire.BlockHeader{*testBlocks[0].BlockHeader, *testBlocks[1].BlockHeader} // 100, 101
-	expectedHeadersChunk2 := []wire.BlockHeader{*testBlocks[2].BlockHeader, *testBlocks[3].BlockHeader} // 102, 103
-	expectedHeadersChunk3 := []wire.BlockHeader{*testBlocks[4].BlockHeader}                             // 104
+	expectedHeadersChunk1 := []wire.BlockHeader{*&testBlocks[0].RawMsgBlock.Header, *&testBlocks[1].RawMsgBlock.Header} // 100, 101
+	expectedHeadersChunk2 := []wire.BlockHeader{*&testBlocks[2].RawMsgBlock.Header, *&testBlocks[3].RawMsgBlock.Header} // 102, 103
+	expectedHeadersChunk3 := []wire.BlockHeader{*&testBlocks[4].RawMsgBlock.Header}                                     // 104
 
 	tests := []struct {
 		name          string

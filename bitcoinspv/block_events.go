@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
@@ -62,14 +61,14 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	ib, msgBlock, err := r.getAndValidateBlock(blockEvent)
+	ib, err := r.getAndValidateBlock(blockEvent)
 	if err != nil {
 		return err
 	}
 
 	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
-		r.UploadToWalrus(msgBlock, ib.BlockHeight, ib.BlockHash().String())
+		r.UploadToWalrus(ib.RawMsgBlock, ib.BlockHeight, ib.BlockHash().String())
 	}
 
 	r.btcCache.Add(ib)
@@ -120,27 +119,27 @@ func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) erro
 
 func (r *Relayer) getAndValidateBlock(
 	blockEvent *btctypes.BlockEvent,
-) (*types.IndexedBlock, *wire.MsgBlock, error) {
+) (*types.IndexedBlock, error) {
 	blockHash := blockEvent.BlockHeader.BlockHash()
-	indexedBlock, msgBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
+	indexedBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error retrieving block (height: %d, hash: %v) from BTC client: %w",
 			blockEvent.Height, blockHash, err,
 		)
 	}
 
 	// if parent block != cache tip, cache needs update - restart bootstrap
-	parentHash := msgBlock.Header.PrevBlock
+	parentHash := indexedBlock.RawMsgBlock.Header.PrevBlock
 	tipCacheBlock := r.btcCache.Last()
 	if parentHash != tipCacheBlock.BlockHash() {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
 			tipCacheBlock.BlockHeight, indexedBlock.BlockHeight,
 		)
 	}
 
-	return indexedBlock, msgBlock, nil
+	return indexedBlock, nil
 }
 
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {

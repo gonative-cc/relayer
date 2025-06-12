@@ -16,7 +16,7 @@ func CreateTestIndexedBlocks(t *testing.T, count int64, startHeight int64) []*In
 		hdr := wire.BlockHeader{Version: int32(i + 1), Timestamp: time.Now().Add(time.Duration(i) * time.Minute)}
 		blocks[i] = &IndexedBlock{
 			BlockHeight: startHeight + i,
-			BlockHeader: &hdr,
+			RawMsgBlock: wire.NewMsgBlock(&hdr),
 		}
 	}
 	return blocks

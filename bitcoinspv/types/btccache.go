@@ -193,7 +193,6 @@ func (cache *BTCCache) FindBlock(height int64) *IndexedBlock {
 	if height < blocks[0].BlockHeight || height > blocks[len(blocks)-1].BlockHeight {
 		return nil
 	}
-
 	// Binary search
 	left, right := 0, len(blocks)-1
 	for left <= right {
