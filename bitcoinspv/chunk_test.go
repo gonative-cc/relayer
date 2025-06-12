@@ -13,7 +13,7 @@ func TestToBlockHeaders(t *testing.T) {
 		headers := toBlockHeaders(inputBlocks)
 		assert.NotNil(t, headers)
 		assert.Len(t, headers, 1)
-		assert.Equal(t, inputBlocks[0].RawMsgBlock.Header.Version, headers[0].Version)
+		assert.Equal(t, inputBlocks[0].MsgBlock.Header.Version, headers[0].Version)
 	})
 
 	t.Run("multiple blocks", func(t *testing.T) {
@@ -22,7 +22,7 @@ func TestToBlockHeaders(t *testing.T) {
 		assert.NotNil(t, headers)
 		assert.Len(t, headers, 3)
 		for i := 0; i < 3; i++ {
-			assert.Equal(t, inputBlocks[i].RawMsgBlock.Header.Version, headers[i].Version)
+			assert.Equal(t, inputBlocks[i].MsgBlock.Header.Version, headers[i].Version)
 		}
 	})
 }

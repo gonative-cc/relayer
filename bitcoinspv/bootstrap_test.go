@@ -28,7 +28,7 @@ func TestBootstrapRelayer(t *testing.T) {
 		blocks := make([]*types.IndexedBlock, confirmationDepth)
 		for i := 0; i < confirmationDepth; i++ {
 			blocks[i] = &types.IndexedBlock{
-				RawMsgBlock: wire.NewMsgBlock(&wire.BlockHeader{}),
+				MsgBlock:    wire.NewMsgBlock(&wire.BlockHeader{}),
 				BlockHeight: int64(i + latestFinalized),
 			}
 		}

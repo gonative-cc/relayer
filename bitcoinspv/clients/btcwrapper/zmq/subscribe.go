@@ -180,7 +180,7 @@ func (c *Client) sendBlockEventToChannel(hashBytes []byte, event btctypes.EventT
 		return
 	}
 
-	blockEvent := btctypes.NewBlockEvent(event, indexedBlock.BlockHeight, &indexedBlock.RawMsgBlock.Header)
+	blockEvent := btctypes.NewBlockEvent(event, indexedBlock.BlockHeight, &indexedBlock.MsgBlock.Header)
 	c.blockEventsChannel <- blockEvent
 }
 

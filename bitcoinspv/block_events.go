@@ -68,7 +68,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 
 	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
-		r.UploadToWalrus(ib.RawMsgBlock, ib.BlockHeight, ib.BlockHash().String())
+		r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
 	}
 
 	r.btcCache.Add(ib)
@@ -130,7 +130,7 @@ func (r *Relayer) getAndValidateBlock(
 	}
 
 	// if parent block != cache tip, cache needs update - restart bootstrap
-	parentHash := indexedBlock.RawMsgBlock.Header.PrevBlock
+	parentHash := indexedBlock.MsgBlock.Header.PrevBlock
 	tipCacheBlock := r.btcCache.Last()
 	if parentHash != tipCacheBlock.BlockHash() {
 		return nil, fmt.Errorf(

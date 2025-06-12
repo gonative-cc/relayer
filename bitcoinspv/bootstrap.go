@@ -156,7 +156,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	if fetchFullBlocks {
 		r.logger.Info().Msgf("Attempting to store %d blocks to Walrus", len(blocks))
 		for _, ib := range blocks {
-			r.UploadToWalrus(ib.RawMsgBlock, ib.BlockHeight, ib.BlockHash().String())
+			r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
 		}
 	}
 
