@@ -79,6 +79,14 @@ func (cache *BTCCache) add(block *IndexedBlock) error {
 	return nil
 }
 
+// IsEmpty check cache is empty
+func (cache *BTCCache) IsEmpty() bool {
+	cache.RLock()
+	defer cache.RUnlock()
+
+	return len(cache.blocks) == 0
+}
+
 // First returns the oldest block in the cache (first in the queue).
 // Returns nil when cache is empty.
 func (cache *BTCCache) First() *IndexedBlock {

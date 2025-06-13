@@ -53,25 +53,26 @@ func (r *Relayer) handleBlockEvent(blockEvent *btctypes.BlockEvent) error {
 // onConnectedBlock handles connected blocks from the BTC client.
 // It is invoked when a new connected block is received from the Bitcoin node.
 func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
-	if err := r.validateBlockHeight(blockEvent); err != nil {
+	if err := r.ensureBlockConsistencyWithCache(blockEvent); err != nil {
 		return err
 	}
 
-	if err := r.validateBlockConsistency(blockEvent); err != nil {
-		return err
-	}
-
-	ib, err := r.getAndValidateBlock(blockEvent)
-	if err != nil {
-		return err
-	}
-
+	// new index block depend on Walrus config
+	ib := new(types.IndexedBlock)
 	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
+		h := blockEvent.BlockHeader.BlockHash()
+		ib, err := r.btcClient.GetBTCBlockByHash(&h)
+		if err != nil {
+			return err
+		}
 		r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
+	} else {
+		ib.BlockHeight = blockEvent.Height
+		ib.MsgBlock.Header = *blockEvent.BlockHeader
 	}
 
-	err = r.btcCache.Add(ib)
+	err := r.btcCache.Add(ib)
 	if err != nil {
 		return err
 	}
@@ -79,74 +80,43 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	return r.processBlock(ib)
 }
 
-func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
-	latestCachedBlock := r.btcCache.First()
-	if latestCachedBlock == nil {
-		err := fmt.Errorf("cache is empty, restart bootstrap process")
-		return err
+func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error {
+	if r.btcCache.IsEmpty() {
+		return fmt.Errorf("cache is empty, restart bootstrap process")
 	}
-	if blockEvent.Height < latestCachedBlock.BlockHeight {
+
+	f := r.btcCache.First()
+	if f.BlockHeight > b.Height {
 		r.logger.Debug().Msgf(
 			"Connecting block (height: %d, hash: %s) too early, skipping",
-			blockEvent.Height,
-			blockEvent.BlockHeader.BlockHash().String(),
+			b.Height,
+			b.BlockHeader.BlockHash().String(),
 		)
 		return nil
 	}
 
-	return nil
-}
-
-func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) error {
-	// verify if block is already in cache and check for consistency
-	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
-	block, err := r.btcCache.FindBlock(blockEvent.Height)
+	cb, err := r.btcCache.FindBlock(b.Height)
 	if err != nil {
 		return err
 	}
 
-	if block.BlockHash() != blockEvent.BlockHeader.BlockHash() {
-
+	if cb.BlockHash() != b.BlockHeader.BlockHash() {
 		return fmt.Errorf(
 			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
-			blockEvent.Height,
-			blockEvent.BlockHeader.BlockHash().String(),
-			block.BlockHash().String(),
+			b.Height,
+			b.BlockHeader.BlockHash().String(),
+			cb.BlockHash().String(),
 		)
 	}
 
-	r.logger.Debug().Msgf(
-		"Connecting block (height: %d, hash: %s) already in cache, skipping",
-		block.BlockHeight,
-		block.BlockHash().String(),
-	)
-	return nil
-
-}
-
-func (r *Relayer) getAndValidateBlock(
-	blockEvent *btctypes.BlockEvent,
-) (*types.IndexedBlock, error) {
-	blockHash := blockEvent.BlockHeader.BlockHash()
-	indexedBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving block (height: %d, hash: %v) from BTC client: %w",
-			blockEvent.Height, blockHash, err,
-		)
-	}
-
-	// if parent block != cache tip, cache needs update - restart bootstrap
-	parentHash := indexedBlock.MsgBlock.Header.PrevBlock
-	tipCacheBlock := r.btcCache.Last()
-	if parentHash != tipCacheBlock.BlockHash() {
-		return nil, fmt.Errorf(
+	l := r.btcCache.Last()
+	if l.BlockHash() != b.BlockHeader.PrevBlock {
+		return fmt.Errorf(
 			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
-			tipCacheBlock.BlockHeight, indexedBlock.BlockHeight,
+			l.BlockHeight, b.Height,
 		)
 	}
-
-	return indexedBlock, nil
+	return nil
 }
 
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
