@@ -142,6 +142,7 @@ func (r *Relayer) WaitForShutdown() {
 	r.wg.Wait()
 }
 
+// UploadToWalrus upload full BTC block to Walrus
 func (r *Relayer) UploadToWalrus(msgBlock *wire.MsgBlock, blockHeight int64, blockHashStr string) {
 	if msgBlock == nil {
 		r.logger.Warn().Int64("height", blockHeight).Str("hash", blockHashStr).

@@ -180,7 +180,7 @@ func (c *Client) sendBlockEventToChannel(hashBytes []byte, event btctypes.EventT
 		return
 	}
 
-	blockEvent := btctypes.NewBlockEvent(event, indexedBlock.BlockHeight, indexedBlock.BlockHeader)
+	blockEvent := btctypes.NewBlockEvent(event, indexedBlock.BlockHeight, &indexedBlock.MsgBlock.Header)
 	c.blockEventsChannel <- blockEvent
 }
 
@@ -197,8 +197,6 @@ func (c *Client) getBlockByHash(
 		return nil, err
 	}
 
-	btcTxs := relayertypes.GetWrappedTxs(block)
-	indexedBlock := relayertypes.NewIndexedBlock(blockVerbose.Height, &block.Header, btcTxs, block)
-
+	indexedBlock := relayertypes.NewIndexedBlock(blockVerbose.Height, block)
 	return indexedBlock, nil
 }
