@@ -172,7 +172,7 @@ func (cache *BTCCache) TrimConfirmedBlocks(k int) []*IndexedBlock {
 	return trimmed
 }
 
- // FindBlock returns an error if no block is found in the cache.
+// FindBlock returns an error if no block is found in the cache.
 // return error when not block not found in cache
 func (cache *BTCCache) FindBlock(height int64) (*IndexedBlock, error) {
 	cache.RLock()
