@@ -161,6 +161,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	}
 
 	err = r.btcCache.Init(blocks)
+
 	return err
 }
 
