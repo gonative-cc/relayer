@@ -99,6 +99,7 @@ func (cache *BTCCache) First() *IndexedBlock {
 	return cache.blocks[0]
 }
 
+// last is internal method. Only use Last
 func (cache *BTCCache) last() *IndexedBlock {
 	if len(cache.blocks) == 0 {
 		return nil
