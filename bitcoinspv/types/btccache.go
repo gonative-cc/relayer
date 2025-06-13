@@ -79,7 +79,7 @@ func (cache *BTCCache) add(block *IndexedBlock) error {
 	return nil
 }
 
-// IsEmpty check cache is empty
+// IsEmpty checks if the cache is empty
 func (cache *BTCCache) IsEmpty() bool {
 	cache.RLock()
 	defer cache.RUnlock()
@@ -172,7 +172,7 @@ func (cache *BTCCache) TrimConfirmedBlocks(k int) []*IndexedBlock {
 	return trimmed
 }
 
-// FindBlock locates a block by its height using binary search
+ // FindBlock returns an error if no block is found in the cache.
 // return error when not block not found in cache
 func (cache *BTCCache) FindBlock(height int64) (*IndexedBlock, error) {
 	cache.RLock()
