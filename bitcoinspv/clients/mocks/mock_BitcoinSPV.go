@@ -10,8 +10,6 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	types "github.com/gonative-cc/relayer/bitcoinspv/types"
-
 	wire "github.com/btcsuite/btcd/wire"
 )
 
@@ -219,63 +217,6 @@ func (_c *MockBitcoinSPV_Stop_Call) Return() *MockBitcoinSPV_Stop_Call {
 
 func (_c *MockBitcoinSPV_Stop_Call) RunAndReturn(run func()) *MockBitcoinSPV_Stop_Call {
 	_c.Run(run)
-	return _c
-}
-
-// VerifySPV provides a mock function with given fields: ctx, spvProof
-func (_m *MockBitcoinSPV) VerifySPV(ctx context.Context, spvProof *types.SPVProof) (int, error) {
-	ret := _m.Called(ctx, spvProof)
-
-	if len(ret) == 0 {
-		panic("no return value specified for VerifySPV")
-	}
-
-	var r0 int
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *types.SPVProof) (int, error)); ok {
-		return rf(ctx, spvProof)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *types.SPVProof) int); ok {
-		r0 = rf(ctx, spvProof)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *types.SPVProof) error); ok {
-		r1 = rf(ctx, spvProof)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockBitcoinSPV_VerifySPV_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifySPV'
-type MockBitcoinSPV_VerifySPV_Call struct {
-	*mock.Call
-}
-
-// VerifySPV is a helper method to define mock.On call
-//   - ctx context.Context
-//   - spvProof *types.SPVProof
-func (_e *MockBitcoinSPV_Expecter) VerifySPV(ctx interface{}, spvProof interface{}) *MockBitcoinSPV_VerifySPV_Call {
-	return &MockBitcoinSPV_VerifySPV_Call{Call: _e.mock.On("VerifySPV", ctx, spvProof)}
-}
-
-func (_c *MockBitcoinSPV_VerifySPV_Call) Run(run func(ctx context.Context, spvProof *types.SPVProof)) *MockBitcoinSPV_VerifySPV_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*types.SPVProof))
-	})
-	return _c
-}
-
-func (_c *MockBitcoinSPV_VerifySPV_Call) Return(_a0 int, _a1 error) *MockBitcoinSPV_VerifySPV_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockBitcoinSPV_VerifySPV_Call) RunAndReturn(run func(context.Context, *types.SPVProof) (int, error)) *MockBitcoinSPV_VerifySPV_Call {
-	_c.Call.Return(run)
 	return _c
 }
 
