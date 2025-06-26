@@ -49,7 +49,7 @@ func (cache *BTCCache) Init(blocks []*IndexedBlock) error {
 	for _, block := range blocks {
 		err := cache.add(block)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to add %s to cache %w", block.BlockHash(), err)
 		}
 	}
 

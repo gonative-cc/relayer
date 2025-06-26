@@ -80,11 +80,19 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	return r.processBlock(ib)
 }
 
+// ensureBlockConsistencyWithCache check the status of new block
+// Steps by steps:
+//  1. Check cache empty
+//  2. Skip verify if new block too early (new block heigh < first block in cache)
+//  3. Check we can append new block to cache.
+//  4. Check block already in cache, and hash of new block
+//     and block have a same height in cache is identical
 func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error {
 	if r.btcCache.IsEmpty() {
 		return fmt.Errorf("cache is empty, restart bootstrap process")
 	}
 
+	//
 	f := r.btcCache.First()
 	if f.BlockHeight > b.Height {
 		r.logger.Debug().Msgf(
@@ -95,11 +103,23 @@ func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error 
 		return nil
 	}
 
+	// check we can append new block to btcCache
+	l := r.btcCache.Last()
+	if l.BlockHeight+1 == b.Height {
+		if l.BlockHash() == b.BlockHeader.PrevBlock {
+			return nil
+		}
+		return fmt.Errorf(
+			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
+			l.BlockHeight, b.Height,
+		)
+	}
+
+	// check new block consistency with cache if this exist in cache
 	cb, err := r.btcCache.FindBlock(b.Height)
 	if err != nil {
 		return err
 	}
-
 	if cb.BlockHash() != b.BlockHeader.BlockHash() {
 		return fmt.Errorf(
 			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
@@ -109,13 +129,6 @@ func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error 
 		)
 	}
 
-	l := r.btcCache.Last()
-	if l.BlockHash() != b.BlockHeader.PrevBlock {
-		return fmt.Errorf(
-			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
-			l.BlockHeight, b.Height,
-		)
-	}
 	return nil
 }
 
