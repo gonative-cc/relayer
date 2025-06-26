@@ -118,7 +118,7 @@ func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error 
 	// check new block consistency with cache if this exist in cache
 	cb, err := r.btcCache.FindBlock(b.Height)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't find new block in cache %w", err)
 	}
 	if cb.BlockHash() != b.BlockHeader.BlockHash() {
 		return fmt.Errorf(
