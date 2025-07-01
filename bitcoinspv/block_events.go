@@ -57,7 +57,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	// new index block depend on Walrus config
+	// new index block depends on Walrus config
 	ib := new(types.IndexedBlock)
 	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
