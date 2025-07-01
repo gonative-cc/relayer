@@ -8,7 +8,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/fardream/go-bcs/bcs"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
-	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/pattonkan/sui-go/sui"
 	"github.com/pattonkan/sui-go/sui/suiptb"
 	"github.com/pattonkan/sui-go/suiclient"
@@ -214,12 +213,6 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 	}
 
 	return blockInfo, nil
-}
-
-// VerifySPV verifies an SPV proof against the light client's stored headers.
-// TODO: finish implementation
-func (c *SPVClient) VerifySPV(_ context.Context, _ *types.SPVProof) (int, error) {
-	return 0, nil
 }
 
 // Stop performs any necessary cleanup and shutdown operations.
