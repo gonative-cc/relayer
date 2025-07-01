@@ -53,7 +53,7 @@ func (r *Relayer) handleBlockEvent(blockEvent *btctypes.BlockEvent) error {
 // onConnectedBlock handles connected blocks from the BTC client.
 // It is invoked when a new connected block is received from the Bitcoin node.
 func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
-	if err := r.ensureBlockConsistencyWithCache(blockEvent); err != nil {
+	if err := r.checkBlockValidity(blockEvent); err != nil {
 		return err
 	}
 
@@ -92,7 +92,6 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 		return fmt.Errorf("cache is empty, restart bootstrap process")
 	}
 
-	//
 	f := r.btcCache.First()
 	if f.BlockHeight > b.Height {
 		r.logger.Debug().Msgf(
@@ -115,23 +114,27 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 		)
 	}
 
-	// check new block consistency with cache if this exist in cache
-	cb, err := r.btcCache.FindBlock(b.Height)
+	reOrg, err := r.isReOrg(b)
 	if err != nil {
-		return fmt.Errorf("can't find new block in cache %w", err)
+		return err
 	}
-	if cb.BlockHash() != b.BlockHeader.BlockHash() {
-		return fmt.Errorf(
-			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
-			b.Height,
-			b.BlockHeader.BlockHash().String(),
-			cb.BlockHash().String(),
-		)
+	if reOrg {
+		return fmt.Errorf("Reorg happened at block heigh %d, rebootstrap relayer", b.Height)
 	}
-
 	return nil
 }
 
+// isReorg check new block we receive can create reorg for not
+func (r *Relayer) isReOrg(b *btctypes.BlockEvent) (bool, error) {
+	cb, err := r.btcCache.FindBlock(b.Height)
+	if err != nil {
+		return false, fmt.Errorf("can't find new block in cache %w", err)
+	}
+	if cb.BlockHash() != b.BlockHeader.BlockHash() {
+		return true, nil
+	}
+	return false, nil
+}
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.Config.ProcessBlockTimeout)
 	defer cancel()
