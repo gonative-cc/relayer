@@ -87,7 +87,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 //  3. Check we can append new block to cache.
 //  4. Check block already in cache, and hash of new block
 //     and block have a same height in cache is identical
-func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error {
+func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 	if r.btcCache.IsEmpty() {
 		return fmt.Errorf("cache is empty, restart bootstrap process")
 	}
