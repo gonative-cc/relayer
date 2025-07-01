@@ -103,7 +103,7 @@ func (r *Relayer) ensureBlockConsistencyWithCache(b *btctypes.BlockEvent) error 
 		return nil
 	}
 
-	// check we can append new block to btcCache
+	// check if we can append a new block to cache
 	l := r.btcCache.Last()
 	if l.BlockHeight+1 == b.Height {
 		if l.BlockHash() == b.BlockHeader.PrevBlock {
