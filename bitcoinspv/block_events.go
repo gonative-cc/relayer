@@ -85,7 +85,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 //  1. Checks if cache is empty
 //  2. Skips verify if a new block not old enough (new block heigh < first block in cache)
 //  3. Checks if appending a new block to cache is possible
-//  4. Checks reorg happend, If reorg happended we will rebootstrap relayer
+//  4. Checks reorg happen, If reorg happended we will rebootstrap relayer
 func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 	if r.btcCache.IsEmpty() {
 		return fmt.Errorf("cache is empty, restart bootstrap process")
@@ -118,7 +118,7 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 		return err
 	}
 	if reOrg {
-		return fmt.Errorf("Reorg happened at block heigh %d, rebootstrap relayer", b.Height)
+		return fmt.Errorf("reorg happened at block heigh %d, rebootstrap relayer", b.Height)
 	}
 	return nil
 }

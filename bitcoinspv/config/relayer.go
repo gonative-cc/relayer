@@ -56,7 +56,7 @@ func isPresent(v string, list []string) bool {
 	return false
 }
 
-// Validate does validation checks for relayer configration values
+// Validate does validation checks for relayer configuration values
 func (cfg *RelayerConfig) Validate() error {
 	if err := cfg.validateLogging(); err != nil {
 		return err
