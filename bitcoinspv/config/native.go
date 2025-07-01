@@ -13,7 +13,7 @@ type NativeConfig struct {
 	RPCEndpoint string `mapstructure:"rpc-endpoint"`
 }
 
-// Validate does validation checks for native client configration values
+// Validate does validation checks for native client configuration values
 func (cfg *NativeConfig) Validate() error {
 	if cfg.RPCEndpoint == "" {
 		return errors.New("native RPC endpoint cannot be empty")
