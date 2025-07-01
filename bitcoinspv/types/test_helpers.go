@@ -1,4 +1,4 @@
-// revive:disable:file
+//revive:disable:file
 package types
 
 import (
