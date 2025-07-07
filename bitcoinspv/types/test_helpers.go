@@ -1,4 +1,5 @@
-//revive:disable:file
+// revive:disable:var-naming
+
 package types
 
 import (
