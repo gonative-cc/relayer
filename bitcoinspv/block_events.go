@@ -57,7 +57,6 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	// new index block depends on Walrus config
 	ib := new(types.IndexedBlock)
 	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
@@ -123,7 +122,7 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 	return nil
 }
 
-// isReorg check new block we receive can create reorg for not
+// isReorg checks if the block is a part of new chain after re-org
 func (r *Relayer) isReOrg(b *btctypes.BlockEvent) (bool, error) {
 	cb, err := r.btcCache.FindBlock(b.Height)
 	if err != nil {
