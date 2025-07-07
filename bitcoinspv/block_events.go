@@ -73,7 +73,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 
 	err := r.btcCache.Add(ib)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't add block to cache %w", err)
 	}
 
 	return r.processBlock(ib)
