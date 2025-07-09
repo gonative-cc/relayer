@@ -102,7 +102,7 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 
 	// check if we can append a new block to cache
 	l := r.btcCache.Last()
-	if l.BlockHeight + 1 == b.Height {
+	if l.BlockHeight+1 == b.Height {
 		if l.BlockHash() == b.BlockHeader.PrevBlock {
 			return nil
 		}
