@@ -82,9 +82,9 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 // checkBlockValidity checks the status of a new block
 // Steps:
 //  1. Checks if cache is empty
-//  2. Skips verify if a new block not old enough (new block heigh < first block in cache)
+//  2. Skips verify if a new block not old enough (new block height < first block in cache)
 //  3. Checks if appending a new block to cache is possible
-//  4. Checks reorg happen, If reorg happened we will rebootstrap relayer
+//  4. Checks if the new block is part of new chain (reorg), If so returns a specific error (this have to be handled by the caller and bootstrap process for the cache restarted)
 func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 	if r.btcCache.IsEmpty() {
 		return fmt.Errorf("cache is empty, restart bootstrap process")
@@ -102,12 +102,12 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 
 	// check if we can append a new block to cache
 	l := r.btcCache.Last()
-	if l.BlockHeight+1 == b.Height {
+	if l.BlockHeight + 1 == b.Height {
 		if l.BlockHash() == b.BlockHeader.PrevBlock {
 			return nil
 		}
 		return fmt.Errorf(
-			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
+			"cache tip height: %d is outdated for connecting block %d, bootstrap process must be restarted",
 			l.BlockHeight, b.Height,
 		)
 	}
@@ -117,7 +117,7 @@ func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
 		return err
 	}
 	if reOrg {
-		return fmt.Errorf("reorg happened at block heigh %d, rebootstrap relayer", b.Height)
+		return fmt.Errorf("reorg happened at block heigh %d, bootstrap process must be restarted", b.Height)
 	}
 	return nil
 }
