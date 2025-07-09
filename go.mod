@@ -10,7 +10,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.8.7
 	github.com/joho/godotenv v1.5.1
-	github.com/pattonkan/sui-go v0.1.3
+	github.com/pattonkan/sui-go v0.1.4
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/tinylib/msgp v1.3.0
@@ -19,6 +19,7 @@ require (
 
 require (
 	github.com/btcsuite/btcutil v1.0.2 // indirect
+	github.com/coder/websocket v1.8.13 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 )
 
@@ -30,8 +31,8 @@ require (
 	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 // indirect
 	github.com/chigopher/pathlib v0.19.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/decred/dcrd/crypto/blake256 v1.0.1 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
+	github.com/decred/dcrd/crypto/blake256 v1.1.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -63,7 +64,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
