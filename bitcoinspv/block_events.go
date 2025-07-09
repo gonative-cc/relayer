@@ -53,95 +53,87 @@ func (r *Relayer) handleBlockEvent(blockEvent *btctypes.BlockEvent) error {
 // onConnectedBlock handles connected blocks from the BTC client.
 // It is invoked when a new connected block is received from the Bitcoin node.
 func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
-	if err := r.validateBlockHeight(blockEvent); err != nil {
+	if err := r.checkBlockValidity(blockEvent); err != nil {
 		return err
 	}
 
-	if err := r.validateBlockConsistency(blockEvent); err != nil {
-		return err
-	}
-
-	ib, err := r.getAndValidateBlock(blockEvent)
-	if err != nil {
-		return err
-	}
-
+	ib := new(types.IndexedBlock)
 	// Store full block in Walrus
 	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
+		h := blockEvent.BlockHeader.BlockHash()
+		ib, err := r.btcClient.GetBTCBlockByHash(&h)
+		if err != nil {
+			return err
+		}
 		r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
+	} else {
+		ib.BlockHeight = blockEvent.Height
+		ib.MsgBlock.Header = *blockEvent.BlockHeader
 	}
 
-	r.btcCache.Add(ib)
+	err := r.btcCache.Add(ib)
+	if err != nil {
+		return fmt.Errorf("can't add block to cache %w", err)
+	}
 
 	return r.processBlock(ib)
 }
 
-func (r *Relayer) validateBlockHeight(blockEvent *btctypes.BlockEvent) error {
-	latestCachedBlock := r.btcCache.First()
-	if latestCachedBlock == nil {
-		err := fmt.Errorf("cache is empty, restart bootstrap process")
-		return err
+// checkBlockValidity checks the status of a new block
+// Steps:
+//  1. Checks if cache is empty
+//  2. Skips verify if a new block not old enough (new block height < first block in cache)
+//  3. Checks if appending a new block to cache is possible
+//  4. Checks if the new block is part of new chain (reorg),
+//     If so returns a specific error, this error handled by the caller and bootstrap process for the cache restarted.
+func (r *Relayer) checkBlockValidity(b *btctypes.BlockEvent) error {
+	if r.btcCache.IsEmpty() {
+		return fmt.Errorf("cache is empty, restart bootstrap process")
 	}
-	if blockEvent.Height < latestCachedBlock.BlockHeight {
+
+	f := r.btcCache.First()
+	if f.BlockHeight > b.Height {
 		r.logger.Debug().Msgf(
 			"Connecting block (height: %d, hash: %s) too early, skipping",
-			blockEvent.Height,
-			blockEvent.BlockHeader.BlockHash().String(),
+			b.Height,
+			b.BlockHeader.BlockHash().String(),
 		)
 		return nil
 	}
 
-	return nil
-}
-
-func (r *Relayer) validateBlockConsistency(blockEvent *btctypes.BlockEvent) error {
-	// verify if block is already in cache and check for consistency
-	// NOTE: this scenario can occur when bootstrap process starts after BTC block subscription
-	if block := r.btcCache.FindBlock(blockEvent.Height); block != nil {
-		if block.BlockHash() == blockEvent.BlockHeader.BlockHash() {
-			r.logger.Debug().Msgf(
-				"Connecting block (height: %d, hash: %s) already in cache, skipping",
-				block.BlockHeight,
-				block.BlockHash().String(),
-			)
+	// check if we can append a new block to cache
+	l := r.btcCache.Last()
+	if l.BlockHeight+1 == b.Height {
+		if l.BlockHash() == b.BlockHeader.PrevBlock {
 			return nil
 		}
 		return fmt.Errorf(
-			"block mismatch at height %d: connecting block hash %s differs from cached block hash %s",
-			blockEvent.Height,
-			blockEvent.BlockHeader.BlockHash().String(),
-			block.BlockHash().String(),
+			"cache tip height: %d is outdated for connecting block %d, bootstrap process must be restarted",
+			l.BlockHeight, b.Height,
 		)
 	}
 
+	reOrg, err := r.isReOrg(b)
+	if err != nil {
+		return err
+	}
+	if reOrg {
+		return fmt.Errorf("reorg happened at block heigh %d, bootstrap process must be restarted", b.Height)
+	}
 	return nil
 }
 
-func (r *Relayer) getAndValidateBlock(
-	blockEvent *btctypes.BlockEvent,
-) (*types.IndexedBlock, error) {
-	blockHash := blockEvent.BlockHeader.BlockHash()
-	indexedBlock, err := r.btcClient.GetBTCBlockByHash(&blockHash)
+// isReorg checks if the block is a part of new chain after re-org
+func (r *Relayer) isReOrg(b *btctypes.BlockEvent) (bool, error) {
+	cb, err := r.btcCache.FindBlock(b.Height)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving block (height: %d, hash: %v) from BTC client: %w",
-			blockEvent.Height, blockHash, err,
-		)
+		return false, fmt.Errorf("can't find new block in cache %w", err)
 	}
-
-	// if parent block != cache tip, cache needs update - restart bootstrap
-	parentHash := indexedBlock.MsgBlock.Header.PrevBlock
-	tipCacheBlock := r.btcCache.Last()
-	if parentHash != tipCacheBlock.BlockHash() {
-		return nil, fmt.Errorf(
-			"cache tip height: %d is outdated for connecting block %d, bootstrap process needs restart",
-			tipCacheBlock.BlockHeight, indexedBlock.BlockHeight,
-		)
+	if cb.BlockHash() != b.BlockHeader.BlockHash() {
+		return true, nil
 	}
-
-	return indexedBlock, nil
+	return false, nil
 }
-
 func (r *Relayer) processBlock(indexedBlock *types.IndexedBlock) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.Config.ProcessBlockTimeout)
 	defer cancel()

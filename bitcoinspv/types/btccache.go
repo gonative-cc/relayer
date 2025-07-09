@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -46,26 +47,44 @@ func (cache *BTCCache) Init(blocks []*IndexedBlock) error {
 	cache.blocks = make([]*IndexedBlock, 0)
 
 	for _, block := range blocks {
-		cache.add(block)
+		err := cache.add(block)
+		if err != nil {
+			return fmt.Errorf("failed to add %s to cache %w", block.BlockHash(), err)
+		}
 	}
 
 	return nil
 }
 
 // Add adds a new block to the cache
-func (cache *BTCCache) Add(block *IndexedBlock) {
+func (cache *BTCCache) Add(block *IndexedBlock) error {
 	cache.Lock()
 	defer cache.Unlock()
-	cache.add(block)
+	return cache.add(block)
 }
 
-func (cache *BTCCache) add(block *IndexedBlock) {
+func (cache *BTCCache) add(block *IndexedBlock) error {
+	if lastBlock := cache.last(); lastBlock != nil {
+		if lastBlock.BlockHeight == block.BlockHeight+1 {
+			return errors.New("invalid block when insert to cache")
+		}
+	}
+
 	if cache.size() == cache.maxEntries {
 		cache.blocks[0] = nil
 		cache.blocks = cache.blocks[1:]
 	}
 
 	cache.blocks = append(cache.blocks, block)
+	return nil
+}
+
+// IsEmpty checks if the cache is empty
+func (cache *BTCCache) IsEmpty() bool {
+	cache.RLock()
+	defer cache.RUnlock()
+
+	return len(cache.blocks) == 0
 }
 
 // First returns the oldest block in the cache (first in the queue).
@@ -80,16 +99,20 @@ func (cache *BTCCache) First() *IndexedBlock {
 	return cache.blocks[0]
 }
 
+// last is internal method. Only use Last
+func (cache *BTCCache) last() *IndexedBlock {
+	if len(cache.blocks) == 0 {
+		return nil
+	}
+	return cache.blocks[len(cache.blocks)-1]
+}
+
 // Last returns the most recent block in the cache (last in the queue).
 // Returns nil when cache is empty.
 func (cache *BTCCache) Last() *IndexedBlock {
 	cache.RLock()
 	defer cache.RUnlock()
-
-	if len(cache.blocks) == 0 {
-		return nil
-	}
-	return cache.blocks[len(cache.blocks)-1]
+	return cache.last()
 }
 
 // RemoveLast removes the most recent block from the cache (last in the queue).
@@ -125,36 +148,6 @@ func (cache *BTCCache) size() int64 {
 	return int64(len(cache.blocks))
 }
 
-// GetBlocksFrom returns blocks from the given height to the tip
-func (cache *BTCCache) GetBlocksFrom(height int64) ([]*IndexedBlock, error) {
-	cache.RLock()
-	defer cache.RUnlock()
-
-	if len(cache.blocks) == 0 {
-		return []*IndexedBlock{}, nil
-	}
-
-	firstHeight := cache.First().BlockHeight
-	lastHeight := cache.Last().BlockHeight
-
-	if height < firstHeight || height > lastHeight {
-		return nil, fmt.Errorf(
-			"height %d is out of range [%d, %d] of BTC cache",
-			height, firstHeight, lastHeight,
-		)
-	}
-
-	idx := sort.Search(len(cache.blocks), func(i int) bool {
-		return cache.blocks[i].BlockHeight >= height
-	})
-
-	if idx < len(cache.blocks) && cache.blocks[idx].BlockHeight == height {
-		return cache.blocks[idx:], nil
-	}
-
-	return nil, fmt.Errorf("block at height %d not found", height)
-}
-
 // GetAllBlocks returns all blocks in the cache
 func (cache *BTCCache) GetAllBlocks() []*IndexedBlock {
 	cache.RLock()
@@ -179,38 +172,23 @@ func (cache *BTCCache) TrimConfirmedBlocks(k int) []*IndexedBlock {
 	return trimmed
 }
 
-// FindBlock locates a block by its height using binary search
-func (cache *BTCCache) FindBlock(height int64) *IndexedBlock {
+// FindBlock returns an error if no block is found in the cache.
+// return error when not block not found in cache
+func (cache *BTCCache) FindBlock(height int64) (*IndexedBlock, error) {
 	cache.RLock()
 	defer cache.RUnlock()
 
-	blocks := cache.blocks
-	if len(blocks) == 0 {
-		return nil
+	if len(cache.blocks) == 0 {
+		return nil, fmt.Errorf("cache is empty")
 	}
 
-	// Check if height is within valid range
-	if height < blocks[0].BlockHeight || height > blocks[len(blocks)-1].BlockHeight {
-		return nil
+	idx := sort.Search(len(cache.blocks), func(i int) bool {
+		return cache.blocks[i].BlockHeight >= height
+	})
+	if idx < len(cache.blocks) && cache.blocks[idx].BlockHeight == height {
+		return cache.blocks[idx], nil
 	}
-	// Binary search
-	left, right := 0, len(blocks)-1
-	for left <= right {
-		mid := left + (right-left)/2
-		block := blocks[mid]
-		blockHeight := block.BlockHeight
-
-		switch {
-		case blockHeight == height:
-			return block
-		case blockHeight > height:
-			right = mid - 1
-		default:
-			left = mid + 1
-		}
-	}
-
-	return nil
+	return nil, fmt.Errorf("block at height %d not found", height)
 }
 
 // Resize updates the maximum number of entries allowed in the cache
