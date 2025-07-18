@@ -152,6 +152,10 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
 	}
 
+	if r.indexerClient != nil {
+		go r.indexerClient.SendBlocks(blocks)
+	}
+
 	// Store full blocks in Walrus
 	if fetchFullBlocks {
 		r.logger.Info().Msgf("Attempting to store %d blocks to Walrus", len(blocks))

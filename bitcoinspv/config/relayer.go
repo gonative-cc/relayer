@@ -40,6 +40,9 @@ type RelayerConfig struct {
 	// ProcessBlockTimeout is the timeout duration for processing a single block.
 	ProcessBlockTimeout time.Duration `mapstructure:"process-block-timeout"`
 
+	// IndexerConfig
+	IndexerURL string `mapstructure:"indexer-url"`
+
 	// Walrus config
 	StoreBlocksInWalrus  bool     `mapstructure:"store-in-walrus"`
 	WalrusStorageEpochs  int      `mapstructure:"walrus-storage-epochs"`
