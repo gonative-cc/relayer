@@ -65,6 +65,10 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		if err != nil {
 			return err
 		}
+		// TODO: for now lets keep the walrus but i think it should be independent. Maybe a if sendToIndexer==true?
+		if r.indexerClient != nil {
+			go r.indexerClient.SendBlocks([]*types.IndexedBlock{ib})
+		}
 		r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
 	} else {
 		ib.BlockHeight = blockEvent.Height

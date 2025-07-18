@@ -8,6 +8,7 @@ relayer:
   headers-chunk-size: 10
   confirmation_depth: 6
   process-block-timeout: 20s
+  indexer-url: "http://127.0.0.1:8787" # default wrangler dev URL
 btc:
   no-client-tls: true
   ca-file: $HOME/.btcd/rpc.cert

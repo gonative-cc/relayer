@@ -21,8 +21,9 @@ type Relayer struct {
 	logger zerolog.Logger
 
 	// Clients
-	btcClient clients.BTCClient
-	lcClient  clients.BitcoinSPV
+	btcClient     clients.BTCClient
+	lcClient      clients.BitcoinSPV
+	indexerClient *clients.IndexerClient
 
 	// Walrus
 	walrusHandler *WalrusHandler
@@ -53,6 +54,7 @@ func New(
 		logger:               logger,
 		btcClient:            btcClient,
 		lcClient:             lcClient,
+		indexerClient:        clients.NewIndexerClient(cfg.IndexerURL, logger),
 		walrusHandler:        walrusHandler,
 		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
