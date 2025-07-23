@@ -86,7 +86,7 @@ func New(
 	}
 
 	if lcObjectResp.Data.Owner.Shared == nil {
-		return nil, fmt.Errorf("object '%s' is not a shared object and cannot be used for the light client", lightClientObjectIDHex)
+		return nil, fmt.Errorf("object '%s' is not a shared object", lightClientObjectIDHex)
 	}
 
 	lcObjArg := suiptb.CallArg{
