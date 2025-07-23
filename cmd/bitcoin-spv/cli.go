@@ -43,9 +43,6 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if storeInWalrus {
-				cfg.Relayer.StoreBlocksInWalrus = true
-			}
 
 			btcClient, err := initBTCClient(cfg, rootLogger)
 			if err != nil {
@@ -55,14 +52,10 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			walrusHandler, err := initWalrusHandler(&cfg.Relayer, rootLogger) // will return nil if flag not set
-			if err != nil {
-				return err
-			}
 
 			logTipBlock(btcClient, rootLogger)
 
-			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, walrusHandler)
+			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient)
 			spvRelayer.Start()
 
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
@@ -131,27 +124,17 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.Bi
 	return client, nil
 }
 
-func initWalrusHandler(cfg *config.RelayerConfig, rootLogger zerolog.Logger) (*bitcoinspv.WalrusHandler, error) {
-	wh, err := bitcoinspv.NewWalrusHandler(cfg, rootLogger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize WalrusHandler: %w", err)
-	}
-	return wh, nil
-}
-
 func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger zerolog.Logger,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
-	walrusHandler *bitcoinspv.WalrusHandler,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
 		rootLogger,
 		btcClient,
 		nativeClient,
-		walrusHandler,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))

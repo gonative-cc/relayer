@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/rs/zerolog"
@@ -28,7 +29,7 @@ type IndexerClient struct {
 func NewIndexerClient(url string, parentLogger zerolog.Logger) *IndexerClient {
 	return &IndexerClient{
 		url:    fmt.Sprintf("%s/bitcoin/blocks", url),
-		client: &http.Client{},
+		client: &http.Client{Timeout: 10 * time.Second},
 		logger: parentLogger.With().Str("module", "indexer_client").Logger(),
 	}
 }
@@ -43,7 +44,7 @@ func (c *IndexerClient) SendBlocks(blocks []*types.IndexedBlock) {
 	for i, block := range blocks {
 		var blockBuffer bytes.Buffer
 		if err := block.MsgBlock.Serialize(&blockBuffer); err != nil {
-			c.logger.Error().Err(err).Msgf("failed to serialize block %d for indexer", block.BlockHeight)
+			c.logger.Error().Err(err).Msgf("Failed to serialize block %d for indexer", block.BlockHeight)
 			return
 		}
 		payload[i] = IndexerPayload{

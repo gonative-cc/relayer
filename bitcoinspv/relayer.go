@@ -1,11 +1,9 @@
 package bitcoinspv
 
 import (
-	"bytes"
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
@@ -25,9 +23,6 @@ type Relayer struct {
 	lcClient      clients.BitcoinSPV
 	indexerClient *clients.IndexerClient
 
-	// Walrus
-	walrusHandler *WalrusHandler
-
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
@@ -46,7 +41,6 @@ func New(
 	parentLogger zerolog.Logger,
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
-	walrusHandler *WalrusHandler,
 ) (*Relayer, error) {
 	logger := parentLogger.With().Str("module", "bitcoinspv").Logger()
 	relayer := &Relayer{
@@ -55,7 +49,6 @@ func New(
 		btcClient:            btcClient,
 		lcClient:             lcClient,
 		indexerClient:        clients.NewIndexerClient(cfg.IndexerURL, logger),
-		walrusHandler:        walrusHandler,
 		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,
@@ -142,31 +135,4 @@ func (r *Relayer) Stop() {
 // WaitForShutdown waits for all relayer goroutines to complete before returning
 func (r *Relayer) WaitForShutdown() {
 	r.wg.Wait()
-}
-
-// UploadToWalrus upload full BTC block to Walrus
-func (r *Relayer) UploadToWalrus(msgBlock *wire.MsgBlock, blockHeight int64, blockHashStr string) {
-	if msgBlock == nil {
-		r.logger.Warn().Int64("height", blockHeight).Str("hash", blockHashStr).
-			Msg("UploadToWalrus called with nil msgBlock, skipping Walrus store.")
-		return
-	}
-
-	var blockBuffer bytes.Buffer
-	if err := msgBlock.Serialize(&blockBuffer); err != nil {
-		r.logger.Error().Err(err).Msgf(
-			"Failed to serialize block %d (%s) for Walrus",
-			blockHeight, blockHashStr,
-		)
-	} else {
-		rawBlockData := blockBuffer.Bytes()
-		_, walrusErr := r.walrusHandler.StoreBlock(rawBlockData, blockHeight, blockHashStr)
-		if walrusErr != nil {
-			r.logger.Warn().Err(walrusErr).Msgf(
-				"Walrus store failed for block %d (%s)",
-				blockHeight, blockHashStr,
-			)
-
-		}
-	}
 }

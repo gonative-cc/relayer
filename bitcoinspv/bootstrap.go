@@ -146,22 +146,14 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	r.logger.Info().Msg("Fetching blocks to internal cache and sending to Walrus storage...")
-	fetchFullBlocks := r.Config.StoreBlocksInWalrus && r.walrusHandler != nil
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, true)
 	if err != nil {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
 	}
 
 	if r.indexerClient != nil {
+		r.logger.Info().Msgf("Attempting to send %d blocks to Indexer", len(blocks))
 		go r.indexerClient.SendBlocks(blocks)
-	}
-
-	// Store full blocks in Walrus
-	if fetchFullBlocks {
-		r.logger.Info().Msgf("Attempting to store %d blocks to Walrus", len(blocks))
-		for _, ib := range blocks {
-			r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
-		}
 	}
 
 	err = r.btcCache.Init(blocks)

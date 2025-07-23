@@ -58,24 +58,15 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	}
 
 	ib := new(types.IndexedBlock)
-	// Store full block in Walrus
-	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
-		h := blockEvent.BlockHeader.BlockHash()
-		ib, err := r.btcClient.GetBTCBlockByHash(&h)
-		if err != nil {
-			return err
-		}
-		// TODO: for now lets keep the walrus but i think it should be independent. Maybe a if sendToIndexer==true?
-		if r.indexerClient != nil {
-			go r.indexerClient.SendBlocks([]*types.IndexedBlock{ib})
-		}
-		r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
-	} else {
-		ib.BlockHeight = blockEvent.Height
-		ib.MsgBlock.Header = *blockEvent.BlockHeader
+	h := blockEvent.BlockHeader.BlockHash()
+	ib, err := r.btcClient.GetBTCBlockByHash(&h)
+	if err != nil {
+		return err
 	}
-
-	err := r.btcCache.Add(ib)
+	if r.indexerClient != nil {
+		go r.indexerClient.SendBlocks([]*types.IndexedBlock{ib})
+	}
+	err = r.btcCache.Add(ib)
 	if err != nil {
 		return fmt.Errorf("can't add block to cache %w", err)
 	}
