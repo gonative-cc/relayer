@@ -289,7 +289,7 @@ func (c *SPVClient) devInspectTransactionBlock(
 	return c.DevInspectTransactionBlock(ctx, &r)
 }
 
-// CheckGetObjErr inspects obj error struct to create a proper error response.
+// CheckGetObjErr inspects objectResponse struct for errors to create a proper error response.
 // Sui GetObject returns error on network error. Object errors are wrapped inside the data.
 // To avoid potential logic errors, we should always use this function to inspect object errors.
 func CheckGetObjErr(id string, obj *suiclient.SuiObjectResponse, err error) error {
