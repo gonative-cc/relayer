@@ -1,4 +1,6 @@
-package types // revive:disable:var-naming
+// revive:disable:var-naming
+
+package types
 
 import (
 	"errors"
