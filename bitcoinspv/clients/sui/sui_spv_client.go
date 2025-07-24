@@ -70,13 +70,25 @@ func New(
 			ShowOwner: true,
 		},
 	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	if lcObjectResp.Data.Owner.Shared == nil {
-		return nil, fmt.Errorf("error init spv client")
+	if lcObjectResp.Error != nil {
+		if lcObjectResp.Error.Data.NotExists != nil {
+			return nil, fmt.Errorf("object '%s' does not exist", lightClientObjectIDHex)
+		}
+		if lcObjectResp.Error.Data.Deleted != nil {
+			return nil, fmt.Errorf("object '%s' has been deleted", lightClientObjectIDHex)
+		}
+		return nil, fmt.Errorf("error fetching object '%s': %v", lightClientObjectIDHex, lcObjectResp.Error)
 	}
+
+	if lcObjectResp.Data.Owner.Shared == nil {
+		return nil, fmt.Errorf("object '%s' is not a shared object", lightClientObjectIDHex)
+	}
+
 	lcObjArg := suiptb.CallArg{
 		Object: &suiptb.ObjectArg{
 			SharedObject: &suiptb.SharedObjectArg{
