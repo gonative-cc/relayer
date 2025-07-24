@@ -21,5 +21,5 @@ var (
 	ErrEventDataFormat      = errors.New("failed to retrieve Sui events")
 	ErrSuiTransactionFailed = errors.New("sui transaction execution failed")
 
-	ErrGetObject = errors.New("Sui GetObject")
+	ErrGetObject = errors.New("sui GetObject")
 )
