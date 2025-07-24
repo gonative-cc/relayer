@@ -14,14 +14,14 @@ indent_style = tab
 [*.{coffee,js,jsx,ts,tsx}]
 indent_style = tab
 indent_size = 4
-max_line_length = 96
+max_line_length = 100
 
 [*.json]
 indent_style = tab
 indent_size = 4
 
 [*.go]
-max_line_length = 96
+max_line_length = 100
 indent_style = tab
 
 [*.py]
