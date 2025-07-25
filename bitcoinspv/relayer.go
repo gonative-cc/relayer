@@ -1,9 +1,11 @@
 package bitcoinspv
 
 import (
+	"bytes"
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcindexer"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -24,6 +26,9 @@ type Relayer struct {
 	lcClient   clients.BitcoinSPV
 	btcIndexer btcindexer.Indexer
 
+	// Walrus
+	walrusHandler *WalrusHandler
+
 	// Cache and state
 	btcCache             *types.BTCCache
 	btcConfirmationDepth int64
@@ -42,6 +47,7 @@ func New(
 	parentLogger zerolog.Logger,
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
+	walrusHandler *WalrusHandler,
 	btcIndexer btcindexer.Indexer,
 ) (*Relayer, error) {
 	logger := parentLogger.With().Str("module", "bitcoinspv").Logger()
@@ -50,6 +56,7 @@ func New(
 		logger:               logger,
 		btcClient:            btcClient,
 		lcClient:             lcClient,
+		walrusHandler:        walrusHandler,
 		btcIndexer:           btcIndexer,
 		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
@@ -137,4 +144,31 @@ func (r *Relayer) Stop() {
 // WaitForShutdown waits for all relayer goroutines to complete before returning
 func (r *Relayer) WaitForShutdown() {
 	r.wg.Wait()
+}
+
+// UploadToWalrus upload full BTC block to Walrus
+func (r *Relayer) UploadToWalrus(msgBlock *wire.MsgBlock, blockHeight int64, blockHashStr string) {
+	if msgBlock == nil {
+		r.logger.Warn().Int64("height", blockHeight).Str("hash", blockHashStr).
+			Msg("UploadToWalrus called with nil msgBlock, skipping Walrus store.")
+		return
+	}
+
+	var blockBuffer bytes.Buffer
+	if err := msgBlock.Serialize(&blockBuffer); err != nil {
+		r.logger.Error().Err(err).Msgf(
+			"Failed to serialize block %d (%s) for Walrus",
+			blockHeight, blockHashStr,
+		)
+	} else {
+		rawBlockData := blockBuffer.Bytes()
+		_, walrusErr := r.walrusHandler.StoreBlock(rawBlockData, blockHeight, blockHashStr)
+		if walrusErr != nil {
+			r.logger.Warn().Err(walrusErr).Msgf(
+				"Walrus store failed for block %d (%s)",
+				blockHeight, blockHashStr,
+			)
+
+		}
+	}
 }

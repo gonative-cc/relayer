@@ -44,7 +44,9 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
+			if storeInWalrus {
+				cfg.Relayer.StoreBlocksInWalrus = true
+			}
 			btcClient, err := initBTCClient(cfg, rootLogger)
 			if err != nil {
 				return err
@@ -53,11 +55,15 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			walrusHandler, err := initWalrusHandler(&cfg.Relayer, rootLogger) // will return nil if flag not set
+			if err != nil {
+				return err
+			}
 			btcIndexer := initBtcIndexer(cfg, rootLogger)
 
 			logTipBlock(btcClient, rootLogger)
 
-			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, btcIndexer)
+			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, walrusHandler, btcIndexer)
 			spvRelayer.Start()
 
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
@@ -126,6 +132,14 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.Bi
 	return client, nil
 }
 
+func initWalrusHandler(cfg *config.RelayerConfig, rootLogger zerolog.Logger) (*bitcoinspv.WalrusHandler, error) {
+	wh, err := bitcoinspv.NewWalrusHandler(cfg, rootLogger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize WalrusHandler: %w", err)
+	}
+	return wh, nil
+}
+
 func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) btcindexer.Indexer {
 	if cfg.Relayer.IndexerURL == "" {
 		rootLogger.Info().Msg("BTC Indexer not configured, will run without it.")
@@ -140,6 +154,7 @@ func initSPVRelayer(
 	rootLogger zerolog.Logger,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
+	walrusHandler *bitcoinspv.WalrusHandler,
 	btcIndexer btcindexer.Indexer,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
@@ -147,6 +162,7 @@ func initSPVRelayer(
 		rootLogger,
 		btcClient,
 		nativeClient,
+		walrusHandler,
 		btcIndexer,
 	)
 	if err != nil {

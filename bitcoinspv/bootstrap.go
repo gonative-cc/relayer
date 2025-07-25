@@ -144,21 +144,28 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// Here we are ensuring that the relayer after every restart starts
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
-	fullBlocks := r.btcIndexer != nil
+	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
 
 	r.logger.Info().Msg("Fetching blocks to internal cache and sending to Walrus storage...")
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fullBlocks)
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
 	if err != nil {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
 	}
 
-	if r.btcIndexer != nil {
-		r.logger.Info().Msgf("Attempting to send %d blocks to Indexer", len(blocks))
-		if err := r.btcIndexer.SendBlocks(ctx, blocks); err != nil {
-			return fmt.Errorf("failed to send blocks to indexer: %w", err)
+	if fetchFullBlocks {
+		if r.walrusHandler != nil {
+			r.logger.Info().Msgf("Storing %d blocks to Walrus", len(blocks))
+			for _, block := range blocks {
+				r.UploadToWalrus(block.MsgBlock, block.BlockHeight, block.BlockHash().String())
+			}
+		}
+		if r.btcIndexer != nil {
+			r.logger.Info().Msgf("Sending %d blocks to Indexer", len(blocks))
+			if err := r.btcIndexer.SendBlocks(ctx, blocks); err != nil {
+				return fmt.Errorf("failed to send blocks to indexer: %w", err)
+			}
 		}
 	}
-
 	err = r.btcCache.Init(blocks)
 
 	return err

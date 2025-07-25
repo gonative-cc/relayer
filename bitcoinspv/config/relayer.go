@@ -41,6 +41,12 @@ type RelayerConfig struct {
 	ProcessBlockTimeout time.Duration `mapstructure:"process-block-timeout"`
 	// IndexerConfig
 	IndexerURL string `mapstructure:"indexer-url"`
+
+	// Walrus config
+	StoreBlocksInWalrus  bool     `mapstructure:"store-in-walrus"`
+	WalrusStorageEpochs  int      `mapstructure:"walrus-storage-epochs"`
+	WalrusPublisherURLs  []string `mapstructure:"walrus-publisher-urls"`
+	WalrusAggregatorURLs []string `mapstructure:"walrus-aggregator-urls"`
 }
 
 func isPresent(v string, list []string) bool {
@@ -135,6 +141,9 @@ func DefaultRelayerConfig() RelayerConfig {
 		HeadersChunkSize:      minheadersChunkSize,
 		BTCConfirmationDepth:  defaultConfirmationDepth,
 		IndexerURL:            "", // disabled by default
-
+		StoreBlocksInWalrus:   false,
+		WalrusPublisherURLs:   []string{},
+		WalrusAggregatorURLs:  []string{},
+		WalrusStorageEpochs:   1,
 	}
 }

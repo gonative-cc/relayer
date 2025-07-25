@@ -57,18 +57,32 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	h := blockEvent.BlockHeader.BlockHash()
-	ib, err := r.btcClient.GetBTCBlockByHash(&h)
-	if err != nil {
-		return err
-	}
+	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
 
-	if r.btcIndexer != nil {
-		// TODO: handle it in another PR, we have more todo contexts in the repo
-		ctx := context.TODO()
-		if err := r.btcIndexer.SendBlocks(ctx, []*types.IndexedBlock{ib}); err != nil {
-			return fmt.Errorf("failed to send blocks to indexer: %w", err)
+	ib := new(types.IndexedBlock)
+	var err error
+
+	if fetchFullBlocks {
+		h := blockEvent.BlockHeader.BlockHash()
+		ib, err = r.btcClient.GetBTCBlockByHash(&h)
+		if err != nil {
+			return fmt.Errorf("failed to get full block %s by hash: %w", h.String(), err)
 		}
+
+		if r.walrusHandler != nil {
+			r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
+		}
+
+		if r.btcIndexer != nil {
+			// TODO: handle it in another PR, we have more todo contexts in the repo
+			ctx := context.TODO()
+			if err := r.btcIndexer.SendBlocks(ctx, []*types.IndexedBlock{ib}); err != nil {
+				return fmt.Errorf("failed to send blocks to indexer: %w", err)
+			}
+		}
+	} else {
+		ib.BlockHeight = blockEvent.Height
+		ib.MsgBlock.Header = *blockEvent.BlockHeader
 	}
 	err = r.btcCache.Add(ib)
 	if err != nil {
