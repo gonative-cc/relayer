@@ -154,7 +154,8 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 
 	if fetchFullBlocks {
 		r.logger.Info().Msgf("Processing %d full blocks for Walrus/Indexer...", len(blocks))
-		// NOTE: we could optimize it to send more than one block at a time to the indexer, however the reorgs on mainnet are minimal
+		// NOTE: We could optimize, and send blocks in batches,
+		//  however its not necessary since reorgs on mainnet are minimal
 		for _, block := range blocks {
 			if err := r.handleFullBlock(ctx, block); err != nil {
 				return fmt.Errorf("failed to process full block during bootstrap: %w", err)
