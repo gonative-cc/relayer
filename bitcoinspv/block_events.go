@@ -57,14 +57,18 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	ib := new(types.IndexedBlock)
 	h := blockEvent.BlockHeader.BlockHash()
 	ib, err := r.btcClient.GetBTCBlockByHash(&h)
 	if err != nil {
 		return err
 	}
-	if r.indexerClient != nil {
-		go r.indexerClient.SendBlocks([]*types.IndexedBlock{ib})
+
+	if r.btcIndexer != nil {
+		// TODO: handle it in another PR, we have more todo contexts in the repo
+		ctx := context.TODO()
+		if err := r.btcIndexer.SendBlocks(ctx, []*types.IndexedBlock{ib}); err != nil {
+			return fmt.Errorf("failed to send blocks to indexer: %w", err)
+		}
 	}
 	err = r.btcCache.Add(ib)
 	if err != nil {

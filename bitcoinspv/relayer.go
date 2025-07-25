@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcindexer"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/rs/zerolog"
@@ -19,9 +20,9 @@ type Relayer struct {
 	logger zerolog.Logger
 
 	// Clients
-	btcClient     clients.BTCClient
-	lcClient      clients.BitcoinSPV
-	indexerClient *clients.IndexerClient
+	btcClient  clients.BTCClient
+	lcClient   clients.BitcoinSPV
+	btcIndexer btcindexer.Indexer
 
 	// Cache and state
 	btcCache             *types.BTCCache
@@ -48,7 +49,7 @@ func New(
 		logger:               logger,
 		btcClient:            btcClient,
 		lcClient:             lcClient,
-		indexerClient:        clients.NewIndexerClient(cfg.IndexerURL, logger),
+		btcIndexer:           btcindexer.NewClient(cfg.IndexerURL, logger),
 		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,

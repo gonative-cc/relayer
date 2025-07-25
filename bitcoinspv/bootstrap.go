@@ -151,9 +151,11 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
 	}
 
-	if r.indexerClient != nil {
+	if r.btcIndexer != nil {
 		r.logger.Info().Msgf("Attempting to send %d blocks to Indexer", len(blocks))
-		go r.indexerClient.SendBlocks(blocks)
+		if err := r.btcIndexer.SendBlocks(ctx, blocks); err != nil {
+			return fmt.Errorf("failed to send blocks to indexer: %w", err)
+		}
 	}
 
 	err = r.btcCache.Init(blocks)
