@@ -46,6 +46,8 @@ func NewClient(url string, parentLogger zerolog.Logger) *Client {
 }
 
 // SendBlocks sends a batch of blocks to the indexer with a retry mechanism.
+// TODO: this should not block the main process
+// probably we should use CF queues
 func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
 	if c == nil || c.client == nil {
 		return errors.New("btcindexer.Client is not initialized")
