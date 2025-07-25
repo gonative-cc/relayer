@@ -25,15 +25,15 @@ const (
 
 // Payload is structure that the indexer expects.
 type Payload struct {
-	Height      int64  `json:"height"`
 	RawBlockHex string `json:"rawBlockHex"`
+	Height      int64  `json:"height"`
 }
 
 // Client is a client for communicating with the nBTC indexer worker.
 type Client struct {
-	url    string
-	client *http.Client
 	logger zerolog.Logger
+	client *http.Client
+	url    string
 }
 
 // NewClient creates a new client for the indexer.
@@ -45,32 +45,18 @@ func NewClient(url string, parentLogger zerolog.Logger) *Client {
 	}
 }
 
-// SendBlocks sends a batch of blocks to the indexer.
+// SendBlocks sends a batch of blocks to the indexer with a retry mechanism.
 func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
 	if c == nil || c.client == nil {
 		return errors.New("btcindexer.Client is not initialized")
 	}
-
 	if len(blocks) == 0 {
 		return nil
 	}
 
-	payload := make([]Payload, len(blocks))
-	for i, block := range blocks {
-		var blockBuffer bytes.Buffer
-		if err := block.MsgBlock.Serialize(&blockBuffer); err != nil {
-			return fmt.Errorf("failed to serialize block %d: %w", block.BlockHeight, err)
-		}
-		payload[i] = Payload{
-			Height:      block.BlockHeight,
-			RawBlockHex: hex.EncodeToString(blockBuffer.Bytes()),
-		}
-	}
-
-	// TODO: do not use json, just raw payload
-	jsonData, err := json.Marshal(payload)
+	jsonData, err := c.preparePayload(blocks)
 	if err != nil {
-		return fmt.Errorf("failed to marshal indexer payload: %w", err)
+		return err
 	}
 
 	var lastErr error
@@ -79,44 +65,70 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 			return ctx.Err()
 		}
 
-		req, err := http.NewRequestWithContext(ctx, "PUT", c.url, bytes.NewReader(jsonData))
+		shouldRetry, err := c.sendAndHandleResponse(ctx, jsonData)
 		if err != nil {
-			return fmt.Errorf("failed to create indexer request: %w", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := c.client.Do(req)
-		if err != nil {
-			lastErr = fmt.Errorf("attempt %d: request failed: %w", attempt+1, err)
-			c.logger.Warn().Err(lastErr).Msg("Retrying indexer call...")
-			c.backoff(ctx, attempt)
-			continue
+			// Non-retryable
+			return err
 		}
 
-		if resp.StatusCode < 300 {
-			c.logger.Info().Int("count", len(blocks)).Int("status_code", resp.StatusCode).Msg("Successfully sent blocks to indexer")
-			resp.Body.Close()
+		if !shouldRetry {
+			// Success
 			return nil
 		}
 
-		// Should not retry
-		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-			body, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			return fmt.Errorf("indexer returned a non-retryable error: status %d, body: %s", resp.StatusCode, string(body))
-		}
-
-		if resp.StatusCode >= 500 {
-			lastErr = fmt.Errorf("attempt %d: indexer returned server error: status %d", attempt+1, resp.StatusCode)
-			c.logger.Warn().Err(lastErr).Msg("Retrying...")
-			resp.Body.Close()
-			c.backoff(ctx, attempt)
-			continue
-		}
-		resp.Body.Close()
+		lastErr = fmt.Errorf("attempt %d failed, retrying", attempt+1)
+		c.logger.Warn().Err(err).Msg("Retrying indexer call...")
+		c.backoff(ctx, attempt)
 	}
 
 	return fmt.Errorf("failed to send blocks to indexer after %d attempts: %w", maxRetries+1, lastErr)
+}
+
+func (c *Client) sendAndHandleResponse(ctx context.Context, payload []byte) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.url, bytes.NewReader(payload))
+	if err != nil {
+		return false, fmt.Errorf("failed to create indexer request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return true, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 300 {
+		c.logger.Info().
+			Int("status_code", resp.StatusCode).
+			Msgf("Successfully sent %d blocks to indexer", len(payload))
+		return false, nil
+	}
+
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		body, _ := io.ReadAll(resp.Body)
+		return false, fmt.Errorf("indexer returned a non-retryable error: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	if resp.StatusCode >= 500 {
+		return true, fmt.Errorf("indexer returned server error: status %d", resp.StatusCode)
+	}
+
+	return true, fmt.Errorf("indexer returned unhandled status: %d", resp.StatusCode)
+}
+
+func (c *Client) preparePayload(blocks []*types.IndexedBlock) ([]byte, error) {
+	payload := make([]Payload, len(blocks))
+	for i, block := range blocks {
+		var blockBuffer bytes.Buffer
+		if err := block.MsgBlock.Serialize(&blockBuffer); err != nil {
+			return nil, fmt.Errorf("failed to serialize block %d: %w", block.BlockHeight, err)
+		}
+		payload[i] = Payload{
+			Height:      block.BlockHeight,
+			RawBlockHex: hex.EncodeToString(blockBuffer.Bytes()),
+		}
+	}
+	return json.Marshal(payload)
 }
 
 func (c *Client) backoff(ctx context.Context, attempt int) {
@@ -127,7 +139,8 @@ func (c *Client) backoff(ctx context.Context, attempt int) {
 	if backoff > maxBackoff {
 		backoff = maxBackoff
 	}
-	jitter := time.Duration(rand.Intn(1000)) * time.Millisecond
+	// NOTE: we dont need secure random generation here, its just retry
+	jitter := time.Duration(rand.Intn(1000)) * time.Millisecond //nolint:gosec
 	totalBackoff := backoff + jitter
 
 	c.logger.Info().Dur("wait_duration", totalBackoff).Msgf("Waiting before next attempt..")

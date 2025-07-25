@@ -27,10 +27,10 @@ var (
 
 // Config represents the main configuration structure for the application
 type Config struct {
-	Sui     SuiConfig     `mapstucture:"sui"`
-	BTC     BTCConfig     `mapstructure:"btc"`
-	Native  NativeConfig  `mapstructure:"native"`
 	Relayer RelayerConfig `mapstructure:"relayer"`
+	Sui     SuiConfig     `mapstucture:"sui"`
+	Native  NativeConfig  `mapstructure:"native"`
+	BTC     BTCConfig     `mapstructure:"btc"`
 }
 
 // Validate checks if the configuration is valid by running validation on all components

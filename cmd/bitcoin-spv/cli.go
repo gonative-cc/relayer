@@ -53,10 +53,7 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			btcIndexer, err := initBtcIndexer(cfg, rootLogger)
-			if err != nil {
-				return err
-			}
+			btcIndexer := initBtcIndexer(cfg, rootLogger)
 
 			logTipBlock(btcClient, rootLogger)
 
@@ -129,13 +126,13 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.Bi
 	return client, nil
 }
 
-func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) (btcindexer.Indexer, error) {
+func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) btcindexer.Indexer {
 	if cfg.Relayer.IndexerURL == "" {
 		rootLogger.Info().Msg("BTC Indexer not configured, will run without it.")
-		return nil, nil
+		return nil
 	}
 	client := btcindexer.NewClient(cfg.Relayer.IndexerURL, rootLogger)
-	return client, nil
+	return client
 }
 
 func initSPVRelayer(
