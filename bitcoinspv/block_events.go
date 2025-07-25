@@ -68,17 +68,9 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		if err != nil {
 			return fmt.Errorf("failed to get full block %s by hash: %w", h.String(), err)
 		}
-
-		if r.walrusHandler != nil {
-			r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
-		}
-
-		if r.btcIndexer != nil {
-			// TODO: handle it in another PR, we have more todo contexts in the repo
-			ctx := context.TODO()
-			if err := r.btcIndexer.SendBlocks(ctx, []*types.IndexedBlock{ib}); err != nil {
-				return fmt.Errorf("failed to send blocks to indexer: %w", err)
-			}
+		ctx := context.TODO()
+		if err := r.handleFullBlock(ctx, ib); err != nil {
+			r.logger.Error().Err(err).Msg("failed to process full block")
 		}
 	} else {
 		ib.BlockHeight = blockEvent.Height
@@ -90,6 +82,23 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	}
 
 	return r.processBlock(ib)
+}
+
+// handleFullBlock is a helper function that process a single full block.
+// It sends the block to Walrus or/and the Indexer if they are configured.
+func (r *Relayer) handleFullBlock(ctx context.Context, block *types.IndexedBlock) error {
+	if r.walrusHandler != nil {
+		r.logger.Info().Int64("height", block.BlockHeight).Msg("Storing block to Walrus")
+		r.UploadToWalrus(block.MsgBlock, block.BlockHeight, block.BlockHash().String())
+	}
+
+	if r.btcIndexer != nil {
+		r.logger.Info().Int64("height", block.BlockHeight).Msg("Sending block to Indexer")
+		if err := r.btcIndexer.SendBlocks(ctx, []*types.IndexedBlock{block}); err != nil {
+			return fmt.Errorf("indexer send failed: %w", err)
+		}
+	}
+	return nil
 }
 
 // checkBlockValidity checks the status of a new block

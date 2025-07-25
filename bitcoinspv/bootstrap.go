@@ -153,16 +153,11 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	}
 
 	if fetchFullBlocks {
-		if r.walrusHandler != nil {
-			r.logger.Info().Msgf("Storing %d blocks to Walrus", len(blocks))
-			for _, block := range blocks {
-				r.UploadToWalrus(block.MsgBlock, block.BlockHeight, block.BlockHash().String())
-			}
-		}
-		if r.btcIndexer != nil {
-			r.logger.Info().Msgf("Sending %d blocks to Indexer", len(blocks))
-			if err := r.btcIndexer.SendBlocks(ctx, blocks); err != nil {
-				return fmt.Errorf("failed to send blocks to indexer: %w", err)
+		r.logger.Info().Msgf("Processing %d full blocks for Walrus/Indexer...", len(blocks))
+		// NOTE: we could optimize it to send more than one block at a time to the indexer, however the reorgs on mainnet are minimal
+		for _, block := range blocks {
+			if err := r.handleFullBlock(ctx, block); err != nil {
+				return fmt.Errorf("failed to process full block during bootstrap: %w", err)
 			}
 		}
 	}
