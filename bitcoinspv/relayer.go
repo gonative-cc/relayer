@@ -7,6 +7,7 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcindexer"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/rs/zerolog"
@@ -21,8 +22,9 @@ type Relayer struct {
 	logger zerolog.Logger
 
 	// Clients
-	btcClient clients.BTCClient
-	lcClient  clients.BitcoinSPV
+	btcClient  clients.BTCClient
+	lcClient   clients.BitcoinSPV
+	btcIndexer btcindexer.Indexer
 
 	// Walrus
 	walrusHandler *WalrusHandler
@@ -46,6 +48,7 @@ func New(
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
 	walrusHandler *WalrusHandler,
+	btcIndexer btcindexer.Indexer,
 ) (*Relayer, error) {
 	logger := parentLogger.With().Str("module", "bitcoinspv").Logger()
 	relayer := &Relayer{
@@ -54,6 +57,7 @@ func New(
 		btcClient:            btcClient,
 		lcClient:             lcClient,
 		walrusHandler:        walrusHandler,
+		btcIndexer:           btcIndexer,
 		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,

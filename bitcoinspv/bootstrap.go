@@ -146,23 +146,23 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
 
 	r.logger.Info().Msg("Fetching blocks to internal cache and sending to Walrus storage...")
-	fetchFullBlocks := r.Config.StoreBlocksInWalrus && r.walrusHandler != nil
+	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
 	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
 	if err != nil {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
 	}
-
-	// Store full blocks in Walrus
+	// TODO: handle retry
 	if fetchFullBlocks {
-		r.logger.Info().Msgf("Attempting to store %d blocks to Walrus", len(blocks))
-		for _, ib := range blocks {
-			r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
+		r.logger.Info().Msgf("Processing %d full blocks for Walrus/Indexer...", len(blocks))
+		// NOTE: We could optimize, and send blocks in batches,
+		//  however its not necessary since reorgs on mainnet are minimal
+		for _, block := range blocks {
+			if err := r.handleFullBlock(ctx, block); err != nil {
+				return fmt.Errorf("failed to process full block during bootstrap: %w", err)
+			}
 		}
 	}
-
-	err = r.btcCache.Init(blocks)
-
-	return err
+	return r.btcCache.Init(blocks)
 }
 
 func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {

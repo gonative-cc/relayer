@@ -9,3 +9,9 @@ packages:
     interfaces:
       BTCClient:
       BitcoinSPV:
+  github.com/gonative-cc/relayer/bitcoinspv/clients/btcindexer:
+    config:
+      dir: "bitcoinspv/clients/mocks"
+      outpkg: "mocks"
+    interfaces:
+      Indexer:

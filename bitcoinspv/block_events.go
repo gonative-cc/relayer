@@ -58,25 +58,47 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	}
 
 	ib := new(types.IndexedBlock)
-	// Store full block in Walrus
-	if r.Config.StoreBlocksInWalrus && r.walrusHandler != nil {
+	var err error
+
+	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
+	if fetchFullBlocks {
 		h := blockEvent.BlockHeader.BlockHash()
-		ib, err := r.btcClient.GetBTCBlockByHash(&h)
+		ib, err = r.btcClient.GetBTCBlockByHash(&h)
+		// TODO: handle retry
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get full block %s by hash: %w", h.String(), err)
 		}
-		r.UploadToWalrus(ib.MsgBlock, ib.BlockHeight, ib.BlockHash().String())
+		ctx := context.TODO()
+		if err := r.handleFullBlock(ctx, ib); err != nil {
+			r.logger.Error().Err(err).Msg("failed to process full block")
+		}
 	} else {
 		ib.BlockHeight = blockEvent.Height
 		ib.MsgBlock.Header = *blockEvent.BlockHeader
 	}
-
-	err := r.btcCache.Add(ib)
+	err = r.btcCache.Add(ib)
 	if err != nil {
 		return fmt.Errorf("can't add block to cache %w", err)
 	}
 
 	return r.processBlock(ib)
+}
+
+// handleFullBlock is a helper function that process a single full block.
+// It sends the block to Walrus or/and the Indexer if they are configured.
+func (r *Relayer) handleFullBlock(ctx context.Context, block *types.IndexedBlock) error {
+	if r.walrusHandler != nil {
+		r.logger.Info().Int64("height", block.BlockHeight).Msg("Storing block to Walrus")
+		r.UploadToWalrus(block.MsgBlock, block.BlockHeight, block.BlockHash().String())
+	}
+
+	if r.btcIndexer != nil {
+		r.logger.Info().Int64("height", block.BlockHeight).Msg("Sending block to Indexer")
+		if err := r.btcIndexer.SendBlocks(ctx, []*types.IndexedBlock{block}); err != nil {
+			return fmt.Errorf("indexer send failed: %w", err)
+		}
+	}
+	return nil
 }
 
 // checkBlockValidity checks the status of a new block

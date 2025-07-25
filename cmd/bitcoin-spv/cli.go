@@ -5,6 +5,7 @@ import (
 
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcindexer"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -46,7 +47,6 @@ func CmdStart() *cobra.Command {
 			if storeInWalrus {
 				cfg.Relayer.StoreBlocksInWalrus = true
 			}
-
 			btcClient, err := initBTCClient(cfg, rootLogger)
 			if err != nil {
 				return err
@@ -59,10 +59,11 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			btcIndexer := initBtcIndexer(cfg, rootLogger)
 
 			logTipBlock(btcClient, rootLogger)
 
-			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, walrusHandler)
+			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, walrusHandler, btcIndexer)
 			spvRelayer.Start()
 
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
@@ -139,12 +140,22 @@ func initWalrusHandler(cfg *config.RelayerConfig, rootLogger zerolog.Logger) (*b
 	return wh, nil
 }
 
+func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) btcindexer.Indexer {
+	if cfg.Relayer.IndexerURL == "" {
+		rootLogger.Info().Msg("BTC Indexer not configured, will run without it.")
+		return nil
+	}
+	client := btcindexer.NewClient(cfg.Relayer.IndexerURL, rootLogger)
+	return client
+}
+
 func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger zerolog.Logger,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
 	walrusHandler *bitcoinspv.WalrusHandler,
+	btcIndexer btcindexer.Indexer,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
@@ -152,6 +163,7 @@ func initSPVRelayer(
 		btcClient,
 		nativeClient,
 		walrusHandler,
+		btcIndexer,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))

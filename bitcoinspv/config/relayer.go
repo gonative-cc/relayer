@@ -39,6 +39,8 @@ type RelayerConfig struct {
 	HeadersChunkSize uint32 `mapstructure:"headers-chunk-size"`
 	// ProcessBlockTimeout is the timeout duration for processing a single block.
 	ProcessBlockTimeout time.Duration `mapstructure:"process-block-timeout"`
+	// IndexerConfig
+	IndexerURL string `mapstructure:"indexer-url"`
 
 	// Walrus config
 	StoreBlocksInWalrus  bool     `mapstructure:"store-in-walrus"`
@@ -138,6 +140,7 @@ func DefaultRelayerConfig() RelayerConfig {
 		BTCCacheSize:          minBTCCacheSize,
 		HeadersChunkSize:      minheadersChunkSize,
 		BTCConfirmationDepth:  defaultConfirmationDepth,
+		IndexerURL:            "", // disabled by default
 		StoreBlocksInWalrus:   false,
 		WalrusPublisherURLs:   []string{},
 		WalrusAggregatorURLs:  []string{},
