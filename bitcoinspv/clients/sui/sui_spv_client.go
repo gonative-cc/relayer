@@ -38,11 +38,12 @@ type SPVClient struct {
 var _ clients.BitcoinSPV = &SPVClient{}
 
 // New BTCLIghtClientObject creates a new SPVClient instance.
+// lcObjID and lcPkgID must be Sui Object ID as HEX.
 func New(
 	suiClient *suiclient.ClientImpl,
 	signer *suisigner.Signer,
-	lightClientObjectIDHex string,
-	lightClientPackageIDHex string,
+	lcObjID string,
+	lcPkgID string,
 	parentLogger zerolog.Logger,
 ) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
@@ -52,12 +53,12 @@ func New(
 		return nil, ErrSignerNill
 	}
 
-	lcPackageID, err := sui.PackageIdFromHex(lightClientPackageIDHex)
+	lcPackageID, err := sui.PackageIdFromHex(lcPkgID)
 	if err != nil {
 		return nil, err
 	}
 
-	lcObjectID, err := sui.ObjectIdFromHex(lightClientObjectIDHex)
+	lcObjectID, err := sui.ObjectIdFromHex(lcObjID)
 	if err != nil {
 		return nil, err
 	}
@@ -70,13 +71,14 @@ func New(
 			ShowOwner: true,
 		},
 	})
-	if err != nil {
+	if err := CheckGetObjErr(lcObjID, lcObjectResp, err); err != nil {
 		return nil, err
 	}
 
 	if lcObjectResp.Data.Owner.Shared == nil {
-		return nil, fmt.Errorf("error init spv client")
+		return nil, fmt.Errorf("object '%s' is not a shared object", lcObjID)
 	}
+
 	lcObjArg := suiptb.CallArg{
 		Object: &suiptb.ObjectArg{
 			SharedObject: &suiptb.SharedObjectArg{
@@ -285,4 +287,25 @@ func (c *SPVClient) devInspectTransactionBlock(
 	}
 
 	return c.DevInspectTransactionBlock(ctx, &r)
+}
+
+// CheckGetObjErr inspects objectResponse struct for errors to create a proper error response.
+// Sui GetObject returns error on network error. Object errors are wrapped inside the data.
+// To avoid potential logic errors, we should always use this function to inspect object errors.
+func CheckGetObjErr(id string, obj *suiclient.SuiObjectResponse, err error) error {
+	if err != nil {
+		return err
+	}
+
+	if obj.Error != nil {
+		if obj.Error.Data.NotExists != nil {
+			return fmt.Errorf("%w id=%s does not exist", ErrGetObject, id)
+		}
+		if obj.Error.Data.Deleted != nil {
+			return fmt.Errorf("%w id=%s has been deleted", ErrGetObject, id)
+		}
+		return fmt.Errorf("%w id=%s %v", ErrGetObject, id, obj.Error)
+	}
+
+	return nil
 }
