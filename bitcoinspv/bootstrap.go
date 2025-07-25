@@ -144,9 +144,13 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	// Here we are ensuring that the relayer after every restart starts
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
 	baseHeight := blockHeight - r.btcConfirmationDepth + 1
+	fullBlocks := false
+	if r.btcIndexer != nil {
+		fullBlocks = true
+	}
 
 	r.logger.Info().Msg("Fetching blocks to internal cache and sending to Walrus storage...")
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, true)
+	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fullBlocks)
 	if err != nil {
 		return fmt.Errorf("failed to get blocks/headers: %w", err)
 	}

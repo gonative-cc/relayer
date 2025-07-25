@@ -42,6 +42,7 @@ func New(
 	parentLogger zerolog.Logger,
 	btcClient clients.BTCClient,
 	lcClient clients.BitcoinSPV,
+	btcIndexer btcindexer.Indexer,
 ) (*Relayer, error) {
 	logger := parentLogger.With().Str("module", "bitcoinspv").Logger()
 	relayer := &Relayer{
@@ -49,7 +50,7 @@ func New(
 		logger:               logger,
 		btcClient:            btcClient,
 		lcClient:             lcClient,
-		btcIndexer:           btcindexer.NewClient(cfg.IndexerURL, logger),
+		btcIndexer:           btcIndexer,
 		btcConfirmationDepth: cfg.BTCConfirmationDepth,
 		quitChannel:          make(chan struct{}),
 		isStarted:            false,

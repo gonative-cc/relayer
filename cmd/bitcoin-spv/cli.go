@@ -5,6 +5,7 @@ import (
 
 	"github.com/gonative-cc/relayer/bitcoinspv"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcindexer"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/btcwrapper"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients/sui"
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
@@ -52,10 +53,14 @@ func CmdStart() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			btcIndexer, err := initBtcIndexer(cfg, rootLogger)
+			if err != nil {
+				return err
+			}
 
 			logTipBlock(btcClient, rootLogger)
 
-			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient)
+			spvRelayer := initSPVRelayer(cfg, rootLogger, btcClient, nativeClient, btcIndexer)
 			spvRelayer.Start()
 
 			setupShutdown(rootLogger, spvRelayer, btcClient, nativeClient)
@@ -124,17 +129,28 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.Bi
 	return client, nil
 }
 
+func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) (btcindexer.Indexer, error) {
+	if cfg.Relayer.IndexerURL == "" {
+		rootLogger.Info().Msg("BTC Indexer not configured, will run without it.")
+		return nil, nil
+	}
+	client := btcindexer.NewClient(cfg.Relayer.IndexerURL, rootLogger)
+	return client, nil
+}
+
 func initSPVRelayer(
 	cfg *config.Config,
 	rootLogger zerolog.Logger,
 	btcClient *btcwrapper.Client,
 	nativeClient clients.BitcoinSPV,
+	btcIndexer btcindexer.Indexer,
 ) *bitcoinspv.Relayer {
 	spvRelayer, err := bitcoinspv.New(
 		&cfg.Relayer,
 		rootLogger,
 		btcClient,
 		nativeClient,
+		btcIndexer,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create bitcoin-spv relayer: %w", err))
