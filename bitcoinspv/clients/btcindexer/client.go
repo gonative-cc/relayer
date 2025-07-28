@@ -80,11 +80,12 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 func (c *Client) sendAndHandleResponse(payload btcindexer.PutBlocksReq) (bool, error) {
 	resp, err := c.apiClient.PutBlocks(payload)
 	if err != nil {
-		return true, err
+		c.logger.Warn().Err(err).Msg("Indexer call failed with network error, retry.")
+		return true, nil
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 300 {
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		c.logger.Info().
 			Int("status_code", resp.StatusCode).
 			Msgf("Successfully sent %d blocks to indexer", len(payload))
@@ -96,11 +97,12 @@ func (c *Client) sendAndHandleResponse(payload btcindexer.PutBlocksReq) (bool, e
 		return false, fmt.Errorf("indexer returned a non-retryable error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	if resp.StatusCode >= 500 {
-		return true, fmt.Errorf("indexer returned server error: status %d", resp.StatusCode)
-	}
+	// resp.StatusCode >= 500 {
+	c.logger.Warn().
+		Int("status_code", resp.StatusCode).
+		Msg("Indexer returned a server error retry.")
+	return true, nil
 
-	return true, fmt.Errorf("indexer returned unhandled status: %d", resp.StatusCode)
 }
 
 func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlocksReq, error) {
