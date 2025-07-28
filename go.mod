@@ -1,14 +1,15 @@
 module github.com/gonative-cc/relayer
 
-go 1.23.4
+go 1.24.4
 
-toolchain go1.24.1
+toolchain go1.24.5
 
 require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.8.7
+	github.com/gonative-cc/workers/api/btcindexer v0.0.0-20250727190927-e10e7f2f70f8
 	github.com/joho/godotenv v1.5.1
 	github.com/pattonkan/sui-go v0.1.5
 	github.com/rs/zerolog v1.34.0
