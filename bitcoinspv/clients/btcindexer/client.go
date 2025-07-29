@@ -3,16 +3,14 @@ package btcindexer
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand"
-	"net/http"
 	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
+	"github.com/gonative-cc/workers/api/btcindexer"
 	"github.com/rs/zerolog"
 )
 
@@ -23,25 +21,18 @@ const (
 	maxBackoff     = 8 * time.Second
 )
 
-// Payload is structure that the indexer expects.
-type Payload struct {
-	RawBlockHex string `json:"rawBlockHex"`
-	Height      int64  `json:"height"`
-}
-
 // Client is a client for communicating with the nBTC indexer worker.
+// It wraps the btcindexer API client to add retry logic.
 type Client struct {
-	logger zerolog.Logger
-	client *http.Client
-	url    string
+	logger    zerolog.Logger
+	apiClient btcindexer.Client
 }
 
 // NewClient creates a new client for the indexer.
 func NewClient(url string, parentLogger zerolog.Logger) *Client {
 	return &Client{
-		url:    fmt.Sprintf("%s/bitcoin/blocks", url),
-		client: &http.Client{Timeout: 10 * time.Second},
-		logger: parentLogger.With().Str("module", "btcindexer_client").Logger(),
+		logger:    parentLogger.With().Str("module", "btcindexer_client").Logger(),
+		apiClient: btcindexer.NewClient(url),
 	}
 }
 
@@ -49,14 +40,14 @@ func NewClient(url string, parentLogger zerolog.Logger) *Client {
 // TODO: this should not block the main process
 // probably we should use CF queues
 func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
-	if c == nil || c.client == nil {
+	if c == nil {
 		return errors.New("btcindexer.Client is not initialized")
 	}
 	if len(blocks) == 0 {
 		return nil
 	}
 
-	jsonData, err := c.preparePayload(blocks)
+	payload, err := c.preparePayload(blocks)
 	if err != nil {
 		return err
 	}
@@ -67,7 +58,7 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 			return ctx.Err()
 		}
 
-		shouldRetry, err := c.sendAndHandleResponse(ctx, jsonData)
+		shouldRetry, err := c.sendAndHandleResponse(payload)
 		if err != nil {
 			// Non-retryable
 			return err
@@ -86,20 +77,15 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 	return fmt.Errorf("failed to send blocks to indexer after %d attempts: %w", maxRetries+1, lastErr)
 }
 
-func (c *Client) sendAndHandleResponse(ctx context.Context, payload []byte) (bool, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.url, bytes.NewReader(payload))
+func (c *Client) sendAndHandleResponse(payload btcindexer.PutBlocksReq) (bool, error) {
+	resp, err := c.apiClient.PutBlocks(payload)
 	if err != nil {
-		return false, fmt.Errorf("failed to create indexer request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return true, err
+		c.logger.Warn().Err(err).Msg("Indexer call failed with network error, retry.")
+		return true, nil
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 300 {
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		c.logger.Info().
 			Int("status_code", resp.StatusCode).
 			Msgf("Successfully sent %d blocks to indexer", len(payload))
@@ -111,26 +97,27 @@ func (c *Client) sendAndHandleResponse(ctx context.Context, payload []byte) (boo
 		return false, fmt.Errorf("indexer returned a non-retryable error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	if resp.StatusCode >= 500 {
-		return true, fmt.Errorf("indexer returned server error: status %d", resp.StatusCode)
-	}
+	// resp.StatusCode >= 500 {
+	c.logger.Warn().
+		Int("status_code", resp.StatusCode).
+		Msg("Indexer returned a server error retry.")
+	return true, nil
 
-	return true, fmt.Errorf("indexer returned unhandled status: %d", resp.StatusCode)
 }
 
-func (c *Client) preparePayload(blocks []*types.IndexedBlock) ([]byte, error) {
-	payload := make([]Payload, len(blocks))
+func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlocksReq, error) {
+	putBlocksReq := make(btcindexer.PutBlocksReq, len(blocks))
 	for i, block := range blocks {
 		var blockBuffer bytes.Buffer
 		if err := block.MsgBlock.Serialize(&blockBuffer); err != nil {
 			return nil, fmt.Errorf("failed to serialize block %d: %w", block.BlockHeight, err)
 		}
-		payload[i] = Payload{
-			Height:      block.BlockHeight,
-			RawBlockHex: hex.EncodeToString(blockBuffer.Bytes()),
+		putBlocksReq[i] = btcindexer.PutBlock{
+			Height: block.BlockHeight,
+			Block:  blockBuffer.Bytes(),
 		}
 	}
-	return json.Marshal(payload)
+	return putBlocksReq, nil
 }
 
 func (c *Client) backoff(ctx context.Context, attempt int) {
