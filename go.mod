@@ -9,7 +9,6 @@ require (
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.8.7
-	github.com/gonative-cc/workers/api/btcindexer v0.0.0-20250727190927-e10e7f2f70f8
 	github.com/joho/godotenv v1.5.1
 	github.com/pattonkan/sui-go v0.1.5
 	github.com/rs/zerolog v1.34.0
@@ -38,6 +37,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/gonative-cc/workers/api/btcindexer v0.0.0-20250729125753-7a476f608c8d
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
