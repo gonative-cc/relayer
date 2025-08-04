@@ -108,23 +108,61 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		return ErrNoBlockHeaders
 	}
 
-	rawHeaders := make([]string, 0, len(blockHeaders))
+	headers := make([]suiptb.Argument, 0, len(blockHeaders))
+
+	ptb := suiptb.NewTransactionDataTransactionBuilder()
+
 	for _, header := range blockHeaders {
 		rawHeader, err := BlockHeaderToHex(header)
+
+		headerArg := ptb.MustPure(rawHeader)
+		header := ptb.Command(suiptb.Command{
+			MoveCall: &suiptb.ProgrammableMoveCall{
+				Package:       c.PackageID,
+				Module:        "block_header",
+				Function:      "new_block_header",
+				TypeArguments: []sui.TypeTag{},
+				Arguments: []suiptb.Argument{
+					headerArg,
+				},
+			},
+		},
+		)
+
 		if err != nil {
 			return fmt.Errorf("error serializing block header: %w", err)
 		}
-		rawHeaders = append(rawHeaders, rawHeader)
+		headers = append(headers, header)
 	}
 
-	arguments := []any{
-		c.LcObjArg.Object.SharedObject.Id,
-		rawHeaders,
-	}
+	headerVec := ptb.Command(
+		suiptb.Command{
+			MakeMoveVec: &suiptb.ProgrammableMakeMoveVec{
+				Type: &sui.TypeTag{Struct: &sui.StructTag{
+					Address: c.PackageID,
+					Module:  "block_header",
+					Name:    "BlockHeader",
+				}},
+			},
+		},
+	)
 
-	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
+	ptb.Command(suiptb.Command{
+		MoveCall: &suiptb.ProgrammableMoveCall{
+			Package:       c.PackageID,
+			Module:        lcModule,
+			Function:      "insert_headers",
+			TypeArguments: []sui.TypeTag{},
+			Arguments: []suiptb.Argument{
+				headerVec,
+			},
+		},
+	})
 
-	_, err := c.executeTx(ctx, insertHeadersFunc, arguments)
+	// c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
+
+	_, err := c.executeTx(ctx, ptb.Finish())
+
 	return err
 }
 
@@ -226,33 +264,32 @@ func (c *SPVClient) Stop() {
 // executionTx is a helper function to construct and execute a Move call on the Sui blockchain.
 func (c *SPVClient) executeTx(
 	ctx context.Context,
-	function string,
-	arguments []any,
+	pt suiptb.ProgrammableTransaction,
 ) (*suiclient.SuiTransactionBlockResponse, error) {
-	req := &suiclient.MoveCallRequest{
-		Signer:    c.Address,
-		PackageId: c.PackageID,
-		Module:    lcModule,
-		Function:  function,
-		TypeArgs:  []string{},
-		Arguments: arguments,
-		GasBudget: sui.NewBigInt(defaultGasBudget),
+	coinPages, err := c.GetCoins(ctx, &suiclient.GetCoinsRequest{
+		Owner: c.Address,
+		Limit: 5,
+	})
+
+	coins := suiclient.Coins(coinPages.Data).CoinRefs()
+
+	if err != nil {
+		return nil, fmt.Errorf("sui move call to '%s' failed: %w", err)
 	}
 
-	resp, err := c.MoveCall(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("sui move call to '%s' failed: %w", function, err)
-	}
+	tx := suiptb.NewTransactionData(c.Address, pt, coins, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
+
+	txBytes, err := bcs.Marshal(tx.V1.Kind)
 
 	options := &suiclient.SuiTransactionBlockResponseOptions{
 		ShowEffects:       true,
 		ShowObjectChanges: true,
 	}
 
-	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, resp.TxBytes, options)
+	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, txBytes, options)
 	if err != nil {
 		return nil,
-			fmt.Errorf("sui transaction submission for '%s' failed: %w", function, err)
+			fmt.Errorf("sui transaction submission for ptb failed: %w", err)
 	}
 
 	// The error returned by SignAndExecuteTransactionBlock only indicates
@@ -261,8 +298,8 @@ func (c *SPVClient) executeTx(
 	// Thats why we MUST inspect the `Effects.Status` field.
 	// It will tell us about execution errors like: Abort, OutOfGas etc.
 	if !signedResp.Effects.Data.IsSuccess() {
-		return signedResp, fmt.Errorf("%w: function '%s' status: %s, error: %s",
-			ErrSuiTransactionFailed, function, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
+		return signedResp, fmt.Errorf("%w: for ptb status: %s, error: %s",
+			ErrSuiTransactionFailed, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
 	}
 
 	return signedResp, nil
