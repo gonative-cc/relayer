@@ -1,33 +1,31 @@
 #!/bin/bash
 # set -e
 
-REPO_URL="https://github.com/gonative-cc/move-bitcoin-spv"
+REPO_URL="https://github.com/gonative-cc/sui-bitcoin-spv"
 CONTAINER_ID="sui-node"
-PACKAGE_PATH="move-bitcoin-spv"
+PACKAGE_PATH="sui-bitcoin-spv"
 CONFIG_FILE="e2e-bitcoin-spv.yml"
 
-INIT_HEADERS='[0x0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000]'
+INIT_HEADERS='0x0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000'
 BTC_NETWORK=2  # regtest (0: mainnet, 1: testnet, 2: regtest)
 START_HEIGHT=0
-
-
-echo "Installing git"
-docker exec "$CONTAINER_ID" /bin/bash -c \
-  "apt-get update && \
-   apt-get install -y wget git"
-
 
 
 
 echo "Cloning light client repo"
 docker exec "$CONTAINER_ID" /bin/bash -c \
        "rm -rf $PACKAGE_PATH && \
-        git clone -b release/alpha $REPO_URL "
+        git clone -b feat/create-light-client-scripts $REPO_URL "
+
 
 echo "Deploying light client to Sui network..."
-PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' && sui client publish --skip-dependency-verification --gas-budget 1000000000 --json")
+PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' && sui client publish --skip-dependency-verification --gas-budget 1000000000 --json  --with-unpublished-dependencies")
 
 PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
+
+rm -rf ./e2e/$PACKAGE_PATH
+git clone -b feat/create-light-client-scripts $REPO_URL ./e2e/$PACKAGE_PATH
+
 
 if [ -z "$PACKAGE_ID" ]; then
   echo "Failed to extract Package ID!"
@@ -38,12 +36,22 @@ fi
 
 echo "Package ID: $PACKAGE_ID"
 
+echo $(pwd)
 
-echo "Initializing light client..."
-INIT_OUTPUT="$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function init_light_client_network --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $BTC_NETWORK $START_HEIGHT \"$INIT_HEADERS\" 0 --json")"
+sed -i "s#^PACKAGE_ID=.*#PACKAGE_ID=${PACKAGE_ID}#" ./e2e/.e2e.env
 
 
-LIGHT_CLIENT_ID=$(echo "$INIT_OUTPUT" | jq -r '.events[] | select(.type | contains("::light_client::NewLightClientEvent")) | .parsedJson.light_client_id')
+cd e2e
+cp ./.e2e.env $PACKAGE_PATH/.env
+cd $PACKAGE_PATH
+npm i
+
+
+LIGHT_CLIENT_ID=$(node script/new_light_client.js| jq -r '.light_client_id')
+cd ../..
+
+pwd
+echo $LIGHT_CLIENT_ID
 
 if [ -z "$LIGHT_CLIENT_ID" ]; then
   echo "Failed to extract Light Client ID!"

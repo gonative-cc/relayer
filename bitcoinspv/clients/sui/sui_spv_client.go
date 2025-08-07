@@ -104,6 +104,8 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
 func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
+	c.logger.Info().Msgf("This is block %s", c.PackageID)
+
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
@@ -115,7 +117,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 	for _, header := range blockHeaders {
 		rawHeader, err := BlockHeaderToHex(header)
 
-		headerArg := ptb.MustPure(rawHeader)
+		headerArg, err := ptb.Pure(rawHeader)
 		header := ptb.Command(suiptb.Command{
 			MoveCall: &suiptb.ProgrammableMoveCall{
 				Package:       c.PackageID,
@@ -135,6 +137,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		headers = append(headers, header)
 	}
 
+	c.logger.Info().Msgf("Pass to this condition")
+
 	headerVec := ptb.Command(
 		suiptb.Command{
 			MakeMoveVec: &suiptb.ProgrammableMakeMoveVec{
@@ -147,12 +151,23 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		},
 	)
 
+	c.logger.Info().Msgf("%s\n", fmt.Sprintf("%#v", headers))
+	c.logger.Info().Msgf("block header\n")
+
 	ptb.Command(suiptb.Command{
 		MoveCall: &suiptb.ProgrammableMoveCall{
-			Package:       c.PackageID,
-			Module:        lcModule,
-			Function:      "insert_headers",
-			TypeArguments: []sui.TypeTag{},
+			Package:  c.PackageID,
+			Module:   lcModule,
+			Function: "insert_headers",
+			TypeArguments: []sui.TypeTag{
+				{
+					Struct: &sui.StructTag{
+						Address: c.PackageID,
+						Module:  "block_header",
+						Name:    "BlockHeader",
+					},
+				},
+			},
 			Arguments: []suiptb.Argument{
 				headerVec,
 			},
@@ -272,6 +287,7 @@ func (c *SPVClient) executeTx(
 	})
 
 	coins := suiclient.Coins(coinPages.Data).CoinRefs()
+	c.logger.Info().Msgf("%s\n", fmt.Sprintf("%#v", coins))
 
 	if err != nil {
 		return nil, fmt.Errorf("sui move call to '%s' failed: %w", err)
@@ -279,7 +295,9 @@ func (c *SPVClient) executeTx(
 
 	tx := suiptb.NewTransactionData(c.Address, pt, coins, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
 
-	txBytes, err := bcs.Marshal(tx.V1.Kind)
+	c.logger.Info().Msgf("pass in execute")
+
+	txBytes, err := bcs.Marshal(tx)
 
 	options := &suiclient.SuiTransactionBlockResponseOptions{
 		ShowEffects:       true,
@@ -291,6 +309,8 @@ func (c *SPVClient) executeTx(
 		return nil,
 			fmt.Errorf("sui transaction submission for ptb failed: %w", err)
 	}
+
+	c.logger.Info().Msgf("%s", signedResp.Effects.Data.V1.Status.Error)
 
 	// The error returned by SignAndExecuteTransactionBlock only indicates
 	// whether the transaction was successfully submitted to the network.
