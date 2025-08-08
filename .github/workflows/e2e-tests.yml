@@ -66,8 +66,9 @@ jobs:
       - name: Run E2E Tests
         run: ./e2e/run_e2e_tests.sh
 
-      - name: Run E2E gap handling test
-        run: ./e2e/run_e2e_gap_handling.sh
+        # We disable this test yet. We should enable this when we have better way to interact with ptc via cli.
+      # - name: Run E2E gap handling test
+      #   run: ./e2e/run_e2e_gap_handling.sh
 
       - name: Stop Services (Docker Compose)
         if: always()

@@ -2,6 +2,7 @@ package sui
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -104,27 +105,82 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
 func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
+	c.logger.Info().Msgf("This is block %s", c.PackageID)
+
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
 
-	rawHeaders := make([]string, 0, len(blockHeaders))
+	headers := make([]suiptb.Argument, 0, len(blockHeaders))
+
+	ptb := suiptb.NewTransactionDataTransactionBuilder()
+
+	c.LcObjArg.Object.SharedObject.Mutable = true
+
+	obj := ptb.MustObj(suiptb.ObjectArg{
+		SharedObject: &suiptb.SharedObjectArg{
+			Id:                   c.LcObjArg.Object.SharedObject.Id,
+			InitialSharedVersion: c.LcObjArg.Object.SharedObject.InitialSharedVersion,
+			Mutable:              true,
+		},
+	})
 	for _, header := range blockHeaders {
 		rawHeader, err := BlockHeaderToHex(header)
 		if err != nil {
+			return err
+		}
+		headerBytes, err := hex.DecodeString(rawHeader[2:])
+		if err != nil {
+			return err
+		}
+		headerArg, err := ptb.Pure(headerBytes)
+		header := ptb.Command(suiptb.Command{
+			MoveCall: &suiptb.ProgrammableMoveCall{
+				Package:       c.PackageID,
+				Module:        "block_header",
+				Function:      "new_block_header",
+				TypeArguments: []sui.TypeTag{},
+				Arguments: []suiptb.Argument{
+					headerArg,
+				},
+			},
+		},
+		)
+
+		if err != nil {
 			return fmt.Errorf("error serializing block header: %w", err)
 		}
-		rawHeaders = append(rawHeaders, rawHeader)
+		headers = append(headers, header)
 	}
 
-	arguments := []any{
-		c.LcObjArg.Object.SharedObject.Id,
-		rawHeaders,
-	}
+	headerVec := ptb.Command(
+		suiptb.Command{
+			MakeMoveVec: &suiptb.ProgrammableMakeMoveVec{
+				Type: &sui.TypeTag{Struct: &sui.StructTag{
+					Address: c.PackageID,
+					Module:  "block_header",
+					Name:    "BlockHeader",
+				}},
+				Objects: headers,
+			},
+		},
+	)
 
-	c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
+	ptb.Command(suiptb.Command{
+		MoveCall: &suiptb.ProgrammableMoveCall{
+			Package:       c.PackageID,
+			Module:        lcModule,
+			Function:      "insert_headers",
+			TypeArguments: []sui.TypeTag{},
+			Arguments: []suiptb.Argument{
+				obj,
+				headerVec,
+			},
+		},
+	})
 
-	_, err := c.executeTx(ctx, insertHeadersFunc, arguments)
+	_, err := c.executeTx(ctx, ptb.Finish())
+
 	return err
 }
 
@@ -226,34 +282,40 @@ func (c *SPVClient) Stop() {
 // executionTx is a helper function to construct and execute a Move call on the Sui blockchain.
 func (c *SPVClient) executeTx(
 	ctx context.Context,
-	function string,
-	arguments []any,
+	pt suiptb.ProgrammableTransaction,
 ) (*suiclient.SuiTransactionBlockResponse, error) {
-	req := &suiclient.MoveCallRequest{
-		Signer:    c.Address,
-		PackageId: c.PackageID,
-		Module:    lcModule,
-		Function:  function,
-		TypeArgs:  []string{},
-		Arguments: arguments,
-		GasBudget: sui.NewBigInt(defaultGasBudget),
-	}
+	coinPages, err := c.GetCoins(ctx, &suiclient.GetCoinsRequest{
+		Owner: c.Address,
+		Limit: 5,
+	})
+	coins := suiclient.Coins(coinPages.Data).CoinRefs()
 
-	resp, err := c.MoveCall(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("sui move call to '%s' failed: %w", function, err)
+		return nil, fmt.Errorf("fetch sui coins failed %w", err)
 	}
 
+	tx := suiptb.NewTransactionData(c.Address, pt, coins, defaultGasBudget, suiclient.DefaultGasPrice)
+
+	c.logger.Info().Msgf("pass in execute")
+
+	txBytes, err := bcs.Marshal(tx)
+
+	if err != nil {
+		return nil,
+			fmt.Errorf("sui tx serialized error %w", err)
+	}
 	options := &suiclient.SuiTransactionBlockResponseOptions{
 		ShowEffects:       true,
 		ShowObjectChanges: true,
 	}
 
-	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, resp.TxBytes, options)
+	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, txBytes, options)
 	if err != nil {
 		return nil,
-			fmt.Errorf("sui transaction submission for '%s' failed: %w", function, err)
+			fmt.Errorf("sui transaction submission for ptb failed: %w", err)
 	}
+
+	c.logger.Info().Msgf("%s", signedResp.Effects.Data.V1.Status.Error)
 
 	// The error returned by SignAndExecuteTransactionBlock only indicates
 	// whether the transaction was successfully submitted to the network.
@@ -261,8 +323,8 @@ func (c *SPVClient) executeTx(
 	// Thats why we MUST inspect the `Effects.Status` field.
 	// It will tell us about execution errors like: Abort, OutOfGas etc.
 	if !signedResp.Effects.Data.IsSuccess() {
-		return signedResp, fmt.Errorf("%w: function '%s' status: %s, error: %s",
-			ErrSuiTransactionFailed, function, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
+		return signedResp, fmt.Errorf("%w: for ptb status: %s, error: %s",
+			ErrSuiTransactionFailed, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
 	}
 
 	return signedResp, nil
