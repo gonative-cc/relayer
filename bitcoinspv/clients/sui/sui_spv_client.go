@@ -126,6 +126,9 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 	})
 	for _, header := range blockHeaders {
 		rawHeader, err := BlockHeaderToHex(header)
+		if err != nil {
+			return err
+		}
 		headerBytes, err := hex.DecodeString(rawHeader[2:])
 		if err != nil {
 			return err
@@ -291,12 +294,16 @@ func (c *SPVClient) executeTx(
 		return nil, fmt.Errorf("fetch sui coins failed %w", err)
 	}
 
-	tx := suiptb.NewTransactionData(c.Address, pt, coins, suiclient.DefaultGasBudget*10, suiclient.DefaultGasPrice)
+	tx := suiptb.NewTransactionData(c.Address, pt, coins, defaultGasBudget, suiclient.DefaultGasPrice)
 
 	c.logger.Info().Msgf("pass in execute")
 
 	txBytes, err := bcs.Marshal(tx)
 
+	if err != nil {
+		return nil,
+			fmt.Errorf("sui tx serialized error %w", err)
+	}
 	options := &suiclient.SuiTransactionBlockResponseOptions{
 		ShowEffects:       true,
 		ShowObjectChanges: true,
