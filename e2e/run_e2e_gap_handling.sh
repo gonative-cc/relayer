@@ -10,7 +10,7 @@ echo "Running E2E tests..."
 
 echo "Start relayer to sync first time"
 
-docker exec -i bitcoind-node bitcoin-cli -generate 100 > /dev/null 2>&1
+docker exec -i bitcoind-node bitcoin-cli -generate 10 > /dev/null 2>&1
 sleep 5
 ./e2e/sync_and_validate_status.sh
 

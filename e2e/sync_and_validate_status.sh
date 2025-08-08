@@ -7,8 +7,10 @@ LIGHT_CLIENT_ID="$(yq -r '.sui.lc_object_id' $E2E_YAML_CONFIG)"
 PACKAGE_ID="$(yq -r '.sui.lc_package_id' $E2E_YAML_CONFIG)"
 
 function get_latest_block_hash_lc() {
-    latest_block_height=$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function head_hash --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID  --dev-inspect --json")
-     echo $latest_block_height
+    latest_block_height=$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function head_height --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID  --dev-inspect --json")
+    # The height is results[0].returnValues[0][0], in little endian format.
+    # we only test with block height < 256, so we can extract is the first element in result.
+    echo $latest_block_height | jq '.results[0].returnValues[0][0][0]'
 }
 
 function get_btc_height() {
@@ -27,7 +29,6 @@ kill $relayer_pid
 lc_height=$(get_latest_block_hash_lc)
 btc_height=$(get_btc_height)
 
-echo $lc_height
 if [[ $((lc_height - btc_height)) != 0 ]]; then
     echo "Relayer not sync the btc node and lc"
     exit 1
