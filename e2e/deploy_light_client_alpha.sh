@@ -15,7 +15,7 @@ START_HEIGHT=0
 echo "Cloning light client repo"
 docker exec "$CONTAINER_ID" /bin/bash -c \
        "rm -rf $PACKAGE_PATH && \
-        git clone -b feat/create-light-client-scripts $REPO_URL "
+        git clone -b dev $REPO_URL "
 
 
 echo "Deploying light client to Sui network..."
@@ -24,7 +24,7 @@ PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' &&
 PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
 
 rm -rf ./e2e/$PACKAGE_PATH
-git clone -b feat/create-light-client-scripts $REPO_URL ./e2e/$PACKAGE_PATH
+git clone -b dev $REPO_URL ./e2e/$PACKAGE_PATH
 
 
 if [ -z "$PACKAGE_ID" ]; then

@@ -2,6 +2,7 @@ package sui
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -114,10 +115,22 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
+	c.LcObjArg.Object.SharedObject.Mutable = true
+
+	obj := ptb.MustObj(suiptb.ObjectArg{
+		SharedObject: &suiptb.SharedObjectArg{
+			Id:                   c.LcObjArg.Object.SharedObject.Id,
+			InitialSharedVersion: c.LcObjArg.Object.SharedObject.InitialSharedVersion,
+			Mutable:              true,
+		},
+	})
 	for _, header := range blockHeaders {
 		rawHeader, err := BlockHeaderToHex(header)
-
-		headerArg, err := ptb.Pure(rawHeader)
+		headerBytes, err := hex.DecodeString(rawHeader[2:])
+		if err != nil {
+			return err
+		}
+		headerArg, err := ptb.Pure(headerBytes)
 		header := ptb.Command(suiptb.Command{
 			MoveCall: &suiptb.ProgrammableMoveCall{
 				Package:       c.PackageID,
@@ -137,8 +150,6 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		headers = append(headers, header)
 	}
 
-	c.logger.Info().Msgf("Pass to this condition")
-
 	headerVec := ptb.Command(
 		suiptb.Command{
 			MakeMoveVec: &suiptb.ProgrammableMakeMoveVec{
@@ -147,34 +158,23 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 					Module:  "block_header",
 					Name:    "BlockHeader",
 				}},
+				Objects: headers,
 			},
 		},
 	)
 
-	c.logger.Info().Msgf("%s\n", fmt.Sprintf("%#v", headers))
-	c.logger.Info().Msgf("block header\n")
-
 	ptb.Command(suiptb.Command{
 		MoveCall: &suiptb.ProgrammableMoveCall{
-			Package:  c.PackageID,
-			Module:   lcModule,
-			Function: "insert_headers",
-			TypeArguments: []sui.TypeTag{
-				{
-					Struct: &sui.StructTag{
-						Address: c.PackageID,
-						Module:  "block_header",
-						Name:    "BlockHeader",
-					},
-				},
-			},
+			Package:       c.PackageID,
+			Module:        lcModule,
+			Function:      "insert_headers",
+			TypeArguments: []sui.TypeTag{},
 			Arguments: []suiptb.Argument{
+				obj,
 				headerVec,
 			},
 		},
 	})
-
-	// c.logger.Debug().Msgf("Calling insert headers with the following arguemts: %v", arguments...)
 
 	_, err := c.executeTx(ctx, ptb.Finish())
 
@@ -285,15 +285,13 @@ func (c *SPVClient) executeTx(
 		Owner: c.Address,
 		Limit: 5,
 	})
-
 	coins := suiclient.Coins(coinPages.Data).CoinRefs()
-	c.logger.Info().Msgf("%s\n", fmt.Sprintf("%#v", coins))
 
 	if err != nil {
-		return nil, fmt.Errorf("sui move call to '%s' failed: %w", err)
+		return nil, fmt.Errorf("fetch sui coins failed %w", err)
 	}
 
-	tx := suiptb.NewTransactionData(c.Address, pt, coins, suiclient.DefaultGasBudget, suiclient.DefaultGasPrice)
+	tx := suiptb.NewTransactionData(c.Address, pt, coins, suiclient.DefaultGasBudget*10, suiclient.DefaultGasPrice)
 
 	c.logger.Info().Msgf("pass in execute")
 

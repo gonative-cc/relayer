@@ -6,9 +6,8 @@ E2E_YAML_CONFIG=./e2e-bitcoin-spv.yml
 LIGHT_CLIENT_ID="$(yq -r '.sui.lc_object_id' $E2E_YAML_CONFIG)"
 PACKAGE_ID="$(yq -r '.sui.lc_package_id' $E2E_YAML_CONFIG)"
 
-function get_latest_block_height_lc() {
-    latest_block_hash=$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function latest_block_hash --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID  --dev-inspect --json")
-     latest_block_height=$(echo "$latest_block_hash" | jq -r '.events[].parsedJson.height')
+function get_latest_block_hash_lc() {
+    latest_block_height=$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function head_hash --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID  --dev-inspect --json")
      echo $latest_block_height
 }
 
@@ -25,8 +24,10 @@ cat stderr.log
 kill $relayer_pid
 
 
-lc_height=$(get_latest_block_height_lc)
+lc_height=$(get_latest_block_hash_lc)
 btc_height=$(get_btc_height)
+
+echo $lc_height
 if [[ $((lc_height - btc_height)) != 0 ]]; then
     echo "Relayer not sync the btc node and lc"
     exit 1
