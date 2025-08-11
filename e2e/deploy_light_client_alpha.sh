@@ -47,7 +47,7 @@ cd $PACKAGE_PATH
 npm i
 
 
-LIGHT_CLIENT_ID=$(node script/new_light_client.js| jq -r '.light_client_id')
+LIGHT_CLIENT_ID=$(node scripts/new_light_client.js| jq -r '.light_client_id')
 cd ../..
 
 pwd
