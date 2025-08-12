@@ -180,8 +180,6 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 	})
 
 	return c.executeTx(ctx, ptb.Finish())
-
-	return err
 }
 
 // ContainsBlock checks if the light client's chain includes a block with the given hash.
@@ -283,7 +281,7 @@ func (c *SPVClient) Stop() {
 func (c *SPVClient) executeTx(
 	ctx context.Context,
 	pt suiptb.ProgrammableTransaction,
-) (*suiclient.SuiTransactionBlockResponse, error) {
+) error {
 	coinPages, err := c.GetCoins(ctx, &suiclient.GetCoinsRequest{
 		Owner: c.Address,
 		Limit: 5,
@@ -291,17 +289,15 @@ func (c *SPVClient) executeTx(
 	coins := suiclient.Coins(coinPages.Data).CoinRefs()
 
 	if err != nil {
-		return nil, fmt.Errorf("fetching Sui coins failed %w", err)
+		return fmt.Errorf("fetching Sui coins failed %w", err)
 	}
 
 	tx := suiptb.NewTransactionData(c.Address, pt, coins, defaultGasBudget, suiclient.DefaultGasPrice)
 
-
 	txBytes, err := bcs.Marshal(tx)
 
 	if err != nil {
-		return nil,
-			fmt.Errorf("failed to serialize Sui transaction %w", err)
+		return fmt.Errorf("failed to serialize Sui transaction %w", err)
 	}
 	options := &suiclient.SuiTransactionBlockResponseOptions{
 		ShowEffects:       true,
@@ -310,8 +306,7 @@ func (c *SPVClient) executeTx(
 
 	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, txBytes, options)
 	if err != nil {
-		return nil,
-			fmt.Errorf("sui pbt transaction submission failed: %w", err)
+		return fmt.Errorf("sui pbt transaction submission failed: %w", err)
 	}
 
 	c.logger.Info().Msgf("%s", signedResp.Effects.Data.V1.Status.Error)
@@ -322,11 +317,11 @@ func (c *SPVClient) executeTx(
 	// Thats why we MUST inspect the `Effects.Status` field.
 	// It will tell us about execution errors like: Abort, OutOfGas etc.
 	if !signedResp.Effects.Data.IsSuccess() {
-		return signedResp, fmt.Errorf("%w: for ptb status: %s, error: %s",
+		return fmt.Errorf("%w: for ptb status: %s, error: %s",
 			ErrSuiTransactionFailed, signedResp.Effects.Data.V1.Status.Status, signedResp.Effects.Data.V1.Status.Error)
 	}
 
-	return signedResp, nil
+	return nil
 }
 
 func (c *SPVClient) devInspectTransactionBlock(
