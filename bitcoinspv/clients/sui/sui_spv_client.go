@@ -179,7 +179,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		},
 	})
 
-	_, err := c.executeTx(ctx, ptb.Finish())
+	return c.executeTx(ctx, ptb.Finish())
 
 	return err
 }
@@ -291,18 +291,17 @@ func (c *SPVClient) executeTx(
 	coins := suiclient.Coins(coinPages.Data).CoinRefs()
 
 	if err != nil {
-		return nil, fmt.Errorf("fetch sui coins failed %w", err)
+		return nil, fmt.Errorf("fetching Sui coins failed %w", err)
 	}
 
 	tx := suiptb.NewTransactionData(c.Address, pt, coins, defaultGasBudget, suiclient.DefaultGasPrice)
 
-	c.logger.Info().Msgf("pass in execute")
 
 	txBytes, err := bcs.Marshal(tx)
 
 	if err != nil {
 		return nil,
-			fmt.Errorf("sui tx serialized error %w", err)
+			fmt.Errorf("failed to serialize Sui transaction %w", err)
 	}
 	options := &suiclient.SuiTransactionBlockResponseOptions{
 		ShowEffects:       true,
@@ -312,7 +311,7 @@ func (c *SPVClient) executeTx(
 	signedResp, err := c.SignAndExecuteTransaction(ctx, c.Signer, txBytes, options)
 	if err != nil {
 		return nil,
-			fmt.Errorf("sui transaction submission for ptb failed: %w", err)
+			fmt.Errorf("sui pbt transaction submission failed: %w", err)
 	}
 
 	c.logger.Info().Msgf("%s", signedResp.Effects.Data.V1.Status.Error)
