@@ -105,7 +105,6 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 
 // InsertHeaders adds new Bitcoin block headers to the light client's chain.
 func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
-	c.logger.Info().Msgf("This is block %s", c.PackageID)
 
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
@@ -129,6 +128,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		if err != nil {
 			return err
 		}
+		// NOTEs: rawHeader after decode have format "0xabcd...""
+		// we need to skip 2 ""0x".
 		headerBytes, err := hex.DecodeString(rawHeader[2:])
 		if err != nil {
 			return err
@@ -179,7 +180,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		},
 	})
 
-	return c.executeTx(ctx, ptb.Finish())
+	c.logger.Debug().Msgf("Calling insert headers with the following block header: %v", blockHeaders)
+	return c.signAndExecutePTB(ctx, ptb.Finish())
 }
 
 // ContainsBlock checks if the light client's chain includes a block with the given hash.
@@ -277,8 +279,8 @@ func (c *SPVClient) Stop() {
 	c.logger.Info().Msg("Stop called")
 }
 
-// executionTx is a helper function to construct and execute a Move call on the Sui blockchain.
-func (c *SPVClient) executeTx(
+// signAndExecutePTB is a helper function to sign and execute a PTB transaction on the Sui blockchain.
+func (c *SPVClient) signAndExecutePTB(
 	ctx context.Context,
 	pt suiptb.ProgrammableTransaction,
 ) error {
