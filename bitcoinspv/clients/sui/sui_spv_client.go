@@ -17,11 +17,14 @@ import (
 )
 
 const (
-	insertHeadersFunc = "insert_headers"
-	containsBlockFunc = "exist"
-	getChainTipFunc   = "head"
-	verifySPVFunc     = "verify_tx"
-	lcModule          = "light_client"
+	insertHeadersFunc  = "insert_headers"
+	containsBlockFunc  = "exist"
+	getChainTipFunc    = "head"
+	verifySPVFunc      = "verify_tx"
+	newBlockHeaderFunc = "new_block_header"
+	lcModule           = "light_client"
+	blockHeaderModule  = "block_header"
+	blockHeaderType    = "BlockHeader"
 	// TODO: Use better defaultGasBudget
 	defaultGasBudget = 10000000000
 )
@@ -138,8 +141,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		header := ptb.Command(suiptb.Command{
 			MoveCall: &suiptb.ProgrammableMoveCall{
 				Package:       c.PackageID,
-				Module:        "block_header",
-				Function:      "new_block_header",
+				Module:        blockHeaderModule,
+				Function:      newBlockHeaderFunc,
 				TypeArguments: []sui.TypeTag{},
 				Arguments: []suiptb.Argument{
 					headerArg,
@@ -159,8 +162,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 			MakeMoveVec: &suiptb.ProgrammableMakeMoveVec{
 				Type: &sui.TypeTag{Struct: &sui.StructTag{
 					Address: c.PackageID,
-					Module:  "block_header",
-					Name:    "BlockHeader",
+					Module:  blockHeaderModule,
+					Name:    blockHeaderType,
 				}},
 				Objects: headers,
 			},
@@ -171,7 +174,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		MoveCall: &suiptb.ProgrammableMoveCall{
 			Package:       c.PackageID,
 			Module:        lcModule,
-			Function:      "insert_headers",
+			Function:      insertHeadersFunc,
 			TypeArguments: []sui.TypeTag{},
 			Arguments: []suiptb.Argument{
 				obj,
