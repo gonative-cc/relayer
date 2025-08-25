@@ -19,7 +19,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/tinylib/msgp v1.3.0
 	github.com/vektra/mockery/v2 v2.53.4
 	gotest.tools v2.2.0+incompatible
