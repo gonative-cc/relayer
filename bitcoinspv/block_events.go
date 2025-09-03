@@ -58,7 +58,7 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 		return err
 	}
 
-	ib := new(types.IndexedBlock)
+	var ib *types.IndexedBlock
 	var err error
 
 	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
