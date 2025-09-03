@@ -30,3 +30,4 @@ contrib/fork-*
 e2e-bitcoin-spv.yml
 bitcoin-spv
 !cmd/bitcoin-spv/
+e2e/sui-bitcoin-spv/
