@@ -9,7 +9,7 @@ PACKAGE_ID="$(yq -r '.sui.lc_package_id' $E2E_YAML_CONFIG)"
 function get_latest_block_hash_lc() {
     latest_block_height=$(docker exec "$CONTAINER_ID" /bin/bash -c "sui client call --function head_height --module light_client --package '$PACKAGE_ID' --gas-budget 100000000 --args $LIGHT_CLIENT_ID  --dev-inspect --json")
     # The height is results[0].returnValues[0][0], in little endian format.
-    # we only test with block height < 256, so we can extract is the first element in result.
+    # We only test with block height < 256, so we can extract it from the first element in results.
     echo $latest_block_height | jq '.results[0].returnValues[0][0][0]'
 }
 
