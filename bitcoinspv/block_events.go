@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
@@ -73,8 +74,10 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 			r.logger.Error().Err(err).Msg("failed to process full block")
 		}
 	} else {
-		ib.BlockHeight = blockEvent.Height
-		ib.MsgBlock.Header = *blockEvent.BlockHeader
+		ib = &types.IndexedBlock{
+			BlockHeight: blockEvent.Height,
+			MsgBlock:    wire.NewMsgBlock(blockEvent.BlockHeader),
+		}
 	}
 	err = r.btcCache.Add(ib)
 	if err != nil {
