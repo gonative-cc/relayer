@@ -2,7 +2,6 @@ package sui
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -88,7 +87,7 @@ func New(
 			SharedObject: &suiptb.SharedObjectArg{
 				Id:                   lcObjectResp.Data.ObjectId,
 				InitialSharedVersion: *lcObjectResp.Data.Owner.Shared.InitialSharedVersion,
-				Mutable:              false,
+				Mutable:              true,
 			},
 		},
 	}
@@ -106,38 +105,26 @@ func configureClientLogger(parentLogger zerolog.Logger) zerolog.Logger {
 	return parentLogger.With().Str("module", "spv_client").Logger()
 }
 
-// InsertHeaders adds new Bitcoin block headers to the light client's chain.
+// InsertHeaders adds new Bitcoin block headers to the light client's chain using a PTB.
 func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.BlockHeader) error {
-
 	if len(blockHeaders) == 0 {
 		return ErrNoBlockHeaders
 	}
 
-	headers := make([]suiptb.Argument, 0, len(blockHeaders))
-
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
-	c.LcObjArg.Object.SharedObject.Mutable = true
-
-	obj := ptb.MustObj(suiptb.ObjectArg{
-		SharedObject: &suiptb.SharedObjectArg{
-			Id:                   c.LcObjArg.Object.SharedObject.Id,
-			InitialSharedVersion: c.LcObjArg.Object.SharedObject.InitialSharedVersion,
-			Mutable:              true,
-		},
-	})
+	lcObjArgument := ptb.MustObj(*c.LcObjArg.Object)
+	headers := make([]suiptb.Argument, 0, len(blockHeaders))
 	for _, header := range blockHeaders {
-		rawHeader, err := BlockHeaderToHex(header)
+		headerBytes, err := blockHeaderToBytes(header)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to serialize block header to bytes: %w", err)
 		}
-		// NOTE: rawHeader after decoding has format "0xabcd...""
-		// we need to skip  "0x".
-		headerBytes, err := hex.DecodeString(rawHeader[2:])
-		if err != nil {
-			return err
-		}
+
 		headerArg, err := ptb.Pure(headerBytes)
+		if err != nil {
+			return fmt.Errorf("failed to create pure argument from header bytes: %w", err)
+		}
 		header := ptb.Command(suiptb.Command{
 			MoveCall: &suiptb.ProgrammableMoveCall{
 				Package:       c.PackageID,
@@ -151,9 +138,6 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		},
 		)
 
-		if err != nil {
-			return fmt.Errorf("error serializing block header: %w", err)
-		}
 		headers = append(headers, header)
 	}
 
@@ -177,13 +161,13 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 			Function:      insertHeadersFunc,
 			TypeArguments: []sui.TypeTag{},
 			Arguments: []suiptb.Argument{
-				obj,
+				lcObjArgument,
 				headerVec,
 			},
 		},
 	})
 
-	c.logger.Debug().Msgf("Calling insert headers with the following headers: %v", blockHeaders)
+	c.logger.Debug().Msgf("Calling insert headers with %d block headers", len(blockHeaders))
 	return c.signAndExecutePTB(ctx, ptb.Finish())
 }
 
@@ -300,7 +284,6 @@ func (c *SPVClient) signAndExecutePTB(
 	tx := suiptb.NewTransactionData(c.Address, pt, coins, defaultGasBudget, suiclient.DefaultGasPrice)
 
 	txBytes, err := bcs.Marshal(tx)
-
 	if err != nil {
 		return fmt.Errorf("failed to serialize Sui transaction %w", err)
 	}
