@@ -8,11 +8,11 @@ require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
-	github.com/fardream/go-bcs v0.8.7
-	github.com/gonative-cc/workers/api/btcindexer v0.1.0
+	github.com/fardream/go-bcs v0.9.0
+	github.com/gonative-cc/workers/api/btcindexer v0.1.1
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-isatty v0.0.20
-	github.com/mattn/go-sqlite3 v1.14.29
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/namihq/walrus-go v0.2.0
 	github.com/pattonkan/sui-go v0.1.5
 	github.com/pebbe/zmq4 v1.4.0
