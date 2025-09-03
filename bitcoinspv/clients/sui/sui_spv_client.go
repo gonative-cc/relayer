@@ -131,8 +131,8 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		if err != nil {
 			return err
 		}
-		// NOTEs: rawHeader after decode have format "0xabcd...""
-		// we need to skip 2 ""0x".
+		// NOTE: rawHeader after decoding has format "0xabcd...""
+		// we need to skip  "0x".
 		headerBytes, err := hex.DecodeString(rawHeader[2:])
 		if err != nil {
 			return err
@@ -183,7 +183,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		},
 	})
 
-	c.logger.Debug().Msgf("Calling insert headers with the following block header: %v", blockHeaders)
+	c.logger.Debug().Msgf("Calling insert headers with the following headers: %v", blockHeaders)
 	return c.signAndExecutePTB(ctx, ptb.Finish())
 }
 
