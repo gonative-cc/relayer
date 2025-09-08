@@ -14,7 +14,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/namihq/walrus-go v0.2.0
-	github.com/pattonkan/sui-go v0.1.5
+	github.com/pattonkan/sui-go v0.1.7
 	github.com/pebbe/zmq4 v1.4.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
