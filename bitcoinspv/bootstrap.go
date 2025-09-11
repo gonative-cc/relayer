@@ -136,33 +136,41 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 	}
 	r.btcCache = cache
 
-	blockHeight, err := r.getLCLatestBlockHeight(ctx)
+	lcHeight, err := r.getLCLatestBlockHeight(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to fetch light client height: %w", err)
+	}
+
+	indexerHeight, err := r.getIndexerLatestBlockHeight(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch indexer height: %w", err)
+	}
+
+	_, btcTipHeight, err := r.btcClient.GetBTCTipBlock()
+	if err != nil {
+		return fmt.Errorf("failedt bitcoin node tip height: %w", err)
+	}
+
+	r.logger.Info().Int64("light_client", lcHeight).Int64("indexer", indexerHeight).Int64("btc_node", btcTipHeight).Msg("Latest known heights")
+
+	if r.btcIndexer != nil && indexerHeight < btcTipHeight {
+		r.logger.Info().Int64("from", indexerHeight+1).Int64("to", btcTipHeight).Msg("Starting indexer backfill...")
+		if err := r.backfillIndexer(ctx, indexerHeight+1, btcTipHeight); err != nil {
+			return fmt.Errorf("indexer backfill failed: %w", err)
+		}
 	}
 
 	// Here we are ensuring that the relayer after every restart starts
 	// submitting headers from the light clients height - confirmationDepth (usually 6).
-	baseHeight := blockHeight - r.btcConfirmationDepth + 1
+	startSyncHeight := lcHeight - r.btcConfirmationDepth + 1
 
-	r.logger.Info().Msg("Fetching blocks to internal cache and sending to Walrus storage...")
-	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
-	blocks, err := r.btcClient.GetBTCTailBlocksByHeight(baseHeight, fetchFullBlocks)
+	r.logger.Info().Int64("start_height", startSyncHeight).Msgf("Bootstrapping lc with headers")
+
+	headers, err := r.btcClient.GetBTCTailBlocksByHeight(startSyncHeight, false) // false - headers only
 	if err != nil {
-		return fmt.Errorf("failed to get blocks/headers: %w", err)
+		return fmt.Errorf("failed to get headers for bootstrap: %w", err)
 	}
-	// TODO: handle retry
-	if fetchFullBlocks {
-		r.logger.Info().Msgf("Processing %d full blocks for Walrus/Indexer...", len(blocks))
-		// NOTE: We could optimize, and send blocks in batches,
-		//  however its not necessary since reorgs on mainnet are minimal
-		for _, block := range blocks {
-			if err := r.handleFullBlock(ctx, block); err != nil {
-				return fmt.Errorf("failed to process full block during bootstrap: %w", err)
-			}
-		}
-	}
-	return r.btcCache.Init(blocks)
+	return r.btcCache.Init(headers)
 }
 
 func (r *Relayer) getBTCLatestBlockHeight() (int64, error) {
@@ -228,4 +236,40 @@ func (r *Relayer) waitForBitcoinCatchup(ctx context.Context) error {
 
 func isBTCCaughtUp(btcHeight int64, lcHeight int64) bool {
 	return btcHeight > 0 && btcHeight >= lcHeight
+}
+
+func (r *Relayer) backfillIndexer(ctx context.Context, startHeight, endHeight int64) error {
+	batchSize := int64(20)
+
+	for current := startHeight; current <= endHeight; current += batchSize {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		batchEnd := current + batchSize - 1
+		if batchEnd > endHeight {
+			batchEnd = endHeight
+		}
+
+		r.logger.Info().Int64("from", current).Int64("to", batchEnd).Msg("Fetching block batch for indexer backfill")
+
+		blocksInBatch := make([]*relayertypes.IndexedBlock, 0, batchEnd-current+1)
+		for i := current; i <= batchEnd; i++ {
+			block, err := r.btcClient.GetBTCBlockByHeight(i)
+			if err != nil {
+				return fmt.Errorf("failed to fetch block at height %d for indexer backfill: %w", i, err)
+			}
+			blocksInBatch = append(blocksInBatch, block)
+		}
+
+		if len(blocksInBatch) > 0 {
+			if err := r.btcIndexer.SendBlocks(ctx, blocksInBatch); err != nil {
+				return fmt.Errorf("failed to send block batch to indexer: %w", err)
+			}
+		}
+	}
+	r.logger.Info().Msg("Indexer backfill completed successfully.")
+	return nil
 }
