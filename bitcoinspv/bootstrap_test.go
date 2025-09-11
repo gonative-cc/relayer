@@ -14,11 +14,24 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupTestWithIndexer(t *testing.T) (*Relayer, *mocks.MockBTCClient, *mocks.MockBitcoinSPV, *mocks.MockIndexer) {
+type testHarness struct {
+	relayer       *Relayer
+	btcClient     *mocks.MockBTCClient
+	lcClient      *mocks.MockBitcoinSPV
+	indexerClient *mocks.MockIndexer
+}
+
+func setupTestWithIndexer(t *testing.T) testHarness {
 	r, btcClient, lcClient := setupTest(t)
 	indexerClient := mocks.NewMockIndexer(t)
 	r.btcIndexer = indexerClient
-	return r, btcClient, lcClient, indexerClient
+
+	return testHarness{
+		relayer:       r,
+		btcClient:     btcClient,
+		lcClient:      lcClient,
+		indexerClient: indexerClient,
+	}
 }
 
 func TestBootstrapRelayer(t *testing.T) {
@@ -27,7 +40,8 @@ func TestBootstrapRelayer(t *testing.T) {
 	const latestFinalized = latestHeight - confirmationDepth + 1
 
 	t.Run("successful bootstrap", func(t *testing.T) {
-		r, btcClient, lcClient, indexerClient := setupTestWithIndexer(t)
+		harness := setupTestWithIndexer(t)
+		r, btcClient, lcClient, indexerClient := harness.relayer, harness.btcClient, harness.lcClient, harness.indexerClient
 
 		btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(latestHeight), nil)
 		lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{

@@ -141,8 +141,9 @@ func (c *Client) backoff(ctx context.Context, attempt int) {
 	}
 }
 
-func (c *Client) GetLatestHeight(ctx context.Context) (int64, error) {
-	resp, err := c.apiClient.GetLatestHeight() // Assumes your generated Go client has this
+// GetLatestHeight returns the latest block height known to the indexer
+func (c *Client) GetLatestHeight() (int64, error) {
+	resp, err := c.apiClient.GetLatestHeight()
 	if err != nil {
 		return 0, err
 	}
