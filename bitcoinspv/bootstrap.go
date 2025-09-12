@@ -282,5 +282,5 @@ func (r *Relayer) getIndexerLatestBlockHeight() (int64, error) {
 	if r.btcIndexer == nil {
 		return 0, nil
 	}
-	return := r.btcIndexer.GetLatestHeight()
+	return r.btcIndexer.GetLatestHeight()
 }
