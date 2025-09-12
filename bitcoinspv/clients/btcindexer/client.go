@@ -3,7 +3,6 @@ package btcindexer
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -143,27 +142,11 @@ func (c *Client) backoff(ctx context.Context, attempt int) {
 
 // GetLatestHeight returns the latest block height known to the indexer
 func (c *Client) GetLatestHeight() (int64, error) {
-	resp, err := c.apiClient.GetLatestHeight()
+	height, err := c.apiClient.GetLatestHeight()
 	if err != nil {
+		c.logger.Error().Err(err).Msg("Failed to get latest height from indexer")
 		return 0, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return 0, fmt.Errorf("indexer returned non-200 status for latest height: %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	var data struct {
-		Height *int64 `json:"height"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return 0, fmt.Errorf("failed to decode indexer height response: %w", err)
-	}
-
-	if data.Height == nil {
-		return 0, nil // No blocks indexed
-	}
-
-	return *data.Height, nil
+	return height, nil
 }

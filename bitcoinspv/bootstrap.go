@@ -141,7 +141,7 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 		return fmt.Errorf("failed to fetch light client height: %w", err)
 	}
 
-	indexerHeight, err := r.getIndexerLatestBlockHeight(ctx)
+	indexerHeight, err := r.getIndexerLatestBlockHeight()
 	if err != nil {
 		return fmt.Errorf("failed to fetch indexer height: %w", err)
 	}
@@ -272,4 +272,16 @@ func (r *Relayer) backfillIndexer(ctx context.Context, startHeight, endHeight in
 	}
 	r.logger.Info().Msg("Indexer backfill completed successfully.")
 	return nil
+}
+
+func (r *Relayer) getIndexerLatestBlockHeight() (int64, error) {
+	if r.btcIndexer == nil {
+		return 0, nil // If no indexer, treat as synced at height 0.
+	}
+	height, err := r.btcIndexer.GetLatestHeight()
+	if err != nil {
+		r.logger.Warn().Err(err).Msg("Could not get latest height from indexer, assuming height 0.")
+		return 0, nil
+	}
+	return height, nil
 }

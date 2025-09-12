@@ -47,7 +47,7 @@ func TestBootstrapRelayer(t *testing.T) {
 		lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{
 			Height: latestHeight,
 		}, nil)
-		indexerClient.On("GetLatestHeight", ctx).Return(int64(latestHeight), nil)
+		indexerClient.On("GetLatestHeight").Return(int64(latestHeight), nil)
 
 		blocks := make([]*types.IndexedBlock, confirmationDepth)
 		for i := 0; i < confirmationDepth; i++ {
