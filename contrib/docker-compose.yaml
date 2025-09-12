@@ -33,20 +33,20 @@ services:
       -rpcallowip=0.0.0.0/0
 
   # we use bitcoind rather than btcd, because btcd lacks the proof generation endpoints
-  btcd:
-    profiles:
-      - donotstart
-    container_name: btcd
-    hostname: btcd
-    build: https://github.com/btcsuite/btcd.git#master
-    volumes:
-      - btcd-data:/root/.btcd
-    ports:
-      - 18333:18333
-      - 18334:18334
-    # https://github.com/btcsuite/btcd/blob/master/docs/configuration.md
-    # Create prod level credentials if exposing node externally
-    command: ["--simnet", "--rpcuser=user", "--rpcpass=password"]
+  # btcd:
+  #   profiles:
+  #     - donotstart
+  #   container_name: btcd
+  #   hostname: btcd
+  #   build: https://github.com/btcsuite/btcd.git#master
+  #   volumes:
+  #     - btcd-data:/root/.btcd
+  #   ports:
+  #     - 18333:18333
+  #     - 18334:18334
+  #   # https://github.com/btcsuite/btcd/blob/master/docs/configuration.md
+  #   # Create prod level credentials if exposing node externally
+  #   command: ["--simnet", "--rpcuser=user", "--rpcpass=password"]
 
   sui-node:
     container_name: sui-node
@@ -59,5 +59,9 @@ services:
     command: >
       /bin/bash -c "RUST_LOG='off,sui_node=info' sui start --with-faucet --force-regenesis"
 
+  # smartcontract:
+  #   container_name: spv
+  #   volumes:
+  #     -
 volumes:
   btcd-data:

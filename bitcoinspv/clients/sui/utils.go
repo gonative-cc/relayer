@@ -91,3 +91,11 @@ func (lb LightBlock) BlockHash() (chainhash.Hash, error) {
 	}
 	return header.BlockHash(), nil
 }
+
+func blockHeaderToBytes(header wire.BlockHeader) ([]byte, error) {
+	var w bytes.Buffer
+	if err := header.Serialize(&w); err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
