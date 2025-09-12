@@ -8,10 +8,31 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/gonative-cc/relayer/bitcoinspv/clients/mocks"
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+type testHarness struct {
+	relayer       *Relayer
+	btcClient     *mocks.MockBTCClient
+	lcClient      *mocks.MockBitcoinSPV
+	indexerClient *mocks.MockIndexer
+}
+
+func setupTestWithIndexer(t *testing.T) testHarness {
+	r, btcClient, lcClient := setupTest(t)
+	indexerClient := mocks.NewMockIndexer(t)
+	r.btcIndexer = indexerClient
+
+	return testHarness{
+		relayer:       r,
+		btcClient:     btcClient,
+		lcClient:      lcClient,
+		indexerClient: indexerClient,
+	}
+}
 
 func TestBootstrapRelayer(t *testing.T) {
 	ctx := context.Background()
@@ -19,12 +40,15 @@ func TestBootstrapRelayer(t *testing.T) {
 	const latestFinalized = latestHeight - confirmationDepth + 1
 
 	t.Run("successful bootstrap", func(t *testing.T) {
-		r, btcClient, lcClient := setupTest(t)
+		harness := setupTestWithIndexer(t)
+		r, btcClient, lcClient, indexerClient := harness.relayer, harness.btcClient, harness.lcClient, harness.indexerClient
 
 		btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(latestHeight), nil)
 		lcClient.On("GetLatestBlockInfo", ctx).Return(&clients.BlockInfo{
 			Height: latestHeight,
 		}, nil)
+		indexerClient.On("GetLatestHeight").Return(int64(latestHeight), nil)
+
 		blocks := make([]*types.IndexedBlock, confirmationDepth)
 		for i := 0; i < confirmationDepth; i++ {
 			blocks[i] = &types.IndexedBlock{
@@ -42,6 +66,7 @@ func TestBootstrapRelayer(t *testing.T) {
 
 	t.Run("failed BTC sync", func(t *testing.T) {
 		r, btcClient, _ := setupTest(t)
+		r.btcIndexer = nil
 
 		expectedErr := errors.New("btc sync failed")
 		btcClient.On("GetBTCTipBlock").Return(nil, int64(0), expectedErr)
@@ -52,6 +77,7 @@ func TestBootstrapRelayer(t *testing.T) {
 
 	t.Run("failed light client sync", func(t *testing.T) {
 		r, btcClient, lcClient := setupTest(t)
+		r.btcIndexer = nil
 		btcClient.On("GetBTCTipBlock").Return(&chainhash.Hash{}, int64(latestFinalized), nil)
 
 		expectedErr := errors.New("light client sync failed")

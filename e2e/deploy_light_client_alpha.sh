@@ -3,7 +3,7 @@
 
 REPO_URL="https://github.com/gonative-cc/sui-bitcoin-spv"
 CONTAINER_ID="sui-node"
-PACKAGE_PATH="sui-bitcoin-spv"
+PACKAGE_PATH="sui-bitcoin-spv/packages/bitcoin_spv"
 CONFIG_FILE="e2e-bitcoin-spv.yml"
 
 INIT_HEADERS='0x0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000'
@@ -23,9 +23,9 @@ PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' &&
 
 PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
 
-rm -rf ./e2e/$PACKAGE_PATH
-git clone $REPO_URL ./e2e/$PACKAGE_PATH
-
+LOCAL_REPO_PATH="./e2e/sui-bitcoin-spv"
+rm -rf "$LOCAL_REPO_PATH"
+git clone "$REPO_URL" "$LOCAL_REPO_PATH"
 
 if [ -z "$PACKAGE_ID" ]; then
   echo "Failed to extract Package ID!"
@@ -41,13 +41,10 @@ echo $(pwd)
 sed -i "s#^PACKAGE_ID=.*#PACKAGE_ID=${PACKAGE_ID}#" ./e2e/.e2e.env
 
 
-cd e2e
-cp ./.e2e.env $PACKAGE_PATH/.env
-cd $PACKAGE_PATH
+cd "$LOCAL_REPO_PATH"
+cp ../.e2e.env ./.env
 npm i
-
-
-LIGHT_CLIENT_ID=$(node scripts/new_light_client.js| jq -r '.light_client_id')
+LIGHT_CLIENT_ID=$(node scripts/new_light_client.js | jq -r '.light_client_id')
 cd ../..
 
 pwd

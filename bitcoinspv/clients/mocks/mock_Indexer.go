@@ -22,6 +22,61 @@ func (_m *MockIndexer) EXPECT() *MockIndexer_Expecter {
 	return &MockIndexer_Expecter{mock: &_m.Mock}
 }
 
+// GetLatestHeight provides a mock function with no fields
+func (_m *MockIndexer) GetLatestHeight() (int64, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestHeight")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (int64, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() int64); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockIndexer_GetLatestHeight_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestHeight'
+type MockIndexer_GetLatestHeight_Call struct {
+	*mock.Call
+}
+
+// GetLatestHeight is a helper method to define mock.On call
+func (_e *MockIndexer_Expecter) GetLatestHeight() *MockIndexer_GetLatestHeight_Call {
+	return &MockIndexer_GetLatestHeight_Call{Call: _e.mock.On("GetLatestHeight")}
+}
+
+func (_c *MockIndexer_GetLatestHeight_Call) Run(run func()) *MockIndexer_GetLatestHeight_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockIndexer_GetLatestHeight_Call) Return(_a0 int64, _a1 error) *MockIndexer_GetLatestHeight_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockIndexer_GetLatestHeight_Call) RunAndReturn(run func() (int64, error)) *MockIndexer_GetLatestHeight_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SendBlocks provides a mock function with given fields: ctx, blocks
 func (_m *MockIndexer) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
 	ret := _m.Called(ctx, blocks)
