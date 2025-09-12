@@ -23,9 +23,9 @@ PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' &&
 
 PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
 
-rm -rf ./e2e/$PACKAGE_PATH
-git clone $REPO_URL ./e2e/$PACKAGE_PATH
-
+LOCAL_REPO_PATH="./e2e/sui-bitcoin-spv"
+rm -rf "$LOCAL_REPO_PATH"
+git clone "$REPO_URL" "$LOCAL_REPO_PATH"
 
 if [ -z "$PACKAGE_ID" ]; then
   echo "Failed to extract Package ID!"
@@ -41,13 +41,10 @@ echo $(pwd)
 sed -i "s#^PACKAGE_ID=.*#PACKAGE_ID=${PACKAGE_ID}#" ./e2e/.e2e.env
 
 
-cd e2e
-cp ./.e2e.env $PACKAGE_PATH/.env
-cd $PACKAGE_PATH
+cd "$LOCAL_REPO_PATH"
+cp ../.e2e.env ./.env
 npm i
-
-
-LIGHT_CLIENT_ID=$(node ../../scripts/new_light_client.js| jq -r '.light_client_id')
+LIGHT_CLIENT_ID=$(node scripts/new_light_client.js | jq -r '.light_client_id')
 cd ../..
 
 pwd
