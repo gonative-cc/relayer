@@ -21,7 +21,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tinylib/msgp v1.4.0
-	github.com/vektra/mockery/v2 v2.53.4
+	github.com/vektra/mockery/v2 v2.53.5
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
 )
