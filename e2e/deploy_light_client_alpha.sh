@@ -3,7 +3,7 @@
 
 REPO_URL="https://github.com/gonative-cc/sui-bitcoin-spv"
 CONTAINER_ID="sui-node"
-PACKAGE_PATH="sui-bitcoin-spv"
+PACKAGE_PATH="sui-bitcoin-spv/packages/bitcoin_spv"
 CONFIG_FILE="e2e-bitcoin-spv.yml"
 
 INIT_HEADERS='0x0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000'
@@ -47,7 +47,7 @@ cd $PACKAGE_PATH
 npm i
 
 
-LIGHT_CLIENT_ID=$(node scripts/new_light_client.js| jq -r '.light_client_id')
+LIGHT_CLIENT_ID=$(node ../../scripts/new_light_client.js| jq -r '.light_client_id')
 cd ../..
 
 pwd

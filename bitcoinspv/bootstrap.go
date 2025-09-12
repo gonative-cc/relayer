@@ -151,7 +151,11 @@ func (r *Relayer) initializeBTCCache(ctx context.Context) error {
 		return fmt.Errorf("failedt bitcoin node tip height: %w", err)
 	}
 
-	r.logger.Info().Int64("light_client", lcHeight).Int64("indexer", indexerHeight).Int64("btc_node", btcTipHeight).Msg("Latest known heights")
+	r.logger.Info().
+		Int64("light_client", lcHeight).
+		Int64("indexer", indexerHeight).
+		Int64("btc_node", btcTipHeight).
+		Msg("Latest known heights")
 
 	if r.btcIndexer != nil && indexerHeight < btcTipHeight {
 		r.logger.Info().Int64("from", indexerHeight+1).Int64("to", btcTipHeight).Msg("Starting indexer backfill...")
@@ -276,12 +280,11 @@ func (r *Relayer) backfillIndexer(ctx context.Context, startHeight, endHeight in
 
 func (r *Relayer) getIndexerLatestBlockHeight() (int64, error) {
 	if r.btcIndexer == nil {
-		return 0, nil // If no indexer, treat as synced at height 0.
+		return 0, nil
 	}
 	height, err := r.btcIndexer.GetLatestHeight()
 	if err != nil {
-		r.logger.Warn().Err(err).Msg("Could not get latest height from indexer, assuming height 0.")
-		return 0, nil
+		return 0, err
 	}
 	return height, nil
 }
