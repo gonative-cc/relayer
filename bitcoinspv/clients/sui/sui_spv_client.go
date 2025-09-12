@@ -201,15 +201,14 @@ func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash)
 			ErrSuiTransactionFailed, containsBlockFunc, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
 	}
 
-	resultEncoded := getBCSResult(resp)
 	var result bool
-
-	err = bcs.UnmarshalAll(resultEncoded[0], &result)
-	if err != nil {
-		return false, err
+	resultVal := resp.Results[0].ReturnValues[0]
+	if resultVal.TypeTag.Bool == nil {
+		return false, fmt.Errorf(
+			"unexpected return type when checking if SPV contains block. Expecting bool, got: %v",
+			resultVal.TypeTag)
 	}
-
-	return result, nil
+	return result, bcs.UnmarshalAll(resultVal.Data, &result)
 }
 
 // GetLatestBlockInfo returns the block hash and height of the best block header.
@@ -236,12 +235,14 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 			ErrSuiTransactionFailed, getChainTipFunc, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
 	}
 
-	resultEncoded := getBCSResult(resp)
-
 	var result LightBlock
-
-	err = bcs.UnmarshalAll(resultEncoded[0], &result)
-	if err != nil {
+	resultVal := resp.Results[0].ReturnValues[0]
+	if resultVal.TypeTag.Struct == nil {
+		return nil, fmt.Errorf(
+			"unexpected return type when checking SPV latest block info. Expecting struct, got: %v",
+			resultVal.TypeTag)
+	}
+	if err = bcs.UnmarshalAll(resultVal.Data, &result); err != nil {
 		return nil, err
 	}
 
