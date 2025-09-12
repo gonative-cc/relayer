@@ -9,6 +9,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
 	"github.com/pattonkan/sui-go/suiclient"
 	"github.com/pattonkan/sui-go/suisigner"
+	"github.com/pattonkan/sui-go/suisigner/suicrypto"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +26,7 @@ func setupIntegrationTest(t *testing.T) (context.Context, clients.BitcoinSPV) {
 	t.Helper()
 
 	cl := suiclient.NewClient(localRPC)
-	s, err := suisigner.NewSignerWithMnemonic(localMnemonic, suisigner.KeySchemeFlagDefault)
+	s, err := suisigner.NewSignerWithMnemonic(localMnemonic, suicrypto.KeySchemeFlagDefault)
 	assert.Nil(t, err)
 	client, err := New(
 		cl,
