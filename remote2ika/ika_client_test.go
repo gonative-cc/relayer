@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pattonkan/sui-go/suiclient"
 	"github.com/pattonkan/sui-go/suisigner"
+	"github.com/pattonkan/sui-go/suisigner/suicrypto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +26,7 @@ func TestClient(t *testing.T) {
 	spvLCFun := "test"
 
 	cl := suiclient.NewClient(localRPC)
-	s, err := suisigner.NewSignerWithMnemonic(localMnemonic, suisigner.KeySchemeFlagDefault)
+	s, err := suisigner.NewSignerWithMnemonic(localMnemonic, suicrypto.KeySchemeFlagDefault)
 	assert.Nil(t, err)
 
 	client, err := NewClient(
