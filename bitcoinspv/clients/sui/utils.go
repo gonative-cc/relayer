@@ -19,12 +19,12 @@ type bcsEncode []byte
 // BlockHeader is block header
 type BlockHeader struct {
 	Version    uint32
-	Parent     [32]byte
-	MerkleRoot [32]byte
+	Parent     []byte
+	MerkleRoot []byte
 	Timestamp  uint32
 	Bits       uint32
 	Nonce      uint32
-	BlockHash  [32]byte
+	BlockHash  []byte
 }
 
 // LightBlock is light block
