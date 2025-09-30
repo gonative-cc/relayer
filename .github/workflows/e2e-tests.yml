@@ -26,7 +26,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     needs: check-repo-status
-    if: ${{ needs.check-repo-status.outputs.updated }}
+    # if: ${{ needs.check-repo-status.outputs.updated }}
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies
@@ -66,7 +66,7 @@ jobs:
       - name: Run E2E Tests
         run: ./e2e/run_e2e_tests.sh
 
-       # We disable this test for now. We should enable it once we have better way to interact with PTBs via cli.
+        # We disable this test for now. We should enable it once we have better way to interact with PTBs via cli.
       # - name: Run E2E gap handling test
       #   run: ./e2e/run_e2e_gap_handling.sh
 
