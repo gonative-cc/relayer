@@ -15,8 +15,9 @@ docker exec "$CONTAINER_ID" /bin/bash -c \
 echo "Deploying light client to Sui network..."
 PUBLISH_OUTPUT=$(docker exec "$CONTAINER_ID" /bin/bash -c "cd '$PACKAGE_PATH' && sui client publish --skip-dependency-verification --gas-budget 1000000000 --json  --with-unpublished-dependencies")
 PUBLISH_JSON=$(echo "$PUBLISH_OUTPUT" | tail -n 1)
-SPV_PACKAGE_ID=$(echo "$PUBLISH_JSON" | jq -r '.objectChanges[] | select(.type == "published") | .modules[] | select(contains("::light_client")) | split("::")[0]')
-PARSER_PACKAGE_ID=$(echo "$PUBLISH_JSON" | jq -r '.objectChanges[] | select(.type == "published") | .modules[] | select(contains("::header")) | split("::")[0]')
+PACKAGE_ID=$(echo "$PUBLISH_JSON" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
+SPV_PACKAGE_ID=$PACKAGE_ID
+PARSER_PACKAGE_ID=$PACKAGE_ID
 
 LOCAL_REPO_PATH="./e2e/sui-bitcoin-spv"
 rm -rf "$LOCAL_REPO_PATH"
