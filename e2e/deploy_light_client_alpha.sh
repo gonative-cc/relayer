@@ -6,12 +6,6 @@ CONTAINER_ID="sui-node"
 PACKAGE_PATH="sui-bitcoin-spv/packages/bitcoin_spv"
 CONFIG_FILE="e2e-bitcoin-spv.yml"
 
-INIT_HEADERS='0x0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000'
-BTC_NETWORK=2  # regtest (0: mainnet, 1: testnet, 2: regtest)
-START_HEIGHT=0
-
-
-
 echo "Cloning light client repo"
 docker exec "$CONTAINER_ID" /bin/bash -c \
        "rm -rf $PACKAGE_PATH && \
@@ -38,27 +32,8 @@ echo "Package ID: $PACKAGE_ID"
 
 echo $(pwd)
 
-SPV_PACKAGE_ID=$PACKAGE_ID
-PARSER_PACKAGE_ID=$PACKAGE_ID
-
-LOCAL_REPO_PATH="./e2e/sui-bitcoin-spv"
-rm -rf "$LOCAL_REPO_PATH"
-git clone "$REPO_URL" "$LOCAL_REPO_PATH"
-
-if [ -z "$SPV_PACKAGE_ID" ] || [ -z "$PARSER_PACKAGE_ID" ]; then
-  echo "Failed to extract one or both Package IDs!"
-  echo "Publish Output:"
-  echo "$PUBLISH_OUTPUT"
-  exit 1
-fi
-
-echo "Bitcoin SPV Package ID: $PACKAGE_ID"
-echo "Bitcoin Parser Package ID: $PACKAGE_ID"
-
-
 sed -i "s#^SPV_PACKAGE_ID=.*#SPV_PACKAGE_ID=${PACKAGE_ID}#" ./e2e/.e2e.env
 sed -i "s#^PARSER_PACKAGE_ID=.*#PARSER_PACKAGE_ID=${PACKAGE_ID}#" ./e2e/.e2e.env
-
 
 cd "$LOCAL_REPO_PATH"
 cp ../.e2e.env ./.env

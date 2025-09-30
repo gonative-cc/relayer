@@ -26,7 +26,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     needs: check-repo-status
-    # if: ${{ needs.check-repo-status.outputs.updated }}
+    if: ${{ needs.check-repo-status.outputs.updated }}
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies

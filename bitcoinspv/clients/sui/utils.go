@@ -17,6 +17,8 @@ const BTCHeaderSize = 80
 type bcsEncode []byte
 
 // BlockHeader is block header
+//
+//nolint:govet
 type BlockHeader struct {
 	Version    uint32
 	Parent     []byte
@@ -89,7 +91,7 @@ func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) []bcsEncode
 
 // BlockHash returns block hash
 func (lb LightBlock) BlockHash() (chainhash.Hash, error) {
-	hash, err := chainhash.NewHash(lb.Header.BlockHash[:])
+	hash, err := chainhash.NewHash(lb.Header.BlockHash)
 	if err != nil {
 		return chainhash.Hash{}, err
 	}
