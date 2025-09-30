@@ -11,6 +11,7 @@ import (
 	"github.com/gonative-cc/relayer/bitcoinspv/config"
 	"github.com/pattonkan/sui-go/suiclient"
 	"github.com/pattonkan/sui-go/suisigner"
+	"github.com/pattonkan/sui-go/suisigner/suicrypto"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -119,7 +120,7 @@ func logTipBlock(btcClient *btcwrapper.Client, rootLogger zerolog.Logger) {
 func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.BitcoinSPV, error) {
 	c := suiclient.NewClient(cfg.Sui.Endpoint)
 
-	signer, err := suisigner.NewSignerWithMnemonic(cfg.Sui.Mnemonic, suisigner.KeySchemeFlagDefault)
+	signer, err := suisigner.NewSignerWithMnemonic(cfg.Sui.Mnemonic, suicrypto.KeySchemeFlagDefault)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new signer: %w", err)
 	}
