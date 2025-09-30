@@ -18,7 +18,13 @@ type bcsEncode []byte
 
 // BlockHeader is block header
 type BlockHeader struct {
-	Internal []uint8
+	Version    uint32
+	Parent     [32]byte
+	MerkleRoot [32]byte
+	Timestamp  uint32
+	Bits       uint32
+	Nonce      uint32
+	BlockHash  [32]byte
 }
 
 // LightBlock is light block
@@ -27,7 +33,7 @@ type BlockHeader struct {
 type LightBlock struct {
 	Height    uint64
 	ChainWork [32]uint8
-	Header    *BlockHeader
+	Header    BlockHeader
 }
 
 // BlockHeaderFromHex converts a hexadecimal string representation of a Bitcoin
@@ -83,13 +89,11 @@ func getBCSResult(res *suiclient.DevInspectTransactionBlockResponse) []bcsEncode
 
 // BlockHash returns block hash
 func (lb LightBlock) BlockHash() (chainhash.Hash, error) {
-	r := bytes.NewReader(lb.Header.Internal)
-	var header wire.BlockHeader
-	err := header.Deserialize(r)
+	hash, err := chainhash.NewHash(lb.Header.BlockHash[:])
 	if err != nil {
-		return header.BlockHash(), err
+		return chainhash.Hash{}, err
 	}
-	return header.BlockHash(), nil
+	return *hash, nil
 }
 
 func blockHeaderToBytes(header wire.BlockHeader) ([]byte, error) {
