@@ -20,9 +20,9 @@ const (
 	containsBlockFunc  = "exist"
 	getChainTipFunc    = "head"
 	verifySPVFunc      = "verify_tx"
-	newBlockHeaderFunc = "new_block_header"
+	newBlockHeaderFunc = "new"
 	lcModule           = "light_client"
-	blockHeaderModule  = "block_header"
+	blockHeaderModule  = "header"
 	blockHeaderType    = "BlockHeader"
 	// TODO: Use better defaultGasBudget
 	defaultGasBudget = 10000000000
