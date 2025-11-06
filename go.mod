@@ -5,7 +5,7 @@ go 1.24.4
 toolchain go1.24.5
 
 require (
-	github.com/avast/retry-go/v4 v4.6.1
+	github.com/avast/retry-go/v4 v4.7.0
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.9.0
