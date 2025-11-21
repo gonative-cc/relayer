@@ -11,7 +11,7 @@ jobs:
     outputs:
       updated: ${{ steps.check.outputs.updated }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: technote-space/get-diff-action@v6.1.2
         with:
           PATTERNS: |
@@ -28,7 +28,7 @@ jobs:
     needs: check-repo-status
     if: ${{ needs.check-repo-status.outputs.updated }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo apt-get update
