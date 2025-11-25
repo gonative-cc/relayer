@@ -26,13 +26,15 @@ const (
 type Client struct {
 	logger    zerolog.Logger
 	apiClient btcindexer.Client
+	network   string
 }
 
 // NewClient creates a new client for the indexer.
-func NewClient(url string, parentLogger zerolog.Logger) *Client {
+func NewClient(url string, network string, parentLogger zerolog.Logger) *Client {
 	return &Client{
 		logger:    parentLogger.With().Str("module", "btcindexer_client").Logger(),
 		apiClient: btcindexer.NewClient(url),
+		network:   network,
 	}
 }
 
@@ -113,8 +115,9 @@ func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlo
 			return nil, fmt.Errorf("failed to serialize block %d: %w", block.BlockHeight, err)
 		}
 		putBlocksReq[i] = btcindexer.PutBlock{
-			Height: block.BlockHeight,
-			Block:  blockBuffer.Bytes(),
+			Network: c.network,
+			Height:  block.BlockHeight,
+			Block:   blockBuffer.Bytes(),
 		}
 	}
 	return putBlocksReq, nil
