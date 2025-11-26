@@ -146,7 +146,7 @@ func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) btcindexer.In
 		rootLogger.Info().Msg("BTC Indexer not configured, will run without it.")
 		return nil
 	}
-	client := btcindexer.NewClient(cfg.Relayer.IndexerURL, rootLogger)
+	client := btcindexer.NewClient(cfg.Relayer.IndexerURL, cfg.Relayer.NetParams, rootLogger)
 	return client
 }
 
