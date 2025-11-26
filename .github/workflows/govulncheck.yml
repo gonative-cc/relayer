@@ -15,6 +15,8 @@ jobs:
     name: Run govulncheck
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: technote-space/get-diff-action@v6.1.2
         with:
           PATTERNS: |
