@@ -20,7 +20,7 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tinylib/msgp v1.5.0
+	github.com/tinylib/msgp v1.6.1
 	github.com/vektra/mockery/v2 v2.53.5
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
