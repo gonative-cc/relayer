@@ -3,10 +3,10 @@ relayer:
   log-level: "debug" # (debug|warn|error|panic|fatal)
   retry-sleep-duration: 5s
   max-retry-sleep-duration: 5m
-  netparams: simnet
+  netparams: regtest
   cache-size: 1000
   headers-chunk-size: 10
-  confirmation_depth: 6
+  confirmation_depth: 3
   process-block-timeout: 20s
   indexer-url: "http://127.0.0.1:8787" # default wrangler dev URL
 btc:
@@ -14,14 +14,15 @@ btc:
   ca-file: $HOME/.btcd/rpc.cert
   endpoint: localhost:18443
   net-params: regtest
-  username: user
-  password: password
+  username: regtest
+  password: regtest
   btc-backend: bitcoind # {btcd, bitcoind}
   zmq-seq-endpoint: tcp://127.0.0.1:28331
 native:
   rpc-endpoint: http://localhost:9797
 sui:
-  endpoint: https://fullnode.devnet.sui.io:443 # for local endpoint use http://127.0.0.1:9000
-  mnemonic: "your mnemonic"
-  lc_object_id: 0x...
-  lc_package_id: 0x ...
+  endpoint: https://fullnode.testnet.sui.io:443 # for local endpoint use http://127.0.0.1:9000
+  mnemonic: "your secrect"
+  lc_object_id:  0xfe02d9ec80523746fbd07e79fc15085295d06cbc140983ba4af1a3b9e00cdd50
+  lc_package_id: 0x808157392513cbc6034720c781b6d4360762a2a987ac4a4cc878c766272b1247
+  btc_lib_pkg_id: 0xf7d3be2ce8504a3fb5999ef46d6725e1024b34cf6cfecdb3d2b5645b0a98c55d
