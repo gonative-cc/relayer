@@ -9,7 +9,7 @@ require (
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/fardream/go-bcs v0.9.0
-	github.com/gonative-cc/workers/api/btcindexer v0.0.0-20251125143753-52dc520d5a41
+	github.com/gonative-cc/workers/api/btcindexer v0.1.2-0.20251226150400-099135e1a77b
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.32
@@ -20,7 +20,7 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tinylib/msgp v1.5.0
+	github.com/tinylib/msgp v1.6.1
 	github.com/vektra/mockery/v2 v2.53.5
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2

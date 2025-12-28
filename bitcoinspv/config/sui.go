@@ -5,5 +5,6 @@ type SuiConfig struct {
 	Endpoint    string `mapstructure:"endpoint"`
 	Mnemonic    string `mapstructure:"mnemonic"`
 	LCObjectID  string `mapstructure:"lc_object_id"`
-	LCPackageID string `mapstructure:"lc_package_id"`
+	LCPkgID     string `mapstructure:"lc_package_id"`
+	BTCLibPkgID string `mapstructure:"btc_lib_pkg_id"`
 }
