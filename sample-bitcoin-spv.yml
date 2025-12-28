@@ -22,7 +22,7 @@ native:
   rpc-endpoint: http://localhost:9797
 sui:
   endpoint: https://fullnode.testnet.sui.io:443 # for local endpoint use http://127.0.0.1:9000
-  mnemonic: "your secrect"
+  mnemonic: "your secret"
   lc_object_id:  0xfe02d9ec80523746fbd07e79fc15085295d06cbc140983ba4af1a3b9e00cdd50
   lc_package_id: 0x808157392513cbc6034720c781b6d4360762a2a987ac4a4cc878c766272b1247
   btc_lib_pkg_id: 0xf7d3be2ce8504a3fb5999ef46d6725e1024b34cf6cfecdb3d2b5645b0a98c55d
