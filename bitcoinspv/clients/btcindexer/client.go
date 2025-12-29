@@ -145,7 +145,7 @@ func (c *Client) backoff(ctx context.Context, attempt int) {
 
 // GetLatestHeight returns the latest block height known to the indexer
 func (c *Client) GetLatestHeight() (int64, error) {
-	height, err := c.apiClient.GetLatestHeight()
+	height, err := c.apiClient.GetLatestHeight(c.network)
 	if err != nil {
 		c.logger.Error().Err(err).Msg("Failed to get latest height from indexer")
 		return 0, err

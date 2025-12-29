@@ -25,7 +25,7 @@ const (
 	blockHeaderModule  = "header"
 	blockHeaderType    = "BlockHeader"
 	// TODO: Use better defaultGasBudget
-	defaultGasBudget = 10000000000
+	defaultGasBudget = 1000000000
 )
 
 // SPVClient implements the BitcoinSPV interface, interacting with a
@@ -33,9 +33,10 @@ const (
 type SPVClient struct {
 	*suiclient.ClientImpl
 	*suisigner.Signer
-	PackageID *sui.PackageId
-	LcObjArg  suiptb.CallArg
-	logger    zerolog.Logger
+	LCPkgID     *sui.PackageId
+	BTCLibPkgID *sui.PackageId
+	LcObjArg    suiptb.CallArg
+	logger      zerolog.Logger
 }
 
 var _ clients.BitcoinSPV = &SPVClient{}
@@ -47,6 +48,7 @@ func New(
 	signer *suisigner.Signer,
 	lcObjID string,
 	lcPkgID string,
+	btcLibPkg string,
 	parentLogger zerolog.Logger,
 ) (clients.BitcoinSPV, error) {
 	if suiClient == nil {
@@ -56,7 +58,12 @@ func New(
 		return nil, ErrSignerNill
 	}
 
-	lcPackageID, err := sui.PackageIdFromHex(lcPkgID)
+	LCPkgID, err := sui.PackageIdFromHex(lcPkgID)
+	if err != nil {
+		return nil, err
+	}
+
+	BTCLibPkgParsed, err := sui.PackageIdFromHex(btcLibPkg)
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +100,12 @@ func New(
 	}
 
 	return &SPVClient{
-		ClientImpl: suiClient,
-		Signer:     signer,
-		logger:     configureClientLogger(parentLogger),
-		PackageID:  lcPackageID,
-		LcObjArg:   lcObjArg,
+		ClientImpl:  suiClient,
+		Signer:      signer,
+		logger:      configureClientLogger(parentLogger),
+		LCPkgID:     LCPkgID,
+		BTCLibPkgID: BTCLibPkgParsed,
+		LcObjArg:    lcObjArg,
 	}, nil
 }
 
@@ -127,7 +135,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		}
 		header := ptb.Command(suiptb.Command{
 			MoveCall: &suiptb.ProgrammableMoveCall{
-				Package:       c.PackageID,
+				Package:       c.BTCLibPkgID,
 				Module:        blockHeaderModule,
 				Function:      newBlockHeaderFunc,
 				TypeArguments: []sui.TypeTag{},
@@ -145,7 +153,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 		suiptb.Command{
 			MakeMoveVec: &suiptb.ProgrammableMakeMoveVec{
 				Type: &sui.TypeTag{Struct: &sui.StructTag{
-					Address: c.PackageID,
+					Address: c.BTCLibPkgID,
 					Module:  blockHeaderModule,
 					Name:    blockHeaderType,
 				}},
@@ -156,7 +164,7 @@ func (c *SPVClient) InsertHeaders(ctx context.Context, blockHeaders []wire.Block
 
 	ptb.Command(suiptb.Command{
 		MoveCall: &suiptb.ProgrammableMoveCall{
-			Package:       c.PackageID,
+			Package:       c.LCPkgID,
 			Module:        lcModule,
 			Function:      insertHeadersFunc,
 			TypeArguments: []sui.TypeTag{},
@@ -181,7 +189,7 @@ func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash)
 	}
 
 	err = ptb.MoveCall(
-		c.PackageID,
+		c.LCPkgID,
 		lcModule,
 		containsBlockFunc,
 		[]sui.TypeTag{},
@@ -216,7 +224,7 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
 	err := ptb.MoveCall(
-		c.PackageID,
+		c.LCPkgID,
 		lcModule,
 		getChainTipFunc,
 		[]sui.TypeTag{},

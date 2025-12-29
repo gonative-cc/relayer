@@ -125,7 +125,7 @@ func initNativeClient(cfg *config.Config, rootLogger zerolog.Logger) (clients.Bi
 		return nil, fmt.Errorf("failed to create new signer: %w", err)
 	}
 
-	client, err := sui.New(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPackageID, rootLogger)
+	client, err := sui.New(c, signer, cfg.Sui.LCObjectID, cfg.Sui.LCPkgID, cfg.Sui.BTCLibPkgID, rootLogger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new bitcoinSPVClient: %w", err)
 	}

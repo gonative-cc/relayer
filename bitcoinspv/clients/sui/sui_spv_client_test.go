@@ -19,7 +19,8 @@ var (
 	localRPC            = "http://127.0.0.1:9000"
 	localMnemonic       = "hungry soft price stem lobster liar super protect script captain spring doctor"
 	lightClientObjectID = "0xfdd31cc07afc6950aaee0ac85c45d244778b4b9c7f1ce91ccd39ada8c2731460"
-	lcPackage           = "0x063d5eab5a5d09c22f1cf4e2dad1c91fd7172f72bea6a9d9a34939996fc84e2a"
+	lcPkgID             = "0x063d5eab5a5d09c22f1cf4e2dad1c91fd7172f72bea6a9d9a34939996fc84e2a"
+	btcLibPkg           = "0xf7d3be2ce8504a3fb5999ef46d6725e1024b34cf6cfecdb3d2b5645b0a98c55d"
 )
 
 func setupIntegrationTest(t *testing.T) (context.Context, clients.BitcoinSPV) {
@@ -32,7 +33,8 @@ func setupIntegrationTest(t *testing.T) (context.Context, clients.BitcoinSPV) {
 		cl,
 		s,
 		lightClientObjectID,
-		lcPackage,
+		lcPkgID,
+		btcLibPkg,
 		zerolog.Logger{},
 	)
 	assert.Nil(t, err)
