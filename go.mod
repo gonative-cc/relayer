@@ -12,7 +12,7 @@ require (
 	github.com/gonative-cc/workers/api/btcindexer v0.1.2-0.20251226150400-099135e1a77b
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-isatty v0.0.20
-	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/namihq/walrus-go v0.2.0
 	github.com/pattonkan/sui-go v0.1.17
 	github.com/pebbe/zmq4 v1.4.0
