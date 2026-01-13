@@ -31,10 +31,10 @@ Mock -> WIP -> alpha -> beta -> production
 
 | Service          | status |
 | :--------------- | :----- |
-| Native-\>Ika     | WIP    |
-| Native-\>Bitcoin | WIP    |
-| Native-\>Bitcoin | :x:    |
-| Bitcoin SPV      |        |
+| Native-\>Ika     | :x:    |
+| Native-\>Bitcoin | :heavy_check_mark: |
+| Bitcoin-\>Native | :heavy_check_mark: |
+| Bitcoin SPV      | :heavy_check_mark: |
 
 ## Documentation
 
