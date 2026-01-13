@@ -31,7 +31,7 @@ Mock -> WIP -> alpha -> beta -> production
 
 | Service          | status |
 | :--------------- | :----- |
-| Native-\>Ika     | :x:    |
+| Native-\>Ika     | (done through [workers]([url](https://github.com/gonative-cc/workers))   |
 | Native-\>Bitcoin | :heavy_check_mark: |
 | Bitcoin-\>Native | :heavy_check_mark: |
 | Bitcoin SPV      | :heavy_check_mark: |
