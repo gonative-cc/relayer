@@ -10,7 +10,16 @@ import (
 )
 
 func TestAPISignRequestFetcher_GetBtcSignRequests(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(mockSelectSignReq))
+	const mockToken = "mock-token"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer "+mockToken {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		mockSelectSignReq(w, r)
+	}))
 	defer ts.Close()
 
 	fetcher := &APISignRequestFetcher{
@@ -18,6 +27,7 @@ func TestAPISignRequestFetcher_GetBtcSignRequests(t *testing.T) {
 	}
 
 	t.Run("Valid request", func(t *testing.T) {
+		t.Setenv("BEARER_TOKEN", mockToken)
 		requests, err := fetcher.GetBtcSignRequests(0, 3)
 		assert.NilError(t, err)
 		assert.Equal(t, 3, len(requests))
@@ -29,12 +39,32 @@ func TestAPISignRequestFetcher_GetBtcSignRequests(t *testing.T) {
 	})
 
 	t.Run("Invalid API URL", func(t *testing.T) {
+		t.Setenv("BEARER_TOKEN", mockToken)
 		fetcher.APIURL = "invalid-url"
 		_, err := fetcher.GetBtcSignRequests(0, 3)
 		assert.ErrorContains(t, err, "failed to make API request")
 	})
 
+	t.Run("Missing Env Var error", func(t *testing.T) {
+		t.Setenv("BEARER_TOKEN", "")
+		_, err := fetcher.GetBtcSignRequests(0, 3)
+		assert.ErrorContains(t, err, "BEARER_TOKEN environment variable not set")
+	})
+
+	t.Run("API request failure (500)", func(t *testing.T) {
+		t.Setenv("BEARER_TOKEN", mockToken)
+		failTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer failTs.Close()
+
+		badFetcher := &APISignRequestFetcher{APIURL: failTs.URL}
+		_, err := badFetcher.GetBtcSignRequests(0, 3)
+		assert.ErrorContains(t, err, "status code: 500")
+	})
+
 	t.Run("API request failure", func(t *testing.T) {
+		t.Setenv("BEARER_TOKEN", mockToken)
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}))
