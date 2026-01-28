@@ -45,6 +45,7 @@ var relayerConfig = RelayerConfig{
 // setupTestProcessor initializes the common dependencies
 func setupTestSuite(t *testing.T) *testSuite {
 	t.Helper()
+	t.Setenv("BEARER_TOKEN", "mock-token")
 
 	ctx := context.Background()
 	db := daltest.InitTestDB(ctx, t)
