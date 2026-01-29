@@ -29,12 +29,12 @@ Status scheme:
 Mock -> WIP -> alpha -> beta -> production
 ```
 
-| Service          | status |
-| :--------------- | :----- |
-| Native-\>Ika     | (done through [workers](https://github.com/gonative-cc/workers))   |
-| Native-\>Bitcoin | :heavy_check_mark: |
-| Bitcoin-\>Native | :heavy_check_mark: |
-| Bitcoin SPV      | :heavy_check_mark: |
+| Service          | status                                                           |
+| :--------------- | :--------------------------------------------------------------- |
+| Native-\>Ika     | (done through [workers](https://github.com/gonative-cc/workers)) |
+| Native-\>Bitcoin | :heavy_check_mark:                                               |
+| Bitcoin-\>Native | :heavy_check_mark:                                               |
+| Bitcoin SPV      | :heavy_check_mark:                                               |
 
 ## Documentation
 
@@ -73,7 +73,6 @@ In order to run Native -> Bitcoin relayer PoC:
 
 1. Run `make setup` (will setup git hooks)
 2. Install and make sure it is in your PATH:
-
    - [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)
    - [revive](https://github.com/mgechev/revive)
 
