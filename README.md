@@ -59,7 +59,8 @@ Check out [SECURITY.md](./SECURITY.md) for security concerns.
 
 1. Make sure you have `go`, `make` installed
 2. Copy and update your env file: `cp .env.example .env`
-3. Build the project: `make build`
+3. Update the env variables like NATIVE_BTCINDEXER_BEARER_TOKEN etc
+4. Build the project: `make build`
 
 To build and start you can run: `make build start`
 

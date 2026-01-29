@@ -35,9 +35,9 @@ func (f *APISignRequestFetcher) GetBtcSignRequests(from, limit int) ([]SignReq, 
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	token := os.Getenv("BEARER_TOKEN")
+	token := os.Getenv("NATIVE_BTCINDEXER_BEARER_TOKEN")
 	if token == "" {
-		return nil, fmt.Errorf("BEARER_TOKEN environment variable not set")
+		return nil, fmt.Errorf("NATIVE_BTCINDEXER_BEARER_TOKEN environment variable not set")
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := http.DefaultClient.Do(req)
