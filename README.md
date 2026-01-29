@@ -29,12 +29,12 @@ Status scheme:
 Mock -> WIP -> alpha -> beta -> production
 ```
 
-| Service          | status |
-| :--------------- | :----- |
-| Native-\>Ika     | (done through [workers](https://github.com/gonative-cc/workers))   |
-| Native-\>Bitcoin | :heavy_check_mark: |
-| Bitcoin-\>Native | :heavy_check_mark: |
-| Bitcoin SPV      | :heavy_check_mark: |
+| Service          | status                                                           |
+| :--------------- | :--------------------------------------------------------------- |
+| Native-\>Ika     | (done through [workers](https://github.com/gonative-cc/workers)) |
+| Native-\>Bitcoin | :heavy_check_mark:                                               |
+| Bitcoin-\>Native | :heavy_check_mark:                                               |
+| Bitcoin SPV      | :heavy_check_mark:                                               |
 
 ## Documentation
 
@@ -59,7 +59,8 @@ Check out [SECURITY.md](./SECURITY.md) for security concerns.
 
 1. Make sure you have `go`, `make` installed
 2. Copy and update your env file: `cp .env.example .env`
-3. Build the project: `make build`
+3. Update the env variables like NATIVE_BTCINDEXER_BEARER_TOKEN etc
+4. Build the project: `make build`
 
 To build and start you can run: `make build start`
 
@@ -72,7 +73,6 @@ In order to run Native -> Bitcoin relayer PoC:
 
 1. Run `make setup` (will setup git hooks)
 2. Install and make sure it is in your PATH:
-
    - [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)
    - [revive](https://github.com/mgechev/revive)
 

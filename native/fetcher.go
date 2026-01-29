@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 
 	"github.com/tinylib/msgp/msgp"
@@ -29,7 +30,18 @@ func (f *APISignRequestFetcher) GetBtcSignRequests(from, limit int) ([]SignReq, 
 	q.Set("from", strconv.Itoa(from))
 	q.Set("limit", strconv.Itoa(limit))
 	u.RawQuery = q.Encode()
-	resp, err := http.Get(u.String())
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	token := os.Getenv("NATIVE_BTCINDEXER_BEARER_TOKEN")
+	if token == "" {
+		return nil, fmt.Errorf("NATIVE_BTCINDEXER_BEARER_TOKEN environment variable not set")
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := http.DefaultClient.Do(req)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to make API request: %w", err)
 	}
