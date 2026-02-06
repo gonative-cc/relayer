@@ -38,6 +38,10 @@ func classifyError(logger zerolog.Logger, err error) ErrorCategory {
 		return categoryNonRecoverable
 	}
 
+	if strings.Contains(err.Error(), "Dependent package not found") {
+		return categoryNonRecoverable
+	}
+
 	// IF ErrSuiTransactionFailed occurred, and the status was 'failure',
 	// but we didn't specifically identify MoveAbort/OutOfGas,
 	// it's still an execution failure. Treat as NonRetryable.
