@@ -19,6 +19,8 @@ const (
 	insertHeadersFunc  = "insert_headers"
 	containsBlockFunc  = "exist"
 	getChainTipFunc    = "head"
+	headHeightFunc     = "head_height"
+	headHashFunc       = "head_hash"
 	verifySPVFunc      = "verify_tx"
 	newBlockHeaderFunc = "new"
 	lcModule           = "light_client"
@@ -223,14 +225,7 @@ func (c *SPVClient) ContainsBlock(ctx context.Context, blockHash chainhash.Hash)
 func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo, error) {
 	ptb := suiptb.NewTransactionDataTransactionBuilder()
 
-	err := ptb.MoveCall(
-		c.LCPkgID,
-		lcModule,
-		getChainTipFunc,
-		[]sui.TypeTag{},
-		[]suiptb.CallArg{c.LcObjArg},
-	)
-	if err != nil {
+	if err := c.addLatestBlockInfoCalls(ptb); err != nil {
 		return nil, err
 	}
 
@@ -239,34 +234,73 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 		return nil, err
 	}
 	if !resp.Effects.Data.IsSuccess() {
-		return nil, fmt.Errorf("%w: function '%s' status: %s, error: %s",
-			ErrSuiTransactionFailed, getChainTipFunc, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
+		return nil, fmt.Errorf("%w: function status: %s, error: %s",
+			ErrSuiTransactionFailed, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
 	}
 
-	var result LightBlock
-	resultVal := resp.Results[0].ReturnValues[0]
-	if resultVal.TypeTag.Struct == nil {
-		return nil, fmt.Errorf(
-			"unexpected return type when checking SPV latest block info. Expecting struct, got: %v",
-			resultVal.TypeTag)
-	}
-	if err = bcs.UnmarshalAll(resultVal.Data, &result); err != nil {
-		return nil, err
+	if len(resp.Results) < 2 {
+		return nil, fmt.Errorf("unexpected number of results from SPV latest block info. Expecting 2, got: %d", len(resp.Results))
 	}
 
-	hash, err := result.BlockHash()
+	height, err := parseHeight(resp.Results[0].ReturnValues[0])
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: fix lint
-	blockInfo := &clients.BlockInfo{
-		Hash: &hash,
-		// #nosec G115
-		Height: int64(result.Height),
+	hash, err := parseHash(resp.Results[1].ReturnValues[0])
+	if err != nil {
+		return nil, err
 	}
 
-	return blockInfo, nil
+	return &clients.BlockInfo{
+		Hash:   hash,
+		Height: int64(height),
+	}, nil
+}
+
+func (c *SPVClient) addLatestBlockInfoCalls(ptb *suiptb.ProgrammableTransactionBuilder) error {
+	// 1. Get head height
+	err := ptb.MoveCall(
+		c.LCPkgID,
+		lcModule,
+		headHeightFunc,
+		[]sui.TypeTag{},
+		[]suiptb.CallArg{c.LcObjArg},
+	)
+	if err != nil {
+		return err
+	}
+
+	// 2. Get head hash
+	return ptb.MoveCall(
+		c.LCPkgID,
+		lcModule,
+		headHashFunc,
+		[]sui.TypeTag{},
+		[]suiptb.CallArg{c.LcObjArg},
+	)
+}
+
+func parseHeight(val suiclient.ReturnValueType) (uint64, error) {
+	if val.TypeTag.U64 == nil {
+		return 0, fmt.Errorf("unexpected return type for head_height. Expecting u64, got: %v", val.TypeTag)
+	}
+	var height uint64
+	if err := bcs.UnmarshalAll(val.Data, &height); err != nil {
+		return 0, fmt.Errorf("failed to unmarshal head_height: %w", err)
+	}
+	return height, nil
+}
+
+func parseHash(val suiclient.ReturnValueType) (*chainhash.Hash, error) {
+	if val.TypeTag.Vector == nil || val.TypeTag.Vector.U8 == nil {
+		return nil, fmt.Errorf("unexpected return type for head_hash. Expecting vector<u8>, got: %v", val.TypeTag)
+	}
+	var hashBytes []byte
+	if err := bcs.UnmarshalAll(val.Data, &hashBytes); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal head_hash: %w", err)
+	}
+	return chainhash.NewHash(hashBytes)
 }
 
 // Stop performs any necessary cleanup and shutdown operations.
