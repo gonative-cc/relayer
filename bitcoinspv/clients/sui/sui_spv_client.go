@@ -19,7 +19,6 @@ import (
 const (
 	insertHeadersFunc  = "insert_headers"
 	containsBlockFunc  = "exist"
-	getChainTipFunc    = "head"
 	headHeightFunc     = "head_height"
 	headHashFunc       = "head_hash"
 	verifySPVFunc      = "verify_tx"
@@ -232,10 +231,10 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 
 	resp, err := c.devInspectTransactionBlock(ctx, ptb)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to inspect latest block info: %w", err)
 	}
 	if !resp.Effects.Data.IsSuccess() {
-		return nil, fmt.Errorf("%w: function status: %s, error: %s",
+		return nil, fmt.Errorf("%w: latest block info (head_height/head_hash) failed: status: %s, error: %s",
 			ErrSuiTransactionFailed, resp.Effects.Data.V1.Status.Status, resp.Effects.Data.V1.Status.Error)
 	}
 
@@ -306,7 +305,11 @@ func parseHash(val suiclient.ReturnValueType) (*chainhash.Hash, error) {
 	if err := bcs.UnmarshalAll(val.Data, &hashBytes); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal head_hash: %w", err)
 	}
-	return chainhash.NewHash(hashBytes)
+	hash, err := chainhash.NewHash(hashBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create chainhash from head_hash bytes: %w", err)
+	}
+	return hash, nil
 }
 
 // Stop performs any necessary cleanup and shutdown operations.

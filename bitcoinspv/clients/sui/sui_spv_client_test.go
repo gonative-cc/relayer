@@ -6,7 +6,9 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/fardream/go-bcs/bcs"
 	"github.com/gonative-cc/relayer/bitcoinspv/clients"
+	"github.com/pattonkan/sui-go/sui"
 	"github.com/pattonkan/sui-go/suiclient"
 	"github.com/pattonkan/sui-go/suisigner"
 	"github.com/pattonkan/sui-go/suisigner/suicrypto"
@@ -100,4 +102,77 @@ func TestGetHeaderChainTip(t *testing.T) {
 	exist, err := client.ContainsBlock(ctx, *blockInfo.Hash)
 	assert.Nil(t, err)
 	assert.True(t, exist, "Chain tip block should exist")
+}
+
+func TestParseHeight(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		height := uint64(12345)
+		data, _ := bcs.Marshal(height)
+		val := suiclient.ReturnValueType{
+			Data:    data,
+			TypeTag: &sui.TypeTag{U64: &sui.EmptyEnum{}},
+		}
+
+		result, err := parseHeight(val)
+		assert.NoError(t, err)
+		assert.Equal(t, height, result)
+	})
+
+	t.Run("wrong type tag", func(t *testing.T) {
+		val := suiclient.ReturnValueType{
+			TypeTag: &sui.TypeTag{U8: &sui.EmptyEnum{}},
+		}
+		_, err := parseHeight(val)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpected return type")
+	})
+
+	t.Run("unmarshal failure", func(t *testing.T) {
+		val := suiclient.ReturnValueType{
+			Data:    []byte{1, 2}, // too short for u64
+			TypeTag: &sui.TypeTag{U64: &sui.EmptyEnum{}},
+		}
+		_, err := parseHeight(val)
+		assert.Error(t, err)
+	})
+}
+
+func TestParseHash(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		hashStr := "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+		hash, _ := chainhash.NewHashFromStr(hashStr)
+		data, _ := bcs.Marshal(hash[:])
+		val := suiclient.ReturnValueType{
+			Data: data,
+			TypeTag: &sui.TypeTag{Vector: &sui.TypeTag{
+				U8: &sui.EmptyEnum{},
+			}},
+		}
+
+		result, err := parseHash(val)
+		assert.NoError(t, err)
+		assert.Equal(t, hash, result)
+	})
+
+	t.Run("wrong type tag", func(t *testing.T) {
+		val := suiclient.ReturnValueType{
+			TypeTag: &sui.TypeTag{U64: &sui.EmptyEnum{}},
+		}
+		_, err := parseHash(val)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpected return type")
+	})
+
+	t.Run("invalid hash length", func(t *testing.T) {
+		data, _ := bcs.Marshal([]byte{1, 2, 3})
+		val := suiclient.ReturnValueType{
+			Data: data,
+			TypeTag: &sui.TypeTag{Vector: &sui.TypeTag{
+				U8: &sui.EmptyEnum{},
+			}},
+		}
+		_, err := parseHash(val)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to create chainhash")
+	})
 }
