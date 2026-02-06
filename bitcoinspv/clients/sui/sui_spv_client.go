@@ -3,6 +3,7 @@ package sui
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -239,7 +240,8 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 	}
 
 	if len(resp.Results) < 2 {
-		return nil, fmt.Errorf("unexpected number of results from SPV latest block info. Expecting 2, got: %d", len(resp.Results))
+		return nil, fmt.Errorf("unexpected number of results from SPV latest block info. Expecting 2, got: %d",
+			len(resp.Results))
 	}
 
 	height, err := parseHeight(resp.Results[0].ReturnValues[0])
@@ -250,6 +252,10 @@ func (c *SPVClient) GetLatestBlockInfo(ctx context.Context) (*clients.BlockInfo,
 	hash, err := parseHash(resp.Results[1].ReturnValues[0])
 	if err != nil {
 		return nil, err
+	}
+
+	if height > math.MaxInt64 {
+		return nil, fmt.Errorf("height %d exceeds max int64", height)
 	}
 
 	return &clients.BlockInfo{
