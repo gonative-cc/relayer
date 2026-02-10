@@ -148,7 +148,7 @@ func initBtcIndexer(cfg *config.Config, rootLogger zerolog.Logger) btcindexer.In
 	}
 	token := cfg.Relayer.AuthToken
 	if token == "" {
-		rootLogger.Warn().Msg("auth-token is not set in config, block submission to indexer will fail if authentication is required.")
+		rootLogger.Warn().Msg("auth-token is not set in config, block submission to indexer will fail.")
 	}
 	client := btcindexer.NewClient(cfg.Relayer.IndexerURL, cfg.Relayer.NetParams, token, rootLogger)
 	return client
