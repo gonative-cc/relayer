@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	btctypes "github.com/gonative-cc/relayer/bitcoinspv/types/btc"
@@ -76,8 +77,18 @@ func (cfg *RelayerConfig) Validate() error {
 	if err := cfg.validateBTCConfirmationDepth(); err != nil {
 		return err
 	}
+	if err := cfg.validateAuthToken(); err != nil {
+		return err
+	}
 	err := cfg.validateHeadersChunkSize()
 	return err
+}
+
+func (cfg *RelayerConfig) validateAuthToken() error {
+	if strings.Contains(cfg.AuthToken, " ") {
+		return errors.New("auth-token cannot contain spaces")
+	}
+	return nil
 }
 
 func (cfg *RelayerConfig) validateLogging() error {
