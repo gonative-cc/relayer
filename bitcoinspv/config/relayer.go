@@ -41,6 +41,7 @@ type RelayerConfig struct {
 	ProcessBlockTimeout time.Duration `mapstructure:"process-block-timeout"`
 	// IndexerConfig
 	IndexerURL string `mapstructure:"indexer-url"`
+	AuthToken  string `mapstructure:"auth-token"`
 
 	// Walrus config
 	StoreBlocksInWalrus  bool     `mapstructure:"store-in-walrus"`
@@ -141,6 +142,7 @@ func DefaultRelayerConfig() RelayerConfig {
 		HeadersChunkSize:      minheadersChunkSize,
 		BTCConfirmationDepth:  defaultConfirmationDepth,
 		IndexerURL:            "", // disabled by default
+		AuthToken:             "",
 		StoreBlocksInWalrus:   false,
 		WalrusPublisherURLs:   []string{},
 		WalrusAggregatorURLs:  []string{},
