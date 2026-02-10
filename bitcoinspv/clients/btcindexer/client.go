@@ -30,10 +30,10 @@ type Client struct {
 }
 
 // NewClient creates a new client for the indexer.
-func NewClient(url string, network string, parentLogger zerolog.Logger) *Client {
+func NewClient(url string, network string, authToken string, parentLogger zerolog.Logger) *Client {
 	return &Client{
 		logger:    parentLogger.With().Str("module", "btcindexer_client").Logger(),
-		apiClient: btcindexer.NewClient(url),
+		apiClient: btcindexer.NewClient(url, authToken),
 		network:   network,
 	}
 }
