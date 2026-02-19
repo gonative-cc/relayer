@@ -91,7 +91,12 @@ func NewClient(url string, network string, authToken string, parentLogger zerolo
 
 // worker processes blocks from the queue in a background goroutine.
 func (c *Client) worker() {
-	defer close(c.done)
+	defer func() {
+		if r := recover(); r != nil {
+			c.logger.Error().Any("panic", r).Msg("Worker panicked, closing done channel")
+		}
+		close(c.done)
+	}()
 	for blocks := range c.blocksChan {
 		if err := c.sendBlocksWithRetry(blocks); err != nil {
 			c.logger.Error().Err(err).Msg("Failed to send blocks to indexer")
@@ -122,11 +127,12 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 	default:
 	}
 
+	c.wg.Add(1)
 	select {
 	case c.blocksChan <- blocks:
-		c.wg.Add(1)
 		return nil
 	default:
+		c.wg.Done()
 		err := errors.New("indexer queue is full, dropping blocks")
 		c.logger.Error().
 			Err(err).
@@ -250,6 +256,7 @@ func (c *Client) GetLatestHeight() (int64, error) {
 
 // Close stops the background worker and waits for it to finish.
 // It is safe to call multiple times.
+// A timeout is applied to prevent indefinite blocking during shutdown.
 func (c *Client) Close() {
 	if c == nil {
 		return
@@ -258,7 +265,16 @@ func (c *Client) Close() {
 		c.closed.set(true)
 		c.retryCancel()
 		close(c.blocksChan)
-		<-c.done
+		done := make(chan struct{})
+		go func() {
+			<-c.done
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			c.logger.Warn().Msg("Close timed out waiting for worker to drain")
+		}
 	})
 }
 
