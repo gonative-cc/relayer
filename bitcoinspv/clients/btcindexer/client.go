@@ -19,7 +19,7 @@ const (
 	maxRetries     = 4
 	initialBackoff = 500 * time.Millisecond
 	maxBackoff     = 8 * time.Second
-	queueSize      = 100
+	queueSize      = 400
 )
 
 // Client is a client for communicating with the nBTC indexer worker.
