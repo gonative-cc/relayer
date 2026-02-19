@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
@@ -19,28 +20,98 @@ const (
 	maxRetries     = 4
 	initialBackoff = 500 * time.Millisecond
 	maxBackoff     = 8 * time.Second
+	queueSize      = 400
 )
 
 // Client is a client for communicating with the nBTC indexer worker.
-// It wraps the btcindexer API client to add retry logic.
+// It wraps the btcindexer API client to add retry logic and async sending.
+//
+//nolint:govet
 type Client struct {
-	logger    zerolog.Logger
-	apiClient btcindexer.Client
-	network   string
+	network     string
+	blocksChan  chan []*types.IndexedBlock
+	done        chan struct{}
+	logger      zerolog.Logger
+	apiClient   btcindexer.Client
+	retryCtx    context.Context
+	retryCancel context.CancelFunc
+	wg          sync.WaitGroup
+	closeOnce   sync.Once
+	closed      atomicBool
+	sendError   atomicError
+}
+
+type atomicBool struct {
+	mu sync.RWMutex
+	v  bool
+}
+
+func (b *atomicBool) get() bool {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.v
+}
+
+func (b *atomicBool) set(v bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.v = v
+}
+
+type atomicError struct {
+	v  error
+	mu sync.Mutex
+}
+
+func (e *atomicError) get() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.v
+}
+
+func (e *atomicError) set(err error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.v = err
 }
 
 // NewClient creates a new client for the indexer.
 func NewClient(url string, network string, authToken string, parentLogger zerolog.Logger) *Client {
-	return &Client{
-		logger:    parentLogger.With().Str("module", "btcindexer_client").Logger(),
-		apiClient: btcindexer.NewClient(url, authToken),
-		network:   network,
+	ctx, cancel := context.WithCancel(context.Background())
+	c := &Client{
+		logger:      parentLogger.With().Str("module", "btcindexer_client").Logger(),
+		apiClient:   btcindexer.NewClient(url, authToken),
+		network:     network,
+		blocksChan:  make(chan []*types.IndexedBlock, queueSize),
+		done:        make(chan struct{}),
+		retryCtx:    ctx,
+		retryCancel: cancel,
+	}
+	go c.worker()
+	return c
+}
+
+// worker processes blocks from the queue in a background goroutine.
+func (c *Client) worker() {
+	defer func() {
+		if r := recover(); r != nil {
+			c.logger.Error().Any("panic", r).Msg("Worker panicked, closing done channel")
+		}
+		close(c.done)
+	}()
+	for blocks := range c.blocksChan {
+		if err := c.sendBlocksWithRetry(blocks); err != nil {
+			c.logger.Error().Err(err).Msg("Failed to send blocks to indexer")
+			c.sendError.set(err)
+		}
+		c.wg.Done()
 	}
 }
 
-// SendBlocks sends a batch of blocks to the indexer with a retry mechanism.
-// TODO: this should not block the main process
-// probably we should use CF queues
+// SendBlocks enqueues blocks for async sending to the indexer.
+// It returns an error only if the queue is full or if the client is closed.
+// Note: The context parameter is currently ignored for queue operations but is
+// checked for cancellation before enqueueing to respect cancellation semantics.
 func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
 	if c == nil {
 		return errors.New("btcindexer.Client is not initialized")
@@ -48,7 +119,34 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 	if len(blocks) == 0 {
 		return nil
 	}
+	if c.closed.get() {
+		return errors.New("btcindexer.Client is closed")
+	}
 
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	c.wg.Add(1)
+	select {
+	case c.blocksChan <- blocks:
+		return nil
+	default:
+		c.wg.Done()
+		err := errors.New("indexer queue is full, dropping blocks")
+		c.logger.Error().
+			Err(err).
+			Int("dropped_blocks_count", len(blocks)).
+			Int("queue_size", queueSize).
+			Msg("Indexer queue is full, dropping blocks")
+		return err
+	}
+}
+
+// sendBlocksWithRetry sends a batch of blocks to the indexer with a retry mechanism.
+func (c *Client) sendBlocksWithRetry(blocks []*types.IndexedBlock) error {
 	payload, err := c.preparePayload(blocks)
 	if err != nil {
 		return err
@@ -56,24 +154,26 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		select {
+		case <-c.retryCtx.Done():
+			return c.retryCtx.Err()
+		default:
 		}
 
 		shouldRetry, err := c.sendAndHandleResponse(payload)
 		if err != nil {
-			// Non-retryable
 			return err
 		}
 
 		if !shouldRetry {
-			// Success
 			return nil
 		}
 
 		lastErr = fmt.Errorf("attempt %d failed, retrying", attempt+1)
-		c.logger.Warn().Err(err).Msg("Retrying indexer call...")
-		c.backoff(ctx, attempt)
+		c.logger.Warn().Err(lastErr).Msg("Retrying indexer call...")
+		if !c.backoff(attempt) {
+			return errors.New("backoff interrupted by shutdown")
+		}
 	}
 
 	return fmt.Errorf("failed to send blocks to indexer after %d attempts: %w", maxRetries+1, lastErr)
@@ -99,7 +199,6 @@ func (c *Client) sendAndHandleResponse(payload btcindexer.PutBlocksReq) (bool, e
 		return false, fmt.Errorf("indexer returned a non-retryable error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	// resp.StatusCode >= 500 {
 	c.logger.Warn().
 		Int("status_code", resp.StatusCode).
 		Msg("Indexer returned a server error retry.")
@@ -123,23 +222,26 @@ func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlo
 	return putBlocksReq, nil
 }
 
-func (c *Client) backoff(ctx context.Context, attempt int) {
+// backoff sleeps for an exponential backoff duration with jitter.
+// Returns false if the context was canceled (e.g., during shutdown), true otherwise.
+func (c *Client) backoff(attempt int) bool {
 	if attempt >= maxRetries {
-		return
+		return true
 	}
 	backoff := time.Duration(1<<attempt) * initialBackoff
 	if backoff > maxBackoff {
 		backoff = maxBackoff
 	}
-	// NOTE: we dont need secure random generation here, its just retry
 	jitter := time.Duration(rand.Intn(1000)) * time.Millisecond //nolint:gosec
 	totalBackoff := backoff + jitter
 
-	c.logger.Info().Dur("wait_duration", totalBackoff).Msgf("Waiting before next attempt..")
+	c.logger.Info().Dur("wait_duration", totalBackoff).Msg("Waiting before next attempt...")
 
 	select {
+	case <-c.retryCtx.Done():
+		return false
 	case <-time.After(totalBackoff):
-	case <-ctx.Done():
+		return true
 	}
 }
 
@@ -152,4 +254,42 @@ func (c *Client) GetLatestHeight() (int64, error) {
 	}
 
 	return height, nil
+}
+
+// Close stops the background worker and waits for it to finish.
+// It is safe to call multiple times.
+// A timeout is applied to prevent indefinite blocking during shutdown.
+func (c *Client) Close() {
+	if c == nil {
+		return
+	}
+	c.closeOnce.Do(func() {
+		c.closed.set(true)
+		c.retryCancel()
+		close(c.blocksChan)
+		done := make(chan struct{})
+		go func() {
+			<-c.done
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			c.logger.Warn().Msg("Close timed out waiting for worker to drain")
+		}
+	})
+}
+
+// Flush waits for all queued blocks to be sent.
+// Returns an error if the client is nil, closed, or if any blocks failed to send.
+func (c *Client) Flush() error {
+	if c == nil {
+		return errors.New("btcindexer.Client is not initialized")
+	}
+	if c.closed.get() {
+		return errors.New("btcindexer.Client is closed")
+	}
+
+	c.wg.Wait()
+	return c.sendError.get()
 }

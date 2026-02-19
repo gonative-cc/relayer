@@ -274,6 +274,12 @@ func (r *Relayer) backfillIndexer(ctx context.Context, startHeight, endHeight in
 			}
 		}
 	}
+
+	if err := r.btcIndexer.Flush(); err != nil {
+		r.logger.Error().Err(err).Msg("Indexer backfill failed: some blocks failed to send asynchronously")
+		return fmt.Errorf("indexer backfill failed: some blocks failed to send asynchronously: %w", err)
+	}
+
 	r.logger.Info().Msg("Indexer backfill completed successfully.")
 	return nil
 }

@@ -143,6 +143,9 @@ func (r *Relayer) Stop() {
 
 // WaitForShutdown waits for all relayer goroutines to complete before returning
 func (r *Relayer) WaitForShutdown() {
+	if r.btcIndexer != nil {
+		r.btcIndexer.Close()
+	}
 	r.wg.Wait()
 }
 
