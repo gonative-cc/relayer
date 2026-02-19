@@ -25,6 +25,8 @@ const (
 
 // Client is a client for communicating with the nBTC indexer worker.
 // It wraps the btcindexer API client to add retry logic and async sending.
+//
+//nolint:govet
 type Client struct {
 	network     string
 	blocksChan  chan []*types.IndexedBlock
