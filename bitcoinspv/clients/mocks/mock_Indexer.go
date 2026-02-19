@@ -55,8 +55,21 @@ func (_c *MockIndexer_Close_Call) RunAndReturn(run func()) *MockIndexer_Close_Ca
 }
 
 // Flush provides a mock function with no fields
-func (_m *MockIndexer) Flush() {
-	_m.Called()
+func (_m *MockIndexer) Flush() error {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Flush")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // MockIndexer_Flush_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Flush'
@@ -76,13 +89,13 @@ func (_c *MockIndexer_Flush_Call) Run(run func()) *MockIndexer_Flush_Call {
 	return _c
 }
 
-func (_c *MockIndexer_Flush_Call) Return() *MockIndexer_Flush_Call {
-	_c.Call.Return()
+func (_c *MockIndexer_Flush_Call) Return(_a0 error) *MockIndexer_Flush_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockIndexer_Flush_Call) RunAndReturn(run func()) *MockIndexer_Flush_Call {
-	_c.Run(run)
+func (_c *MockIndexer_Flush_Call) RunAndReturn(run func() error) *MockIndexer_Flush_Call {
+	_c.Call.Return(run)
 	return _c
 }
 

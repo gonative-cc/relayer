@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/gonative-cc/relayer/bitcoinspv/types"
@@ -29,18 +30,61 @@ type Client struct {
 	apiClient btcindexer.Client
 	network   string
 
-	blocksChan chan []*types.IndexedBlock
-	done       chan struct{}
+	blocksChan  chan []*types.IndexedBlock
+	done        chan struct{}
+	closeOnce   sync.Once
+	closed      atomicBool
+	wg          sync.WaitGroup
+	retryCtx    context.Context
+	retryCancel context.CancelFunc
+	sendError   atomicError
+}
+
+type atomicBool struct {
+	mu sync.RWMutex
+	v  bool
+}
+
+func (b *atomicBool) get() bool {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.v
+}
+
+func (b *atomicBool) set(v bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.v = v
+}
+
+type atomicError struct {
+	mu sync.Mutex
+	v  error
+}
+
+func (e *atomicError) get() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.v
+}
+
+func (e *atomicError) set(err error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.v = err
 }
 
 // NewClient creates a new client for the indexer.
 func NewClient(url string, network string, authToken string, parentLogger zerolog.Logger) *Client {
+	ctx, cancel := context.WithCancel(context.Background())
 	c := &Client{
-		logger:     parentLogger.With().Str("module", "btcindexer_client").Logger(),
-		apiClient:  btcindexer.NewClient(url, authToken),
-		network:    network,
-		blocksChan: make(chan []*types.IndexedBlock, queueSize),
-		done:       make(chan struct{}),
+		logger:      parentLogger.With().Str("module", "btcindexer_client").Logger(),
+		apiClient:   btcindexer.NewClient(url, authToken),
+		network:     network,
+		blocksChan:  make(chan []*types.IndexedBlock, queueSize),
+		done:        make(chan struct{}),
+		retryCtx:    ctx,
+		retryCancel: cancel,
 	}
 	go c.worker()
 	return c
@@ -52,22 +96,36 @@ func (c *Client) worker() {
 	for blocks := range c.blocksChan {
 		if err := c.sendBlocksWithRetry(blocks); err != nil {
 			c.logger.Error().Err(err).Msg("Failed to send blocks to indexer")
+			c.sendError.set(err)
 		}
+		c.wg.Done()
 	}
 }
 
 // SendBlocks enqueues blocks for async sending to the indexer.
-// It returns an error only if the queue is full.
-func (c *Client) SendBlocks(_ context.Context, blocks []*types.IndexedBlock) error {
+// It returns an error only if the queue is full or if the client is closed.
+// Note: The context parameter is currently ignored for queue operations but is
+// checked for cancellation before enqueueing to respect cancellation semantics.
+func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
 	if c == nil {
 		return errors.New("btcindexer.Client is not initialized")
 	}
 	if len(blocks) == 0 {
 		return nil
 	}
+	if c.closed.get() {
+		return errors.New("btcindexer.Client is closed")
+	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
 
 	select {
 	case c.blocksChan <- blocks:
+		c.wg.Add(1)
 		return nil
 	default:
 		err := errors.New("indexer queue is full, dropping blocks")
@@ -89,6 +147,12 @@ func (c *Client) sendBlocksWithRetry(blocks []*types.IndexedBlock) error {
 
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
+		select {
+		case <-c.retryCtx.Done():
+			return c.retryCtx.Err()
+		default:
+		}
+
 		shouldRetry, err := c.sendAndHandleResponse(payload)
 		if err != nil {
 			return err
@@ -99,8 +163,10 @@ func (c *Client) sendBlocksWithRetry(blocks []*types.IndexedBlock) error {
 		}
 
 		lastErr = fmt.Errorf("attempt %d failed, retrying", attempt+1)
-		c.logger.Warn().Err(err).Msg("Retrying indexer call...")
-		c.backoff(attempt)
+		c.logger.Warn().Err(lastErr).Msg("Retrying indexer call...")
+		if !c.backoff(attempt) {
+			return errors.New("backoff interrupted by shutdown")
+		}
 	}
 
 	return fmt.Errorf("failed to send blocks to indexer after %d attempts: %w", maxRetries+1, lastErr)
@@ -126,7 +192,6 @@ func (c *Client) sendAndHandleResponse(payload btcindexer.PutBlocksReq) (bool, e
 		return false, fmt.Errorf("indexer returned a non-retryable error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	// resp.StatusCode >= 500 {
 	c.logger.Warn().
 		Int("status_code", resp.StatusCode).
 		Msg("Indexer returned a server error retry.")
@@ -150,9 +215,11 @@ func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlo
 	return putBlocksReq, nil
 }
 
-func (c *Client) backoff(attempt int) {
+// backoff sleeps for an exponential backoff duration with jitter.
+// Returns false if the context was cancelled (e.g., during shutdown), true otherwise.
+func (c *Client) backoff(attempt int) bool {
 	if attempt >= maxRetries {
-		return
+		return true
 	}
 	backoff := time.Duration(1<<attempt) * initialBackoff
 	if backoff > maxBackoff {
@@ -161,8 +228,14 @@ func (c *Client) backoff(attempt int) {
 	jitter := time.Duration(rand.Intn(1000)) * time.Millisecond //nolint:gosec
 	totalBackoff := backoff + jitter
 
-	c.logger.Info().Dur("wait_duration", totalBackoff).Msgf("Waiting before next attempt..")
-	time.Sleep(totalBackoff)
+	c.logger.Info().Dur("wait_duration", totalBackoff).Msg("Waiting before next attempt...")
+
+	select {
+	case <-c.retryCtx.Done():
+		return false
+	case <-time.After(totalBackoff):
+		return true
+	}
 }
 
 // GetLatestHeight returns the latest block height known to the indexer
@@ -177,17 +250,29 @@ func (c *Client) GetLatestHeight() (int64, error) {
 }
 
 // Close stops the background worker and waits for it to finish.
+// It is safe to call multiple times.
 func (c *Client) Close() {
 	if c == nil {
 		return
 	}
-	close(c.blocksChan)
-	<-c.done
+	c.closeOnce.Do(func() {
+		c.closed.set(true)
+		c.retryCancel()
+		close(c.blocksChan)
+		<-c.done
+	})
 }
 
 // Flush waits for all queued blocks to be sent.
-func (c *Client) Flush() {
-	for len(c.blocksChan) > 0 {
-		time.Sleep(100 * time.Millisecond)
+// Returns an error if the client is nil, closed, or if any blocks failed to send.
+func (c *Client) Flush() error {
+	if c == nil {
+		return errors.New("btcindexer.Client is not initialized")
 	}
+	if c.closed.get() {
+		return errors.New("btcindexer.Client is closed")
+	}
+
+	c.wg.Wait()
+	return c.sendError.get()
 }

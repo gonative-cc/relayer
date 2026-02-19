@@ -10,6 +10,6 @@ import (
 type Indexer interface {
 	SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error
 	GetLatestHeight() (int64, error)
-	Flush()
+	Flush() error
 	Close()
 }

@@ -275,7 +275,11 @@ func (r *Relayer) backfillIndexer(ctx context.Context, startHeight, endHeight in
 		}
 	}
 
-	r.btcIndexer.Flush()
+	if err := r.btcIndexer.Flush(); err != nil {
+		r.logger.Error().Err(err).Msg("Indexer backfill failed: blocks could not be sent")
+		return fmt.Errorf("indexer backfill failed: %w", err)
+	}
+
 	r.logger.Info().Msg("Indexer backfill completed successfully.")
 	return nil
 }
