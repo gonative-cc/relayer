@@ -26,18 +26,17 @@ const (
 // Client is a client for communicating with the nBTC indexer worker.
 // It wraps the btcindexer API client to add retry logic and async sending.
 type Client struct {
-	logger    zerolog.Logger
-	apiClient btcindexer.Client
-	network   string
-
-	blocksChan  chan []*types.IndexedBlock
-	done        chan struct{}
-	closeOnce   sync.Once
+	logger      zerolog.Logger
+	apiClient   btcindexer.Client
+	network     string
 	closed      atomicBool
+	sendError   atomicError
 	wg          sync.WaitGroup
+	closeOnce   sync.Once
 	retryCtx    context.Context
 	retryCancel context.CancelFunc
-	sendError   atomicError
+	blocksChan  chan []*types.IndexedBlock
+	done        chan struct{}
 }
 
 type atomicBool struct {
