@@ -274,6 +274,8 @@ func (r *Relayer) backfillIndexer(ctx context.Context, startHeight, endHeight in
 			}
 		}
 	}
+
+	r.btcIndexer.Flush()
 	r.logger.Info().Msg("Indexer backfill completed successfully.")
 	return nil
 }

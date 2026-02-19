@@ -19,29 +19,46 @@ const (
 	maxRetries     = 4
 	initialBackoff = 500 * time.Millisecond
 	maxBackoff     = 8 * time.Second
+	queueSize      = 100
 )
 
 // Client is a client for communicating with the nBTC indexer worker.
-// It wraps the btcindexer API client to add retry logic.
+// It wraps the btcindexer API client to add retry logic and async sending.
 type Client struct {
 	logger    zerolog.Logger
 	apiClient btcindexer.Client
 	network   string
+
+	blocksChan chan []*types.IndexedBlock
+	done       chan struct{}
 }
 
 // NewClient creates a new client for the indexer.
 func NewClient(url string, network string, authToken string, parentLogger zerolog.Logger) *Client {
-	return &Client{
-		logger:    parentLogger.With().Str("module", "btcindexer_client").Logger(),
-		apiClient: btcindexer.NewClient(url, authToken),
-		network:   network,
+	c := &Client{
+		logger:     parentLogger.With().Str("module", "btcindexer_client").Logger(),
+		apiClient:  btcindexer.NewClient(url, authToken),
+		network:    network,
+		blocksChan: make(chan []*types.IndexedBlock, queueSize),
+		done:       make(chan struct{}),
+	}
+	go c.worker()
+	return c
+}
+
+// worker processes blocks from the queue in a background goroutine.
+func (c *Client) worker() {
+	defer close(c.done)
+	for blocks := range c.blocksChan {
+		if err := c.sendBlocksWithRetry(blocks); err != nil {
+			c.logger.Error().Err(err).Msg("Failed to send blocks to indexer")
+		}
 	}
 }
 
-// SendBlocks sends a batch of blocks to the indexer with a retry mechanism.
-// TODO: this should not block the main process
-// probably we should use CF queues
-func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) error {
+// SendBlocks enqueues blocks for async sending to the indexer.
+// It returns an error only if the queue is full.
+func (c *Client) SendBlocks(_ context.Context, blocks []*types.IndexedBlock) error {
 	if c == nil {
 		return errors.New("btcindexer.Client is not initialized")
 	}
@@ -49,6 +66,16 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 		return nil
 	}
 
+	select {
+	case c.blocksChan <- blocks:
+		return nil
+	default:
+		return errors.New("indexer queue is full, dropping blocks")
+	}
+}
+
+// sendBlocksWithRetry sends a batch of blocks to the indexer with a retry mechanism.
+func (c *Client) sendBlocksWithRetry(blocks []*types.IndexedBlock) error {
 	payload, err := c.preparePayload(blocks)
 	if err != nil {
 		return err
@@ -56,24 +83,18 @@ func (c *Client) SendBlocks(ctx context.Context, blocks []*types.IndexedBlock) e
 
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
 		shouldRetry, err := c.sendAndHandleResponse(payload)
 		if err != nil {
-			// Non-retryable
 			return err
 		}
 
 		if !shouldRetry {
-			// Success
 			return nil
 		}
 
 		lastErr = fmt.Errorf("attempt %d failed, retrying", attempt+1)
 		c.logger.Warn().Err(err).Msg("Retrying indexer call...")
-		c.backoff(ctx, attempt)
+		c.backoff(attempt)
 	}
 
 	return fmt.Errorf("failed to send blocks to indexer after %d attempts: %w", maxRetries+1, lastErr)
@@ -123,7 +144,7 @@ func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlo
 	return putBlocksReq, nil
 }
 
-func (c *Client) backoff(ctx context.Context, attempt int) {
+func (c *Client) backoff(attempt int) {
 	if attempt >= maxRetries {
 		return
 	}
@@ -131,16 +152,11 @@ func (c *Client) backoff(ctx context.Context, attempt int) {
 	if backoff > maxBackoff {
 		backoff = maxBackoff
 	}
-	// NOTE: we dont need secure random generation here, its just retry
 	jitter := time.Duration(rand.Intn(1000)) * time.Millisecond //nolint:gosec
 	totalBackoff := backoff + jitter
 
 	c.logger.Info().Dur("wait_duration", totalBackoff).Msgf("Waiting before next attempt..")
-
-	select {
-	case <-time.After(totalBackoff):
-	case <-ctx.Done():
-	}
+	time.Sleep(totalBackoff)
 }
 
 // GetLatestHeight returns the latest block height known to the indexer
@@ -152,4 +168,17 @@ func (c *Client) GetLatestHeight() (int64, error) {
 	}
 
 	return height, nil
+}
+
+// Close stops the background worker and waits for it to finish.
+func (c *Client) Close() {
+	close(c.blocksChan)
+	<-c.done
+}
+
+// Flush waits for all queued blocks to be sent.
+func (c *Client) Flush() {
+	for len(c.blocksChan) > 0 {
+		time.Sleep(100 * time.Millisecond)
+	}
 }

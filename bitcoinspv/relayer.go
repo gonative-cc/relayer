@@ -144,6 +144,9 @@ func (r *Relayer) Stop() {
 // WaitForShutdown waits for all relayer goroutines to complete before returning
 func (r *Relayer) WaitForShutdown() {
 	r.wg.Wait()
+	if r.btcIndexer != nil {
+		r.btcIndexer.Close()
+	}
 }
 
 // UploadToWalrus upload full BTC block to Walrus
