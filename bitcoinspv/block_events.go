@@ -64,9 +64,10 @@ func (r *Relayer) onConnectedBlock(blockEvent *btctypes.BlockEvent) error {
 	fetchFullBlocks := r.btcIndexer != nil || r.walrusHandler != nil
 	if fetchFullBlocks {
 		h := blockEvent.BlockHeader.BlockHash()
-		ib, err = r.btcClient.GetBTCBlockByHash(&h)
-		// TODO: handle retry
-		if err != nil {
+		if err := RetryDo(r.logger, r.Config.RetrySleepDuration, r.Config.MaxRetrySleepDuration, func() error {
+			ib, err = r.btcClient.GetBTCBlockByHash(&h)
+			return err
+		}); err != nil {
 			return fmt.Errorf("failed to get full block %s by hash: %w", h.String(), err)
 		}
 		ctx := context.TODO()
