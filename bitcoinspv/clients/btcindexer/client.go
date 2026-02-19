@@ -70,7 +70,13 @@ func (c *Client) SendBlocks(_ context.Context, blocks []*types.IndexedBlock) err
 	case c.blocksChan <- blocks:
 		return nil
 	default:
-		return errors.New("indexer queue is full, dropping blocks")
+		err := errors.New("indexer queue is full, dropping blocks")
+		c.logger.Error().
+			Err(err).
+			Int("dropped_blocks_count", len(blocks)).
+			Int("queue_size", queueSize).
+			Msg("Indexer queue is full, dropping blocks")
+		return err
 	}
 }
 
@@ -172,6 +178,9 @@ func (c *Client) GetLatestHeight() (int64, error) {
 
 // Close stops the background worker and waits for it to finish.
 func (c *Client) Close() {
+	if c == nil {
+		return
+	}
 	close(c.blocksChan)
 	<-c.done
 }
