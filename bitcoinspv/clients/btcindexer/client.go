@@ -26,17 +26,17 @@ const (
 // Client is a client for communicating with the nBTC indexer worker.
 // It wraps the btcindexer API client to add retry logic and async sending.
 type Client struct {
-	logger      zerolog.Logger
-	apiClient   btcindexer.Client
 	network     string
-	closed      atomicBool
-	sendError   atomicError
-	wg          sync.WaitGroup
-	closeOnce   sync.Once
-	retryCtx    context.Context
-	retryCancel context.CancelFunc
 	blocksChan  chan []*types.IndexedBlock
 	done        chan struct{}
+	logger      zerolog.Logger
+	apiClient   btcindexer.Client
+	retryCtx    context.Context
+	retryCancel context.CancelFunc
+	wg          sync.WaitGroup
+	closeOnce   sync.Once
+	closed      atomicBool
+	sendError   atomicError
 }
 
 type atomicBool struct {
@@ -57,8 +57,8 @@ func (b *atomicBool) set(v bool) {
 }
 
 type atomicError struct {
-	mu sync.Mutex
 	v  error
+	mu sync.Mutex
 }
 
 func (e *atomicError) get() error {
@@ -221,7 +221,7 @@ func (c *Client) preparePayload(blocks []*types.IndexedBlock) (btcindexer.PutBlo
 }
 
 // backoff sleeps for an exponential backoff duration with jitter.
-// Returns false if the context was cancelled (e.g., during shutdown), true otherwise.
+// Returns false if the context was canceled (e.g., during shutdown), true otherwise.
 func (c *Client) backoff(attempt int) bool {
 	if attempt >= maxRetries {
 		return true
