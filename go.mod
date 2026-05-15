@@ -7,7 +7,7 @@ toolchain go1.24.5
 require (
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/btcsuite/btcd v0.24.2
-	github.com/btcsuite/btcd/btcutil v1.1.6
+	github.com/btcsuite/btcd/btcutil v1.2.0
 	github.com/fardream/go-bcs v0.9.0
 	github.com/gonative-cc/workers/api/btcindexer v0.1.2-0.20260210104614-22a77a96629a
 	github.com/joho/godotenv v1.5.1
@@ -26,11 +26,14 @@ require (
 	gotest.tools/v3 v3.5.2
 )
 
-require go.yaml.in/yaml/v3 v3.0.4 // indirect
+require (
+	github.com/kcalvinalvin/anet v0.0.0-20251112173137-d8ddc1f6dbee // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
+)
 
 require (
 	github.com/Khan/genqlient v0.8.1 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.5 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd // indirect
